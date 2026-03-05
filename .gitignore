@@ -36,3 +36,21 @@ extlib.zip
 *.cpp.json
 *.c.json
 .devcontainer/**
+
+# Visual Studio 및 CMake 빌드 결과물
+/vs_build_win64/
+/exec/
+/out/
+/build/
+/.vs/
+CMakeCache.txt
+CMakeFiles/
+
+# Visual Studio 사용자 설정 파일
+*.user
+*.suo
+
+# Python 캐시 파일 (빌드 중 생성됨)
+__pycache__/
+*.pyc
+*.pyo
