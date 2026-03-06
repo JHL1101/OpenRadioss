@@ -28,6 +28,7 @@ engine/extlib/scalap*
 engine/extlib/v2*
 engine/extlib/v3*
 .vscode/settings.json
+.vscode/launch.json
 *.sif
 extlib/**
 extlib.zip
