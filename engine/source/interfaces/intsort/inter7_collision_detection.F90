@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter7_collision_detection_mod   ../engine/source/interfaces/intsort/inter7_collision_detection.F90
 !||--- called by ------------------------------------------------------
 !||    inter_sort_07                    ../engine/source/interfaces/int07/inter_sort_07.F
 !||====================================================================
       MODULE INTER7_COLLISION_DETECTION_MOD
-      implicit none
+        implicit none
       CONTAINS
 !||====================================================================
 !||    inter7_collision_detection   ../engine/source/interfaces/intsort/inter7_collision_detection.F90
@@ -43,6 +44,8 @@
 !||    inter7_candidate_pairs_mod   ../engine/source/interfaces/intsort/inter7_candidate_pairs.F90
 !||    inter_struct_mod             ../engine/share/modules/inter_struct_mod.F
 !||    message_mod                  ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod                ../common_source/modules/precision_mod.F90
 !||    tri7box                      ../engine/share/modules/tri7box.F
 !||    voxel_dimensions_mod         ../engine/source/interfaces/intsort/voxel_dimensions.F90
@@ -77,6 +80,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                 implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   arguments
@@ -178,7 +183,7 @@
 
 
           if(itask == 0) then
-            allocate(prev_remote_number(s_prev_remote_number))
+            call my_alloc(prev_remote_number, s_prev_remote_number, "prev_remote_number")
             ! find the old id of remote candidate nodes (inactive, ifq, itied)
             if(nspmd>1.and.(inacti==5.or.inacti==6.or.inacti==7.or.ifq>0.or.itied/=0)) then
               call spmd_oldnumcd(renum,prev_remote_number,s_prev_remote_number,nsnrold, &
@@ -296,7 +301,7 @@
 
           IF(ITASK==0)  THEN
 !           IF(ALLOCATED(inter_struct%NEXT_NOD)) DEALLOCATE(inter_struct%NEXT_NOD)
-            IF(ALLOCATED(PREV_REMOTE_NUMBER)) DEALLOCATE(PREV_REMOTE_NUMBER)
+            IF(ALLOCATED(PREV_REMOTE_NUMBER)) call my_dealloc(PREV_REMOTE_NUMBER)
 !           if(allocated(inter_struct%list_nb_voxel_on)) deallocate(inter_struct%list_nb_voxel_on)
 
           END IF

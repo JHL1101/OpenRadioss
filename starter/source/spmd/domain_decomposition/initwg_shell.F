@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    initwg_shell       ../starter/source/spmd/domain_decomposition/initwg_shell.F
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .            NUMELC,IPM,NUMMAT,NUMGEO,POIN_PART_SHELL,
      .            MID_PID_SHELL,IPARTC,OFF,BUFMAT,
      .            MID_OLD,PID_OLD,MLN_OLD,RECHERCHE,TELT_PRO,
-     .            TABMP_L,MAT_PARAM,numeltg,iworksh)
+     .            TABMP_L,MAT_PARAM,numeltg,iworksh,elm_group)
 C-----------------------------------------------
 C            M o d u l e s
 C-----------------------------------------------
@@ -74,7 +75,8 @@ C     REAL OR REAL*8
       INTEGER, DIMENSION(2,*), INTENT(IN) :: POIN_PART_SHELL
       TYPE(MID_PID_TYPE), DIMENSION(*), INTENT(INOUT) :: MID_PID_SHELL
       TYPE(MATPARAM_STRUCT_) ,DIMENSION(NUMMAT), INTENT(IN) :: MAT_PARAM
-      integer, dimension(3,numelc+numeltg), intent(in) :: iworksh !< ply data for shell & shell3n elements            
+      integer, dimension(3,numelc+numeltg), intent(in) :: iworksh !< ply data for shell & shell3n elements
+      integer, dimension(numelc,2), intent(in) :: elm_group !< group id & number of element in the group for each element 
 C-----------------------------------------------
       INTEGER  NPN, MID, PID, MLN,
      .    ISTRAIN, ITHK, IHBE, IPLA, ISSN, I, J,
@@ -144,7 +146,7 @@ C-----------------------------------------------
         ! -----------------
         NPN = NINT(GEO(6,PID))
         NPT = ABS(NPN) ! get the number of integration points
-        if(iworksh(2,i)>0) npt = iworksh(2,i) ! if ply data is available, get the number of integration points from ply data (for composite materials)
+        if(iworksh(1,i)>0) npt = iworksh(1,i) ! if ply data is available, get the number of integration points from ply data (for composite materials)
         IHBE = NINT(GEO(171,PID))
         ITHK = NINT(GEO(35,PID))
         IPLA = NINT(GEO(39,PID))
@@ -457,18 +459,21 @@ C ow            Q4
 
         ! --------------------
         IF(RECHERCHE==0) THEN
-         IF((WD_LOCAL==0.).AND.(MLN/=0)) THEN
-           POIDS = TELT * INVTREF
-           WD(I+OFF) = POIDS
-           POIN_PART = IPARTC(I)
-           POIN_MID = POIN_PART_SHELL(1,POIN_PART)
-           POIN_PID = POIN_PART_SHELL(2,POIN_PART)
-           IF(POIN_MID/=0.AND.POIN_PID/=0) MID_PID_SHELL(POIN_MID)%COST1D(POIN_PID) = TELT
-         ELSEIF((WD_LOCAL==0.).AND.(MLN==0)) THEN
-           WD(I+OFF) = 0.0001
-         ENDIF
+          IF((WD_LOCAL==0.).AND.(MLN/=0)) THEN
+            if(elm_group(i,2)>0.and.elm_group(i,2)<80) then
+              telt = telt * (18.248*(elm_group(i,2))**(-0.625))
+            endif                   
+            POIDS = TELT * INVTREF     
+            WD(I+OFF) = POIDS
+            POIN_PART = IPARTC(I)
+            POIN_MID = POIN_PART_SHELL(1,POIN_PART)
+            POIN_PID = POIN_PART_SHELL(2,POIN_PART)
+            IF(POIN_MID/=0.AND.POIN_PID/=0) MID_PID_SHELL(POIN_MID)%COST1D(POIN_PID) = TELT
+          ELSEIF((WD_LOCAL==0.).AND.(MLN==0)) THEN
+            WD(I+OFF) = 0.0001
+          ENDIF
         ELSE
-         TELT_PRO = TELT
+          TELT_PRO = TELT
         ENDIF
         ! --------------------
       ENDDO

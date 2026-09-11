@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    admbcs        ../starter/source/model/remesh/admbcs.F
 !||--- called by ------------------------------------------------------
@@ -57,8 +58,6 @@ C-----------------------------------------------
       INTEGER IP,NLEV,N1,N2,IC1,IC2,ICOD,IS1,IS2, 
      .        DIR, N
 C-----------------------------------------------
-      INTEGER MY_AND
-      EXTERNAL MY_AND
 C-----------------------------------------------
 C
       DO N=1,NUMELC0
@@ -70,7 +69,7 @@ C
             N2=IXC(MOD(DIR+1,4)+2,N)
             IC1 =ICODE(N1)
             IC2 =ICODE(N2)
-            ICOD=MY_AND(IC1,IC2)
+            ICOD=IAND(IC1,IC2)
             IF(ICOD/=0)THEN
               IS1=ISKEW(N1)
               IS2=ISKEW(N2)
@@ -98,7 +97,7 @@ C
             N2=IXTG(MOD(DIR+1,3)+2,N)
             IC1 =ICODE(N1)
             IC2 =ICODE(N2)
-            ICOD=MY_AND(IC1,IC2)
+            ICOD=IAND(IC1,IC2)
             IF(ICOD/=0)THEN
               IS1=ISKEW(N1)
               IS2=ISKEW(N2)
@@ -152,8 +151,6 @@ C-----------------------------------------------
       INTEGER LEVEL,IP,NLEV
       INTEGER SON,M1,M2
 C-----------------------------------------------
-      INTEGER MY_OR
-      EXTERNAL MY_OR
 C-----------------------------------------------
       LEVEL=SH4TREE(3,N)
       IF(LEVEL<0)THEN
@@ -172,8 +169,8 @@ C-----------------------------------------------
       ELSE
         M1=IXC(DIR+2,N)
         M2=IXC(MOD(DIR+1,4)+2,N)
-        ICODE(M1)=MY_OR(ICOD,ICODE(M1))
-        ICODE(M2)=MY_OR(ICOD,ICODE(M2))
+        ICODE(M1)=IOR(ICOD,ICODE(M1))
+        ICODE(M2)=IOR(ICOD,ICODE(M2))
         ISKEW(M1)=ISK
         ISKEW(M2)=ISK
       END IF
@@ -211,8 +208,6 @@ C-----------------------------------------------
       INTEGER LEVEL,IP,NLEV
       INTEGER SON, M1, M2
 C-----------------------------------------------
-      INTEGER MY_OR
-      EXTERNAL MY_OR
 C-----------------------------------------------
       LEVEL=SH3TREE(3,N)
       IF(LEVEL<0)THEN
@@ -231,8 +226,8 @@ C-----------------------------------------------
       ELSE
         M1=IXTG(DIR+2,N)
         M2=IXTG(MOD(DIR+1,3)+2,N)
-        ICODE(M1)=MY_OR(ICOD,ICODE(M1))
-        ICODE(M2)=MY_OR(ICOD,ICODE(M2))
+        ICODE(M1)=IOR(ICOD,ICODE(M1))
+        ICODE(M2)=IOR(ICOD,ICODE(M2))
         ISKEW(M1)=ISK
         ISKEW(M2)=ISK
       END IF

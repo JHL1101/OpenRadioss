@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,32 +15,35 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    hm_read_part           ../starter/source/model/assembling/hm_read_part.F
+!||    hm_read_part                   ../starter/source/model/assembling/hm_read_part.F
 !||--- called by ------------------------------------------------------
-!||    lectur                 ../starter/source/starter/lectur.F
+!||    lectur                         ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    ale_euler_init         ../starter/source/materials/ale/ale_euler_init.F
-!||    ancmsg                 ../starter/source/output/message/message.F
-!||    fretitl                ../starter/source/starter/freform.F
-!||    fretitl2               ../starter/source/starter/freform.F
-!||    get_u_geo              ../starter/source/user_interface/uaccess.F
-!||    hm_get_floatv          ../starter/source/devtools/hm_reader/hm_get_floatv.F
-!||    hm_get_intv            ../starter/source/devtools/hm_reader/hm_get_intv.F
-!||    hm_option_read_key     ../starter/source/devtools/hm_reader/hm_option_read_key.F
-!||    hm_option_start        ../starter/source/devtools/hm_reader/hm_option_start.F
-!||    nintri                 ../starter/source/system/nintrr.F
-!||    udouble                ../starter/source/system/sysfus.F
+!||    ale_euler_init                 ../starter/source/materials/ale/ale_euler_init.F
+!||    ancmsg                         ../starter/source/output/message/message.F
+!||    fretitl                        ../starter/source/starter/freform.F
+!||    fretitl2                       ../starter/source/starter/freform.F
+!||    get_u_geo                      ../starter/source/user_interface/uaccess.F
+!||    hm_get_floatv                  ../starter/source/devtools/hm_reader/hm_get_floatv.F
+!||    hm_get_intv                    ../starter/source/devtools/hm_reader/hm_get_intv.F
+!||    hm_is_part_with_elements       ../starter/source/devtools/hm_reader/hm_is_part_with_elements.F90
+!||    hm_option_read_key             ../starter/source/devtools/hm_reader/hm_option_read_key.F
+!||    hm_option_start                ../starter/source/devtools/hm_reader/hm_option_start.F
+!||    nintri                         ../starter/source/system/nintrr.F
+!||    udouble                        ../starter/source/system/sysfus.F
 !||--- uses       -----------------------------------------------------
-!||    elbuftag_mod           ../starter/share/modules1/elbuftag_mod.F
-!||    hm_option_read_mod     ../starter/share/modules1/hm_option_read_mod.F
-!||    message_mod            ../starter/share/message_module/message_mod.F
-!||    submodel_mod           ../starter/share/modules1/submodel_mod.F
+!||    elbuftag_mod                   ../starter/share/modules1/elbuftag_mod.F
+!||    hm_is_part_with_elements_mod   ../starter/source/devtools/hm_reader/hm_is_part_with_elements.F90
+!||    hm_option_read_mod             ../starter/share/modules1/hm_option_read_mod.F
+!||    message_mod                    ../starter/share/message_module/message_mod.F
+!||    submodel_mod                   ../starter/share/modules1/submodel_mod.F
 !||====================================================================
       SUBROUTINE HM_READ_PART(IPART,PM,GEO,IPM,IGEO,IWA,THK_PART,
      .                        UNITAB,LSUBMODEL,MULTI_FVM,MLAW_TAG,
@@ -69,6 +72,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE UNITAB_MOD
       USE MESSAGE_MOD           
+      use my_alloc_mod
       USE SUBMODEL_MOD           
       USE HM_OPTION_READ_MOD
       USE MULTI_FVM_MOD
@@ -77,6 +81,8 @@ C-----------------------------------------------
       USE MAT_ELEM_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use glob_therm_mod
+      use hm_is_part_with_elements_mod
+      use, intrinsic :: iso_c_binding , only : c_bool
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -117,11 +123,12 @@ C-----------------------------------------------
       CHARACTER*5 CHAR_PROP,CHAR_MAT
       CHARACTER*7::CHAR_MAT_TYPE,CHAR_PROP_TYPE
       LOGICAL IS_AVAILABLE, USER_LAW, IS_ASSOCIATED_LAW51
-      INTEGER PID,MID,SID,ID,ID1,ID2,I,IMID,IPID,ISID,K,ITH, IGTYP,XFEMFLG,
-     .        IXFEM,IHBE,ILAW,UID,IFLAGUNIT,J,IDMAT_PLY,
-     .        ILAW_PLY,IPMAT,NPT,IDPARTSPH,SUB_INDEX,SIZE, IDS, CNT, 
-     .        IFIX_TMP,STAT,JALE_FROM_PROP,JALE_FROM_MAT
+      INTEGER PID,MID,SID,ID,I,IMID,IPID,ISID,ITH, IGTYP,XFEMFLG,
+     .        IXFEM,IHBE,ILAW,UID,J,IDMAT_PLY,
+     .        ILAW_PLY,IPMAT,NPT,IDPARTSPH,SUB_INDEX, IDS, CNT,
+     .        STAT,JALE_FROM_PROP,JALE_FROM_MAT
       my_real BID, THICK,FAC_L,MP,VOL,DIAM
+      logical(c_bool) :: IS_FILLED
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
@@ -199,20 +206,30 @@ C--------------------------------------------------
         
 C--------------------------------------------------
 C MATERIAL & PROPERTY CHECKS
-C--------------------------------------------------        
+C-------------------------------------------------- 
+        IS_FILLED = .FALSE.
+        call hm_is_part_with_elements(ID,IS_FILLED)
+               
         IPID = NINTRI(PID,IGEO,NPROPGI,NUMGEO,1)
         IF(IPID == 0) THEN
            IPID=1
-           CALL ANCMSG(MSGID=178,MSGTYPE=MSGERROR,ANMODE=ANINFO,I1=ID,C1=TITR,I2=PID)
+           IGTYP=0
+           IF(IS_FILLED) THEN
+             CALL ANCMSG(MSGID=178,MSGTYPE=MSGERROR,ANMODE=ANINFO,I1=ID,C1=TITR,I2=PID)
+           ELSE
+             CALL ANCMSG(MSGID=178,MSGTYPE=MSGWARNING,ANMODE=ANINFO,I1=ID,C1=TITR,I2=PID)
+           ENDIF
            TITR1=' '
         ELSE
             CALL FRETITL2(TITR1,IGEO(NPROPGI-LTITR+1,IPID),LTITR)
+            IGTYP=NINT(GEO(12,IPID))
         ENDIF
 
-        IGTYP=NINT(GEO(12,IPID))
-        IF(IGTYP == 17 .OR. IGTYP == 51) IPART_STACK = 1
-        IF(IGTYP ==  52) IPART_PCOMPP = 1
-        IF( (IGTYP == 0).OR.
+        IF(IS_FILLED .OR. IGTYP == 34) THEN
+
+          IF(IGTYP == 17 .OR. IGTYP == 51) IPART_STACK = 1
+          IF(IGTYP ==  52) IPART_PCOMPP = 1
+          IF( (IGTYP == 0).OR.
      .      (IGTYP == 1).OR.(IGTYP == 2).OR.(IGTYP == 3).OR.
      .      (IGTYP == 6).OR.(IGTYP == 9).OR.(IGTYP == 10).OR.
      .      (IGTYP == 11).OR.(IGTYP == 14).OR.(IGTYP == 16).OR.
@@ -228,41 +245,41 @@ C--------------------------------------------------
      .                     C1=TITR,
      .                     I2=MID)
             ENDIF          
-        ENDIF
-        !--- check material identifier
-        IF(MID == 0) THEN
-         !fictitious material law for spring elements
-         IMID=NUMMAT
-         ILAW=IPM(2,IMID)
-        ELSE
-         IMID = NINTRI(MID,IPM,NPROPMI,NUMMAT,1)
-         IF(IMID == 0) THEN
-            CALL ANCMSG(MSGID=179,
+          ENDIF
+          !--- check material identifier
+          IF(MID == 0) THEN
+           !fictitious material law for spring elements
+           IMID=NUMMAT
+           ILAW=IPM(2,IMID)
+          ELSE
+           IMID = NINTRI(MID,IPM,NPROPMI,NUMMAT,1)
+           IF(IMID == 0) THEN
+              CALL ANCMSG(MSGID=179,
      .                  MSGTYPE=MSGERROR,
      .                  ANMODE=ANINFO,
      .                  I1=ID,
      .                  C1=TITR,
      .                  I2=MID)
-           ILAW=0
-         ELSE
-           ILAW  = IPM(2,IMID)
-           IXFEM = MAT_PARAM(IMID)%IXFEM
-           CALL FRETITL2(TITR2,IPM(NPROPMI-LTITR+1,IMID),LTITR)
-         ENDIF
-         !check if law151 is used
-         IF(ILAW == 151)IS_ASSOCIATED_LAW51=.TRUE.
+             ILAW=0
+           ELSE
+             ILAW  = IPM(2,IMID)
+             IXFEM = MAT_PARAM(IMID)%IXFEM
+             CALL FRETITL2(TITR2,IPM(NPROPMI-LTITR+1,IMID),LTITR)
+           ENDIF
+           !check if law151 is used
+           IF(ILAW == 151)IS_ASSOCIATED_LAW51=.TRUE.
                 
          !--- check property identifier
-         IGTYP=0
-         IF(IPID > 0) IGTYP=IGEO(11,IPID)
-         IF (IXFEM > 0 .and. (IGTYP==1  .or. IGTYP==9 .or. IGTYP==10 .or. 
+           IGTYP=0
+           IF(IPID > 0) IGTYP=IGEO(11,IPID)
+           IF (IXFEM > 0 .and. (IGTYP==1  .or. IGTYP==9 .or. IGTYP==10 .or. 
      .                        IGTYP==11 .or. IGTYP==51)) THEN
-           XFEMFLG = XFEMFLG + IXFEM
-         END IF
-         IF (ILAW == 99.AND.IGTYP == 14) THEN
-           IHBE=IGEO(10,IPID)
-           IF (IHBE == 12) THEN
-            CALL ANCMSG(MSGID=768,
+             XFEMFLG = XFEMFLG + IXFEM
+           END IF
+           IF (ILAW == 99.AND.IGTYP == 14) THEN
+             IHBE=IGEO(10,IPID)
+             IF (IHBE == 12) THEN
+              CALL ANCMSG(MSGID=768,
      .                  MSGTYPE=MSGERROR,
      .                  ANMODE=ANINFO,
      .                  I1=ID,
@@ -273,57 +290,57 @@ C--------------------------------------------------
      .                  C3=TITR2,
      .                  C4='SOLID',
      .                  I4=IHBE)
+             END IF
            END IF
-         END IF
-         !tag for user material law
-         IF (ILAW==29 .or. ILAW==30 .or. ILAW==31 .or. ILAW==99) THEN
-           USER_LAW = .true.
-         ELSE
-           USER_LAW = .false.
-         ENDIF
+           !tag for user material law
+           IF (ILAW==29 .or. ILAW==30 .or. ILAW==31 .or. ILAW==99) THEN
+             USER_LAW = .true.
+           ELSE
+             USER_LAW = .false.
+           ENDIF
          
          !check compatibility between material law and property
-         IF (((IGTYP==43) .and. ((ILAW/=59 .and. ILAW/=83 .and. ILAW/=116 .and. ILAW/=117 .AND. ILAW /=120.AND.ILAW/=169) .and. 
+           IF (((IGTYP==43) .and. ((ILAW/=59 .and. ILAW/=83 .and. ILAW/=116 .and. ILAW/=117 .AND. ILAW /=120.AND.ILAW/=169) .and. 
      .       (USER_LAW .eqv. .false. ) ).eqv. .true.) .or.
      .       ((ILAW==59 .or. ILAW==83 .or. ILAW==116 .or. ILAW==117) .and. IGTYP/=43) .or.
      .        (ILAW==1 .and. (IGTYP==9.OR.IGTYP==10.OR.IGTYP==11.OR.IGTYP==16.OR.
      .                        IGTYP==17.OR.IGTYP==51.OR.IGTYP==52) .eqv. .true.) .eqv. .true.) THEN
-           CALL ANCMSG(MSGID=658,
+             CALL ANCMSG(MSGID=658,
      .                 MSGTYPE=MSGERROR,
      .                 ANMODE=ANINFO_BLIND_2,
      .                 I1=PID,
      .                 C1=TITR1,
      .                 I2=ILAW,
      .                 I3=IGTYP)
-         ENDIF
+           ENDIF
          
          !anisotropic material law not compatible with isotropic property
-         IF (ILAW == 87 .AND. IGTYP /= 9) THEN
-           CALL ANCMSG(MSGID=1110,
+           IF (ILAW == 87 .AND. IGTYP /= 9) THEN
+             CALL ANCMSG(MSGID=1110,
      .                 MSGTYPE=MSGWARNING,
      .                 ANMODE=ANINFO_BLIND_1,
      .                 I1=ID,
      .                 C1=TITR,
      .                 I2=ILAW,
      .                 I3=IGTYP)
-         ENDIF
-         IF (ILAW == 187 .AND. IGTYP /= 6) THEN
-           CALL ANCMSG(MSGID=1110,
+           ENDIF
+           IF (ILAW == 187 .AND. IGTYP /= 6) THEN
+            CALL ANCMSG(MSGID=1110,
      .                 MSGTYPE=MSGWARNING,
      .                 ANMODE=ANINFO_BLIND_1,
      .                 I1=ID,
      .                 C1=TITR,
      .                 I2=ILAW,
      .                 I3=IGTYP)
-         ENDIF
+           ENDIF
 
-         !rigid material law (obsolete)
-         IF(ILAW == 13 .AND. IRODDL == 0) IRODDL = 1
+           !rigid material law (obsolete)
+           IF(ILAW == 13 .AND. IRODDL == 0) IRODDL = 1
          
-        ENDIF
+          ENDIF
 
-        ! compatibility of global material and ply material for type11
-        IF(IGTYP == 11) THEN
+          ! compatibility of global material and ply material for type11
+          IF(IGTYP == 11) THEN
             NPT=IGEO(4,IPID)
             IPMAT = 100
            DO J=1,NPT
@@ -341,89 +358,103 @@ C--------------------------------------------------
      .                  C3=TITR2)
              ENDIF
            ENDDO
-        ENDIF  
+          ENDIF  
               
-        !spring type 23 & material compatibility
-        IF(IGTYP == 23) THEN
-           IMID = NINTRI(MID,IPM,NPROPMI,NUMMAT,1)
-           ILAW=IPM(2,IMID)
-           IF(ILAW /= 108 .AND. ILAW /=113.AND. ILAW /=114 .AND. ILAW /= 0 ) THEN
-             CALL ANCMSG(MSGID = 1715,
+          !spring type 23 & material compatibility
+          IF(IGTYP == 23) THEN
+            IF(ILAW /= 108 .AND. ILAW /=113.AND. ILAW /=114 .AND. ILAW /=135 .AND. ILAW /= 0 ) THEN
+              CALL ANCMSG(MSGID = 1715,
      .                  MSGTYPE=MSGERROR,
      .                  ANMODE=ANINFO,
      .                  I1=ID,
      .                  C1=TITR)
-           ENDIF
-        ENDIF
+            ENDIF
+          ENDIF
 
-        ! law70 (/MAT/FOAM_TAB)
-        IF(ILAW == 70 .AND. IGEO(31,IPID) == 1) WRITE(IOUT,2000)
+          ! law70 (/MAT/FOAM_TAB)
+          IF(ILAW == 70 .AND. IGEO(31,IPID) == 1) WRITE(IOUT,2000)
 
 c-------------------------------------------------------------------
 c      ALE EULER SPECIFIC TREATMENTS
 c-------------------------------------------------------------------
-        !SSP BUFFER + UPWIND + TURB + CHECK + CONVECTION FLAGS
-        CALL ALE_EULER_INIT( MLAW_TAG,IPM,PM,IGEO,TITR,TITR1,TITR2,IGTYP,
-     .   ID,ILAW,MID,IMID,PID,IPID,JALE_FROM_PROP,JALE_FROM_MAT,
-     .   GLOB_THERM%ITHERM,GLOB_THERM%ITHERM_FE)           
+          !SSP BUFFER + UPWIND + TURB + CHECK + CONVECTION FLAGS
+          CALL ALE_EULER_INIT( MLAW_TAG,IPM,PM,IGEO,TITR,TITR1,TITR2,IGTYP,
+     .     ID,ILAW,MID,IMID,PID,IPID,JALE_FROM_PROP,JALE_FROM_MAT,
+     .     GLOB_THERM%ITHERM,GLOB_THERM%ITHERM_FE)           
 
 c-------------------------------------------------------------------
 c      STARTER PRINTOUT
 c-------------------------------------------------------------------
-        WRITE(IOUT,'(/A,I10,2A)')'PART:',ID,',',TRIM(TITR)
-        WRITE(IOUT,'(A)')        '----'
+          WRITE(IOUT,'(/A,I10,2A)')'PART:',ID,',',TRIM(TITR)
+          WRITE(IOUT,'(A)')        '----'
         
 C----PROPERTY OUTPUT  
-        CHAR_PROP_TYPE='TYPE ? '
-        IF(IPID>0)THEN
-          WRITE(CHAR_PROP_TYPE(5:7),FMT='(I3)')IGTYP
-          IF(IGTYP<10)WRITE(CHAR_PROP_TYPE(6:6),FMT='(A1)') '0'
-        ENDIF
-        WRITE(IOUT,'(A,I10,4A)')'     PROPERTY    :',PID,' (',TRIM(CHAR_PROP_TYPE),'),',TRIM(TITR1)
+          CHAR_PROP_TYPE='TYPE ? '
+          IF(IPID>0)THEN
+            WRITE(CHAR_PROP_TYPE(5:7),FMT='(I3)')IGTYP
+            IF(IGTYP<10)WRITE(CHAR_PROP_TYPE(6:6),FMT='(A1)') '0'
+          ENDIF
+          WRITE(IOUT,'(A,I10,4A)')'     PROPERTY    :',PID,' (',TRIM(CHAR_PROP_TYPE),'),',TRIM(TITR1)
         
 C----MATERIAL OUTPUT
-        CHAR_MAT_TYPE='LAW  ? '
-        IF(IMID>0)THEN
-          WRITE(CHAR_MAT_TYPE(5:7),FMT='(I3)')ILAW
-          IF(ILAW<10)WRITE(CHAR_MAT_TYPE(6:6),FMT='(A1)') '0'
-        ENDIF         
-        IF( IMID /= 0) WRITE(IOUT,'(A,I10,4A)')'     MATERIAL    :',MID,' (',TRIM(CHAR_MAT_TYPE),'),',TRIM(TITR2)
+          CHAR_MAT_TYPE='LAW  ? '
+          IF(IMID>0)THEN
+            WRITE(CHAR_MAT_TYPE(5:7),FMT='(I3)')ILAW
+            IF(ILAW<10)WRITE(CHAR_MAT_TYPE(6:6),FMT='(A1)') '0'
+          ENDIF         
+          IF( IMID /= 0) WRITE(IOUT,'(A,I10,4A)')'     MATERIAL    :',MID,' (',TRIM(CHAR_MAT_TYPE),'),',TRIM(TITR2)
                  
 C----SUBSET OUTPUT            
-        WRITE(IOUT,'(A,I10,2A)')'     SUBSET      :',SID
+          WRITE(IOUT,'(A,I10,2A)')'     SUBSET      :',SID
       
 C----FRAMEWORK OUTPUT        
-        IF(JALE_FROM_PROP==1 .OR. JALE_FROM_MAT==1)THEN
-          WRITE(IOUT,'(A)')'     FRAMEWORK   :         ALE'
-        ELSEIF(JALE_FROM_PROP==2 .OR. JALE_FROM_MAT==2)THEN       
-          WRITE(IOUT,'(A)')'     FRAMEWORK   :         EULER'    
-        ELSE
-          WRITE(IOUT,'(A)')'     FRAMEWORK   :         LAGRANGE'
-        ENDIF    
+          IF(JALE_FROM_PROP==1 .OR. JALE_FROM_MAT==1)THEN
+            WRITE(IOUT,'(A)')'     FRAMEWORK   :         ALE'
+          ELSEIF(JALE_FROM_PROP==2 .OR. JALE_FROM_MAT==2)THEN       
+            WRITE(IOUT,'(A)')'     FRAMEWORK   :         EULER'    
+          ELSE
+            WRITE(IOUT,'(A)')'     FRAMEWORK   :         LAGRANGE'
+          ENDIF    
 
 C----VIRTUAL THICKNESS OUTPUT  (For properties which are compatible with shell elements : /SHELL and /SH3N) 
-        IF( (IGTYP == 0).OR.
+          IF( (IGTYP == 0).OR.
      .      (IGTYP == 1).OR.(IGTYP == 9).OR.(IGTYP == 10).OR.
      .      (IGTYP == 11).OR.(IGTYP == 16).OR.(IGTYP == 17).OR.
      .      (IGTYP == 19).OR.(IGTYP == 51).OR.(IGTYP == 52)) THEN      
-          WRITE(IOUT,'(A,1PG20.13,2A)')'     VIRT. THICKN:       ',THK_PART(I)
-        ENDIF
+            WRITE(IOUT,'(A,1PG20.13,2A)')'     VIRT. THICKN:       ',THK_PART(I)
+          ENDIF
 C----VIRTUAL THICKNESS OUTPUT  (extended to /BEAM /TRUSS /SPRING) 
-        IF( THK_PART(I)>ZERO .AND. ((IGTYP == 3).OR.(IGTYP == 2).OR.
+          IF( THK_PART(I)>ZERO .AND. ((IGTYP == 3).OR.(IGTYP == 2).OR.
      .      (IGTYP == 18).OR.(IGTYP == 4).OR.(IGTYP == 8).OR.
      .      (IGTYP == 12).OR.(IGTYP == 13).OR.(IGTYP == 23).OR.
      .      (IGTYP == 25).OR.(IGTYP == 26).OR.(IGTYP == 27))) THEN      
-          WRITE(IOUT,'(A,1PG20.13,2A)')'     VIRT. THICKN:       ',THK_PART(I)
-        ENDIF
+            WRITE(IOUT,'(A,1PG20.13,2A)')'     VIRT. THICKN:       ',THK_PART(I)
+          ENDIF
 
 C----SPH SMOOTHING LENGTH OUTPUT ( /PROP/SPH (Type34) )   
-        IF (IGEO(11,IPID) == 34) THEN
-          DIAM =GET_U_GEO(6,IPID)
-          IF(DIAM == ZERO) THEN
-            MP  = GET_U_GEO(1,IPID)
-            VOL = MP/PM(1,IMID)
-            DIAM= (SQR2*VOL)**THIRD
-            WRITE(IOUT,'(A,1PG20.13,2A)')' SPH SMOOTHING LENGTH:   ',DIAM
+          IF (IGEO(11,IPID) == 34) THEN
+            DIAM =GET_U_GEO(6,IPID)
+            IF(DIAM == ZERO .AND. IMID > 0) THEN
+              MP  = GET_U_GEO(1,IPID)
+              VOL = MP/PM(1,IMID)
+              DIAM= (SQR2*VOL)**THIRD
+              WRITE(IOUT,'(A,1PG20.13,2A)')' SPH SMOOTHING LENGTH:   ',DIAM
+            ENDIF
+          ENDIF
+        ELSE 
+          IF(MID == 0) THEN
+            IMID=NUMMAT
+          ELSE
+            IMID = NINTRI(MID,IPM,NPROPMI,NUMMAT,1)
+            IF(IMID == 0) THEN
+              CALL ANCMSG(MSGID=179,
+     .                  MSGTYPE=MSGWARNING,
+     .                  ANMODE=ANINFO,
+     .                  I1=ID,
+     .                  C1=TITR,
+     .                  I2=MID)
+              IMID = NUMMAT  ! fallback safe default
+            ENDIF
           ENDIF
         ENDIF
 
@@ -467,9 +498,9 @@ C--------------------------------------------------
       IF (MULTI_FVM%IS_USED) THEN
          IMULTI_FVM = 1     
          IF (N2D == 0) THEN
-            ALLOCATE(MULTI_FVM%VEL(3, NUMELS), STAT=stat)
+            call my_alloc(MULTI_FVM%VEL, 3, NUMELS, "MULTI_FVM%VEL", stat=stat)
          ELSE
-            ALLOCATE(MULTI_FVM%VEL(3, NUMELQ + NUMELTG), STAT=stat)
+            call my_alloc(MULTI_FVM%VEL, 3, NUMELQ + NUMELTG, "MULTI_FVM%VEL", stat=stat)
          ENDIF
          IF(STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='MULTI_FVM%VEL')
          MULTI_FVM%VEL(: ,:) = ZERO
@@ -552,7 +583,6 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER PID,ID,I,IPID,UID,SUB_INDEX
       CHARACTER MESS*40
-      INTEGER  IFIX_TMP
       CHARACTER(LEN=NCHARTITLE)::TITR
       TYPE(SUBMODEL_DATA) LSUBMODEL(NSUBMOD)
       LOGICAL IS_AVAILABLE

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat79            ../starter/source/materials/mat/mat079/hm_read_mat79.F
 !||--- called by ------------------------------------------------------
@@ -82,7 +83,7 @@ C-----------------------------------------------
      .        SHEAR, AA, BB, MM, NN, CC, EPS0, SIGFMAX, TMAX, HEL, PHEL,
      .        D1, D2, K1, K2, K3, BETA, YOUNG, NU, RHO0, RHOR, ASRATE,
      .        EPSMAX
-      LOGICAL :: IS_ENCRYPTED, IS_AVAILABLE
+      LOGICAL :: IS_ENCRYPTED, IS_AVAILABLE, IS_STABLE
 C-----------------------------------------------
 C     S o u r c e 
 C-----------------------------------------------
@@ -196,8 +197,30 @@ C--------
      .               I1=MAT_ID,
      .               C1=TITR)
       ENDIF
-C
-      
+C----------------------------------------------------------------
+C     EOS COMPRESSION STABILITY
+C     The pressure tangent modulus dP/dmu = K1 + 2*K2*mu + 3*K3*mu**2
+C     must remain positive for any compression mu > 0 to keep a real
+C     sound speed. It can become non-positive if K3 < 0, if K3 = 0 with
+C     K2 < 0, or if K3 > 0 with K2 < 0 and K2**2 > 3*K1*K3.
+C----------------------------------------------------------------
+      IS_STABLE = .TRUE.
+      IF(K3 > ZERO)THEN
+        IF(K2 < ZERO .AND. K2*K2 > THREE*K1*K3) IS_STABLE = .FALSE.
+      ELSEIF(K3 == ZERO)THEN
+        IF(K2 < ZERO) IS_STABLE = .FALSE.
+      ELSE
+        IS_STABLE = .FALSE.
+      ENDIF
+      IF(.NOT. IS_STABLE)THEN
+         CALL ANCMSG(MSGID=3164,
+     .               MSGTYPE=MSGWARNING,
+     .               ANMODE=ANINFO,
+     .               I1=MAT_ID,
+     .               C1=TITR,
+     .               R1=K2,
+     .               R2=K3)
+      ENDIF  
 C           
       UPARAM(1) = SHEAR
       UPARAM(2) = TWO*SHEAR

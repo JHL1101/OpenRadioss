@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dfuncf             ../engine/source/output/anim/generate/dfuncf.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod       ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE DFUNCF(ELBUF_TAB ,FUNC  ,IFUNC  ,IPARG    ,GEO  ,
      .                  IXT       ,IXP   ,IXR    ,MASS     ,PM   ,
@@ -45,6 +47,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -75,17 +78,17 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 C     REAL
       my_real
-     .   EVAR(MVSIZ),
-     .   OFF, P, VONM2, VONM, S1, S2, S12, S3, VALUE,
+!     .   EVAR(MVSIZ),
+     .   OFF, VALUE,
      .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3, XM,     
      .   FOR, AREA, FEQ, EPLAS,DAMMX   
       INTEGER I, NG, NEL, NFT, ITY, LFT, NPT, 
-     .        IADD, N, J, LLT, MLW, NB1, NB2, NB3, NB4, NB5, 
-     .        NB6, NB7, NB8, NB9, NB10, NB11, NB12, NB13, NB14, NB15,
-     .        NB16, LLL,NUVAR,IGTYP,IFAIL,
-     .        ISTRAIN,NN, K1, K2,JTURB,MT,JALE, IMID, IALEL,IPID,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,NF,
-     .        OFFSET,K,INC,KK,IHBE,ISROT,ILAYER,IR,IS,JJ(6),IPT
+     .        N, J, LLT, MLW,
+!     .        NB6, NB7, NB8, NB9, NB10, NB11, NB12, NB13, NB14, NB15,
+     .        IGTYP,IFAIL,
+!     .        ISTRAIN,NN, K1, K2,JTURB,MT,JALE, IMID, IALEL,IPID,
+     .        NN1,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,
+     .        OFFSET,K,INC,KK,ILAYER,IR,IS,JJ(6),IPT
       INTEGER LPLA    ! Used for size of PL Buffer
       REAL R4
       REAL,DIMENSION(:),ALLOCATABLE:: WAL
@@ -93,7 +96,7 @@ C
       TYPE(G_BUFEL_) ,POINTER :: GBUF
       TYPE(L_BUFEL_),POINTER :: LBUF
 C-----------------------------------------------
-      CALL MY_ALLOC(WAL,NBF+NANIM1D_L)
+      call my_alloc(WAL, NBF+NANIM1D_L, "WAL")
 C
       NN1 = 1
       NN3 = 1
@@ -505,7 +508,7 @@ C + X-ELEMENTS
           CALL SPMD_R4GET_PARTN(1,NBF2,NBPART,IADG,WAL,BUF)
       ENDIF
  
-      DEALLOCATE(WAL)
+      call my_dealloc(WAL)
       RETURN
       END
 !||====================================================================
@@ -558,11 +561,11 @@ C-----------------------------------------------
 C     REAL
       my_real
      .   EVAR(MVSIZ),
-     .   OFF, P, VONM2, VONM, S1, S2, S12, S3, VALUE,
+     .   P, VONM2, VONM, S1, S2, S12, S3, VALUE,
      .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3,FOR,AREA
       INTEGER I, J, N, NG, NEL, MLW, NN1, 
-     .        INOD, ISOLNOD, IPRT, LIAD, NPTR, NPTS, NPTT, IPT,
-     .        IS, IR, IT, NPTG,NC(20,MVSIZ),NNOD,IHBE,MPT,JJ(6)
+     .        ISOLNOD,
+     .        NC(20,MVSIZ),NNOD,JJ(6)
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     
 C=======================================================================
       DO 900 NG=1,NGROUP
@@ -834,12 +837,12 @@ C     REAL
      .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3,FOR,AREA,
      .   XX1,XX2,XX3,YY1,YY2,YY3,ZZ1,ZZ2,ZZ3,THK0,AL0
       INTEGER I, NG, NEL, 
-     .        IADD, N, J,K, MLW,  
-     .        NN, MT, IMID, IALEL,IPID,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,NF,
-     .        OFFSET,INC,KK, IUS, NUVAR,
-     .        INOD, ISOLNOD, IPRT, LIAD, NPTR, NPTS, NPTT, IPT,
-     .        IS, IR, IT, NPTG,NC(20,MVSIZ),NNOD,IEXPAN,IHBE,MPT,
+     .        N, J, MLW,  
+!     .        NN, MT, IMID, IALEL,IPID,
+     .        NN1,
+     .        INC,
+     .        ISOLNOD,
+     .        NC(20,MVSIZ),NNOD,
      .        N1,N2,N3,N4,JJ(6)
  
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     

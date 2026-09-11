@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spclasv              ../engine/source/elements/sph/spclasv.F
 !||--- called by ------------------------------------------------------
@@ -225,6 +226,7 @@ C
            NVOIS  =KXSP(5,N)
            NVOISS1=KXSP(6,N)
            NVOISS =KXSP(7,N)
+           IF(NVOIS<=0) CYCLE
            INOD=KXSP(3,N)
            XI=X(1,INOD)
            YI=X(2,INOD)
@@ -239,18 +241,23 @@ C          we are necessarily closer to the real particle than to the phantom pa
              YJ=X(2,JNOD)
              ZJ=X(3,JNOD)
              DJ=SPBUF(1,M)
-           ELSE
+           ELSEIF(JNOD<0)THEN
              NN = -JNOD
              XJ=XSPHR(3,NN)
              YJ=XSPHR(4,NN)
              ZJ=XSPHR(5,NN)
              DJ=XSPHR(2,NN)
+           ELSE
+C            JNOD==0: corrupted neighbor entry, skip
+             CYCLE
            END IF
            DD  =(XI-XJ)*(XI-XJ)+(YI-YJ)*(YI-YJ)+(ZI-ZJ)*(ZI-ZJ)
            DMS =DI+DJ
            DMS2=DMS*DMS
-           DK=DD/DMS2
-           MYSPATRUE=MAX(ZERO,MIN(MYSPATRUE,DK-ONE))
+           IF(DMS2>ZERO) THEN
+             DK=DD/DMS2
+             MYSPATRUE=MAX(ZERO,MIN(MYSPATRUE,DK-ONE))
+           END IF
          END IF
 C
        END DO

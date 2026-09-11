@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stack_mod                      ../engine/share/modules/stack_mod.F
 !||--- called by ------------------------------------------------------
@@ -91,6 +92,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    imp_k_eig                      ../engine/stub/imp_k_eig.F
 !||    imp_solv                       ../engine/source/implicit/imp_solv.F
 !||    ini_tmax                       ../engine/source/output/ini_outmax.F
+!||    init_h3d_engine                ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    init_th                        ../engine/source/output/th/init_th.F
 !||    init_th0                       ../engine/source/output/th/init_th0.F
 !||    layini                         ../engine/source/elements/shell/coque/layini.F
@@ -146,6 +148,7 @@ c
 !||    arret             ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
 !||    message_mod       ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
         SUBROUTINE STACK_PLY_ALLOC(STACK,IPART_STACK,NPT_STACK,NS_STACK)
 C-----------------------------------------------
@@ -153,6 +156,7 @@ C   M o d u l e s
 C-----------------------------------------------
           USE MESSAGE_MOD
 C-----------------------------------------------------------------------
+      use my_alloc_mod
           IMPLICIT NONE
 C-----------------------------------------------
 C   m y _ r e a l
@@ -173,28 +177,30 @@ C-----------------------------------------------
           IF(IPART_STACK >0) THEN
 
                
-               ALLOCATE(STACK%IGEO(4*NPT_STACK+2,NS_STACK),STAT=IERR)
+               call my_alloc(STACK%IGEO, 4*NPT_STACK+2, NS_STACK, "STACK%IGEO", stat=IERR)
                IF(IERR/=0) THEN
                   CALL ANCMSG(MSGID=19,ANMODE=ANINFO,C1='(/PROP/STACK/...)')
                   CALL ARRET(2)
                ENDIF
                STACK%IGEO = 0
 
-               ALLOCATE(STACK%GEO(6*NPT_STACK+1,NS_STACK),STAT=IERR)
+               call my_alloc(STACK%GEO, 6*NPT_STACK+1, NS_STACK, "STACK%GEO", stat=IERR)
                IF(IERR/=0) THEN
                    CALL ANCMSG(MSGID=19,ANMODE=ANINFO,C1='(/PROP/STACK/...)')
                    CALL ARRET(2)
                ENDIF
                STACK%GEO = 0.0
 
-               ALLOCATE(STACK%PM(20,NS_STACK),STAT=IERR)
+               call my_alloc(STACK%PM, 20, NS_STACK, "STACK%PM", stat=IERR)
                IF(IERR/=0) THEN
                    CALL ANCMSG(MSGID=19,ANMODE=ANINFO,C1='(/PROP/STACK/...)')
                    CALL ARRET(2)
                ENDIF
                STACK%PM = 0.0
           ELSE
-               ALLOCATE(STACK%IGEO(0,0),STACK%GEO(0,0),STACK%PM(0,0))
+               call my_alloc(STACK%IGEO, 0, 0, "STACK%IGEO")
+               call my_alloc(STACK%GEO, 0, 0, "STACK%GEO")
+               call my_alloc(STACK%PM, 0, 0, "STACK%PM")
           ENDIF 
 
         END SUBROUTINE STACK_PLY_ALLOC

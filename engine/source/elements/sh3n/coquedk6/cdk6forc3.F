@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 cc
 !||====================================================================
 !||    cdk6forc3        ../engine/source/elements/sh3n/coquedk6/cdk6forc3.F
@@ -50,6 +51,8 @@ cc
 !||    failwave_mod     ../common_source/modules/failwave_mod.F
 !||    glob_therm_mod   ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    mat_elem_mod     ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod   ../common_source/modules/nlocal_reg_mod.F
 !||    sensor_mod       ../common_source/modules/sensor_mod.F90
 !||    stack_mod        ../engine/share/modules/stack_mod.F
@@ -101,6 +104,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -263,7 +268,7 @@ C
       ENDDO
       IF (NPT == 0) NPTTOT = NPT  !  compatibility with global integration
       NDDL = NPTTOT
-      ALLOCATE(VAR_REG(NEL,NDDL))
+      call my_alloc(VAR_REG, NEL, NDDL, "VAR_REG")
 c--------------------------------------------
 c     Front wave
 c--------------------------------------------
@@ -284,8 +289,8 @@ c-------------------------------------
       L_DIRB = ELBUF_STR%BUFLY(1)%LY_DIRB
       IGTYP = IGEO(11,IXTG(5,1))
       IF(IDRAPE > 0 .AND. (IGTYP == 51 .OR. IGTYP == 52)) THEN
-        ALLOCATE(DIRA(NPTTOT*NEL*L_DIRA))
-        ALLOCATE(DIRB(NPTTOT*NEL*L_DIRB))
+        call my_alloc(DIRA, NPTTOT*NEL*L_DIRA, "DIRA")
+        call my_alloc(DIRB, NPTTOT*NEL*L_DIRB, "DIRB")
         IF (L_DIRA == 0) THEN
             CONTINUE
         ELSEIF (IREP == 0) THEN
@@ -309,8 +314,8 @@ c-------------------------------------
       ELSE ! idrape
         SDIR_A=NLAY*NEL*L_DIRA
         SDIR_B=NLAY*NEL*L_DIRB
-        ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-        ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+        call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+        call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
         DIRA=ZERO
         DIRB=ZERO
         IF (L_DIRA == 0) THEN
@@ -544,6 +549,6 @@ c--------------------------------------------
         ENDDO
       ENDIF
 C-----------
-      IF (ALLOCATED(VAR_REG))  DEALLOCATE(VAR_REG)     
+      IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
       RETURN
       END

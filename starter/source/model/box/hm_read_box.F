@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_box            ../starter/source/model/box/hm_read_box.F
 !||--- called by ------------------------------------------------------
@@ -72,21 +73,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,II,J,UID,LEN,BOXID,IUNIT,FLAGUNIT,
+      INTEGER I,II,LEN,BOXID,
      .        IAD,NBOX,NBOX_RECT,NBOX_CYL,NBOX_SPHER,NBOX_BOX,NLIST
-      my_real :: BID
-      INTEGER :: IWORK(70000)
-      INTEGER INDEX(NBBOX*3),IX1(NBBOX),IX2(NBBOX)
       INTEGER, DIMENSION(:)   ,ALLOCATABLE :: BUFTMP,IBOXTMP
-      CHARACTER(LEN=NCHARKEY)    :: KEY,KEY2
       CHARACTER(nchartitle)  :: TITR,MESS
-      LOGICAL :: IS_AVAILABLE
 c
       DATA MESS/'BOX DEFINITION                          '/
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER LISTCNT,NBOXLST
+      INTEGER NBOXLST
 C-----------------------------------------------
 C     IBOX(I)%ID       : BOX IDENTIFIER
 C     IBOX(I)%TITLE    : BOX title
@@ -122,7 +118,7 @@ c
 c-----------------------------------------------
       IAD = 0
       LEN = 5*NBBOX
-      CALL MY_ALLOC(BUFTMP  ,LEN)
+      CALL MY_ALLOC(BUFTMP  ,LEN,"BUFTMP  ")
 c--------------------------------------------------
 c
       CALL READ_BOX_SPHER(
@@ -142,7 +138,7 @@ c
 c--------------------------------------------------
 c     Search for double IDs
 c
-      CALL MY_ALLOC (IBOXTMP  ,NBOX )
+      CALL MY_ALLOC(IBOXTMP  ,NBOX ,"IBOXTMP  ")
       IBOXTMP(1:NBOX) = IBOX(1:NBOX)%ID
       CALL UDOUBLE_IGR(IBOXTMP,NBOX,MESS,0,ZERO)
 c
@@ -169,8 +165,8 @@ c--------------------------------------------------
         ENDDO
       ENDIF      
 C-----------------------------
-      IF (ALLOCATED(IBOXTMP)) DEALLOCATE (IBOXTMP)
-      IF (ALLOCATED(BUFTMP) ) DEALLOCATE (BUFTMP )
+      IF (ALLOCATED(IBOXTMP)) CALL MY_DEALLOC(IBOXTMP)
+      IF (ALLOCATED(BUFTMP) ) CALL MY_DEALLOC(BUFTMP)
 c-----------
       RETURN
       END

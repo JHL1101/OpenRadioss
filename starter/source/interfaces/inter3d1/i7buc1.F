@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i7buc1                 ../starter/source/interfaces/inter3d1/i7buc1.F
 !||--- called by ------------------------------------------------------
@@ -89,21 +90,21 @@ C-----------------------------------------------
      .   GAP_S_L(*),GAP_M_L(*)
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
-      INTEGER, DIMENSION(MVSIZ), INTENT(IN) :: PROV_N,PROV_E,NSVG
-      INTEGER, DIMENSION(MVSIZ), INTENT(IN) :: IX1,IX2,IX3,IX4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: N11,N12,N13,PENE
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: X1,X2,X3,X4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: Y1,Y2,Y3,Y4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: Z1,Z2,Z3,Z4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: XI,YI,ZI
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: X0,Y0,Z0
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: NX1,NY1,NZ1
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: NX2,NY2,NZ2
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: NX3,NY3,NZ3
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: NX4,NY4,NZ4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: P1,P2,P3,P4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: LB1,LB2,LB3,LB4
-      my_real, DIMENSION(MVSIZ), INTENT(IN) :: LC1,LC2,LC3,LC4,STIF
+      INTEGER, DIMENSION(MVSIZ), INTENT(INOUT) :: PROV_N,PROV_E,NSVG
+      INTEGER, DIMENSION(MVSIZ), INTENT(INOUT) :: IX1,IX2,IX3,IX4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: N11,N12,N13,PENE
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: X1,X2,X3,X4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: Y1,Y2,Y3,Y4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: Z1,Z2,Z3,Z4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: XI,YI,ZI
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: X0,Y0,Z0
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: NX1,NY1,NZ1
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: NX2,NY2,NZ2
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: NX3,NY3,NZ3
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: NX4,NY4,NZ4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: P1,P2,P3,P4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: LB1,LB2,LB3,LB4
+      my_real, DIMENSION(MVSIZ), INTENT(INOUT) :: LC1,LC2,LC3,LC4,STIF
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fv_up_switch             ../engine/source/airbag/fv_up_switch.F
 !||--- called by ------------------------------------------------------
@@ -138,7 +139,7 @@ C-----------------------------------------------
       INTEGER I, II, IINJ, IEL, N1, N2, N3, JEL,
      .        NN1, NN2, NN3, J, JJ, K, KK, ISENS, IVEL,
      .        ITAGP(NPOLH), NV, ILVOUT, IPRI,
-     .        IVENT, IDEF, IPORP, 
+     .        IVENT, IDEF,
      .        ITVENT, PHDT, I1, I2, ICONT(NNT),IVDP,ITTF, IDPDEF,
      .        IDTPDEF,ITYPL,
      .        PREPARE_ANIM,IVENTYP
@@ -148,7 +149,7 @@ C-----------------------------------------------
      .        NODAREA(NNT), X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3,
      .        X12, Y12, Z12, X13, Y13, Z13, NRX, NRY, NRZ, AREA2,
      .        ELAREA(NELT), NORM(3,NELT), KSI, ETA, 
-     .        PNORM(3,NNTR), PVOLU(NPOLH), AREA, NX, NY,
+     .        PVOLU(NPOLH), AREA, NX, NY,
      .        NZ, GAMAI, CPAI, CPBI, CPCI, RMWI, TI,
      .        CPDI, CPEI, CPFI,
      .        RHOI, DATAINJ(6,NJET), SCALT,
@@ -187,7 +188,6 @@ C
      .          GET_U_FUNC
       EXTERNAL GET_U_FUNC
       CHARACTER*20 VENTTITLE
-      INTEGER :: NODE_ID(5), INODE
       MY_REAL :: TAB_PVOL(NELT), DOT_PROD
       MY_REAL :: MOMENTUM_FLUX_X(NELT), MOMENTUM_FLUX_Y(NELT), MOMENTUM_FLUX_Z(NELT),
      .     MASS_FLUX(NELT), ENERGY_FLUX(NELT),

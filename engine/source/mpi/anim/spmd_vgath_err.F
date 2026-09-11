@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,28 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_vgath_err        ../engine/source/mpi/anim/spmd_vgath_err.F
+!||    spmd_vgath_err       ../engine/source/mpi/anim/spmd_vgath_err.F
 !||--- called by ------------------------------------------------------
-!||    sortie_error          ../engine/source/output/sortie_error.F
+!||    sortie_error         ../engine/source/output/sortie_error.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_outpitab         ../engine/source/mpi/interfaces/spmd_outp.F
+!||    spmd_get_count_int   ../engine/source/mpi/generic/spmd_get_count.F90
+!||    spmd_outpitab        ../engine/source/mpi/interfaces/spmd_outp.F
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
        SUBROUTINE SPMD_VGATH_ERR(X,MS,MSINI,NODGLOB,WEIGHT,NUM,IFLAG,
      .                           ITAB,LENG)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -61,7 +63,7 @@ C-----------------------------------------------
      .       , DIMENSION(:), ALLOCATABLE :: V, MAXV, MAXV_1, MAXV_2, MAXV_RES0,
      .                                      MAXV_RES1, MAXV_RES2
 
-      INTEGER STATUS(MPI_STATUS_SIZE),IERROR,MSGOFF,FLAG,ITABG(LENG)
+      INTEGER STATUS(MPI_STATUS_SIZE),MSGOFF,FLAG,ITABG(LENG)
       INTEGER SIZ,MSGTYP,I,J,K,MSGOFF2,
      .        L,ISMASSCHANGE,MSGOFF3,MSGOFF4
       INTEGER, DIMENSION(:) , ALLOCATABLE :: IDNOD0, IDNOD, IDNOD_RES
@@ -133,20 +135,16 @@ C   In the floating buffer because there are only 2 24 bits available ~ 16 milli
 C   of nodes at most
 
          MSGTYP = MSGOFF
-         CALL MPI_SEND(IDNOD0,SIZ,MPI_INTEGER,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL spmd_send(IDNOD0(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
 
          MSGTYP = MSGOFF2
-         CALL MPI_SEND(MAXV0,SIZ,MPI_REAL,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL spmd_send(MAXV0(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
 
          MSGTYP = MSGOFF3
-         CALL MPI_SEND(MAXV1,SIZ,MPI_REAL,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL spmd_send(MAXV1(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
 
          MSGTYP = MSGOFF4 
-         CALL MPI_SEND(MAXV2,SIZ,MPI_REAL,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL spmd_send(MAXV2(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
 
        ELSE ! ISPMD == 0
           DO I=1,NUMNOD
@@ -176,26 +174,21 @@ C   of nodes at most
 C   Reception 
             MSGTYP = MSGOFF
 
-            CALL MPI_PROBE(IT_SPMD(I),MSGTYP,
-     .                    SPMD_COMM_WORLD,STATUS,ierror)
-              CALL MPI_GET_COUNT(STATUS,MPI_INTEGER,SIZ,ierror)
+            CALL spmd_probe(IT_SPMD(I),MSGTYP,STATUS)
+              CALL spmd_get_count_int(STATUS,SIZ)
 
-            CALL MPI_RECV(IDNOD0,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL spmd_recv(IDNOD0(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
 
 C   Reception
 
             MSGTYP = MSGOFF2 
-            CALL MPI_RECV(MAXV0,SIZ,MPI_REAL,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL spmd_recv(MAXV0(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
 
             MSGTYP = MSGOFF3
-            CALL MPI_RECV(MAXV1,SIZ,MPI_REAL,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL spmd_recv(MAXV1(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
 
             MSGTYP = MSGOFF4 
-            CALL MPI_RECV(MAXV2,SIZ,MPI_REAL,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL spmd_recv(MAXV2(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
 
 
             J = 1

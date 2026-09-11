@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i21dst3         ../starter/source/interfaces/inter3d1/i21dst3.F
 !||--- called by ------------------------------------------------------
@@ -83,10 +84,7 @@ C-----------------------------------------------
      .     YI1(MVSIZ),  YI2(MVSIZ),
      .     ZI1(MVSIZ),  ZI2(MVSIZ)
       my_real
-     .     S2,D1,D2,D3,D4,
-     .     X12,X23,X34,X41,XI0,
-     .     Y12,Y23,Y34,Y41,YI0,
-     .     Z12,Z23,Z34,Z41,ZI0,
+     .     S2,
      .     XN1(MVSIZ),YN1(MVSIZ),ZN1(MVSIZ),
      .     XN2(MVSIZ),YN2(MVSIZ),ZN2(MVSIZ),
      .     XN3(MVSIZ),YN3(MVSIZ),ZN3(MVSIZ),
@@ -95,7 +93,6 @@ C-----------------------------------------------
      .     SY1(MVSIZ),SY2(MVSIZ),
      .     SZ1(MVSIZ),SZ2(MVSIZ),
      .     XI0V(MVSIZ),  YI0V(MVSIZ),  ZI0V(MVSIZ),
-     .     XH(MVSIZ),  YH(MVSIZ),  ZH(MVSIZ),
      .     NX(MVSIZ),  NY(MVSIZ),  NZ(MVSIZ),
      .     GAP2(MVSIZ), NN, 
      .     X0H(MVSIZ), Y0H(MVSIZ), Z0H(MVSIZ),
@@ -107,7 +104,7 @@ C-----------------------------------------------
      .     SIDE, CRIT, CRITO, LBO, LCO, LB, LC, LA, SL,
      .     LAMBDA, XP, YP, ZP, DIST, DEPTH2, DRAD2,GAPP
       my_real
-     .     CMAJ(MVSIZ), CSTS_L(2,MVSIZ)
+     .     CSTS_L(2,MVSIZ)
 C--------------------------------------------------------
       IF(IGAP==0)THEN
         DO I=1,JLT

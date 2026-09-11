@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_rbe3               ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
 !||--- called by ------------------------------------------------------
@@ -99,7 +100,7 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:),ALLOCATABLE   :: ISKEW0
       my_real, DIMENSION(:,:),ALLOCATABLE :: WI
       CHARACTER(LEN=NCHARTITLE) ::  TITR
-      CHARACTER(LEN=NCHARFIELD) :: STRING
+
       CHARACTER :: MESS*40
       LOGICAL IS_AVAILABLE
 C-----------------------------------------------
@@ -125,9 +126,9 @@ C=======================================================================
 ! 2) incompatibility kin
 ! 3) avoid too much added mass : 2 conditions 1)Is>0 2)rR>?
 ! rbe3_mod is used from engine, ini is done in resol_init,internal arrays of pen are added in restart 
-      CALL MY_ALLOC(IKINE1,3*NUMNOD)
-      CALL MY_ALLOC(ISKEW0,SLRBE3/2)
-      CALL MY_ALLOC(WI,6,NUMNOD)
+      CALL MY_ALLOC(IKINE1,3*NUMNOD,"IKINE1")
+      CALL MY_ALLOC(ISKEW0,SLRBE3/2,"ISKEW0")
+      CALL MY_ALLOC(WI,6,NUMNOD,"WI")
 c
       WRITE(IOUT,1000)
 CC
@@ -343,9 +344,9 @@ c        WRITE(IOUT,1103)
       ENDDO
       IF (NSPMD==1) LXINTD = 0
 C
-      DEALLOCATE(IKINE1)
-      DEALLOCATE(ISKEW0)
-      DEALLOCATE(WI)
+      CALL MY_DEALLOC(IKINE1)
+      CALL MY_DEALLOC(ISKEW0)
+      CALL MY_DEALLOC(WI)
       RETURN
 C
  1000 FORMAT(//
@@ -421,8 +422,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, NM, NMT,M,IROT,IMO,ICR,
-     .        J, P,IAD,NS,IADS,IERR1,IC,ICT
+      INTEGER I, NM, NMT,M,IROT,IMO,
+     .        J, P,IAD,NS,IADS,IERR1
       INTEGER ID,IPEN
       CHARACTER(LEN=NCHARTITLE)::TITR
 C
@@ -598,7 +599,7 @@ C     REAL
      *                 TMUFX(3), TMUFY(3), TMUFZ(3),
      *                 TFUMX(3), TFUMY(3), TFUMZ(3),
      *                 TMUMX(3), TMUMY(3), TMUMZ(3),
-     *                 A(6,6), C(6,6), T(3,3),SMIN,SMAX,MMAX,TMAX,
+     *                 A(6,6), C(6,6), SMIN,SMAX,MMAX,TMAX,
      *                 XBAR(3),RN(3),GAMMA(9),WI(NG),GAMMA_MAX,RNDOTRN,DET,ARM
 C
 C     INITIALIZATION
@@ -1355,14 +1356,15 @@ C
       RETURN
       END
 !||====================================================================
-!||    invert                        ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
+!||    invert                               ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
 !||--- called by ------------------------------------------------------
-!||    damping_range_compute_param   ../starter/source/general_controls/damping/damping_range_compute_param.F90
-!||    law87_upd                     ../starter/source/materials/mat/mat087/law87_upd.F90
-!||    mass_fluid_qd                 ../starter/source/fluid/mass-fluid_qd.F
-!||    mass_fluid_tg                 ../starter/source/fluid/mass-fluid_tg.F
-!||    rbe3chk                       ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
-!||    rbe3cl                        ../starter/source/constraints/general/kinchk.F
+!||    damping_range_compute_param          ../starter/source/general_controls/damping/damping_range_compute_param.F90
+!||    hm_read_yield_criterion_barlat2000   ../starter/source/materials/mat/mat131/yield_criterion/hm_read_yield_criterion_barlat2000.F90
+!||    law87_upd                            ../starter/source/materials/mat/mat087/law87_upd.F90
+!||    mass_fluid_qd                        ../starter/source/fluid/mass-fluid_qd.F
+!||    mass_fluid_tg                        ../starter/source/fluid/mass-fluid_tg.F
+!||    rbe3chk                              ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
+!||    rbe3cl                               ../starter/source/constraints/general/kinchk.F
 !||====================================================================
        SUBROUTINE INVERT(MATRIX, INVERSE, N, ERRORFLAG)
 C-----------------------------------------------
@@ -1626,7 +1628,7 @@ C
       my_real FCOPY(SLRBE3*3)
 C========================================================================|
 C-----only one level of hierarchy is allowed
-      CALL MY_ALLOC(ITAG,NUMNOD)
+      CALL MY_ALLOC(ITAG,NUMNOD,"ITAG")
       ITAG(1:NUMNOD)=0
       DO I=1,NRBE3
        NS = IRBE3(3,I)
@@ -1797,8 +1799,7 @@ C----- re-ordering
         ENDDO
       END IF
 C
-      DEALLOCATE(ITAG)
+      CALL MY_DEALLOC(ITAG)
       RETURN
       END SUBROUTINE HIREORBE3
 C========================================================================|
-

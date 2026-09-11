@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    spmd_int18_law151_pon   ../engine/source/mpi/forces/spmd_int18_law151_pon.F
@@ -32,7 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod           ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod             ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod           ../common_source/modules/ale/multi_fvm_mod.F90
-!||    spmd_comm_world_mod     ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod                ../engine/source/mpi/spmd_mod.F90
 !||    tri7box                 ../engine/share/modules/tri7box.F
 !||====================================================================
         SUBROUTINE SPMD_INT18_LAW151_PON(     
@@ -66,7 +67,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -98,7 +99,6 @@ C-----------------------------------------------
         INTEGER :: NIN,NTY,NB_INT18
         INTEGER :: IERROR,IALLOCS, IALLOCR
         INTEGER :: MSGTYP,MSGOFF
-        INTEGER, DIMENSION(MPI_STATUS_SIZE) :: STATUS
         INTEGER, DIMENSION(NINTER) :: DEBUT,DEBUTE
         INTEGER, DIMENSION(PARASIZ) :: REQ_SI,REQ_RI
         INTEGER, DIMENSION(PARASIZ+1) :: ADDS,ADDR
@@ -168,8 +168,8 @@ C   In addition test to know if global compartment required between the 2 procs
                     SIZ = L+1-ADD
                     IF(SIZ>0)THEN
                         MSGTYP = MSGOFF
-                        CALL MPI_IRECV( BBUFR(ADD),SIZ,MPI_DOUBLE_PRECISION,
-     .                                  IT_SPMD(P),MSGTYP,SPMD_COMM_WORLD,REQ_RI(P),IERROR )
+                        CALL SPMD_IRECV( BBUFR(ADD:ADD+SIZ-1),SIZ,
+     .                                   IT_SPMD(P),MSGTYP,REQ_RI(P) )
                     ENDIF
                 ENDIF
             ENDDO
@@ -219,8 +219,8 @@ C
                     SIZ = L+1-ADD
                     IF(SIZ>0)THEN
                         MSGTYP = MSGOFF
-                        CALL MPI_ISEND( BBUFS(ADD),SIZ,MPI_DOUBLE_PRECISION,IT_SPMD(P),
-     .                                 MSGTYP,SPMD_COMM_WORLD,REQ_SI(P),IERROR )
+                        CALL SPMD_ISEND( BBUFS(ADD:ADD+SIZ-1),SIZ,IT_SPMD(P),
+     .                                  MSGTYP,REQ_SI(P) )
                     ENDIF ! siz > 0
                 ENDIF ! p /= proc
             ENDDO ! p=1,nspmd
@@ -234,7 +234,7 @@ C Attente IRECV
 C
             DO P = 1, NSPMD
                 IF(ADDR(P+1)-ADDR(P)>0) THEN
-                    CALL MPI_WAIT(REQ_RI(P),STATUS,IERROR)
+                    CALL SPMD_WAIT(REQ_RI(P))
                     L = ADDR(P)
                     DO II=1,MULTI_FVM%NUMBER_INT18
                         NIN = MULTI_FVM%INT18_LIST(II)
@@ -268,7 +268,7 @@ C Attente ISEND
 C
             DO P = 1, NSPMD
                 IF(ADDS(P+1)-ADDS(P)>0) THEN
-                    CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+                    CALL SPMD_WAIT(REQ_SI(P))
                 ENDIF
             ENDDO
 C Deallocation S

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_sensor_user       ../starter/source/tools/sensor/read_sensor_user.F
 !||--- called by ------------------------------------------------------
@@ -53,6 +54,7 @@ C-----------------------------------------------
       USE FORMAT_MOD ,ONLY :  FMT_F
       USE READER_OLD_MOD , ONLY : KEY0, KCUR, KLINE, LINE
       USE USER_INTERFACE_MOD,only : KSENS_CUR
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -147,15 +149,15 @@ C--------------------
           SENSOR_PTR%NPARI  = 0
           SENSOR_PTR%NPARR  = 0
           SENSOR_PTR%NVAR  = 0
-          ALLOCATE(SENSOR_PTR%IPARAM(SENSOR_PTR%NPARI))
-          ALLOCATE(SENSOR_PTR%RPARAM(SENSOR_PTR%NPARR))
-          ALLOCATE(SENSOR_PTR%VAR(SENSOR_PTR%NVAR))
+          call my_alloc(SENSOR_PTR%IPARAM, SENSOR_PTR%NPARI, "SENSOR_PTR%IPARAM")
+          call my_alloc(SENSOR_PTR%RPARAM, SENSOR_PTR%NPARR, "SENSOR_PTR%RPARAM")
+          call my_alloc(SENSOR_PTR%VAR, SENSOR_PTR%NVAR, "SENSOR_PTR%VAR")
           ! User Sensor Buffer
-          ALLOCATE(SENSOR_PTR%INTEGER_USERBUF(ISENBUF))
-          ALLOCATE(SENSOR_PTR%FLOAT_USERBUF(LSENBUF))
+          call my_alloc(SENSOR_PTR%INTEGER_USERBUF, ISENBUF, "SENSOR_PTR%INTEGER_USERBUF")
+          call my_alloc(SENSOR_PTR%FLOAT_USERBUF, LSENBUF, "SENSOR_PTR%FLOAT_USERBUF")
 
-          ALLOCATE(SENSOR_PTR%INTEGER_USERPARAM(NSENPARI))
-          ALLOCATE(SENSOR_PTR%FLOAT_USERPARAM(NSENPARR))
+          call my_alloc(SENSOR_PTR%INTEGER_USERPARAM, NSENPARI, "SENSOR_PTR%INTEGER_USERPARAM")
+          call my_alloc(SENSOR_PTR%FLOAT_USERPARAM, NSENPARR, "SENSOR_PTR%FLOAT_USERPARAM")
 
           ! Initialize to Zero
           SENSOR_PTR%INTEGER_USERBUF(1:ISENBUF)=0

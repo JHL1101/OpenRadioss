@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    pblast_3                       ../engine/source/loads/pblast/pblast_3.F
 !||--- called by ------------------------------------------------------
@@ -382,11 +383,11 @@ C-----------------------------------------------
               write(iout,*)                'Warning : /LOAD/PBLAST id=',ID,' NEGATIVE ANGLE,',ANGLE_g
               write(istdo,*)               'Warning : /LOAD/PBLAST id=',ID,' NEGATIVE ANGLE,',ANGLE_g
               if(n4 == 0 .or. n3 == n4)then
-                write(iout,FMT= '(A,3I11)')'           FACE:',itab((/n1,n2,n3/)),' SEEMS TO BE BELOW THE GROUND'
-                write(istdo,FMT='(A,3I11)')'           FACE:',itab((/n1,n2,n3/)),' SEEMS TO BE BELOW THE GROUND'
+                write(iout,FMT= '(A,3I11)')'           FACE:',itab(n1),itab(n2),itab(n3),' SEEMS TO BE BELOW THE GROUND'
+                write(istdo,FMT='(A,3I11)')'           FACE:',itab(n1),itab(n2),itab(n3),' SEEMS TO BE BELOW THE GROUND'
               else
-                write(iout,FMT= '(A,4I11)')'           FACE:',itab((/n1,n2,n3,n4/)),' SEEMS TO BE BELOW THE GROUND'
-                write(istdo,FMT='(A,4I11)')'           FACE:',itab((/n1,n2,n3,n4/)),' SEEMS TO BE BELOW THE GROUND'
+                write(iout,FMT= '(A,4I11)')'           FACE:',itab(n1),itab(n2),itab(n3),itab(n4),' SEEMS TO BE BELOW THE GROUND'
+                write(istdo,FMT='(A,4I11)')'           FACE:',itab(n1),itab(n2),itab(n3),itab(n4),' SEEMS TO BE BELOW THE GROUND'
               endif
               ANGLE_g = ZERO
               PBLAST%PBLAST_TAB(IL)%TAGMSG(I) = 1
@@ -394,11 +395,11 @@ C-----------------------------------------------
               write(iout, FMT='(A,I0,A,E10.4)')'Warning : /LOAD/PBLAST id=',ID,' ANGLE IS OVER THE UPPER BOUND,',ANGLE_g
               write(istdo,FMT='(A,I0,A,E10.4)')'Warning : /LOAD/PBLAST id=',ID,' ANGLE IS OVER THE UPPER BOUND,',ANGLE_g
               if(n4 == 0 .or. n3 == n4)then
-                write(iout, FMT='(A,3I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab((/n1,n2,n3/))
-                write(istdo,FMT='(A,3I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab((/n1,n2,n3/))
+                write(iout, FMT='(A,3I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab(n1),itab(n2),itab(n3)
+                write(istdo,FMT='(A,3I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab(n1),itab(n2),itab(n3)
               else
-                write(iout, FMT='(A,4I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab((/n1,n2,n3,n4/))
-                write(istdo,FMT='(A,4I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab((/n1,n2,n3,n4/))
+                write(iout, FMT='(A,4I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab(n1),itab(n2),itab(n3),itab(n4)
+                write(istdo,FMT='(A,4I11)')    '          ANGLE SET TO 85.00 FOR FACE:',itab(n1),itab(n2),itab(n3),itab(n4)
               endif
 
               ANGLE_g = 85.00000

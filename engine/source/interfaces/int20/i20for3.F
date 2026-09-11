@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i20for3           ../engine/source/interfaces/int20/i20for3.F
 !||--- called by ------------------------------------------------------
@@ -109,12 +110,12 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT
       INTEGER NELTST,ITYPTST,JLT,IBCC,IBCM,IBCS,IVIS2,INACTI,IBAG,NIN,
-     .        NTY ,NLN,NLG(NLN),NSV(*),
+     .        NLN,NLG(NLN),NSV(*),
      .        ICODT(*), ITAB(*), ISKY(*), KINET(*),
      .        MFROT, IFQ, NOINT,NEWFRONT,ISECIN, NSTRF(*),
      .        IFPEN(*) ,ICONTACT(*), CAND_N(*),
      .        KINI(*),
-     .        ISET, NISKYFI,IADM,INTTH,IFORM, IGAP,JTASK
+     .        NISKYFI,IADM,INTTH,IFORM, IGAP,JTASK
       INTEGER IX1L(MVSIZ), IX2L(MVSIZ), IX3L(MVSIZ), IX4L(MVSIZ),
      .        CN_LOC(MVSIZ),CE_LOC(MVSIZ),INDEX(MVSIZ),NSVG(MVSIZ),
      .        NISUB, LISUB(*), ADDSUBS(*), ADDSUBM(*), LISUBS(*),
@@ -135,7 +136,7 @@ C-----------------------------------------------
      .     LC1(MVSIZ), LC2(MVSIZ), LC3(MVSIZ), LC4(MVSIZ),
      .     P1(MVSIZ), P2(MVSIZ), P3(MVSIZ), P4(MVSIZ), STIF(MVSIZ),
      .     GAPV(MVSIZ),GAPR(MVSIZ),SECFCUM(7,NUMNOD,NSECT),
-     .     TMP(MVSIZ),STIFSAV(MVSIZ), VISCN(*),
+     .     VISCN(*),
      .     VXI(MVSIZ),VYI(MVSIZ),VZI(MVSIZ),MSI(MVSIZ),
      .     X1(MVSIZ),Y1(MVSIZ),Z1(MVSIZ),
      .     X2(MVSIZ),Y2(MVSIZ),Z2(MVSIZ),
@@ -157,7 +158,6 @@ C-----------------------------------------------
      .        JSUB,KSUB,JJ,KK,IN,NSUB,ISIGN,IPROJ,IBID
       INTEGER IX1G(MVSIZ), IX2G(MVSIZ), IX3G(MVSIZ), IX4G(MVSIZ)
       my_real
-     .   FXR(MVSIZ), FYR(MVSIZ), FZR(MVSIZ),
      .   FXI(MVSIZ), FYI(MVSIZ), FZI(MVSIZ), FNI(MVSIZ),
      .   FXT(MVSIZ),FYT(MVSIZ),FZT(MVSIZ),
      .   FX1(MVSIZ), FX2(MVSIZ), FX3(MVSIZ), FX4(MVSIZ),
@@ -171,22 +171,19 @@ C-----------------------------------------------
      .   KT(MVSIZ),C(MVSIZ),CF(MVSIZ),
      .   KS(MVSIZ),K1(MVSIZ),K2(MVSIZ),K3(MVSIZ),K4(MVSIZ),
      .   CS(MVSIZ),C1(MVSIZ),C2(MVSIZ),C3(MVSIZ),C4(MVSIZ),
-     .   P1S(MVSIZ),P2S(MVSIZ),P3S(MVSIZ),P4S(MVSIZ),
      .   PHI1(MVSIZ),PHI2(MVSIZ),PHI3(MVSIZ),PHI4(MVSIZ),
      .   FSAVSUB1(15,NISUB),MASM(MVSIZ)
       my_real
-     .   VNX, VNY, VNZ, AA, CRIT,S2,DIST,RDIST,
+     .   VNX, VNY, VNZ, AA, S2,DIST,RDIST,
      .   V2, FM2, DT1INV, VISCA, FAC,FF,ALPHI,ALPHA,BETA,
-     .   FX, FY, FZ, F2, MAS2, M2SK, DTMI0,DTI,FT,FN,FMAX,FTN,
+     .   FX, FY, FZ, F2, MAS2, DTMI0,DTI,FT,FN,FTN,
      .   FACM1, ECONTT, ECONVT, H0, LA1, LA2, LA3, LA4,
-     .   D1,D2,D3,D4,A1,A2,A3,A4,E10, H0D, S2D, SUM,
-     .   FSAV1, FSAV2, FSAV3, FSAV4, FSAV5, FSAV6, FSAV7, FSAV8,
+     .   D1,D2,D3,D4,A1,A2,A3,A4,
+     .   FSAV1, FSAV2, FSAV3, FSAV4, FSAV5, FSAV6, FSAV8,
      .   FSAV9, FSAV10, FSAV11, FSAV12, FSAV13, FSAV14, FSAV15, FFO,
-     .   LA1D,LA2D,LA3D,LA4D,T1,T1D,T2,T2D,FFD,VISD,FACD,D1D,
-     .   D2D,D3D,D4D,VNXD,VNYD,VNZD,V2D,FM2D,F2D,AAD,FXD,FYD,FZD,
-     .   A1D,A2D,A3D,A4D,VV,AX1,AX2,AY1,AY2,AZ1,AZ2,AX,AY,AZ,
-     .   AREA,P,VV1,VV2,V21,DMU, DTI2,H00 ,A0X,A0Y,A0Z,RX,RY,RZ,
-     .   ANX,ANY,ANZ,AAN,AAX,AAY,AAZ ,RR,RS,AAA,STFR,VISR,
+     .   VV,AX1,AX2,AY1,AY2,AZ1,AZ2,AX,AY,AZ,
+     .   AREA,P,VV1,VV2,DMU, DTI2,H00 ,A0X,A0Y,A0Z,RX,RY,RZ,
+     .   ANX,ANY,ANZ,AAN,AAX,AAY,AAZ ,RR,RS,AAA,
      .   PREC,PS,XSA,PIS,PPLUS,CX,CY,CFI,AUX,TM,TS,IMPX,IMPY,IMPZ,BB,
      .   NN1,NN2,NN3,NN4,XN1,YN1,ZN1,XN2,YN2,ZN2,XN3,YN3,ZN3,XN4,YN4,
      .   ZN4,DTMINI,BID
@@ -2300,8 +2297,6 @@ C-----------------------------------------------
       my_real
      .   DDX,STFR,VISR,UNSDT2,FX,FY,FZ,ECONTT, ECONVT,
      .   FXR(NLN), FYR(NLN), FZR(NLN),DX(NLN),DY(NLN),DZ(NLN)
-      DOUBLE PRECISION
-     .   FX6(6,NLN), FY6(6,NLN), FZ6(6,NLN)
 
 C-----------------------------------------------
 
@@ -2471,8 +2466,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J1, J , K0,NBINTER,K1S,K, NI, IL, IG
-      INTEGER NISKYL,NISKYL1,ISIGN
+      INTEGER I, J , K0,NBINTER,K1S,K, NI, IL
+      INTEGER ISIGN
       my_real
      .   VX(MVSIZ), VY(MVSIZ), VZ(MVSIZ), VN(MVSIZ),
      .   FXI(MVSIZ), FYI(MVSIZ), FZI(MVSIZ), FNI(MVSIZ),
@@ -3584,7 +3579,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J1, NISKYL1, NISKYL,IGP,IGM, NISKYFIEL
+      INTEGER I, NISKYL1, NISKYL,IGP,IGM, NISKYFIEL
 C
       NISKYL1 = 0
       DO I = 1, JLT
@@ -3727,7 +3722,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J1, NISKYL1, NISKYL,IGP,IGM, NISKYFIEL
+      INTEGER I, NISKYL1, NISKYL,IGP,IGM, NISKYFIEL
 C
       NISKYL1 = 0
       DO I = 1, JLT

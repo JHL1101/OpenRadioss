@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stifint_icontrol_mod   ../starter/source/interfaces/interf1/stifint_icontrol.F90
 !||--- called by ------------------------------------------------------
@@ -27,16 +28,17 @@
 !||====================================================================
       module stifint_icontrol_mod
 
-      implicit none
+        implicit none
 
       contains
 !=======================================================================================================================
-!!\brief This subroutine do the initialization of stiffness contact interface for solid distortion control
+!!\brief This subroutine performs the initialization of stiffness contact interface for solid distortion control
 !=======================================================================================================================
 !||====================================================================
 !||    stifint_icontrol   ../starter/source/interfaces/interf1/stifint_icontrol.F90
 !||--- called by ------------------------------------------------------
 !||    lectur             ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine stifint_icontrol(                                           &
@@ -51,6 +53,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           use constant_mod,             only: zero,em20,one
           use intbufdef_mod
+          use MY_ALLOC_MOD,             only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
           use precision_mod, only : WP
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
@@ -61,14 +65,14 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: numnod           !< number node
-          integer, intent (in   )                          :: npari            !< 1er dim of ipari
+          integer, intent (in   )                          :: npari            !< first dimension of ipari
           integer, intent (in   )                          :: ninter           !< number interface
-          integer, intent (in   )                          :: npropgi          !< 1er dim of igeo
+          integer, intent (in   )                          :: npropgi          !< first dimension of igeo
           integer, intent (in   )                          :: numgeo           !< number of prop
-          integer, intent (in   )                          :: npropm           !< 1er dim of pm
+          integer, intent (in   )                          :: npropm           !< first dimension of pm
           integer, intent (in   )                          :: nummat           !< number of materials
           integer, intent (in   )                          :: numels           !< number solid element
-          integer, intent (in   )                          :: nixs             !< 1er dim of ixs
+          integer, intent (in   )                          :: nixs             !< first dimension of ixs
           integer, intent (in   )                          :: numels8          !< number solid (n<=8) element
           integer, intent (in   )                          :: numels10         !< number tet10 element
           integer, intent (in   )                          :: numels16         !< number s16 element
@@ -93,7 +97,7 @@
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
           sfac_max = one
-          allocate(itag(numnod))
+          call my_alloc(itag,numnod,"itag")
           sfac = -HUGE(sfac)
           itag = 0
           do i = 1, numels8
@@ -199,7 +203,7 @@
             end if
           end do
 !
-          deallocate(itag)
+          call my_dealloc(itag)
 !
         end subroutine stifint_icontrol
 !

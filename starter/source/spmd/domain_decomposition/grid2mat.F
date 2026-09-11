@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dometis                         ../starter/source/spmd/domain_decomposition/grid2mat.F
 !||--- called by ------------------------------------------------------
@@ -45,6 +46,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    cluster_mod                     ../starter/share/modules1/cluster_mod.F
 !||    consider_edge_mod               ../starter/source/spmd/domain_decomposition/consider_edge.F
+!||    elm_group_mod                   ../starter/source/modules/elm_group_mod.F90
 !||    format_mod                      ../starter/share/modules1/format_mod.F90
 !||    front_mod                       ../starter/share/modules1/front_mod.F
 !||    get_metis_arguments_mod         ../starter/source/spmd/domain_decomposition/get_metis_arguments.F90
@@ -75,7 +77,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      6  POIN_PART_SHELL,POIN_PART_TRI,POIN_PART_SOL,
      7  MID_PID_SHELL,MID_PID_TRI,MID_PID_SOL,T_MONVOL,
      8  EBCS_TAG_CELL_SPMD,NPBY,LPBY,MAT_PARAM,
-     9  iworksh)
+     9  iworksh,elm_group)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -95,9 +97,12 @@ C-----------------------------------------------
       USE FORMAT_MOD , ONLY : FMW_A_I
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
       use get_metis_arguments_mod
+      use elm_group_mod , only : elm_group_      
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -144,10 +149,10 @@ C-----------------------------------------------
       INTEGER, DIMENSION(NUMMAT) :: POIN_UMP
       INTEGER, DIMENSION(7,TAILLE) :: TAB_UMP
       my_real, DIMENSION(TAILLE_OLD) :: CPUTIME_MP_OLD
-      INTEGER, DIMENSION(2,NPART), INTENT(IN) :: POIN_PART_SHELL,POIN_PART_TRI
-      INTEGER, DIMENSION(2,NPART,7), INTENT(IN) :: POIN_PART_SOL
-      TYPE(MID_PID_TYPE), DIMENSION(NUMMAT), INTENT(IN) :: MID_PID_SHELL,MID_PID_TRI
-      TYPE(MID_PID_TYPE), DIMENSION(NUMMAT,7), INTENT(IN) :: MID_PID_SOL
+      INTEGER, DIMENSION(2,NPART), INTENT(INOUT) :: POIN_PART_SHELL,POIN_PART_TRI 
+      INTEGER, DIMENSION(2,NPART,7), INTENT(INOUT) :: POIN_PART_SOL
+      TYPE(MID_PID_TYPE), DIMENSION(NUMMAT), INTENT(INOUT) :: MID_PID_SHELL,MID_PID_TRI ! initwg_shell
+      TYPE(MID_PID_TYPE), DIMENSION(NUMMAT,7), INTENT(INOUT) :: MID_PID_SOL
       TYPE (SURF_)   , DIMENSION(NSURF)   :: IGRSURF
       TYPE(MONVOL_STRUCT_), DIMENSION(NVOLU), INTENT(IN) :: T_MONVOL
       INTEGER,INTENT(IN) :: EBCS_TAG_CELL_SPMD(NUMELQ+NUMELTG+NUMELS)
@@ -156,30 +161,29 @@ C-----------------------------------------------
       TYPE(INTER_CAND_), INTENT(in) :: INTER_CAND
       TYPE(MATPARAM_STRUCT_) ,DIMENSION(NUMMAT), INTENT(IN) :: MAT_PARAM
       integer, dimension(3,numelc+numeltg), intent(in) :: iworksh !< ply data for shell & shell3n elements
+      type(elm_group_), intent(in) :: elm_group !< element group data structure to store the group id and the number of element in the group for each element  
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NCRITMAX
       PARAMETER (NCRITMAX = 20)
-      INTEGER NSEG, I, J, UTIL, K, NUSE, ELEMD_OLD,
+      INTEGER I, J, K, ELEMD_OLD,
      .        LCNE,IO_ERR1,ISH1,ISH2,II, NNC, IT,
-     .        NEDGES, ELK, OFF,CC1, CC2, NUMG1, NUMG2,
-     .        INED,L,M,N,NEWEDGE,NEDGES_OLD,
-     .        LENWORK,NOD1, NOD2, MODE, NELEM0, MM,
-     .        WORK(70000), NUML, IERROR,
-     .        ELEMD, IMMNUL, NEDDEL, ITYPINT, IWARN1,
-     .        MAXI, MAXJ, MAX, I1, I2, I3, N1, N2, NUMG3, NUMG4,
-     .        NELX,ADDX,MID,PID,JALE,MLN,NSHIFT,NNODE, NN,
-     .        OPTIONS(40),NCOND,NFLAG,IWFLG,NODC,ICUR,IERR1,NEC,
-     .        INWDCOUNT,ICCAND,ICNOD_SMS,ISOLBAR, ICKIN, NK, NKI,
+     .        NEDGES, OFF,CC1, CC2, NUMG1, NUMG2,
+     .        L,M,N,NEWEDGE,NEDGES_OLD,
+     .        WORK(70000), IERROR,
+     .        ELEMD, ITYPINT, IWARN1,
+     .        MAX, I1, I2, I3, N1, N2, NUMG3, NUMG4,
+     .        NELX,ADDX,MID,PID,JALE,MLN,NNODE, NN,
+     .        OPTIONS(40),NCOND,NFLAG,IWFLG,IERR1,NEC,
+     .        ICCAND,ICNOD_SMS,ISOLBAR, ICKIN, NK, NKI,
      .        ICELEM, ICINTS, ICINTM, ICINT2, ICDDL, ICFSI, ICDEL, ICSOL,
      .        ICR2R,NUMEL_R2R, CEPCLUSTER,
      .        NCONNX, CURR, PREV, NEXT, I1OLD, I2OLD, INC, IDB_METIS,
-     .        NELIG3D,NCOND2,LSMS,  
-     .        OFFC,OFFTG,K0,ITYP,                     
-     .        NN_L,IS,IAD,ITY,KAD,JALE_FROM_MAT, JALE_FROM_PROP
+     .        NELIG3D,NCOND2,
+     .        OFFC,OFFTG,ITYP,                     
+     .        NN_L,JALE_FROM_MAT, JALE_FROM_PROP
       INTEGER, DIMENSION(:),ALLOCATABLE :: XADJ, ADJNCY,IWD,IWD2, 
-     .        IENDT,ITRI,INDEX,DOMCLUSTER,ELEMCLUST,
      .        XADJ_OLD, ADJNCY_OLD, COLORS, ROOTS,
      .        POINTER_NEIGH,CONNECT_WEIGHT,TAGELEM,CNE,
      .        IWD_COPY
@@ -201,15 +205,14 @@ C metis5 null pointers
 
       INTEGER 
      .        METIS_SetDefaultOptions
-      INTEGER NNO,NNS,NTG,NNI,NTGT,NTGI
+
       INTEGER NELMIN
       INTEGER NFVMBAG,NB_FVMBAG_TRIM,DD_FVMBAG_TRY
-      INTEGER FVM_ELEM(NVOLU),AVG,MAX_TRY
+      INTEGER FVM_ELEM(NVOLU),MAX_TRY
       INTEGER WD_MAX_FACTOR
       INTEGER NB_ELEM_ALE,MAIN_TARGET
-      CHARACTER (LEN=255) :: STR
+
       LOGICAL :: FVM_DOMDEC,DD_UNBALANCED
-      LOGICAL, DIMENSION(:), ALLOCATABLE :: TAGGED_ELEM
       INTEGER, DIMENSION(:), ALLOCATABLE :: ISORT,INDEX_SORT
 
       INTEGER (kind=8) :: NEDGES_8
@@ -217,10 +220,10 @@ C metis5 null pointers
       my_real, DIMENSION(:,:), ALLOCATABLE :: COORDS
       my_real, DIMENSION(:), ALLOCATABLE :: MIN_DIST
       my_real :: DIST
-      my_real :: XMIN(3),XMAX(3)
+
       INTEGER :: CEP_MIN
-      INTEGER :: C1,C2
-      INTEGER :: OFFSET
+
+
       integer, dimension(:), allocatable :: part_id
 
 C ---- statistics for edges added for contact interface
@@ -228,10 +231,10 @@ C ---- statistics for edges added for contact interface
         INTEGER :: refused_cep0, refused_numg,refused_numg0
         INTEGER :: switch_tried, switch_done 
 
-        integer, pointer :: null_int(:)
-        real, pointer :: null_real(:)
-        integer :: int_bidon
-        real :: real_bidon
+
+
+
+
 
         INTEGER :: IJK
         INTEGER :: NSN
@@ -253,7 +256,7 @@ C-----------------------------------------------
       METIS_RANDOM_SEED= 0
       CALL GET_METIS_ARGUMENTS(LEGACY_PARTITIONING,METIS_RANDOM_SEED)
 
-      ALLOCATE(IWKIN(NUMNOD))
+      call my_alloc(IWKIN, NUMNOD, "IWKIN")
       number_of_added_edges = 0
       refused_numg = 0
       refused_numg0 = 0
@@ -365,7 +368,7 @@ C
       END DO
 C 
       LCNE = ADSKY(NUMNOD+1)
-      ALLOCATE(CNE(LCNE),STAT=IERR1)
+      call my_alloc(CNE, LCNE, "CNE", stat=IERR1)
 C
       IF(IERR1/=0)THEN
         CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,
@@ -616,9 +619,9 @@ C-----------------------------------------------
 C   CNE CALCULATION
 C-----------------------------------------------
 C We have to tag elements for know theirs number of nodes
-      ALLOCATE(TAGELEM(NELEM))
-      ALLOCATE(PART_ID(NELEM))
-      ALLOCATE(elem_coords(3,NELEM))
+      call my_alloc(TAGELEM, NELEM, "TAGELEM")
+      call my_alloc(PART_ID, NELEM, "PART_ID")
+      call my_alloc(elem_coords, 3, NELEM, "elem_coords")
       PART_ID = -1
       elem_coords = 0.0 
       DO I = 1,NELEM
@@ -1002,7 +1005,7 @@ C          ENDIF
         ENDIF  
       END IF     
 C
-      ALLOCATE(RWD(NELEM*NCOND),STAT=IERR1)
+      call my_alloc(RWD, NELEM*NCOND, "RWD", stat=IERR1)
 C Metis weights following 
       DO I = 1, NCOND*NELEM
         RWD(I) = 0
@@ -1018,7 +1021,7 @@ C   default weight optimization
      .             TABMP_L,IPART,IPARTC,IPARTG,
      .             IPARTS,NPART,POIN_PART_SHELL,POIN_PART_TRI,POIN_PART_SOL,
      .             MID_PID_SHELL,MID_PID_TRI,MID_PID_SOL,IDDLEVEL,
-     .             MAT_PARAM,iworksh)
+     .             MAT_PARAM,iworksh,elm_group)
 C
       IF(NSUBDOM>0)THEN
         COST_R2R = ZERO
@@ -1339,7 +1342,7 @@ C
       
 C interface & dof weight normalization
 
-      ALLOCATE(IWD(NELEM*NCOND),STAT=IERR1)
+      call my_alloc(IWD, NELEM*NCOND, "IWD", stat=IERR1)
 
       DO I = 1, NCOND*NELEM
         IWD(I) = 0
@@ -1368,7 +1371,7 @@ c     .    IWD(NCOND*(I-1)+ICNOD)= NINT(RWD(NCOND*(I-1)+ICNOD)*10)
      .    IWD(NCOND*(I-1)+ICNOD_SMS) = NINT(RWD(NCOND*(I-1)+ICNOD_SMS))
       END DO
 
-      DEALLOCATE(RWD)
+      call my_dealloc(RWD)
 
 C.....construction of Ei Ej pairs connected by a point
 
@@ -1404,8 +1407,8 @@ C----------------------------------------------
 !     IDDCONNECT%PDOM(1,N) : connected element to element N
 !     IDDCONNECT%PDOM(2,N) : next index in IDDCONNECT for element N
 !     allocation IDDCONNECT % PDOM et % IENTRYDOM
-      ALLOCATE(IDDCONNECT%PDOM(2,SIDDCONNECT),STAT=IERR1)
-      ALLOCATE(IDDCONNECT%IENTRYDOM(2,NELEM),STAT=IERR1)    
+      call my_alloc(IDDCONNECT%PDOM, 2, SIDDCONNECT, "IDDCONNECT%PDOM", stat=IERR1)
+      call my_alloc(IDDCONNECT%IENTRYDOM, 2, NELEM, "IDDCONNECT%IENTRYDOM", stat=IERR1)
 ! initialization of IDDCONNECT%IENTRYDOM
       CALL INI_IDDCONNECT(NELEM)
 C
@@ -1417,8 +1420,8 @@ C+------------------------------------------------------------+
 C| Domain decomposition for models with solids                |
 C|      dectivated via Domdec = -3 in /SPMD card              |
 C+------------------------------------------------------------+
-        ALLOCATE(CONNECTIVITY(MAX_NB_NODES_PER_ELT,NELEM))
-        ALLOCATE(NB_NODES_MINI(NELEM)) ! minimum number of shared nodes to consider the edge
+        call my_alloc(CONNECTIVITY, MAX_NB_NODES_PER_ELT, NELEM, "CONNECTIVITY")
+        call my_alloc(NB_NODES_MINI, NELEM, "NB_NODES_MINI") ! minimum number of shared nodes to consider the edge
         CONNECTIVITY(1:MAX_NB_NODES_PER_ELT,1:NELEM) = 0
         NB_NODES_MINI(1:NELEM) = 3
         DO I = 1 , NELEM
@@ -1429,8 +1432,8 @@ C+------------------------------------------------------------+
           CALL SORT_DESCENDING(CONNECTIVITY(1,I))
         ENDDO
 
-        ALLOCATE(CONNECT_WEIGHT(NELEM))
-        ALLOCATE(POINTER_NEIGH(NELEM))
+        call my_alloc(CONNECT_WEIGHT, NELEM, "CONNECT_WEIGHT")
+        call my_alloc(POINTER_NEIGH, NELEM, "POINTER_NEIGH")
         DO I =1,NELEM
            CONNECT_WEIGHT(I)=0
            POINTER_NEIGH(I)=0
@@ -1476,10 +1479,10 @@ C+------------------------------------------------------------+
             ENDDO
           ENDIF
         ENDDO
-        DEALLOCATE(CONNECT_WEIGHT)
-        DEALLOCATE(POINTER_NEIGH)
-        DEALLOCATE(NB_NODES_MINI)
-        DEALLOCATE(CONNECTIVITY)
+        CALL MY_DEALLOC(CONNECT_WEIGHT)
+        CALL MY_DEALLOC(POINTER_NEIGH)
+        call my_dealloc(NB_NODES_MINI)
+        CALL MY_DEALLOC(CONNECTIVITY)
 
       ELSE                                               
 C+------------------------------------------------------------+
@@ -1603,8 +1606,8 @@ C
 
 
 
-        ALLOCATE(ISORT(NELEMINT))
-        ALLOCATE(INDEX_SORT(2*NELEMINT))
+        call my_alloc(ISORT, NELEMINT, "ISORT")
+        call my_alloc(INDEX_SORT, 2*NELEMINT, "INDEX_SORT")
 
 C sorting of NELEMINT : negative value for IXINT(6) means that distance is small
         DO I=1,NELEMINT
@@ -1789,13 +1792,13 @@ C load-balancing contact force -- incremental needed for multiple interface
 C ================================================================
 C  Add connectivity between disconnected parts
 C           according to the distance
-        ALLOCATE(COLORS(NELEM+1),STAT=IERR1)
-        ALLOCATE(ROOTS(NELEM),STAT=IERR1)
+        call my_alloc(COLORS, NELEM+1, "COLORS", stat=IERR1)
+        call my_alloc(ROOTS, NELEM, "ROOTS", stat=IERR1)
         CALL PLIST_BFS(NELEM,NCONNX,COLORS,ROOTS)
 
         !NUMG1 id of the root element of the larest connected part
-        ALLOCATE(MIN_DIST(NCONNX))
-        ALLOCATE(COORDS(3,NCONNX))
+        call my_alloc(MIN_DIST, NCONNX, "MIN_DIST")
+        call my_alloc(COORDS, 3, NCONNX, "COORDS")
         DO I = 1,NCONNX
 
           CALL FIND_NODES(ROOTS(I)   ,ELEMNODES,TAGELEM,IXS,IXS10,
@@ -1835,9 +1838,10 @@ C distance between the current root, and its closest neighbor
             ENDIF
           ENDDO
         ENDDO
-        DEALLOCATE(MIN_DIST)
-        DEALLOCATE(COORDS)
-        DEALLOCATE(INDEX_SORT,ISORT)
+        CALL MY_DEALLOC(MIN_DIST)
+        CALL MY_DEALLOC(COORDS)
+        CALL MY_DEALLOC(INDEX_SORT)
+        CALL MY_DEALLOC(ISORT)
 C ================================================================
 C       WRITE(6,*) "STATISTIC ON CONTACT INTERFACE"
 C       WRITE(6,"(6(A,X,I10))") " added:",number_of_added_edges,
@@ -1859,7 +1863,7 @@ C
         NEDGES_8 = NEDGES_8 / 2
       ENDIF
 
-      IF(ALLOCATED(TAGELEM)) DEALLOCATE(TAGELEM)
+      IF(ALLOCATED(TAGELEM)) CALL MY_DEALLOC(TAGELEM)
 
 
 !   ----------------------------------------------------------------
@@ -1901,7 +1905,7 @@ C
                     NUMBER_OF_ELEMENT_RBODY = NUMBER_OF_ELEMENT_RBODY + 1
                 ENDDO
                 ! ----------------
-                ALLOCATE( LIST_ELEMENT_RBODY(NUMBER_OF_ELEMENT_RBODY) )
+                call my_alloc(LIST_ELEMENT_RBODY, NUMBER_OF_ELEMENT_RBODY, "LIST_ELEMENT_RBODY")
                 !   -----------------------------
 
                 NUMBER_OF_ELEMENT_RBODY = 0 ! number of element in the current RBODY
@@ -1929,7 +1933,7 @@ C
                 ! save the element list
                 IF(NUMBER_OF_ELEMENT_RBODY>0) 
      .          CALL C_PREVENT_DECOMPOSITION_RBODY(NUMBER_OF_ELEMENT_RBODY,LIST_ELEMENT_RBODY)
-                DEALLOCATE( LIST_ELEMENT_RBODY )
+                CALL MY_DEALLOC(LIST_ELEMENT_RBODY)
                 ! ----------------
             ENDIF
             K = K + NSN
@@ -1941,11 +1945,11 @@ C
 
       IF (NEDGES>0 .AND. NSPMD > 1) THEN      
 !       Metis structures 1/2
-        ALLOCATE(XADJ(NELEM+1),STAT=IERR1)
+        call my_alloc(XADJ, NELEM+1, "XADJ", stat=IERR1)
 !       init XADJ
         XADJ(1:NELEM+1)=0
 ! deallocation of CNE
-        DEALLOCATE(CNE)
+        CALL MY_DEALLOC(CNE)
 ! Number of edges
         NEDGES = 0
         DO I=1,NELEM
@@ -1954,7 +1958,7 @@ C
         ENDDO
         NEDGES = NEDGES/2
 !       Metis structures 2/2
-        ALLOCATE(ADJNCY(2*NEDGES),STAT=IERR1)
+        call my_alloc(ADJNCY, 2*NEDGES, "ADJNCY", stat=IERR1)
 
         XADJ(1) = 1
         DO I=1,NELEM
@@ -1965,14 +1969,14 @@ C
           ENDIF
         ENDDO
 ! deallocation of IDDCONNECT % PDOM and % IENTRYDOM
-        DEALLOCATE(IDDCONNECT%PDOM)
-        DEALLOCATE(IDDCONNECT%IENTRYDOM)
+        CALL MY_DEALLOC(IDDCONNECT%PDOM)
+        call my_dealloc(IDDCONNECT%IENTRYDOM)
 
 C Determine connectivity components
-        IF(ALLOCATED(COLORS)) DEALLOCATE(COLORS)
-        IF(ALLOCATED(ROOTS)) DEALLOCATE(ROOTS)
-        ALLOCATE(COLORS(NELEM+1),STAT=IERR1)
-        ALLOCATE(ROOTS(NELEM),STAT=IERR1)
+        IF(ALLOCATED(COLORS)) CALL MY_DEALLOC(COLORS)
+        IF(ALLOCATED(ROOTS)) CALL MY_DEALLOC(ROOTS)
+        call my_alloc(COLORS, NELEM+1, "COLORS", stat=IERR1)
+        call my_alloc(ROOTS, NELEM, "ROOTS", stat=IERR1)
         CALL DD_BFS(XADJ,ADJNCY,NELEM,NEDGES,NCONNX,COLORS,ROOTS)
 
         IF(LEGACY_PARTITIONING .AND. NCONNX > 0) THEN
@@ -1980,13 +1984,13 @@ C Determine connectivity components
      .  ' NUMBER OF DISCONNECTED COMPONENTS FIXED FOR DOMAIN DECOMP:'
      .  ,NCONNX
 C Metis Workaround to create additional connectivities between non connected graphs
-          ALLOCATE(XADJ_OLD(NELEM+1),STAT=IERR1)
-          ALLOCATE(ADJNCY_OLD(2*NEDGES),STAT=IERR1)
+          call my_alloc(XADJ_OLD, NELEM+1, "XADJ_OLD", stat=IERR1)
+          call my_alloc(ADJNCY_OLD, 2*NEDGES, "ADJNCY_OLD", stat=IERR1)
           XADJ_OLD(1:NELEM+1)=XADJ(1:NELEM+1)
           ADJNCY_OLD(1:2*NEDGES)=ADJNCY(1:2*NEDGES)
           NEWEDGE = NEDGES+NCONNX-1         
-          DEALLOCATE(ADJNCY)
-          ALLOCATE(ADJNCY(2*NEWEDGE),STAT=IERR1)
+          CALL MY_DEALLOC(ADJNCY)
+          call my_alloc(ADJNCY, 2*NEWEDGE, "ADJNCY", stat=IERR1)
 C 1) recompute new XADJ and fill new ADJCNY
           INC=0
           DO I = 1, NCONNX
@@ -2053,7 +2057,8 @@ C set correct XADJ for NEXT of NELEM+1
           END DO
 C
           NEDGES=NEWEDGE
-          DEALLOCATE(XADJ_OLD,ADJNCY_OLD)
+          CALL MY_DEALLOC(XADJ_OLD)
+          CALL MY_DEALLOC(ADJNCY_OLD)
 C 2) recompute connexity to verify it is ok now
           CALL DD_BFS(XADJ,ADJNCY,NELEM,NEDGES,NCONNX,COLORS,ROOTS)
           IF(NCONNX > 1) THEN
@@ -2061,7 +2066,8 @@ C 2) recompute connexity to verify it is ok now
      .      '** INFO: REMAINING DISCONNECTED COMPONENTS:',NCONNX
           END IF
         END IF
-        DEALLOCATE(COLORS,ROOTS)
+        CALL MY_DEALLOC(COLORS)
+        CALL MY_DEALLOC(ROOTS)
 
         WRITE(IOUT,*)' '
         WRITE(IOUT,FMT=FMW_A_I)
@@ -2311,8 +2317,8 @@ C    Loop over domain decomposition until satisfactory load balancing for elemen
 C---------------------------------------------------------------------
         MAX_TRY       = 3
         WD_MAX_FACTOR = 2
-        ALLOCATE(IWD_COPY(NCOND*NELEM))
-        ALLOCATE(WD_COPY(NELEM))
+        call my_alloc(IWD_COPY, NCOND*NELEM, "IWD_COPY")
+        call my_alloc(WD_COPY, NELEM, "WD_COPY")
         IF((DECTYP==4 .OR. DECTYP==6) .AND. IDDLEVEL==1 .AND. NELEM>10*NSPMD )THEN
 
           IF(ICDEL /= 0 ) THEN 
@@ -2393,7 +2399,7 @@ C      CHECK Quality of Domain Decomp on elements
 
             WRITE(IOUT,'(A,I5)') 'RETRY KWAY WITH NCOND =',NCOND2
 
-            ALLOCATE(IWD2(NCOND2*NELEM))
+            call my_alloc(IWD2, NCOND2*NELEM, "IWD2")
             DO I= 1, NELEM
               DO J = 1, NCOND2
                 IWD2( NCOND2*(I-1) +J ) = IWD ( NCOND*(I-1) + J)
@@ -2446,7 +2452,7 @@ C  RSB METIS
      7             NCRITMAX ,WNOD_SMS,ICNOD_SMS) 
         
             ENDIF       
-            DEALLOCATE(IWD2)                                 
+            CALL MY_DEALLOC(IWD2)
 
             DD_UNBALANCED =  (DMIN(MAIN_TARGET) <  AVERAGE(MAIN_TARGET)*0.80)
             IF(FVM_DOMDEC) THEN
@@ -2455,8 +2461,8 @@ C  RSB METIS
 
           ENDDO  !  ( DMIN(MAIN_TARGET) <  AVERAGE(MAIN_TARGET)*0.80  .AND.  NCOND2 > 1 )
         ENDIF 
-        DEALLOCATE(IWD_COPY)
-        DEALLOCATE(WD_COPY)
+        CALL MY_DEALLOC(IWD_COPY)
+        CALL MY_DEALLOC(WD_COPY)
 C---------------------------------------------------------------------
 C       End of loop over domain decomposition                                             
 C---------------------------------------------------------------------
@@ -2504,7 +2510,8 @@ C       Save the PMAIN in FVMAIN
         ENDIF
 
 C
-        DEALLOCATE(XADJ,ADJNCY)
+        CALL MY_DEALLOC(XADJ)
+        CALL MY_DEALLOC(ADJNCY)
 !        IF(ASSOCIATED(ADJWGT2))  DEALLOCATE(ADJWGT2) 
        
         DO I = 1, NELEM
@@ -2586,7 +2593,7 @@ C
           ENDIF
         ENDDO
         WRITE(IOUT,*)' '               
-        DEALLOCATE(IWD)
+        CALL MY_DEALLOC(IWD)
         WRITE(IOUT,*)'STATISTICS ON DECOMPOSITION WEIGHTS'
         WRITE(IOUT,*)'-----------------------------------'
         WRITE(IOUT,8000)    
@@ -2649,15 +2656,15 @@ C
      .    NINT(AVERAGE(12)),NINT(DEVIATION(12))
       ELSE
 C   a single element or unconnected elements or a single processor
-        DEALLOCATE(CNE)
-        DEALLOCATE(IDDCONNECT%PDOM)
-        DEALLOCATE(IDDCONNECT%IENTRYDOM) 
+        CALL MY_DEALLOC(CNE)
+        CALL MY_DEALLOC(IDDCONNECT%PDOM)
+        call my_dealloc(IDDCONNECT%IENTRYDOM)
         DO I = 1, NELEM
           CEP(I) = 0
         ENDDO
       ENDIF
-      DEALLOCATE(IWKIN)
-      IF(ALLOCATED(PART_ID)) DEALLOCATE(PART_ID)
+      CALL MY_DEALLOC(IWKIN)
+      IF(ALLOCATED(PART_ID)) CALL MY_DEALLOC(PART_ID)
 C
  1000 FORMAT('#PROC    ELEMENT W.    SECND NOD W.   MAST NOD W.    CONT ELT W.',
      .       '        INT2 W.         DOF W.') 
@@ -2682,19 +2689,20 @@ C
       RETURN
       END
 !||====================================================================
-!||    spdometis    ../starter/source/spmd/domain_decomposition/grid2mat.F
+!||    spdometis      ../starter/source/spmd/domain_decomposition/grid2mat.F
 !||--- called by ------------------------------------------------------
-!||    lectur       ../starter/source/starter/lectur.F
+!||    lectur         ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    format_mod   ../starter/share/modules1/format_mod.F90
-!||    metis_mod    ../starter/source/spmd/domain_decomposition/metis_mod.F90
+!||    format_mod     ../starter/share/modules1/format_mod.F90
+!||    metis_mod      ../starter/source/spmd/domain_decomposition/metis_mod.F90
 !||====================================================================
       SUBROUTINE SPDOMETIS(KXSP, IXSP, NOD2SP, CEPSP, RESERVEP,
      .                     SPH2SOL, CEP)
 
         USE METIS_MOD
         USE FORMAT_MOD , ONLY : FMW_A_I
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -2715,18 +2723,18 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NEDGES, CC, N, N1, N2, NI, I, J,  ADDX,
+      INTEGER NEDGES, CC, N, N2, NI, I, J,  ADDX,
      .        NUMSPHA, P, NCOND, NNODE, NEC, IERR1, MODE, NOD1, NOD2,
      .        IWFLG, NFLAG, NEWEDGE
       INTEGER(kind=8) :: IW
       INTEGER IWD(NUMSPH), RESERVEP(NBPARTINLET),
      .        WORK(70000), OPTIONS(40), CEPSL(NUMSPH)
       INTEGER, DIMENSION(:),ALLOCATABLE :: IEND, XADJ, ADJNCY,
-     .                                     ITRIM,INDEXM, EDGE
+     .                                     ITRIM,INDEXM
       REAL    UBVEC(15)
 C metis5 null pointers
-      INTEGER, POINTER :: adjwgt(:)=>null(),vsize(:)=>null()
-      REAL, POINTER :: tpwgts(:)=>null()
+
+
       INTEGER METIS_SetDefaultOptions
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
@@ -2756,7 +2764,7 @@ c Numsph Active Less Sph2sol/= 0
 C
 
       IF (NEDGES>0) THEN
-        ALLOCATE(IEND(2*NEDGES))
+        call my_alloc(IEND, 2*NEDGES, "IEND")
         NI = 0
         DO N = 1, NUMSPHA
           DO CC = 1, MIN(12,KXSP(4,N))
@@ -2779,8 +2787,8 @@ C
 C
 C METIS ADDITIONAL TREATMENT
 C
-        ALLOCATE(ITRIM(2*NEDGES),STAT=IERR1)
-        ALLOCATE(INDEXM(2*NEDGES),STAT=IERR1)
+        call my_alloc(ITRIM, 2*NEDGES, "ITRIM", stat=IERR1)
+        call my_alloc(INDEXM, 2*NEDGES, "INDEXM", stat=IERR1)
 
         DO I = 1, NEDGES
           ITRIM(2*I-1) = IEND(2*I-1)
@@ -2796,7 +2804,7 @@ C
         ENDDO
  
 C Metis structures 1/2
-        ALLOCATE(XADJ(NUMSPHA+1),STAT=IERR1)
+        call my_alloc(XADJ, NUMSPHA+1, "XADJ", stat=IERR1)
 C init XADJ
         XADJ(1:NUMSPHA+1)=0
 C first node
@@ -2820,13 +2828,13 @@ C count xadj
           ENDIF
         ENDDO
 
-        DEALLOCATE(ITRIM)
-        DEALLOCATE(INDEXM)
+        CALL MY_DEALLOC(ITRIM)
+        CALL MY_DEALLOC(INDEXM)
 C
         NEDGES = NEWEDGE
 
 C Metis structures 2/2
-        ALLOCATE(ADJNCY(2*NEDGES),STAT=IERR1)
+        call my_alloc(ADJNCY, 2*NEDGES, "ADJNCY", stat=IERR1)
 
 C build xadj & adjcny in a simple pass
 
@@ -2851,7 +2859,7 @@ C reset XADJ
           XADJ(I)=XADJ(I-1)
         END DO
         XADJ(1)=1     
-        DEALLOCATE(IEND)
+        CALL MY_DEALLOC(IEND)
       ENDIF
 C----------------------    
 C
@@ -2899,7 +2907,8 @@ C
         DO N = 1, NUMSPHA
           CEPSP(N) = CEPSL(N)-1
         END DO
-        DEALLOCATE(XADJ,ADJNCY)          
+        CALL MY_DEALLOC(XADJ)
+        CALL MY_DEALLOC(ADJNCY)
       ELSE IF (NSPMD == 1) THEN
         DO N = 1, NUMSPHA
           CEPSP(N) = 0
@@ -3017,7 +3026,6 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER NSV(*), MSR(*), IWCONT(2,*), NSN, NMN, NSNT, NMNT
-      INTEGER :: COST
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -3194,14 +3202,17 @@ C
       RETURN
       END
 !||====================================================================
-!||    dd_bfs    ../starter/source/spmd/domain_decomposition/grid2mat.F
+!||    dd_bfs         ../starter/source/spmd/domain_decomposition/grid2mat.F
 !||--- called by ------------------------------------------------------
-!||    dometis   ../starter/source/spmd/domain_decomposition/grid2mat.F
+!||    dometis        ../starter/source/spmd/domain_decomposition/grid2mat.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE DD_BFS(XADJ,ADJNCY,NELEM,NEDGES,NCONNX,COLORS,ROOTS)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -3216,7 +3227,7 @@ C-----------------------------------------------
       INTEGER FILE_NEXT, ROOT, CURRENT
       INTEGER, DIMENSION(:), ALLOCATABLE :: FILE_V
 C-----------------------------------------------
-      ALLOCATE(FILE_V(NELEM)) 
+      call my_alloc(FILE_V, NELEM, "FILE_V")
       DO N = 1, NELEM
         COLORS(N)=0
       END DO
@@ -3253,7 +3264,7 @@ c        END IF
           END DO            
         END DO
       END DO
-      DEALLOCATE(FILE_V) 
+      CALL MY_DEALLOC(FILE_V)
       RETURN
       END
 
@@ -3700,7 +3711,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER TAILLE,TAILLE2,MARQUEUR2
+      INTEGER TAILLE,TAILLE2
       INTEGER, DIMENSION(7+6,TAILLE2,2) :: TAB_UMP_LOC2
       INTEGER, DIMENSION(6) :: TAB_SOL
       INTEGER, DIMENSION(NUMMAT) :: POIN_UMP
@@ -3921,7 +3932,7 @@ C-----------------------------------------------
 C----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C---------------------------------------------
-      INTEGER K,N,ADDX,NELX,J,NELIG3D,I,ELEM
+      INTEGER K,N,ADDX,NELX,NELIG3D,I,ELEM
 C---------------------------------------------
       NELMIN = 3
       DO I=1,MAX_NB_NODES_PER_ELT 
@@ -4061,6 +4072,7 @@ C-----------------------------------------------
       USE GROUPDEF_MOD
       USE MONVOL_STRUCT_MOD
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -4088,11 +4100,11 @@ C   L o c a l   V a r i a b l e s
 C---------------------------------------------
        LOGICAL, DIMENSION(:), ALLOCATABLE :: TAGGED_ELEM
        INTEGER, DIMENSION(:), ALLOCATABLE :: ELTG,MATTG
-       INTEGER :: I,J,K,N,K0,K1,K2,K6
-       INTEGER :: ITYP,S
+       INTEGER :: I,J,K,N,K0
+       INTEGER :: ITYP
        INTEGER :: OFFC,OFFTG
        INTEGER :: NNS,NTG,NNI,NTGI,NNO,NN,NTGT
-       INTEGER :: RADALE, IBID
+       INTEGER :: IBID
        
 C---------------------------------------------
 C                                
@@ -4125,7 +4137,7 @@ C===============================================================================
           IF(I > 0)  WRITE(IOUT,'(A)')
      .  ' DOMAIN DECOMPOSITION OPTIMIZED FOR FVMBAGS  '
 
-          ALLOCATE(TAGGED_ELEM(NELEM))
+          call my_alloc(TAGGED_ELEM, NELEM, "TAGGED_ELEM")
           OFFC =  NUMELS+NUMELQ
           OFFTG = NUMELS+NUMELQ+ NUMELC+NUMELT+NUMELP+NUMELR
           DO N = 1, NVOLU 
@@ -4142,8 +4154,8 @@ C===============================================================================
                NNO=3
                NTGT=NTG+NTGI
 
-               ALLOCATE(ELTG(NTGT))
-               ALLOCATE(MATTG(NTGT))               
+               call my_alloc(ELTG, NTGT, "ELTG")
+               call my_alloc(MATTG, NTGT, "MATTG")
                
                CALL FVELSURF(
      .              T_MONVOL(N)%NODES, T_MONVOL(N)%ELEM, IBID, IXC, IXTG, NTGT,
@@ -4196,11 +4208,11 @@ c                        CALL IDDCONNECTPLUS(K,K0,NELEM)
               IF(WD(FVM_ELEM(N)) > WD_MAX) THEN
                  WD(FVM_ELEM(N)) = WD_MAX
               ENDIF
-              DEALLOCATE(ELTG)
-              DEALLOCATE(MATTG)
+              CALL MY_DEALLOC(ELTG)
+              CALL MY_DEALLOC(MATTG)
             ENDIF 
           ENDDO ! 1,NVOLU
-          DEALLOCATE(TAGGED_ELEM)
+          CALL MY_DEALLOC(TAGGED_ELEM)
 
       RETURN
       END

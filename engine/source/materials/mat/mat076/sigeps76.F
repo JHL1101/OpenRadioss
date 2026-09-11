@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    sigeps76           ../engine/source/materials/mat/mat076/sigeps76.F
+!||    sigeps76                ../engine/source/materials/mat/mat076/sigeps76.F
 !||--- called by ------------------------------------------------------
-!||    mulaw              ../engine/source/materials/mat_share/mulaw.F90
+!||    mulaw                   ../engine/source/materials/mat_share/mulaw.F90
 !||--- calls      -----------------------------------------------------
-!||    asso_plas76        ../engine/source/materials/mat/mat076/asso_plas76.F
-!||    no_asso_plas76     ../engine/source/materials/mat/mat076/no_asso_plas76.F
-!||    vinter             ../engine/source/tools/curve/vinter.F
+!||    asso_plas76             ../engine/source/materials/mat/mat076/asso_plas76.F
+!||    no_asso_plas76          ../engine/source/materials/mat/mat076/no_asso_plas76.F
+!||    table_mat_vinterp       ../engine/source/materials/tools/table_mat_vinterp.F
 !||--- uses       -----------------------------------------------------
-!||    matparam_def_mod   ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    matparam_def_mod        ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    table_mat_vinterp_mod   ../engine/source/materials/tools/table_mat_vinterp.F
 !||====================================================================
       SUBROUTINE SIGEPS76(
-     1           NEL     ,NUPARAM ,NUVAR    ,NFUNC    ,IFUNC    ,NGL      ,
-     2           NPF     ,TF      ,TIME     ,TIMESTEP ,UPARAM   ,MATPARAM ,
+     1           NEL     ,NUPARAM ,NUVAR    ,NGL      ,
+     2           TIME    ,TIMESTEP,UPARAM   ,MATPARAM ,
      3           RHO0    ,DPLA    ,ET       ,SOUNDSP  ,YLD      ,UVAR     ,
      3           DEPSXX  ,DEPSYY  ,DEPSZZ   ,DEPSXY   ,DEPSYZ   ,DEPSZX   ,
      4           SIGOXX  ,SIGOYY  ,SIGOZZ   ,SIGOXY   ,SIGOYZ   ,SIGOZX   ,
@@ -44,6 +46,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MATPARAM_DEF_MOD
+      USE TABLE_MAT_VINTERP_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -51,13 +54,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
 C-----------------------------------------------
-#include      "tabsiz_c.inc"
+!#include      "tabsiz_c.inc"
 #include      "comlock.inc"
 #include      "units_c.inc"
 C=======================================================================
-      INTEGER, INTENT(IN) :: NEL,NFUNC,NUPARAM,NUVAR,INLOC,L_PLANL
+      INTEGER, INTENT(IN) :: NEL,NUPARAM,NUVAR,INLOC,L_PLANL
       INTEGER ,INTENT(IN)    :: NVARTMP
-      INTEGER, DIMENSION(NFUNC), INTENT(IN) :: IFUNC
       INTEGER, DIMENSION(NEL), INTENT(IN) :: NGL
       INTEGER ,DIMENSION(NEL,NVARTMP) ,INTENT(INOUT) :: VARTMP
       my_real, INTENT(IN) :: TIME,TIMESTEP
@@ -73,19 +75,15 @@ C=======================================================================
       my_real, DIMENSION(NEL,NUVAR), INTENT(INOUT) :: UVAR
       TYPE(MATPARAM_STRUCT_), INTENT(IN), TARGET :: MATPARAM
 C-----------------------------------------------
-C   VARIABLES FOR FUNCTION INTERPOLATION 
-C-----------------------------------------------
-      INTEGER :: NPF(SNPC)
-      my_real :: TF(STF)
-C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER :: I,IFORM,NUMTABL,NINDX,INDX(NEL)
-      INTEGER ,DIMENSION(NEL) :: IAD,ILEN
-      my_real :: EPSPF,EPSPR,YFAC2
+      INTEGER ,PARAMETER :: FUNC_DMG = 5
+      my_real :: EPSPF,EPSPR
       my_real ,DIMENSION(NEL) :: DF,PLA_DAM,SIG0XX,SIG0YY,
      .   SIG0ZZ,SIG0XY,SIG0YZ,SIG0ZX
-      TYPE(TABLE_4D_),DIMENSION(:),POINTER :: TABLE
+      my_real, DIMENSION(NEL,1) :: XVEC
+      TYPE(TABLE_4D_),DIMENSION(:),CONTIGUOUS,POINTER :: TABLE
 C=======================================================================
 c
       !====================================================================
@@ -96,7 +94,6 @@ c
       IFORM = NINT(UPARAM(13)) ! Flag for plasticity 
                                !   = 0 associated (with quadratic yield criterion only)
                                !   = 1 not associated          
-      YFAC2 = UPARAM(29)       ! Damage function scale factor
       DO I = 1,NEL
         IF (OFF(I) < EM01) OFF(I) = ZERO
         IF (OFF(I) <  ONE) OFF(I) = OFF(I)*FOUR_OVER_5  
@@ -123,8 +120,8 @@ c
       !====================================================================
       IF (IFORM == 1) THEN  ! Associated plastic flow, Quadratic yield criterion
         CALL ASSO_PLAS76(     
-     1      NEL    ,NUPARAM,NUVAR   ,NFUNC   ,IFUNC   ,NVARTMP,
-     2      NPF    ,TF     ,TIME    ,TIMESTEP,UPARAM  ,VARTMP ,
+     1      NEL    ,NUPARAM,NUVAR   ,NVARTMP,
+     2      TIME   ,TIMESTEP,UPARAM ,VARTMP ,
      3      RHO0   ,PLA    ,DPLA    ,ET      ,NUMTABL ,TABLE  ,
      3      DEPSXX ,DEPSYY ,DEPSZZ  ,DEPSXY  ,DEPSYZ  ,DEPSZX ,
      4      SIG0XX ,SIG0YY ,SIG0ZZ  ,SIG0XY  ,SIG0YZ  ,SIG0ZX ,
@@ -132,8 +129,8 @@ c
      6      SOUNDSP,UVAR   ,OFF     ,EPSD    ,YLD     ,DMG    )
       ELSE ! Non-associated plastic flow
         CALL NO_ASSO_PLAS76(
-     1      NEL    ,NUPARAM,NUVAR   ,NFUNC   ,IFUNC   ,NVARTMP,
-     2      NPF    ,TF     ,TIME    ,TIMESTEP,UPARAM  ,VARTMP ,
+     1      NEL    ,NUPARAM,NUVAR   ,NVARTMP ,
+     2      TIME   ,TIMESTEP,UPARAM ,VARTMP  ,
      3      RHO0   ,PLA    ,DPLA    ,ET      ,NUMTABL ,TABLE  ,
      3      DEPSXX ,DEPSYY ,DEPSZZ  ,DEPSXY  ,DEPSYZ  ,DEPSZX ,
      4      SIG0XX ,SIG0YY ,SIG0ZZ  ,SIG0XY  ,SIG0YZ  ,SIG0ZX ,
@@ -151,14 +148,12 @@ c
         PLA_DAM(1:NEL) = PLA(1:NEL)
       ENDIF
 !
-      IF (IFUNC(2) > 0) THEN
+      IF (TABLE(FUNC_DMG)%NOTABLE > 0) THEN
         ! Tabulated damage
-        IAD(1:NEL)  = NPF(IFUNC(2))   / 2 + 1
-        ILEN(1:NEL) = NPF(IFUNC(2)+1) / 2 - IAD(1:NEL) - VARTMP(1:NEL,7)
 !
-        CALL VINTER(TF,IAD,VARTMP(1:NEL,7),ILEN,NEL,PLA_DAM,DF,DMG)
+        XVEC(1:NEL,1) = PLA_DAM(1:NEL) 
+        CALL TABLE_MAT_VINTERP(TABLE(FUNC_DMG),NEL,NEL,VARTMP(1:NEL,7:7),XVEC,DMG,DF)
 !        
-        DMG(1:NEL) = ABS(YFAC2)*DMG(1:NEL)
         DO I=1,NEL
           IF (DMG(I) >= ONE) THEN 
             DMG(I) = ONE

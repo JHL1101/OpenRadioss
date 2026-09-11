@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_skin_scalar        ../engine/source/output/h3d/h3d_results/h3d_skin_scalar.F
 !||--- called by ------------------------------------------------------
@@ -116,15 +117,11 @@ C-----------------------------------------------
       my_real
      .   VALUE(MVSIZ),RINDX,STRAIN(3,MVSIZ),F_EXP,F_GAUSS(9)
       INTEGER I, NG, NEL, NPTR, NPTS, NPTT, NLAY, IFAIL, ILAY, 
-     .        IR,IS,IT,IL,MLW, NUVAR,IUS,LENF,PTF,PTM,PTS,NFAIL,
-     .        N,NN,K,K1,K2,JTURB,MT,IMID,IALEL,IPID,ISH3N,NNI,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN9,NF,BUF,NVARF,
-     .        OFFSET,IHBE,NPTM,NPG, MPT,IPT,IADD,IADR,IPMAT,IFAILT,
-     .        IIGEO,IADI,ISUBSTACK,ITHK,NB_PLYOFF,IUVAR,IDX,IPOS,ITRIMAT,
-     .        IALEFVM_FLG, IMAT,IADBUF,NUPARAM,IOK_PART(MVSIZ),
+     .        IR,IS,IT,MLW,NFAIL,
+     .        N,IOK_PART(MVSIZ),
      .        MLWI,PID,MID,MX,KCVT,IOR_TSH,ICSTR
       INTEGER 
-     .        IS_WRITTEN_VALUE(MVSIZ),NFRAC,IU(4),IV,NB_FACE,KFACE,NSKIN
+     .        IS_WRITTEN_VALUE(MVSIZ),NSKIN
       INTEGER NGL(MVSIZ) 
  
  
@@ -215,7 +212,7 @@ C----------    F.I. uses also average strain to be consisting
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                    DO I=1,NEL 
                     RINDX = FBUF%FLOC(IFAIL)%INDX(I)                  
                     VALUE(I) = MAX(VALUE(I),RINDX) 
@@ -249,7 +246,7 @@ C-------- grp skin_up
                   DO I=1,NEL                                                      
                      CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                     RINDX = FBUF%FLOC(IFAIL)%INDX(I)                  
                     VALUE(I) = MAX(VALUE(I),RINDX) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -287,7 +284,7 @@ C------
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                    DO I=1,NEL 
                     RINDX = FBUF%FLOC(IFAIL)%INDX(I)                  
                     VALUE(I) = MAX(VALUE(I),RINDX) 
@@ -321,7 +318,7 @@ C-------- grp skin_up
                   DO I=1,NEL                                                      
                      CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                     RINDX = FBUF%FLOC(IFAIL)%INDX(I)                  
                     VALUE(I) = MAX(VALUE(I),RINDX) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -358,7 +355,7 @@ C-------- grp skin_inf first
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                   DO I=1,NEL                                                      
                     VALUE(I) = MAX(VALUE(I),FBUF%FLOC(IFAIL)%DAM(I)) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -392,7 +389,7 @@ C-------- grp skin_up
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                   DO I=1,NEL                                                      
                     VALUE(I) = MAX(VALUE(I),FBUF%FLOC(IFAIL)%DAM(I)) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -430,7 +427,7 @@ C-------- grp skin_inf first
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                   DO I=1,NEL                                                      
                     VALUE(I) = MAX(VALUE(I),FBUF%FLOC(IFAIL)%DAM(I)) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -464,7 +461,7 @@ C-------- grp skin_up
                IF (FBUF%FLOC(IFAIL)%ILAWF == 7) THEN ! check /FLD model                
                   CALL H3D_FLD_TSH(ELBUF_TAB(NG),MAT_PARAM(MX)%FAIL(IFAIL),
      .                       IR,IS,IT,ILAY,IFAIL,
-     .                       NPF,TF,NGL,STRAIN,NEL )
+     .                       NGL,STRAIN,NEL )
                   DO I=1,NEL                                                      
                     VALUE(I) = MAX(VALUE(I),FBUF%FLOC(IFAIL)%DAM(I)) 
                     IS_WRITTEN_VALUE(I) = 1                           
@@ -588,26 +585,23 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NL, N1, N2, N3, N4, N5, 
-     .        IAD ,NP ,IFUNC ,NPRES,NSKIN0,NSKIN1,N1FRAM,DIR_HSP,I,N
+     .        IAD ,NP ,IFUNC ,NSKIN0,DIR_HSP,I,N
       INTEGER K1, K2, K3, ISENS, K, 
      .        N_OLD, ISMOOTH,IDEL,NINTERP ,NPL,TAGN1,TAGN2,TAGN3,TAGN4,
-     .        FUN_CX,FUN_VEL,DIR_VEL,IFRA2, IANIM,IJK,UP_BOUND,
-     .        IZ_UPDATE,ABAC_ID,ISIZ_SEG,IERR1,
-     .        Phi_I, ID, USER_ID, ITA_SHIFT,NDT,NDT0,
-     .        NITER,ITER,IMODEL,IL,IS,SEGCONT,FUN_HSP,IFRA1,IFLOAD,NP0,NPI
+     .        FUN_CX,FUN_VEL,DIR_VEL,IFRA2,ISIZ_SEG,
+     .        ID,IL,SEGCONT,FUN_HSP,IFRA1,IFLOAD,NP0
       my_real
-     .   NX, NY, NZ, AXI, AA, A0, VV, FX, FY, FZ, AX, DYDX, TS,
-     .   SIXTH,X_OLD, F1, F2,XSENS,FCX,FCY,FCYPINCH,FP,
-     .   FCX1,FCY1,FCX2,FCY2,VX,VY,VZ,VEL,VSEG,NORM
-      my_real FINTER, ZFx,ZFy,ZFz, ZZFx,ZZFy,ZZFz,PS, Zx,Zy,Zz,FINTER_SMOOTH
+     .   NX, NY, NZ, AA, DYDX, TS,
+     .   X_OLD, F1,XSENS,FCX,FCY,FCYPINCH,FP,
+     .   FCX1,FCY1,FCX2,FCY2,VEL,VSEG,NORM
+      my_real FINTER, FINTER_SMOOTH
 c
-      my_real COORMEAN,YMEAN,ZMEAN,PVEL,NSIGN,DNORM,
-     .        Xdet,Ydet,Zdet,Tdet,Wtnt,PMIN,Dx,Dy,Dz,NORMD, P,
-     .        FAC_M_bb, FAC_L_bb, FAC_T_bb, FAC_P_bb, FAC_I_bb, T0INF_LOC, TA_SHIFT, TT_STAR
+      my_real COORMEAN,PVEL,NSIGN,
+     .        Tdet, P
 
       INTEGER :: IFUN,IFRA,M1,M2,NDIM,NPOINT, IIOUT,SHIFT,FUNCTYPE
        my_real :: LEN, DIRX, DIRY, DIRZ, 
-     .     BETA,GAMMA,R,S,RMAX,XFACR,XFACT,YFAC,SEGP,PRESS,DISP
+     .     RMAX,XFACR,XFACT,YFAC,SEGP,PRESS,DISP
       my_real, DIMENSION(3) :: P0,DIR,A,B,C,D,M
      
       EXTERNAL FINTER,FINTER_SMOOTH

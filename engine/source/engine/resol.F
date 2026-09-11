@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    resol                                        ../engine/source/engine/resol.F
 !||--- called by ------------------------------------------------------
@@ -45,10 +46,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    alesub2                                      ../engine/source/ale/subcycling/alesub2.F
 !||    alewdx                                       ../engine/source/ale/grid/alewdx.F
 !||    alloc_elbuf_imp                              ../engine/source/elements/elbuf/alloc_elbuf_imp.F
+!||    allocate_output_data                         ../common_source/modules/output/output_mod.F90
 !||    allocate_sph_work                            ../common_source/modules/mat_elem/sph_work.F90
 !||    ams_prepare_poff_assembly                    ../engine/source/mpi/ams/spmd_sms.F
 !||    ancmsg                                       ../engine/source/output/message/message.F
 !||    arret                                        ../engine/source/system/arret.F
+!||    assinit                                      ../engine/source/assembly/assadd2.F
 !||    asspar                                       ../engine/source/assembly/asspar.F
 !||    asspar3                                      ../engine/source/assembly/asspar3.F
 !||    asspar4                                      ../engine/source/assembly/asspar4.F
@@ -70,6 +73,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    check_nodal_state                            ../engine/source/interfaces/interf/check_nodal_state.F
 !||    check_remote_surface_state                   ../engine/source/interfaces/interf/check_remote_surface_state.F
 !||    check_surface_state                          ../engine/source/interfaces/interf/check_surface_state.F
+!||    chkinit                                      ../engine/source/interfaces/interf/chkstfn3.F
 !||    chkload                                      ../engine/source/interfaces/chkload.F
 !||    chkmsin                                      ../engine/source/output/outfile/chkmsin.F
 !||    chkstfn3n                                    ../engine/source/interfaces/interf/chkstfn3.F
@@ -111,6 +115,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    deplafakeige                                 ../engine/source/assembly/displfakeige.F
 !||    deplapinch                                   ../engine/source/assembly/displpinch.F
 !||    desacti                                      ../engine/source/elements/desacti.F
+!||    detach_node_from_rwalls                      ../engine/source/engine/node_spliting/detach_node.F90
 !||    disp_vel_saved_cload                         ../engine/source/assembly/disp_vel_saved_cload.F
 !||    dtnoda                                       ../engine/source/time_step/dtnoda.F
 !||    dtnodamp                                     ../engine/source/time_step/dtnodamp.F
@@ -144,6 +149,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    forcepinch                                   ../engine/source/loads/general/forcepinch.F
 !||    forint                                       ../engine/source/elements/forint.F
 !||    forintc                                      ../engine/source/elements/forintc.F
+!||    forintc_prepare_gpu                          ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    forintp                                      ../engine/source/elements/forintp.F
 !||    forints                                      ../engine/source/elements/forints.F
 !||    free_pinch                                   ../common_source/modules/pinchtype_mod.F
@@ -165,6 +171,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    get_ibuf_c                                   ../engine/source/coupling/rad2rad/rad2rad_c.c
 !||    get_neighbour_surface                        ../engine/source/interfaces/interf/get_neighbour_surface.F90
 !||    get_shmbuf_c                                 ../engine/source/coupling/rad2rad/rad2rad_c.c
+!||    gpu_shell_launch_async                       ../engine/source/elements/shell/coque/shell_internal_forces.F90
+!||    gpu_shell_sync_scatter                       ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    gravit                                       ../engine/source/loads/general/grav/gravit.F
 !||    gravit_fvm_fem                               ../engine/source/loads/general/grav/gravit_fvm_fem.F
 !||    i14ist                                       ../engine/source/interfaces/int14/i14ist.F
@@ -221,6 +229,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    lag_multp                                    ../engine/source/tools/lagmul/lag_mult.F
 !||    load_pressure                                ../engine/source/loads/general/load_pressure/load_pressure.F
 !||    manctr                                       ../engine/source/input/manctr.F
+!||    merge_boundary_with_split                    ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||    modsti                                       ../engine/source/time_step/modsti.F
 !||    monvol0                                      ../engine/source/airbag/monvol0.F
 !||    movfra1                                      ../engine/source/tools/skew/movfram.F
@@ -234,6 +243,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    my_barrier                                   ../engine/source/system/machine.F
 !||    newskw                                       ../engine/source/tools/skew/newskw.F
 !||    newskw_init                                  ../engine/source/tools/skew/newskw.F
+!||    nloc_shell_detach                            ../engine/source/engine/node_spliting/nloc_shell_detach.F90
 !||    nlocal_acc                                   ../engine/source/assembly/nlocal_acc.F
 !||    nlocal_dtnoda                                ../engine/source/time_step/nlocal_dtnoda.F
 !||    nlocal_incr                                  ../engine/source/assembly/nlocal_incr.F
@@ -288,7 +298,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    reaction_forces_check_for_requested_output   ../engine/source/output/reactions.F
 !||    reaction_forces_th                           ../engine/source/output/reaction_forces_th.F
 !||    reallocate_i_skyline                         ../engine/source/system/reallocate_skyline.F
+!||    rebuild_pon_tables                           ../engine/source/assembly/assadd2.F
 !||    renum_siz                                    ../engine/source/interfaces/interf/renum_siz.F
+!||    report_alloc                                 ../common_source/tools/memory/my_alloc_tools.F90
 !||    resol_alloc_nitsche                          ../engine/source/engine/resol_alloc.F90
 !||    resol_alloc_phase1                           ../engine/source/engine/resol_alloc.F90
 !||    resol_alloc_phase10                          ../engine/source/engine/resol_alloc.F90
@@ -333,7 +345,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sensor_logical                               ../engine/source/tools/sensor/sensor_logical.F
 !||    sensor_spmd                                  ../engine/source/tools/sensor/sensor_spmd.F
 !||    sensor_temp0                                 ../engine/source/tools/sensor/sensor_temp0.F
-!||    sfem_init                                    ../common_source/modules/elements/sfem_mod.F90
+!||    sfem_init                                    ../engine/source/elements/solid/solide4_sfem/sfem_init.F90
 !||    smp_init                                     ../engine/source/engine/resol_init.F
 !||    sms_build_mat_2                              ../engine/source/ams/sms_build_mat_2.F
 !||    sms_encin_2                                  ../engine/source/ams/sms_encin_2.F
@@ -358,7 +370,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    splissv                                      ../engine/source/elements/sph/splissv.F
 !||    split_asspar4                                ../engine/source/assembly/split_asspar4.F
 !||    spmd_allglob_isum9                           ../engine/source/mpi/generic/spmd_allglob_isum9.F
-!||    spmd_barrier                                 ../engine/source/mpi/spmd_mod.F90
 !||    spmd_chkw                                    ../engine/source/mpi/generic/spmd_chkw.F
 !||    spmd_collect                                 ../engine/source/mpi/output/spmd_collect.F
 !||    spmd_collect_multi_fvm                       ../engine/source/mpi/output/spmd_collect_multi_fvm.F
@@ -409,10 +420,13 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_max_xfe_i                               ../engine/source/mpi/elements/spmd_xfem.F
 !||    spmd_mumps_ini                               ../engine/source/mpi/implicit/imp_spmd.F
 !||    spmd_nlist_sms                               ../engine/source/mpi/ams/spmd_sms.F
+!||    spmd_profile_begin                           ../engine/source/mpi/generic/spmd_profiler_mod.F90
+!||    spmd_profile_end                             ../engine/source/mpi/generic/spmd_profiler_mod.F90
 !||    spmd_rbcast                                  ../engine/source/mpi/generic/spmd_rbcast.F
+!||    spmd_rebuild_boundary                        ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||    spmd_sd_xv                                   ../engine/source/mpi/nodes/spmd_sd_xv.F
 !||    spmd_sort_sms                                ../engine/source/mpi/ams/spmd_sms.F
-!||    spmd_wait                                    ../engine/source/mpi/spmd_wait.F90
+!||    spmd_sub_boundaries                          ../engine/source/mpi/spmd_exch_sub.F
 !||    spmd_wiout                                   ../engine/source/mpi/generic/spmd_wiout.F
 !||    spmd_xv_inter_type1                          ../engine/source/mpi/nodes/spmd_sd_xv_inter1.F90
 !||    sponfv                                       ../engine/source/elements/sph/sponfv.F
@@ -462,6 +476,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    bcs_nrf_mod                                  ../engine/source/boundary_conditions/bcs_nrf.F90
 !||    check_mod                                    ../common_source/modules/check_mod.F
 !||    cluster_mod                                  ../engine/share/modules/cluster_mod.F
+!||    command_line_args_mod                        ../engine/share/modules/command_line_args.F
 !||    connectivity_mod                             ../common_source/modules/connectivity.F90
 !||    coupling_adapter_mod                         ../engine/source/coupling/coupling_adapter.F90
 !||    crackxfem_mod                                ../engine/share/modules/crackxfem_mod.F
@@ -521,6 +536,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    multimat_param_mod                           ../common_source/modules/multimat_param_mod.F90
 !||    my_alloc_mod                                 ../common_source/tools/memory/my_alloc.F90
 !||    names_and_titles_mod                         ../common_source/modules/names_and_titles_mod.F
+!||    nloc_shell_detach_mod                        ../engine/source/engine/node_spliting/nloc_shell_detach.F90
 !||    nlocal_reg_mod                               ../common_source/modules/nlocal_reg_mod.F
 !||    nodal_arrays_mod                             ../common_source/modules/nodal_arrays.F90
 !||    offset_nproj_mod                             ../engine/source/interfaces/shell_offset/offset_nproj.F90
@@ -545,7 +561,10 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    seatbelt_mod                                 ../common_source/modules/seatbelt_mod.F
 !||    segvar_mod                                   ../engine/share/modules/segvar_mod.F
 !||    sensor_mod                                   ../common_source/modules/sensor_mod.F90
+!||    sfem_init_mod                                ../engine/source/elements/solid/solide4_sfem/sfem_init.F90
 !||    sfem_mod                                     ../common_source/modules/elements/sfem_mod.F90
+!||    shell_gpu_mod                                ../engine/source/elements/shell/coque/shell_gpu_mod.F90
+!||    shell_internal_forces_mod                    ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    shooting_node_mod                            ../engine/share/modules/shooting_node_mod.F90
 !||    skew_mod                                     ../common_source/modules/skew_mod.F90
 !||    sms_mod                                      ../engine/share/modules/sms_mod.F
@@ -553,6 +572,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sph_work_mod                                 ../common_source/modules/mat_elem/sph_work.F90
 !||    spmd_exch_wave_mod                           ../engine/source/mpi/nodes/spmd_exch_wave.F
 !||    spmd_mod                                     ../engine/source/mpi/spmd_mod.F90
+!||    spmd_profiler_mod                            ../engine/source/mpi/generic/spmd_profiler_mod.F90
+!||    spmd_rebuild_boundary_mod                    ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||    spmd_xv_inter_type1_mod                      ../engine/source/mpi/nodes/spmd_sd_xv_inter1.F90
 !||    stack_mod                                    ../engine/share/modules/stack_mod.F
 !||    state_mod                                    ../common_source/modules/state_mod.F
@@ -600,7 +621,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      T        NBRCVOIS,NBSDVOIS,LNRCVOIS,LNSDVOIS,NERCVOIS,NESDVOIS,LERCVOIS,
      U        LESDVOIS,NPSEGCOM,LSEGCOM ,NPORGEO ,
      V        IXTG1   ,NPBYL   ,LPBYL   ,RBYL    ,IGEO    ,IPM     ,
-     W        MADPRT  ,MADSH4  ,MADSH3  ,MADSOL  ,MADNOD  ,MADFAIL ,
+     W        MADPRT  ,MADSH4  ,MADSH3  ,MADSOL  ,MADNOD  ,
      X        IAD_RBY ,FR_RBY  ,IAD_RBY2,
      Y        FR_RBY2 ,IAD_I2M ,FR_I2M  ,ADDCNI2 ,PROCNI2 ,IADI2   ,FR_MV   ,
      Z        IADMV2  ,FR_LL   ,FR_RL   ,IADCJ   ,
@@ -655,11 +676,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
+              USE COMMAND_LINE_ARGS_MOD
               USE SPMD_EXCH_WAVE_MOD
               USE GHOST_SHELLS_MOD
               USE CONNECTIVITY_MOD
               USE NODAL_ARRAYS_MOD
               USE detach_node_mod
+              USE nloc_shell_detach_mod
+              USE spmd_rebuild_boundary_mod
               USE DSGRAPH_MOD
               USE ERROR_MOD
               USE RESOLSAV_MOD
@@ -774,6 +798,10 @@ C-----------------------------------------------
               use init_ale_mod , only : init_ale
               use sfem_mod
               use init_global_boundary_list_mod , only : init_global_boundary_list
+              use sfem_init_mod , only : sfem_init
+              use shell_internal_forces_mod
+              use shell_gpu_mod
+              use spmd_profiler_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -861,7 +889,7 @@ C-----------------------------------------------
      .           NERCVOIS(*),NESDVOIS(*),LERCVOIS(*),LESDVOIS(*), NPORGEO(*),
      .           NPSEGCOM(*), LSEGCOM(*), IGEO(NPROPGI,*),
      .           IPM(NPROPMI,*),MADPRT(*), MADSH4(*), MADSH3(*), MADSOL(*),
-     .           MADNOD(*),MADFAIL(*),
+     .           MADNOD(*),
      .           IAD_RBY2(*),
      .           FR_RBY2(*),IAD_I2M(*),FR_I2M(*),ADDCNI2(*),PROCNI2(*),IADI2(*),
      .           FR_MV(*), IADMV2(*),  FR_LL(*),  FR_RL(*),
@@ -1003,7 +1031,7 @@ c
               type (PBLAST_) ,intent(inout)                      :: PBLAST
               type (rbe3_) ,intent(inout)                        :: RBE3
               type (rwall_) ,intent(inout)                       :: RWALL
-              type (sfem_) ,intent(inout)                        :: SFEM  
+              type (global_sfem_) ,intent(inout) :: SFEM  
 C
               INTEGER ,INTENT(IN) :: NDAMP_VREL,NDAMP_VREL_RBYG
               INTEGER ,INTENT(IN) :: ID_DAMP_VREL(NDAMP_VREL),FR_DAMP_VREL(NSPMD+2,NDAMP_VREL)
@@ -1024,8 +1052,8 @@ C-----------------------------------------------
      .           ISTOP,  NFIA, NFEA, NFOA, NDMA, NDIN,
      .           NFNCA, NFTCA,NDMA2, NFNCA2, NFTCA2,
      .           L1,L2,L3,LL1,LL2,LL3,NFT2,LISENDP_PXFEM,
-     .           LIRECVP_PXFEM,NDAMA2,FLG_KJ2,NCONT,BID,K12,IVAD,IAD_GREL,
-     .           FLG_KJ2_RAZ,I_EXCH_FLG_RAZ
+     .           LIRECVP_PXFEM,NDAMA2,FLG_KJ2,FLG_SPR_DT,NCONT,BID,K12,IVAD,IAD_GREL,
+     .           FLG_KJ2_RAZ,FLG_SPR_RAZ,I_EXCH_FLG_RAZ
               INTEGER :: LISENDP_CRK,LIRECVP_CRK
               INTEGER :: I13A,I13B,I13C,I13D,I13E,I13F,I13G,I13H,I13I
               INTEGER :: I15A,I15B,I15C,I15D,I15E,I15F,I15G,I15H,I15I,I15J,I15K
@@ -1075,6 +1103,14 @@ C----
               SAVE DRETRI, XSEC, LISENDP, LIRECVP, ISENDP, IRECVP,
      .             CNEL, ADDCNEL, ADDTMPL, IPARTL, NPARTL, LINDIDEL, LBUFIDEL,
      .             LBUFSEGLO
+C--- Rolling BOUNDARY_ADD/BOUNDARY baseline used by merge_boundary_with_split.
+C--- spmd_rebuild_boundary uses MAIN_PROC only, losing multi-section placements
+C--- set from element connectivity. This baseline is captured from the current
+C--- boundary BEFORE each rebuild (so before split N it holds split N-1's merged
+C--- boundary), keeping previously split nodes across multiple split events.
+              INTEGER, DIMENSION(:,:), ALLOCATABLE :: NLOC_BND_ADD_ORIG
+              INTEGER, DIMENSION(:),   ALLOCATABLE :: NLOC_BND_ORIG
+              INTEGER, SAVE :: NLOC_BND_NSPMD_SAVE = -1
               my_real DT2T,
      .                DT2SAVE,  MAS, BB, WFEXC,TREST,DTREST,
      .                DMAST, DINERT, FACTB,DAMPT,
@@ -1164,7 +1200,7 @@ C End Parith/ON specific
               my_real DT3
               INTEGER  IGROUPFLG(2)
               INTEGER, DIMENSION(:),ALLOCATABLE :: IGROUPC,IGROUPTG,IGROUPS
-              INTEGER  IOLDSECT
+              INTEGER  IOLDSECT,S_NODA_FEXT
               ! TETRA4 : SMOOTH FINITE ELEMENT FORMULATIONS now in SFEM%
 C-----------------------------------------------------------------------------------
 C Parith/OFF + AMS
@@ -1336,7 +1372,7 @@ C-------------------------------------------------------------------------------
               INTEGER STOP_OR_ADD_CYCLE  !< Check if additional cycle must be done after restart at termination
               INTEGER, PARAMETER :: MAXFUNC = 100
               INTEGER :: GLOB_IDEL7NOK, RQ_SHOOTING_NODE
-              integer :: numnod_old,numnodm_old
+              integer :: numnod_old,numnodm_old,nloc_nnod_old
               integer :: new_crack,nsect_offset
               TYPE(FR_WAVE_) :: FR_WAVE_BUF
 C-----------------------------------------------------------------------------------
@@ -1367,6 +1403,11 @@ C coupling coupling
               logical :: ongoing
               double precision :: dt2max_coupling
 C-----------------------------------------------------------------------------------
+C GPU
+              type(SHELLS_) :: SHELLS
+              integer :: ipri
+C             
+
               call resol_alloc_phase1(rby6,dxancg,nb25_candt,nb25_impct,nb25_dst1,nb25_dst2,igrouc,igrounc, 
      .                                interfaces,int18add,idamp_rdof_tab,icontact_old, 
      .                                nrbykin,numnod,parasiz,ngroup,ninter,sicontact,nodes,
@@ -1385,6 +1426,7 @@ C-------------------------------------------------------------------------------
               IDAMP_RDOF_TAB = 0
               FLG_DTNODAMP = 0
               FLG_KJ2 = 0
+              FLG_SPR_DT = 0
               I_EXCH_FLG_RAZ = 0
               NELTST  = 0
               ITYPTST = 0
@@ -1512,7 +1554,7 @@ C------------------------------------------
      .                                NGPE,NGRTH,NELEM,NODREAC,GRTH,IGRTH,DXANCG, 
      .                                IGROUPFLG,IGROUPC,IGROUPTG,IGROUPS,NUMMAT,IPM,NPROPMI, 
      .                                NVOLU,NUMELC,NUMELS)
- 
+
 C-----------------------------------------------
 C /IMPDISP/FGEO
               FXVEL_FGEO = 0
@@ -1605,6 +1647,7 @@ C===============================================================================
               LL2 = LL1+6*NUMELS10
               LL3 = LL2+12*NUMELS20
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              call spmd_profile_begin(PROF_RESOL_INIT)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,N1,GREFTSK,GRELTSK)
@@ -1638,7 +1681,7 @@ C
      L         XFRAME   ,
      M         IXTG1    ,IBCL     ,NODES%VISCN    ,DD_R2R   ,
      O         ELBUF    ,IPART    ,MADPRT   ,MADSH4   ,
-     P         MADSH3   ,MADSOL   ,MADNOD   ,MADFAIL  ,IGEO     ,
+     P         MADSH3   ,MADSOL   ,MADNOD   ,IGEO     ,
      Q         INTLIST  ,NBINTC   ,ELEMENT%PON%PROCNE   ,NISKYFI  ,NODES%WEIGHT   ,
      R         ISIZXV   ,ILENXV   ,ADDCNI2  ,PROCNI2  ,IAD_I2M  ,
      S         FR_I2M   ,FR_NBCCI2,I2SIZE   ,FR_MAD   ,LWIBEM   ,
@@ -1688,6 +1731,7 @@ C
 !$OMP END PARALLEL
 C     End Initialisations //     
               CALL PYTHON_END_OPENMP(PYTHON)
+              call spmd_profile_end(PROF_RESOL_INIT)
               IF (ALEMUSCL_Param%IALEMUSCL == 0) DEALLOCATE(ADDTMPL)
 C========================================================================================
 C                                  NON PARALLEL SECTION (SMP)
@@ -1815,13 +1859,13 @@ C ---------------------
 C Allocating FEXT Array
 C ---------------------
               IF(ANIM_V(5)+OUTP_V(5)+H3D_DATA%N_VECT_FINT+
-     .           ANIM_V(6)+OUTP_V(6)+H3D_DATA%N_VECT_FEXT >0 .or. ViperCoupling) THEN
-                ALLOCATE(NODA_FEXT(3*NUMNOD))
-                NODA_FEXT(1:3*NUMNOD)=ZERO
+     .           ANIM_V(6)+OUTP_V(6)+H3D_DATA%N_VECT_FEXT >0 .or. ViperCoupling .OR. NFLOW>0 ) THEN
+                S_NODA_FEXT = NUMNOD
               ELSE
-                ALLOCATE(NODA_FEXT(3))
-                NODA_FEXT(1:3)=ZERO
+                S_NODA_FEXT = 1
               ENDIF
+              ALLOCATE(NODA_FEXT(3*S_NODA_FEXT))
+              NODA_FEXT(1:3*S_NODA_FEXT)=ZERO
 C ---------------------
 C Allocating PEXT Array
 C ---------------------
@@ -1946,6 +1990,7 @@ C------------IF adaptive Mesh : check if there are elements eroded after trimmin
 c         allocate(nodes%deleted_node(2*numnod)) ! working array to mark nodes connected to deleted element
 c         allocate(nodes%work_array_node(nthread*numnod)) ! working array to mark nodes (connected to active element or deleted element)
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              call spmd_profile_begin(PROF_TAGOFF3N)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,N1,GREFTSK,GRELTSK,omp_address)
@@ -2060,10 +2105,15 @@ C Init var parallel SMP
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
                 CALL DEALLOC_SHOOT_INTER( SHOOT_STRUCT )
+                call spmd_profile_end(PROF_TAGOFF3N)
               ENDIF
 
               ! TETRA4 : SMOOTH FINITE ELEMENT FORMULATIONS
-              CALL sfem_init(SFEM)
+              !CALL sfem_init(SFEM)
+              l1 = 1+nixs*numels+nsvois*nixs ! address of ixs10
+              call sfem_init(numels,numels10,numels8,numnod,ngroup, 
+     .                       nparg,ispmd,nspmd, 
+     .                       iparg,ixs,ixs(l1),sfem,nodes)
 
 C========================================================================================
 C                                    NON PARALLEL SECTION (SMP)
@@ -2603,6 +2653,18 @@ C
 C===========================================================================
 C                 BEGINNING OF EXPLICIT ITERATION LOOP
 C===========================================================================
+              IF(GPU == 1) THEN
+               CALL FORINTC_PREPARE_GPU( GPU, SHELLS, NUMELC,
+     .           PM , NPROPM,       GEO, NPROPG,  
+     .           NODES, MAT_ELEM  , NSECT, NSLIPRING, NEXMAD, 
+     .           IPARG, nparg     ,ELEMENT%SHELL%IXC       , IPART(K3),
+     .           IGROUC    ,NGROUC, NGROUP, NIXC    ,
+     .           ELBUF_TAB, DTFAC1(3),
+     .           NODADT, IDT1SH, IDTMINS, IDTMIN(3),
+     .           HVISC, HELAS, HVLIN )
+              ENDIF
+
+
  100          CONTINUE
 
               NCYCLE_DEBUG = NCYCLE
@@ -2675,8 +2737,6 @@ C
 C----------------------------------
               IF(IMONM > 0) CALL STOPTIME(TIMERS,47)
               IF(IMON>0) CALL STOPTIME(TIMERS,6)
-
-              IMADFSH4=0
 
 C----------------------------------
 C       Gather actual thickness of shells
@@ -2912,6 +2972,7 @@ C-------------------------------------------------------------------
                 IF (IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,41)
                CALL PYTHON_BEGIN_OPENMP(PYTHON)
+               call spmd_profile_begin(PROF_PFLUID)
 !$OMP PARALLEL
                 CALL PFLUID(ILOADP  ,LOADP             ,NPC        ,TF          ,NODES%A               ,
      2                      NODES%V       ,NODES%X                 ,XFRAME      ,NODES%MS              ,
@@ -2919,6 +2980,7 @@ C-------------------------------------------------------------------
      4                      ELEMENT%PON%FSKY , ELEMENT%PON%FSKY                 ,LLOADP                ,NODA_FEXT   ,H3D_DATA  ,
      5                      OUTPUT%TH%TH_SURF, PYTHON)
 !$OMP END PARALLEL
+               call spmd_profile_end(PROF_PFLUID)
                 CALL PYTHON_END_OPENMP(PYTHON)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,41)
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
@@ -2961,14 +3023,12 @@ C----------------------
 C         /BCS/NRF
 C----------------------
                 IF(BCS%NUM_NRF > 0)THEN
-                  CALL BCS_NRF(N2D            , NUMNOD   ,
-     .                         NODES%X        , NODES%V  , NODES%A   ,
-     .                         NIXS           , NIXTG    , NIXQ      ,
-     .                         NUMELS         , NUMELTG  , NUMELQ    ,
-     .                         IXS            , IXTG     , IXQ       ,
-     .                         IPARIT         , LSKY     , ELEMENT%PON%FSKY,
-     .                         OUTPUT%TH%WFEXT, NODA_FEXT, DT1       ,
-     .                         ANIM_V         , OUTP_V   , H3D_DATA  )
+                  CALL BCS_NRF(N2D            , NUMNOD     ,
+     .                         NODES%X        , NODES%V    , NODES%A   ,
+     .                         IPARIT         , LSKY       , ELEMENT%PON%FSKY,
+     .                         OUTPUT%TH%WFEXT, NODA_FEXT  , DT1       ,
+     .                         ANIM_V         , OUTP_V     , H3D_DATA  ,
+     .                         bcs            , NODES%STIFN, NODES%MS)
                 ENDIF
 C----------------------
 
@@ -2977,7 +3037,7 @@ C----------------------
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
-
+               call spmd_profile_begin(PROF_CONV_RAD)                           
 !$OMP PARALLEL
 C-------------------------------------------------------------------
 C   BC -- CONVECTION  for heat_transfert by FEM
@@ -3004,6 +3064,7 @@ C-----------------------------------------------------------
                   IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                 ENDIF
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_CONV_RAD)
               ENDIF
 
 C========================================================================================
@@ -3061,8 +3122,9 @@ C
               IF (NFLOW>0) THEN
                 CALL FLOW0(OUTPUT,IFLOW, RFLOW,   WIFLOW, WRFLOW, NODES%X,
      .                     NODES%V,     NODES%A,       NPC,    TF,     SENSORS%SENSOR_TAB,
-     .                     NBGAUGE,LGAUGE,  GAUGE , NSENSOR,
-     .                     IGRV,   AGRV  ,NFUNCT  ,PYTHON, OUTPUT%TH%WFEXT)
+     .                     NBGAUGE,LGAUGE,  GAUGE , NSENSOR,  IGRV,   
+     .                     AGRV  ,NFUNCT  ,NUMNOD   ,PYTHON, OUTPUT%TH%WFEXT,
+     .                     S_NODA_FEXT, NODA_FEXT, OUTPUT%DATA%NODA_SURF, OUTPUT%DATA%NODA_PEXT)
               ENDIF
 
 C----------------------------------------
@@ -3082,7 +3144,7 @@ C----------------------------------------
      5             IGRBRIC ,NODES%TEMP    ,2       ,IRLEN7T ,ISLEN7T ,
      6             IRLEN20 ,ISLEN20 ,IRLEN20T,ISLEN20T,IRLEN20E,
      7             ISLEN20E,NODES%IKINE   ,DIAG_SMS,SENSORS%SENSOR_TAB,INTERFACES%INTBUF_TAB ,INT24E2EUSE,
-     8             FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%NNSH_OSET)
+     8             FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%HAS_OFFSET_GLOBAL)
               END IF
               IF (IMONM > 0) CALL STOPTIME(TIMERS,24)
               IF (IMON>0) CALL STOPTIME(TIMERS,13)
@@ -3124,10 +3186,13 @@ C TETRA4 : SMOOTH FINITE ELEMENT FORMULATIONS
 C---------------------------------------------
               IF(SFEM%ISFEM == 1) THEN
                 IF(GLOB_THERM%ITHERM == 0)THEN
+                  if(imon>0) call startime(timers,timer_sfem)               
                   L1 = 1+NIXS*NUMELS + NSVOIS*NIXS
-                  CALL S4LAGSFEM(IPARG, IXS, NODES%X, NODES%V, ELBUF_TAB, sfem%SFEM_NODVAR, sfem%S_SFEM_NODVAR,
-     .                           NODES%BOUNDARY_ADD, NODES%BOUNDARY, IXS(L1), NODES%XDP, SXDP,
-     .                           NUMNOD, NODES%BOUNDARY_SIZE , NSPMD, NUMELS, NUMELS8, NUMELS10,  NPARG, NGROUP, IRESP)
+                  CALL S4LAGSFEM(IPARG, IXS, NODES%X, NODES%V, ELBUF_TAB, sfem%lag%nodvar, sfem%S_SFEM_NODVAR,
+     .                           IXS(L1), NODES%XDP, nodes%s_xdp,
+     .                           NUMNOD, NSPMD, NUMELS, NUMELS8, NUMELS10,  NPARG, NGROUP, IRESP,
+     .                           0,ispmd,sfem%lag)    
+                  if(imon>0) call stoptime(timers,timer_sfem)
                 ENDIF
               ENDIF
 
@@ -3153,6 +3218,9 @@ C----------------------------------------
                   NATIV_SMS_SIZ = 0
                 ENDIF
 
+C
+
+
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
@@ -3164,7 +3232,7 @@ C===============================================================================
                   CALL ASSIGN_PTR(ptrX,NODES%X,3,NUMNOD)
                 ENDIF
                 INTER_ERRORS = 0
-
+                call spmd_profile_begin(PROF_INTTRI)
 !$OMP PARALLEL PRIVATE(ITSK,DT2TT,NELTSTT,ITYPTSTT)
                 DT2TT = DT2T
                 NELTSTT = NELTST
@@ -3205,6 +3273,7 @@ C
 #include "lockoff.inc"
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_INTTRI)
                 IF(INTER_ERRORS > 0) THEN
                   MSTOP = 2
                 ENDIF
@@ -3306,7 +3375,6 @@ C
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
-
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
@@ -3373,14 +3441,27 @@ C===============================================================================
 C--- // ----------------------------------------
 C     EXTERNAL FORCES (ANIM, OUTP, H3D)
 C-----------------------------------------------
+                call spmd_profile_begin(PROF_FORANI1)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
                 NODLTSK   = (ITSK+1)*NUMNOD/NTHREAD
                 CALL FORANI1(OUTPUT,NODES%A ,NFIA,NFEA,NFOA,NODFTSK,NODLTSK,NODA_FEXT,H3D_DATA)
 !$OMP END PARALLEL
-C
+                call spmd_profile_end(PROF_FORANI1)
               ENDIF
+
+              IF(SFEM%ISFEM == 1) THEN
+                IF(GLOB_THERM%ITHERM == 0)THEN
+                  L1 = 1+NIXS*NUMELS + NSVOIS*NIXS
+                  if(imon>0) call startime(timers,timer_sfem)               
+                  CALL S4LAGSFEM(IPARG, IXS, NODES%X, NODES%V, ELBUF_TAB, sfem%lag%nodvar, sfem%S_SFEM_NODVAR,
+     .                           IXS(L1), NODES%XDP, nodes%s_xdp,
+     .                           NUMNOD, NSPMD, NUMELS, NUMELS8, NUMELS10,  NPARG, NGROUP, IRESP,
+     .                           1,ispmd,sfem%lag)  
+                  if(imon>0) call stoptime(timers,timer_sfem)
+                ENDIF
+              ENDIF              
 C--------------------------------------------------------
 C       ALE flux + forces
 C--------------------------------------------------------
@@ -3399,6 +3480,7 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              CALL spmd_profile_begin(PROF_ALEMAIN)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,DT2TT,NELTSTT,ITYPTSTT)
@@ -3438,7 +3520,7 @@ C
      M               IGRBRIC               ,NLOC_DMG ,ID_GLOBAL_VOIS,FACE_VOIS         ,EBCS_TAB           ,ALE_CONNECTIVITY,
      N               MAT_ELEM              ,H3D_DATA ,DT            ,OUTPUT            ,NEED_COMM_INTER18  ,IDTMINS         ,
      O               IDTMIN                ,MAXFUNC  ,IMON_MAT      ,USERL_AVAIL       ,
-     P               impl_s                ,idyna    ,PYTHON        ,MAT_ELEM%MAT_PARAM,GLOB_THERM,SFEM )
+     P               impl_s                ,idyna    ,PYTHON        ,MAT_ELEM%MAT_PARAM,GLOB_THERM,SFEM,nodes%s_xdp )
 
                 IF(INT22 /=0)  call my_barrier !INTER22in input files  - get also IDT_INT22
 #include "lockon.inc"
@@ -3467,6 +3549,7 @@ C
 
 !$OMP END PARALLEL
                CALL PYTHON_END_OPENMP(PYTHON)
+               CALL spmd_profile_end(PROF_ALEMAIN)
 
                 IF(NEED_COMM_INTER18) THEN
                   CALL SPMD_EXCH_INTER_18(NINTER,NSPMD,NUMBER_INTER18,SXCELL,INTER18_LIST,
@@ -3576,6 +3659,16 @@ C===============================================================================
 !$OMP END PARALLEL
 
               ENDIF
+
+              IF(GPU == 1) THEN
+C     GPU SHELL: launch async pipeline BEFORE CPU element work
+C     so that GPU kernels execute while FORINTC + FORINT run on CPU.
+C     Results are collected later by gpu_shell_sync_scatter.
+                CALL STARTIME(TIMERS,TIMER_GPU_SHELL)
+                CALL gpu_shell_launch_async(NODES,SHELLS,DT1)
+                CALL STOPTIME(TIMERS,TIMER_GPU_SHELL)
+               ENDIF
+
 C--- // 3N ------------------------------
 C       INTERFACES WITH VOID OPENING
 C----------------------------------------
@@ -3617,10 +3710,12 @@ C----------------------------------------
                 ENDIF
 
 
+
 C=======================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_INTFO1)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,IADISK)
@@ -3670,6 +3765,7 @@ C Init var parallel SMP
 
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_INTFO1)
 
                 IF(IMPL_S>0) THEN
                   CALL RE2INT5(NT_IMP,NUM_IMP,NS_IMP,NE_IMP,NUM_IMPL,IPARI,NINT7)
@@ -3720,6 +3816,7 @@ C===============================================================================
                   CALL ASSIGN_PTR(ptrX,NODES%X,3,NUMNOD)
                 ENDIF
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                CALL spmd_profile_begin(PROF_INTFO2)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IADISK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,DT2TT,NELTSTT,ITYPTSTT)
@@ -3772,7 +3869,7 @@ C Init var parallel SMP
      P            PSKIDS            ,T2MAIN_SMS     ,FORNEQS        ,KNOTLOCPC       ,KNOTLOCEL      ,
      Q            PINCH_DATA%APINCH(1,IDX_PINCH),PINCH_DATA%STIFPINCH(IDX_PINCH),T2FAC_SMS,TAGNCONT   ,
      R            KLOADPINTER       ,LOADPINTER     ,LOADP_HYD_INTER ,DGAPLOADINT    ,S_LOADPINTER    ,
-     S            INTERFACES        ,XCELL_REMOTE)
+     S            INTERFACES        ,XCELL_REMOTE , IGRSURF)
 
                 IF(NINTSTAMP/=0.AND.(ANIM_V(12)+OUTP_V(12)+H3D_DATA%N_VECT_PCONT >0.OR.
      .                 ANIM_V(4)+OUTP_V(4)+H3D_DATA%N_VECT_CONT >0))THEN
@@ -3802,6 +3899,7 @@ C Init var parallel SMP
                   CALL ASSPARXX(ITSK, INTLIST,NBINTC,IPARI,GLOB_THERM%NODADT_THERM)
                 ENDIF
 !$OMP END PARALLEL
+                CALL spmd_profile_end(PROF_INTFO2)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
 C========================================================================================
@@ -3932,6 +4030,7 @@ C       VOLUMES MONITORES
 C--------------------------------------------------------
 
               IF(NVOLU/=0)THEN
+                call spmd_profile_begin(PROF_FVBAG)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,50)
                 CALL TRACE_IN(11,0,ZERO)
                 NN = NUMELC+NUMELTG+IBAGSURF
@@ -3982,6 +4081,7 @@ C
                 ! After this call DT2R and MIN_TAB are unchanged
                 ! The minimum value of DT2R and the corresponding MIN_TAB
                 ! Will be received after a call to  MPI_MIN_REAL_END
+                call spmd_profile_end(PROF_FVBAG)
               ENDIF
 
               T1SH=TT
@@ -4001,13 +4101,13 @@ C     INTERNAL FORCES OF SHELLS, 3-NODE SHELLS
 C-------------------------------
               CALL TRACE_IN(14,0,ZERO)
               IF (IMON>0) CALL STARTIME(TIMERS,TIMER_ELEMENT)
-
 C -------------------------------------------------------------------
 C   User Libraries get the possibility to use GET_U_NOD_X & GET_U_NOD_V in user elements properties (Solids & Springs)
               GETUNOD_NOCOM=1
 C -------------------------------------------------------------------
               LLT1 = I87G+3*NUMELTG
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              call spmd_profile_begin(PROF_FORINTC)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,NDTSKR,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,DT2TT,NELTSTT,ITYPTSTT)
@@ -4033,7 +4133,7 @@ C Init var parallel SMP
 
               NDTSKR=NDTSK ; IF(IRODDL == 0)NDTSKR=1
 
-              CALL FORINTC(TIMERS,
+              CALL FORINTC(TIMERS, GPU,
      1           PM           ,GEO             ,NODES%X               ,NODES%A(1,NDTSK)     ,NODES%AR(1,NDTSK)  ,
      2           NODES%V            ,NODES%VR              ,NODES%MS              ,NODES%IN             ,NLOC_DMG     ,
      3           WA(NWAFTSK)  ,NODES%STIFN(NDTSK)    ,NODES%STIFR(NDTSKR)    ,ELEMENT%PON%FSKY           ,CRKSKY       ,
@@ -4046,7 +4146,7 @@ C Init var parallel SMP
      A           IPART        ,IPART(K3)       ,IPART(K8)       ,SECFCUM        ,
      B           FSAVD        ,MAT_ELEM%GROUP_PARAM ,
      E           FZERO        ,IXTG1           ,ELEMENT%PON%IAD_TG6      ,IGEO           ,IPM          ,
-     F           MADFAIL      ,XSEC            ,ITSK            ,NODES%MCP          ,
+     F           XSEC         ,ITSK            ,NODES%MCP          ,
      G           NODES%TEMP         ,FTHE(IDX_FTHE)  ,FTHESKY         ,
      H           MS_PLY       ,ZI_PLY          ,INOD_PXFEM      ,XEDGE4N       ,XEDGE3N       ,
      I           IEL_PXFEM    ,IADC_PXFEM      ,IGROUC          ,NGROUC        ,GRESAV(IGMTSK),
@@ -4068,6 +4168,8 @@ C Init var parallel SMP
               END IF
 #include "lockoff.inc"
 !$OMP END PARALLEL
+              call spmd_profile_end(PROF_FORINTC)
+
               CALL PYTHON_END_OPENMP(PYTHON)
               CALL TRACE_OUT(14)
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_ELEMENT)
@@ -4094,6 +4196,7 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
            CALL PYTHON_BEGIN_OPENMP(PYTHON)
+           call spmd_profile_begin(PROF_FORINT)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,NDTSKR,IPMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,DT2TT,NELTSTT,ITYPTSTT)
@@ -4153,7 +4256,8 @@ C
      Z         SBUFMAT        ,SNPC          ,STF         ,NODADT  ,DTFAC1,
      .         DTMIN1         ,IDTMIN        ,IOUT        ,ISTDO   ,IDTMINS,DTFACS,NSVOIS,
      .         IRESP          ,MAXFUNC       ,USERL_AVAIL ,GLOB_THERM,IMON_MAT,DTMINS,SANIN,
-     .         NGRTH          ,NELEM         ,SFEM  )
+     .         NGRTH          ,NELEM         ,SFEM        ,FLG_SPR_DT)
+
 C
 #include "lockon.inc"
               IF(DT2TT<DT2T)THEN
@@ -4163,14 +4267,40 @@ C
               END IF
 #include "lockoff.inc"
 !$OMP END PARALLEL
+              call spmd_profile_end(PROF_FORINT)
               CALL PYTHON_END_OPENMP(PYTHON)
               CALL TRACE_OUT(14)
-
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_ELEMENT)
+
+              IF(GPU == 1) THEN
+C     Compute print-flag for GPU shell sync: same logic as FORINTC IPRI.
+C     (GPU elements are only offloaded when ISENS_ENERGY==0, so the
+C     SENSOR_ENERGY_PART side-effect is not relevant here.)
+                IPRI = 0
+                IF (MOD(NCYCLE,IABS(NCPRI))==0.OR.TT >= OUTPUT%TH%THIS.OR.
+     .               MDESS /= 0.OR.TT >= OUTPUT%TH%THIS1(1).OR.TT >= OUTPUT%TH%THIS1(2)
+     .               .OR.TT >= OUTPUT%TH%THIS1(3).OR.TT >= OUTPUT%TH%THIS1(4).OR.TT >= OUTPUT%TH%THIS1(5)
+     .               .OR.TT >= OUTPUT%TH%THIS1(6).OR.TT >= OUTPUT%TH%THIS1(7).OR.TT >= OUTPUT%TH%THIS1(8)
+     .               .OR.TT >= OUTPUT%TH%THIS1(9).OR.NTH /= 0.OR.NANIM/=0
+     .               .OR.TT >= TABFIS(1).OR.TT >= TABFIS(2)
+     .               .OR.TT >= TABFIS(3).OR.TT >= TABFIS(4).OR.TT >= TABFIS(5)
+     .               .OR.TT >= TABFIS(6).OR.TT >= TABFIS(7).OR.TT >= TABFIS(8)
+     .               .OR.TT >= TABFIS(9).OR.TT >= TABFIS(10).OR.ISTAT==3) IPRI=1
+C     GPU SHELL: synchronize + scatter results now that FORINTC + FORINT
+C     have completed on the CPU.  By this point the GPU pipeline has had
+C     time to finish, so the sync call should return near-instantly.
+                CALL STARTIME(TIMERS,TIMER_GPU_SHELL)
+                CALL gpu_shell_sync_scatter(
+     .           NODES,SHELLS,DT2T,PARTSAV,NPSAV,NPART,IPRI)
+                CALL STOPTIME(TIMERS,TIMER_GPU_SHELL)
+              ENDIF
+
+
 C-----
               IF(NUMSPHG/=0)THEN
+                call spmd_profile_begin(PROF_SPH)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                IF (IMONM > 0) CALL STARTIME(TIMERS,87)
+                IF (IMON>0) CALL STARTIME(TIMERS,87)
                 CALL TRACE_IN(13,0,ZERO)
 C-----------------------------------------------
 C     SPH SORT, SYMMETRIZATION AND CSPH PREPARATION & SPH INLETS/OUTLETS (After forint)
@@ -4205,11 +4335,11 @@ C Init var parallel SMP
 !$OMP END PARALLEL
               CALL PYTHON_END_OPENMP(PYTHON)
 
-                IF (IMONM > 0) CALL STOPTIME(TIMERS,87)
+                IF (IMON>0) CALL STOPTIME(TIMERS,87)
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
-                IF (IMONM > 0) CALL STARTIME(TIMERS,88)
+                IF (IMON>0) CALL STARTIME(TIMERS,88)
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
 !$OMP PARALLEL
@@ -4262,6 +4392,7 @@ C----------------------------------
 #include "lockoff.inc"
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_SPH)
                 CALL PYTHON_END_OPENMP(PYTHON)
 C -------------------------------------------------------------------
 C   User Libraries get the possibility to use GET_U_NOD_X & GET_U_NOD_V in user elements properties (Solids & Springs)
@@ -4273,7 +4404,7 @@ C                                     NON PARALLEL SECTION (SMP)
 C========================================================================================
 
                 CALL TRACE_OUT(13)
-                IF (IMONM > 0) CALL STOPTIME(TIMERS,88)
+                IF (IMON>0) CALL STOPTIME(TIMERS,88)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
               ENDIF
 
@@ -4292,6 +4423,7 @@ C----------------------------------------------
 
 
               IF(NVOLU/=0)THEN
+                call spmd_profile_begin(PROF_FVBAG)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,50)
                 CALL TRACE_IN(11,0,ZERO)
                 NN = NUMELC+NUMELTG+IBAGSURF
@@ -4329,6 +4461,7 @@ C
 
                 CALL TRACE_OUT(11)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,50)
+                call spmd_profile_end(PROF_FVBAG)
               ENDIF
 
 C========================================================================================
@@ -4358,6 +4491,7 @@ C----------------------------------------
 C Communication of interface forces (SPMD), Part2 : Reception
 C----------------------------------------
               IF(NINTER/=0) THEN
+                call spmd_profile_begin(PROF_EXFOR)
                 IF(NSPMD>1)THEN
                   IF(IMONM == 2)THEN
                     CALL STARTIME(TIMERS,59)
@@ -4399,6 +4533,7 @@ C
                     IF (IMONM > 0) CALL STOPTIME(TIMERS,22)
                   ENDIF
                 ENDIF
+                call spmd_profile_end(PROF_EXFOR)
               ENDIF
 
  22           CONTINUE
@@ -4408,8 +4543,10 @@ C
                 CALL SPMD_EXCH_SUB_PON(NLOC_DMG)
               ENDIF
               IF(NSPMD > 1.AND. NINTLOADP > 0)THEN
+                call spmd_profile_begin(PROF_TAGNCONT)
                 LENR = NODES%BOUNDARY_ADD(1,NSPMD+1)-NODES%BOUNDARY_ADD(1,1)
                 CALL SPMD_EXCH_TAGNCONT(TAGNCONT,NODES%BOUNDARY_ADD ,NODES%BOUNDARY,LENR     )
+                call spmd_profile_end(PROF_TAGNCONT)
               ENDIF
 !   ----------------------------------
 
@@ -4418,13 +4555,14 @@ C
                 CALL TRACE_IN(10,0,ZERO)
                 IF (IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,41)
+                CALL spmd_profile_begin(PROF_LOADP)
                 CALL LOAD_PRESSURE(ILOADP    ,LOADP     ,LLOADP  ,NPC    ,TF       ,
      2                              NODES%A         ,NODES%V         ,NODES%X       ,SKEWS%SKEW   ,SENSORS%SENSOR_TAB,
      3                              ELEMENT%PON%IAD_LOADP,ELEMENT%PON%FSKY      ,OUTPUT%DATA%VECT_FEXT,TAGNCONT ,NSENSOR   ,
      4                              LOADP_HYD_INTER,H3D_DATA , PYTHON,
      5                              NPRESLOAD ,LOADP_TAGDEL,OUTPUT%TH%TH_SURF,PBLAST,OUTPUT%TH%WFEXT)
 
-
+                CALL spmd_profile_end(PROF_LOADP)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,41)
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                 CALL TRACE_OUT(10)
@@ -4432,6 +4570,7 @@ C
 C--- //------------------------------
 C       FORCE ASSEMBLY
 C-------------------------------------
+              CALL spmd_profile_begin(PROF_ASM)
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
@@ -4484,7 +4623,7 @@ C                                     PARALLEL SECTION (SMP)
 C========================================================================================
               IF(NUMSPH /= 0 .AND. NSPHSOL /= 0 )THEN
                 IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                IF (IMONM > 0) CALL STARTIME(TIMERS,89)
+                IF (IMON>0) CALL STARTIME(TIMERS,89)
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
 !$OMP PARALLEL
 !$OMP+PRIVATE(ITSK,NODFTSK,NODLTSK)
@@ -4502,7 +4641,7 @@ C===============================================================================
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
 
-                IF (IMONM > 0) CALL STOPTIME(TIMERS,89)
+                IF (IMON>0) CALL STOPTIME(TIMERS,89)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
               ENDIF
 
@@ -4791,6 +4930,7 @@ C
               IF(IPARIT==1) DEALLOCATE( FSKY_L )
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_ASM)
               CALL TRACE_OUT(15)
+              CALL spmd_profile_end(PROF_ASM)
 C========================================================================================
 C                                    NON PARALLEL SECTION (SMP)
 C========================================================================================
@@ -5010,6 +5150,7 @@ C===============================================================================
 c         allocate(nodes%deleted_node(2*numnod)) ! working array to mark nodes connected to deleted element
 c         allocate(nodes%work_array_node(nthread*numnod)) ! working array to mark nodes (connected to active element or deleted element)
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_SHOOTING_NODE)
 !$OMP PARALLEL
 !$OMP+ PRIVATE(ITSK,NODFTSK,NODLTSK,NUMNTSK,NDTSK,IPMTSK,IGMTSK)
 !$OMP+ PRIVATE(PARTFTSK,PARTLTSK,NWAFTSK,GREFTSK,GRELTSK,omp_address)
@@ -5142,61 +5283,152 @@ C Init var parallel SMP
                   CALL PYTHON_END_OPENMP(PYTHON)
                   IF (IMONM > 0 ) CALL STOPTIME(TIMERS,29)
                   CALL DEALLOC_SHOOT_INTER( SHOOT_STRUCT )
+                  call spmd_profile_end(PROF_SHOOTING_NODE)
                 ENDIF
               ENDIF
 
 
 c ========================================================================================
 C                                     node splitting
-C  uncomment the following code for an example of node splitting (using non-physical deformation critera)
+             IF(.FALSE.) THEN
+C            IF(NLOC_DMG%IMOD>0) THEN
+               numnod_old = numnod
+               numnodm_old = numnodm
+               nloc_nnod_old = NLOC_DMG%NNOD
+               ! the main function that will contain the physical criteria to detach nodes and update the ownership of the new nodes
+               call nloc_shell_detach(nodes, element, interfaces, npari, ninter, ipari, numnod,
+     .                  numnodg, numelc, ispmd, nspmd,
+     .                  new_crack, nloc_dmg, nthread)
+ 
+               if(new_crack > 0) then
+                 ! if at least 1 node has been detached, some data must be re-initialized
+                 numnodm = numnodm_old + new_crack
+                 ! Rebuild BOUNDARY and BOUNDARY_ADD from scratch using updated ownership.
+                 ! This replaces the per-split extend_boundary_for_split incremental updates.
+                 IF (NSPMD > 1) THEN
+                   ! Snapshot the CURRENT boundary as the merge baseline BEFORE the
+                   ! rebuild. spmd_rebuild_boundary uses only MAIN_PROC ownership, which
+                   ! moves some existing nodes out of sections where they were placed
+                   ! from element connectivity (e.g., a triple-rank node shared by ranks
+                   ! 0,3,4 ends up only in rank-0 section, losing the rank-3 exchange).
+                   ! merge_boundary_with_split restores the correct sections for the
+                   ! existing nodes while appending the new split-node entries.
+                   ! Snapshotting on EVERY split (not only the first) keeps the baseline
+                   ! rolling: before split N it holds split N-1's merged boundary, so
+                   ! nodes created in earlier splits (now id <= NUMNOD_OLD) are retained
+                   ! instead of being dropped by the (id > NUMNOD_OLD) new-node filter.
+                   NLOC_BND_NSPMD_SAVE = NODES%BOUNDARY_SIZE
+                   IF (ALLOCATED(NLOC_BND_ADD_ORIG)) DEALLOCATE(NLOC_BND_ADD_ORIG)
+                   ALLOCATE(NLOC_BND_ADD_ORIG(2, NSPMD+1))
+                   NLOC_BND_ADD_ORIG = NODES%BOUNDARY_ADD
+                   IF (ALLOCATED(NLOC_BND_ORIG)) DEALLOCATE(NLOC_BND_ORIG)
+                   ALLOCATE(NLOC_BND_ORIG(MAX(1, NLOC_BND_NSPMD_SAVE)))
+                   IF (NLOC_BND_NSPMD_SAVE > 0) THEN
+                     NLOC_BND_ORIG(1:NLOC_BND_NSPMD_SAVE) =
+     .                 NODES%BOUNDARY(1:NLOC_BND_NSPMD_SAVE)
+                   END IF
+                   CALL spmd_rebuild_boundary(NUMNOD, NSPMD, ISPMD,NODES) 
+                   ! Merge: keep baseline sections for existing nodes (local ID <= NUMNOD_OLD)
+                   ! and append new-node entries from the rebuilt boundary (local ID > NUMNOD_OLD).
+                   ! This ensures both Parith/ON mechanical and NLOC exchanges are correct.
+                   CALL merge_boundary_with_split(NODES, NUMNOD_OLD, NSPMD,
+     .               NLOC_BND_ADD_ORIG, NLOC_BND_ORIG, NLOC_BND_NSPMD_SAVE)
+                   ! Rebuild non-local MPI boundary tables with the merged boundary.
+                   IF (NLOC_DMG%IMOD > 0) THEN
+                     CALL SPMD_SUB_BOUNDARIES(NLOC_DMG,NODES%BOUNDARY_ADD,
+     .                 NODES%BOUNDARY,NUMNOD_OLD,NODES%ITAB)
+                   END IF
+                   ! Rebuild ghost shell communication tables (shells_to_send and offset)
+                   ! now that BOUNDARY/BOUNDARY_ADD reflect the new node ownership.
+                   CALL init_ghost_shells(NODES, ELEMENT, ISPMD, NSPMD,
+     .               NODES%BOUNDARY_ADD, NODES%BOUNDARY_SIZE, NODES%BOUNDARY)
+                   ! Rebuild Parith/ON send/recv tables to include the new node.
+                   ! ASSADD2 runs only once pre-loop; ISENDP/IRECVP/FR_NBCC must be
+                   ! rebuilt here so SPMD_EXCH2_A_PON exchanges the new node FSKY rows.
+                   IF (IPARIT /= 0) THEN
+                     CALL ASSINIT(ELEMENT%PON%ADSKY,
+     .                 NODES%BOUNDARY_ADD, NODES%BOUNDARY,
+     .                 ELEMENT%PON%PROCNE, LISENDP, LIRECVP)
+                     IF (ALLOCATED(ELEMENT%PON%ISENDP))
+     .                 DEALLOCATE(ELEMENT%PON%ISENDP)
+                     IF (ALLOCATED(ELEMENT%PON%IRECVP))
+     .                 DEALLOCATE(ELEMENT%PON%IRECVP)
+                     ALLOCATE(ELEMENT%PON%ISENDP(
+     .                 MIN(LISENDP,1):LISENDP))
+                     ALLOCATE(ELEMENT%PON%IRECVP(
+     .                 MIN(LIRECVP,1):LIRECVP))
+                     CALL REBUILD_PON_TABLES(ELEMENT%PON%ADSKY,
+     .                 NODES%BOUNDARY_ADD, NODES%BOUNDARY,
+     .                 ELEMENT%PON%PROCNE, FR_NBCC,
+     .                 ELEMENT%PON%IADSDP, ELEMENT%PON%IADRCP,
+     .                 ELEMENT%PON%ISENDP, ELEMENT%PON%IRECVP,
+     .                 NUMNOD_OLD, NODES%ITAB)
+                   END IF
+                 END IF
+                 CALL INIT_NODAL_STATE( IPARI,SHOOT_STRUCT,INTERFACES%INTBUF_TAB,NODES%BOUNDARY_ADD,NODES%BOUNDARY,
+     .                                NODES%ITAB,NODES,GEO,ADDCNEL,CNEL,
+     .                                IXS,ELEMENT%SHELL%IXC,IXT,IXP,IXR,IXTG,
+     .                                SIZE_ADDCNEL,SIZE_CNEL ,
+     .                                numelsg,numelqg,numelcg,numeltrg,numelpg,
+     .                                numelrg,numeltgg , IXS(L1))
 
-C            numnod_old = numnod
-C            numnodm_old = numnodm
-C            call test_jc_shell_detach(nodes, element, interfaces, npari, ninter, ipari, numnod,
-C    .                numnodg, elbuf_tab, ngroup, ngrouc, nparg, iparg, igrouc, numelc, ispmd, nspmd,
-C    .                new_crack)
 
+                 IF(IDEL7NG>0.OR.IRAD2R>0.OR.ALEMUSCL_Param%IALEMUSCL>0.OR.PDEL>0) THEN
+                   SIZE_ADDCNEL = NUMNOD+1
+                   SIZE_CNEL = LCNEL
+                   NELEML = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP+NUMELR+NUMELTG
+                   S_ELEM_STATE = NELEML
+                   DEALLOCATE(CNEL)
+                   ALLOCATE(CNEL(0:SIZE_CNEL))
+                   DEALLOCATE(ADDCNEL)
+                   ALLOCATE(ADDCNEL(0:SIZE_ADDCNEL))
+                   DEALLOCATE(ADDTMPL)
+                   ALLOCATE(ADDTMPL(0:NUMNOD+1))
+                   NELEML = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP+NUMELR+NUMELTG
+                   ALEMUSCL_Buffer%pCNEL => CNEL
+                   ALEMUSCL_Buffer%pADDCNEL => ADDCNEL
+                   ALEMUSCL_Buffer%pADDTMPL => ADDTMPL
+                   L1 = 1+NIXS*NUMELS + NSVOIS*NIXS
+                   L2 = L1+6*NUMELS10
+                   L3 = L2+12*NUMELS20
 
-C            if(new_crack > 0) then
-C              ! if at least 1 node has been detached, some data must be re-initialized
-C              numnodm = numnodm_old + new_crack
-C              CALL INIT_NODAL_STATE( IPARI,SHOOT_STRUCT,INTERFACES%INTBUF_TAB,NODES%BOUNDARY_ADD,NODES%BOUNDARY,
-C    .                              NODES%ITAB,NODES,GEO,ADDCNEL,CNEL,
-C    .                              IXS,ELEMENT%SHELL%IXC,IXT,IXP,IXR,IXTG,
-C    .                              SIZE_ADDCNEL,SIZE_CNEL ,
-C    .                              numelsg,numelqg,numelcg,numeltrg,numelpg,
-C    .                              numelrg,numeltgg , IXS(L1))
+                   CALL CHKINIT(
+     2                IXS        ,IXQ       ,ELEMENT%SHELL%IXC       ,IXT         ,IXP       ,
+     3                IXR        ,IXTG      ,IXS(L1)       ,IXS(L2)     ,
+     4                IXS(L3)      ,IXTG1     ,GEO       ,ADDCNEL     ,CNEL      ,
+     5                ADDTMPL    ,IPARG     )
 
-
-C              IF(IDEL7NG>0.OR.IRAD2R>0.OR.ALEMUSCL_Param%IALEMUSCL>0.OR.PDEL>0) THEN
-C                SIZE_ADDCNEL = NUMNOD+1
-C                SIZE_CNEL = LCNEL
-C                NELEML = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP+NUMELR+NUMELTG
-C                S_ELEM_STATE = NELEML
-C                DEALLOCATE(CNEL)
-C                ALLOCATE(CNEL(0:SIZE_CNEL))
-C                DEALLOCATE(ADDCNEL)
-C                ALLOCATE(ADDCNEL(0:SIZE_ADDCNEL))
-C                DEALLOCATE(ADDTMPL)
-C                ALLOCATE(ADDTMPL(0:NUMNOD+1))
-C                NELEML = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP+NUMELR+NUMELTG
-C                ALEMUSCL_Buffer%pCNEL => CNEL
-C                ALEMUSCL_Buffer%pADDCNEL => ADDCNEL
-C                ALEMUSCL_Buffer%pADDTMPL => ADDTMPL
-C                L1 = 1+NIXS*NUMELS + NSVOIS*NIXS
-C                L2 = L1+6*NUMELS10
-C                L3 = L2+12*NUMELS20
-
-C                CALL CHKINIT(
-C    2              IXS        ,IXQ       ,ELEMENT%SHELL%IXC       ,IXT         ,IXP       ,
-C    3              IXR        ,IXTG      ,IXS(L1)       ,IXS(L2)     ,
-C    4              IXS(L3)      ,IXTG1     ,GEO       ,ADDCNEL     ,CNEL      ,
-C    5              ADDTMPL    ,IPARG     )
-
-C              ENDIF
-C              CALL ALLOCATE_OUTPUT_DATA(OUTPUT,NUMNOD)
-C              LCNE0 = SIZE(ELEMENT%PON%PROCNE)
-C            endif
+                 ENDIF
+                 CALL ALLOCATE_OUTPUT_DATA(OUTPUT,NUMNOD)
+                 LCNE0 = SIZE(ELEMENT%PON%PROCNE)
+                 LSKY= LCNE0
+                 ! Reallocate skyline arrays after node split (NUMNOD has increased).
+                 ! ADSKYI is dimensioned (0:NUMNOD+1) but was sized for the old NUMNOD.
+                 IF(IPARIT > 0) THEN
+                   IF(SIZE(INTERFACES%PON%ADSKYI,1) < NUMNOD+2) THEN
+                     DEALLOCATE(INTERFACES%PON%ADSKYI)
+                     ALLOCATE(INTERFACES%PON%ADSKYI(0:NUMNOD+1))
+                   ENDIF
+                 ENDIF
+                 IF(RWALL%NRWALL > 0) THEN
+                   CALL DETACH_NODE_FROM_RWALLS(NODES, NUMNOD_OLD, NUMNOD, RWALL)
+                 ENDIF
+                 ! DEBUG: Print NLOC VNL for new split nodes so MPI vs MONO can be compared.
+C                  IF(NLOC_DMG%IMOD > 0) THEN
+C                    DO I=NUMNOD_OLD+1, NUMNOD
+C                      IF(NLOC_DMG%IDXI(I) > 0) THEN
+C                        WRITE(6,'(a,i0,a,i0,a,i0,a,g14.7,a,g14.7)')
+C     .                   '[NLOC_NEWNODE] r=', ISPMD,
+C     .                   ' itab=', NODES%ITAB(I),
+C     .                   ' nl_idx=', NLOC_DMG%IDXI(I),
+C     .                   ' vnl=', NLOC_DMG%VNL(NLOC_DMG%POSI(NLOC_DMG%IDXI(I))),
+C     .                   ' mass=', NLOC_DMG%MASS(NLOC_DMG%POSI(NLOC_DMG%IDXI(I)))
+C                      ENDIF
+C                    ENDDO
+C                    CALL FLUSH(6)
+C                  ENDIF
+               endif
+              endif
 
 C========================================================================================
 C                                     NON PARALLEL SECTION (SMP)
@@ -5261,7 +5493,6 @@ C
 C========================================================================================
 C                                     NON PARALLEL SECTION (SMP)
 C========================================================================================
-
 C----------------------------------
 C       EXTERNAL FORCES FROM SECTIONS
 C----------------------------------
@@ -5287,6 +5518,7 @@ C-----------------------------------------------------
      .                                   IRESP,NODES%X,NODES%XDP,NODES%V,DT1,NODES%MS0,NUMNOD,
      .                                   FLAG_GUIDED_CABLE_UPDATE,SFSAV,FSAV,OFFSAV)
               ENDIF
+              IF (NGUIDED_CABLE_G > 0) I7KGLO = 1
 C
 C-----------------------------------------------------
 C         INTERFACES 18 KINE
@@ -5319,6 +5551,7 @@ C===============================================================================
 C                                     NON PARALLEL SECTION (SMP)
 C========================================================================================
               IF(NINTER/=0)THEN
+                call spmd_profile_begin(PROF_TIED)
                 IF (IMON>0) THEN
                   CALL STARTIME(TIMERS,6)
                   CALL STARTIME(TIMERS,TIMER_CONTSORT)
@@ -5345,7 +5578,7 @@ C===============================================================================
                 ENDIF
 C
                 IF((IDTMINS/=0.OR.IDTMINS_INT/=0).AND.NCYCLE==0)ISMSCH=1
-
+                call spmd_profile_end(PROF_TIED)
               ENDIF
 C
 C----------------------------------
@@ -5458,7 +5691,7 @@ C-----------------------------------------------------
 C========================================================================================
 C                                     NON PARALLEL SECTION (SMP)
 C========================================================================================
-
+                call spmd_profile_begin(PROF_RBY) 
                 CALL RBYSENS(
      1           IPARG,IPARI       ,NODES%MS    ,NODES%IN   ,
      2           IXS  ,IXQ  ,ELEMENT%SHELL%IXC   ,IXT   ,IXP  ,
@@ -5490,6 +5723,7 @@ C===============================================================================
 
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_RBY)
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,40)
 C-----------------------------------------------------
@@ -5551,9 +5785,10 @@ C----------------------------------------------------------
 C     Rigid wall - Force node (moving RWALL)
 C----------------------------------------------------------
               IF (NRWALL>0) THEN 
+                call spmd_profile_begin(PROF_RWALL)
                 CALL RGWALF(NODES%A ,RWALL%RWBUF ,RWALL%NPRW ,NODES%MS )
                 IF (RWALL%nrwall_pen>0 .AND. IMPL_S==0) THEN 
-                   nsect_offset = nsect + nintsub + ninter 
+                   nsect_offset = nsect + nintsub + ninter
 !$OMP PARALLEL
                   CALL RGWAL0_PEN(
      1            NODES%X           ,NODES%A        ,NODES%V      ,NODES%MS       ,NUMNOD            ,
@@ -5563,7 +5798,8 @@ C----------------------------------------------------------
      5            RWALL%NRWALL,RWALL        )
 !$OMP END PARALLEL
                 END IF 
-              END IF 
+                call spmd_profile_end(PROF_RWALL)
+              END IF
 
 C-----------------------------------------------
 C     SELECTIVE MASS SCALING
@@ -5713,15 +5949,16 @@ C --------------------------
               IF (I_EXCH_FLG_RAZ==0) THEN
                 ! Flag for reset of stifn and stifr - must be set only at first cycle - ncycle=0 not enough because of chkpt
                 ! I_EXCH_FLG_RAZ ensures that it is set only once
-
                 FLG_KJ2_RAZ = FLG_KJ2
+                FLG_SPR_RAZ = FLG_SPR_DT
                 IF (NSPMD > 1) call spmd_allreduce(FLG_KJ2,FLG_KJ2_RAZ,1,SPMD_SUM)
+                IF (NSPMD > 1) call spmd_allreduce(FLG_SPR_DT,FLG_SPR_RAZ,1,SPMD_SUM)
                 I_EXCH_FLG_RAZ = 1
               ENDIF
 C
-              IF (FLG_KJ2==1) THEN
+              IF ((FLG_KJ2==1).OR.(FLG_SPR_DT==1)) THEN
 C
-                IF (NCYCLE==0) THEN
+                IF ((NCYCLE==0).AND.(FLG_KJ2==1)) THEN
                   ALLOCATE(STK_SN(NUMNOD),STK_SR(NUMNOD))
                   STK_SN(1:NUMNOD)=NODES%STIFN(1:NUMNOD)
                   STK_SR(1:NUMNOD)=NODES%STIFR(1:NUMNOD)
@@ -5738,7 +5975,7 @@ C----------------------------------------------------------
               IF ((NCYCLE==0).AND.(IDT_PERCENT_ADDMASS > 0).AND.(IDTMIN(11)==3.OR.IDTMIN(11)==8)) THEN
                 CALL FIND_DT_FOR_TARGETED_ADDED_MASS(NODES%MS,NODES%STIFN,DTFAC1(11),IDTGR(11),TARGET_DT,
      .                                               PERCENT_ADDMASS,PERCENT_ADDMASS_OLD,MASS0_START,NODES%WEIGHT_MD,IGRNOD,
-     .                                               ICNDS10)
+     .                                               ICNDS10,NODES%ITAB)
                 DTMIN1(11) = MAX(DTMIN1(11),TARGET_DT)
               ELSEIF ((IDT_PERCENT_ADDMASS == 2).AND.(IDTMIN(11) == 8)) THEN
 C--     For /DT/NODA/STOP + % added mass - IDTMIN switch back to 1 after first cycle
@@ -5799,6 +6036,7 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              call spmd_profile_begin(PROF_DTNODA)
 !$OMP PARALLEL
 !$OMP+PRIVATE(ITSK,DT2TT,NELTSTT,ITYPTSTT,NODFTSK,NODLTSK)
 !$OMP+PRIVATE(DMAST,DINERT)
@@ -5870,7 +6108,7 @@ C------------Need to stop computation at Tstop for /DT/THERM----------
              CALL PYTHON_END_OPENMP(PYTHON)
 
 C ----RAZ of NODES%STIFN AND NODES%STIFR for kjoints with element time step----------------------
-              IF ((FLG_KJ2_RAZ==1).AND.(I7KGLO==0).AND.(IDTMINS==0).AND.(NODADT==0)) THEN
+              IF ((FLG_KJ2_RAZ + FLG_SPR_RAZ > 0).AND.(I7KGLO==0).AND.(IDTMINS==0).AND.(NODADT==0)) THEN
                 NODES%STIFN(1:NUMNOD) = EM20
                 IF (IRODDL > 0) NODES%STIFR(1:NUMNOD) = EM20
               ENDIF
@@ -5912,6 +6150,8 @@ C-----------------------------
                     IEXICODT = 0
                   ENDIF
                 ENDIF
+             call spmd_profile_end(PROF_DTNODA)
+
 
 
 C========================================================================================
@@ -6059,7 +6299,7 @@ C--           IF no node/elemt on proc - dt2=10E6 -> dt2 can be equal to zero
               ENDIF
               ! ----------------------
 #ifdef DNC
-              IF(MDS_AVAIL==1) THEN
+              IF(MDS_AVAIL==1 .and. MDS_NMAT > 0) THEN
                 TSTOP_USER = TSTOP
                 TT_USER = TT
                 MSTOP_USER = 0
@@ -6111,16 +6351,14 @@ C processes in charge of the FVMBAGS know NPOLH)
               IF (IMPL_S==1)  CALL IMP_DT2(DT2)
 
               IF (IMONM > 0) CALL STOPTIME(TIMERS,53)
-
+              
 C --------------------------
               IF ( NCYCLE == 0 .AND. FLG_KJ2_RAZ > 0  ) THEN     ! All processes should go in this block
-
                 if (ispmd==0)then
                    write(iout,'(A)') ' '
                    write(iout,'(A/)') ' AUTOMATIC STIFFNESS COMPUTATION FOR JOINTS'
                    write(iout,'(A)') '  JOINT ID      TYPE                KNN                KNR'
                 endif
-                
                 IF (FLG_KJ2 == 1) then                        
                     CALL JOINT_BLOCK_STIFFNESS(NODES%ITAB,NODES%MS,NODES%IN,STK_SN,STK_SR,
      1                    NODES%WEIGHT,IXR,IPART,NODES%X,IPART(K6),
@@ -6299,6 +6537,7 @@ C-----------------------------------------------
 !$OMP END PARALLEL
               CALL PYTHON_END_OPENMP(PYTHON)
 
+
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_IO)
 C-----------------------------------------------
 C     SELECTIVE MASS SCALING
@@ -6397,6 +6636,7 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_ANIM)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
@@ -6434,11 +6674,13 @@ C-----------------------------------------------
                 ENDIF ! ILAG+IALE+IEULER/=0
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_ANIM)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_INTEG)
 C-----------------------------------------------
                 IF (ILAG+IALE+IEULER/=0)THEN
+
                   IF(IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
                   IF(IMONM > 0) CALL STARTIME(TIMERS,40)
 
@@ -6446,18 +6688,21 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_RBYCOR)
 !$OMP PARALLEL
 
                   CALL RBYCOR(
      1                 RBY ,NODES%X   ,NODES%V    ,NODES%VR     ,SKEWS%SKEW    ,FSAV     ,
      2                 LPBY,NPBY,NODES%ISKEW,NODES%ITAB   ,NODES%WEIGHT  ,NODES%A        ,
      3                 NODES%AR  ,NODES%MS  ,NODES%IN   ,KINDRBY,IRBKIN_L,NRBYKIN_L ,
-     4                 NODES%WEIGHT_MD,MS_2D)
+     4                 NODES%WEIGHT_MD,MS_2D,NODES%D )
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_RBYCOR)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
                   IF(IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                   IF(IMONM > 0) CALL STOPTIME(TIMERS,40)
+
                 ENDIF  ! ILAG+IALE+IEULER/=0
 C========================================================================================
 C-----  RBE2 Bilan crrection
@@ -6478,6 +6723,7 @@ C
                   IF(IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                   IF(IMONM > 0) CALL STOPTIME(TIMERS,40)
                 ENDIF
+
 C--------------------
 C       SENSOR //  IN IMPLICIT
 C-----------------------------------------------
@@ -6521,7 +6767,6 @@ c
 c
                   ! check activation condition of logical sensors hierarchy
                   CALL SENSOR_LOGICAL(SENSORS)
-
                 ENDIF
                 GOTO 111
               ENDIF
@@ -6559,13 +6804,14 @@ C------------------------
 C           Conservative smoothing of velocities
 C------------------------
                   IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                  IF (IMONM > 0) CALL STARTIME(TIMERS,89)
+                  IF (IMON>0) CALL STARTIME(TIMERS,89)
 
                   ALLOCATE(WASPSYM(3*NSPHSYM+1))
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
                  CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                 call spmd_profile_begin(PROF_SPLISSV)
 !$OMP PARALLEL PRIVATE(ITSK,IPMTSK)
                   ITSK = OMP_GET_THREAD_NUM()
                   IPMTSK = 1 + ITSK*NPSAV*NPART
@@ -6582,6 +6828,7 @@ C===============================================================================
      9            IGEO      ,SOL2SPH_TYP,SPH_WORK)
 
 !$OMP END PARALLEL
+                  CALL spmd_profile_end(PROF_SPLISSV)
                   CALL PYTHON_END_OPENMP(PYTHON)
                   DEALLOCATE(WASPSYM)
 C========================================================================================
@@ -6589,13 +6836,15 @@ C                                   NON PARALLEL SECTION (SMP)
 C========================================================================================
 
                   IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
-                  IF (IMONM > 0) CALL STOPTIME(TIMERS,89)
+                  IF (IMON>0) CALL STOPTIME(TIMERS,89)
 C------------------------
 C           Second Part of artificial forces work.
 C--- //0 ----------------
                   IF (IMON>0) CALL STARTIME(TIMERS,6)
                   IF (IMONM > 0) CALL STARTIME(TIMERS,48)
+                  IF (IMON>0) CALL STARTIME(TIMERS,89)
                   CALL SPWFVIS(SPBUF,IPART(K10),PARTSAV,IPARG,ELBUF_TAB, KXSP ,WASPH(KSPACTIV))
+                  IF (IMON>0) CALL STOPTIME(TIMERS,89)
                   IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
                   IF (IMON>0) CALL STOPTIME(TIMERS,6)
 C========================================================================================
@@ -6651,6 +6900,7 @@ C                                     PARALLEL SECTION (SMP)
 C========================================================================================
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_ACCELE)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK,NODFT_NL,NODLT_NL)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
@@ -6714,6 +6964,7 @@ C-----------------------------------------------
                 IF (GLOB_THERM%ITHERM_FE > 0 )
      .             CALL TEMPUR(NODES%TEMP ,NODES%MCP,FTHE,NODFTSK,NODLTSK,NODES%WEIGHT,MCP_OFF,GLOB_THERM%HEAT_STORED)
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_ACCELE)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
 C------------------------------------------
@@ -6762,6 +7013,7 @@ C-----------------------------------------------
 C  INLETS,OUTLETS.
 C-----------------------------------------------
                 IF(NSPHIO/=0)THEN
+                  call spmd_profile_begin(PROF_SPONFV)
 C globalize NSPHACT in NSPHACTG
                   NSPHACTG = NSPHACT
 
@@ -6773,32 +7025,35 @@ C globalize NSPHACT in NSPHACTG
 C--- //0 ----------------
                     IF (IMON>0) CALL STARTIME(TIMERS,6)
                     IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                    IF (IMONM > 0) CALL STARTIME(TIMERS,89)
+                    IF (IMON>0) CALL STARTIME(TIMERS,89)
 
                     CALL SPONFV (NODES%X   ,NODES%V     ,NODES%A       ,NODES%D       ,NODES%MS      ,
      2                     SPBUF   ,NODES%ITAB    ,KXSP    ,IXSP    ,NOD2SP  ,
      3                     NPC     ,TF      ,ISPHIO  ,VSPHIO  ,IPART   ,
      4                    IPART(K10),WASPH(KSPACTIV) ,WA,WASPH(KSPH22) ,SPH_WORK, OUTPUT%TH%WFEXT)
 
-                    IF (IMONM > 0) CALL STOPTIME(TIMERS,89)
+                    IF (IMON>0) CALL STOPTIME(TIMERS,89)
                     IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
                     IF (IMON>0) CALL STOPTIME(TIMERS,6)
+                    call spmd_profile_end(PROF_SPONFV)
                   ENDIF
                 END IF
                 IF(NSPHIO/=0.AND.NSPHACTG/=0)THEN
+                  call spmd_profile_begin(PROF_SPONFV)
 C--- //0 ----------------
                   IF (IMON>0) CALL STARTIME(TIMERS,6)
                   IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                  IF (IMONM > 0) CALL STARTIME(TIMERS,89)
+                  IF (IMON>0) CALL STARTIME(TIMERS,89)
 
                   CALL SPONFV (NODES%X   ,NODES%V     ,NODES%A       ,NODES%D       ,NODES%MS      ,
      2                   SPBUF   ,NODES%ITAB    ,KXSP    ,IXSP    ,NOD2SP  ,
      3                   NPC     ,TF      ,ISPHIO  ,VSPHIO  ,IPART   ,
      4                   IPART(K10),WASPH(KSPACTIV),WA,WASPH(KSPH22) ,SPH_WORK, OUTPUT%TH%WFEXT)
 
-                  IF (IMONM > 0) CALL STOPTIME(TIMERS,89)
+                  IF (IMON>0) CALL STOPTIME(TIMERS,89)
                   IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
                   IF (IMON>0) CALL STOPTIME(TIMERS,6)
+                  call spmd_profile_end(PROF_SPONFV)
                 ENDIF
 
 C-----------------------------------------------
@@ -6819,6 +7074,7 @@ C===============================================================================
                 IF(COMPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
 
                    CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                   call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                   ITSK = OMP_GET_THREAD_NUM()
@@ -6835,6 +7091,7 @@ C-----------------------------------------------
 
 !$OMP END PARALLEL
                     CALL PYTHON_END_OPENMP(PYTHON)  
+                    call spmd_profile_end(PROF_REAC)
                 END IF
 
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_IO)
@@ -6844,8 +7101,9 @@ C------------------------------
 C         GRAVITE / ACCEL. BASE
 C------------------------------
                 IF(NGRAV/=0.AND.IDTMINS==0.AND.IDTMINS_INT==0) THEN
+                  call spmd_profile_begin(PROF_GRAVIT)
                   IF (IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
-                  IF (IMONM > 0) CALL STARTIME(TIMERS,46)
+                  IF (IMON>0) CALL STARTIME(TIMERS,46)
 
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
@@ -6881,13 +7139,16 @@ C----------------------
      .                            FXBGRW, NODES%BOUNDARY_ADD, NODES%BOUNDARY, OUTPUT%TH%WFEXT, PYTHON)
                   END IF
                   IF (IMON>0) CALL STOPTIME(TIMERS,46)
-                  IF (IMONM > 0) CALL STOPTIME(TIMERS,TIMER_KIN)
+                  IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
+                  call spmd_profile_end(PROF_GRAVIT)
                 ENDIF
 C----------------------
 C         /BCS/CYCLIC
 C----------------------
                 IF(NBCSCYC > 0)THEN
+                  call spmd_profile_begin(PROF_BCSCYCL)
                   CALL BCSCYC(IBCSCYC,LBCSCYC,SKEWS%SKEW,NODES%X,NODES%V,NODES%A,NODES%ITAB)
+                  call spmd_profile_end(PROF_BCSCYCL)
                 ENDIF
 C----------------------
 C         CENTRIFUGAL FORCES
@@ -6900,6 +7161,7 @@ C                                     PARALLEL SECTION (SMP)
 C========================================================================================
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_CENTRIF)
 !$OMP PARALLEL PRIVATE(ITSK)
                   ITSK = OMP_GET_THREAD_NUM()
                   CALL CFIELD_1(PYTHON,ICFIELD  ,CFIELD,NPC   ,TF    ,NODES%A,
@@ -6907,6 +7169,7 @@ C===============================================================================
      3                            NODES%WEIGHT,LCFIELD,ITSK ,IFRAME,NSENSOR, OUTPUT%TH%WFEXT)
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_CENTRIF)
 
                   IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                 ENDIF
@@ -6919,6 +7182,7 @@ C===============================================================================
 
                 IF(COMPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
                     CALL PYTHON_BEGIN_OPENMP(PYTHON)  
+                    call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                   ITSK = OMP_GET_THREAD_NUM()
@@ -6934,6 +7198,7 @@ C-----------------------------------------------
                   CALL REACTION_FORCES_2(NODFTSK,NODLTSK,NODES%A,NODES%AR,NODES%MS,NODES%IN,FREAC,IFLAG)
 
 !$OMP END PARALLEL
+                  call spmd_profile_end(PROF_REAC)
                     CALL PYTHON_END_OPENMP(PYTHON)
 
                 END IF
@@ -6950,12 +7215,14 @@ C         (ANIM, OUTP, H3D)
 C-----------------------------------------------
                 IF (IMON>0) CALL STARTIME(TIMERS,TIMER_IO)
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_FORANI3)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
                 NODLTSK   = (ITSK+1)*NUMNOD/NTHREAD
                 CALL FORANI3(OUTPUT,NODES%A,NODES%MS,NODFTSK,NODLTSK,H3D_DATA)
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_FORANI3)
                 CALL PYTHON_END_OPENMP(PYTHON)
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_IO)
 
@@ -6995,6 +7262,7 @@ C===============================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
                   CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                  call spmd_profile_begin(PROF_I18MAIN_KINE_2)
 !$OMP PARALLEL PRIVATE(ITSK)
                   ITSK = OMP_GET_THREAD_NUM()
 C        /---------------/
@@ -7007,6 +7275,7 @@ C        /---------------/
      5                          NODES%BOUNDARY_ADD,NODES%BOUNDARY,H3D_DATA )
 !$OMP END PARALLEL
                   CALL PYTHON_END_OPENMP(PYTHON)
+                  call spmd_profile_end(PROF_I18MAIN_KINE_2)
                 ENDIF
 C========================================================================================
 C                                     NON PARALLEL SECTION (SMP)
@@ -7035,11 +7304,10 @@ C         BOUNDARY CONDITIONS
 C-------------------------------
                 IF (IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,42)
-
+                call spmd_profile_begin(PROF_BCS)
                 CALL THBCS(NODFT  ,NODLT  ,NODES%ICODT  ,NODES%ICODR,NODES%ISKEW,
      2                     SKEWS%SKEW   ,NODES%A      ,NODES%AR     ,NODES%MS   ,NODES%IN   ,
      3                     FTHREAC,NODREAC,CPTREAC)
-
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
@@ -7059,6 +7327,7 @@ C---
      .                         INOD_PXFEM,MS_PLY,IBC_PLY)
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_BCS)
 
                 IF (IMONM > 0) THEN
                   CALL STOPTIME(TIMERS,42)
@@ -7074,6 +7343,7 @@ C      [JOINT1][JOINT2]...          -
 
 C-------------------
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_RLINK)
 !$OMP PARALLEL PRIVATE(ITSK)
                 ITSK = OMP_GET_THREAD_NUM()
 
@@ -7108,6 +7378,7 @@ C-- // -----------
                 ENDIF
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_RLINK)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
                 IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
@@ -7129,6 +7400,7 @@ C--- //-----------------------------------------
 C         SAVE FORCES FROM INITIAL STATE
 C---------------------------------------
               IF(TT==ZERO.AND.(ISIGI==2.OR.ISIGI==4)) THEN
+                call spmd_profile_begin(PROF_INIT_FORCES)
 #include      "vectorize.inc"
                 DO I=NODFTSK,NODLTSK
                   FZERO(1,I)=-NODES%A(1,I)
@@ -7138,6 +7410,7 @@ C---------------------------------------
                   FZERO(3,I)=-NODES%A(3,I)
                   NODES%A(3,I)=ZERO
                 ENDDO
+                call spmd_profile_end(PROF_INIT_FORCES)
               ENDIF
 !$OMP END PARALLEL
 
@@ -7161,6 +7434,7 @@ C===============================================================================
               IF(COMPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
 
                     CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                    call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -7176,14 +7450,16 @@ C-----------------------------------------------
                 CALL REACTION_FORCES_2(NODFTSK,NODLTSK,NODES%A,NODES%AR,NODES%MS,NODES%IN,FREAC,IFLAG)
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_REAC)
                     CALL PYTHON_END_OPENMP(PYTHON)
               END IF
 
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_IO)
 C-----------------------------------------------
-              IF (IMONM > 0) CALL STARTIME(TIMERS,52)
+              IF (IMON>0) CALL STARTIME(TIMERS,52)
 
               CALL PYTHON_BEGIN_OPENMP(PYTHON)
+              if(IDAMP /=0) call spmd_profile_begin(PROF_DAMPING)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
               ITSK = OMP_GET_THREAD_NUM()
@@ -7233,6 +7509,7 @@ C-----------------------------------------------
 
 !$OMP END PARALLEL
               CALL PYTHON_END_OPENMP(PYTHON)
+              IF(IDAMP /=0) call spmd_profile_end(PROF_DAMPING)
 
               IF(IMON>0) CALL STOPTIME(TIMERS,52)
 C-----------------------------------------------
@@ -7241,6 +7518,7 @@ C-----------------------------------------------
               IF(COMPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -7257,6 +7535,7 @@ C-----------------------------------------------
 
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_REAC)
 
               END IF
 
@@ -7270,6 +7549,7 @@ C===============================================================================
 
               IF(CPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -7285,6 +7565,7 @@ C-----------------------------------------------
      .                                    NODES%IN     ,FTHREAC ,IFLAG,NODREAC)
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_REAC)
                 CALL PYTHON_END_OPENMP(PYTHON)
               END IF
 
@@ -7298,6 +7579,7 @@ C--------------------------
 C          STATIC
 C--------------------------
               IF(ISTAT/=0) THEN
+                call spmd_profile_begin(PROF_STATIC)
                 IF (IMON>0) CALL STARTIME(TIMERS,6)
                 IF (IMONM > 0) CALL STARTIME(TIMERS,49)
                 IF (NS10E>0) THEN
@@ -7307,6 +7589,7 @@ C--------------------------
                 END IF
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,49)
                 IF (IMON>0) CALL STOPTIME(TIMERS,6)
+                call spmd_profile_end(PROF_STATIC)
               ENDIF
               ENCIN = ZERO
               ENROT = ZERO
@@ -7316,6 +7599,7 @@ C--------------------------
 C          IMPOSED VELOCITIES & DISPLACEMENTS 
 C--------------------------
               IF(NFXVEL/=0) THEN
+                call spmd_profile_begin(PROF_FIXVEL)
                 IF(IMON>0) THEN
                   CALL STARTIME(TIMERS,6)
                   CALL STARTIME(TIMERS,TIMER_KIN)
@@ -7340,6 +7624,7 @@ C
                   CALL STOPTIME(TIMERS,TIMER_KIN)
                   CALL STOPTIME(TIMERS,6)
                 ENDIF
+                call spmd_profile_end(PROF_FIXVEL)
               ENDIF
 
 C========================================================================================
@@ -7351,6 +7636,7 @@ C===============================================================================
               IF(CPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_REAC)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -7365,6 +7651,7 @@ C----------------------------------------------
                 CALL REACTION_FORCES_TH(NODFTSK,NODLTSK ,NODES%A  ,NODES%AR   ,NODES%MS  ,NODES%IN   ,FTHREAC ,IFLAG,NODREAC)
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_REAC)
                 CALL PYTHON_END_OPENMP(PYTHON)
 
               END IF
@@ -7379,6 +7666,9 @@ C===============================================================================
               IF (IMONM > 0) CALL STARTIME(TIMERS,43)
 
               CALL PYTHON_BEGIN_OPENMP(PYTHON)  
+              if(NRWALL>0) then
+                call spmd_profile_begin(PROF_RIGIDWALL)
+              end if
 !$OMP PARALLEL
 
 C-------------------
@@ -7408,6 +7698,9 @@ C         Obsolete
               ENDIF
 
 !$OMP END PARALLEL
+              if(NRWALL>0) then
+                call spmd_profile_end(PROF_RIGIDWALL)
+              end if
               CALL PYTHON_END_OPENMP(PYTHON)
 
               IF (IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
@@ -7442,6 +7735,7 @@ C--------------------------
               ENDIF
 C---------------
               IF(ISECUT/=0)THEN
+                call spmd_profile_begin(PROF_SECTION_IO)
                 IF (IMON>0) CALL STARTIME(TIMERS,TIMER_IO)
                 CALL SECTION_IO (
      1            NSTRF,NODES%D,NODES%DR,NODES%V,NODES%VR,FSAV(1,1+NINTER+NRWALL+NRBODY),
@@ -7450,6 +7744,7 @@ C---------------
      4            RG_CUT ,IAD_CUT       ,FR_CUT,NODES%WEIGHT_MD,IOLDSECT,
      5            SENSORS%STABSEN,SENSORS%SFSAV,SENSORS%TABSENSOR ,SENSORS%FSAV ,OUTPUT%TH%WFEXT )
                 IF(IMON>0) CALL STOPTIME(TIMERS,TIMER_IO)
+                call spmd_profile_end(PROF_SECTION_IO)
               ENDIF
 
 C-----------------------------------------------------
@@ -7532,6 +7827,7 @@ C--------------------------------------------------
 c     rigid bodies velocities on secondary nodes
 C--------------------------------------------------
               IF(NRBYKIN>0)THEN
+                call spmd_profile_begin(PROF_RBY)
 
                 IF(IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
                 IF(IMONM > 0) CALL STARTIME(TIMERS,40)
@@ -7561,12 +7857,14 @@ C // --------------------------
 C--------------------------------------------------
                 IF(IMON>0) CALL STOPTIME(TIMERS,TIMER_KIN)
                 IF(IMONM > 0) CALL STOPTIME(TIMERS,40)
+                call spmd_profile_end(PROF_RBY)
 
               ENDIF
 C---------------------------------------------------
 C  rigid material
 C--------------------------------------------------
 C
+              call spmd_profile_begin(PROF_OTHER_KIN)
               IF(IRIGID_MAT > 0 ) THEN
 
 C========================================================================================
@@ -7685,12 +7983,14 @@ C--- //0 ----------------
               IF (IMON>0) CALL STARTIME(TIMERS,TIMER_KIN)
               IF (IMONM > 0) CALL STARTIME(TIMERS,40)
 
+              call spmd_profile_end(PROF_OTHER_KIN)
+
               IF(NUMSPH/=0.AND.NSPHSOL/=0)THEN
 C------------------------
 C         Solids impose velocity to SPH
 C--- // ----------------
                 IF (IMONM > 0) CALL STARTIME(TIMERS,48)
-                IF (IMONM > 0) CALL STARTIME(TIMERS,89)
+                IF (IMON>0) CALL STARTIME(TIMERS,89)
 
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
@@ -7709,18 +8009,18 @@ C===============================================================================
 !$OMP END PARALLEL
                 CALL PYTHON_END_OPENMP(PYTHON)
 
-                IF (IMONM > 0) CALL STOPTIME(TIMERS,89)
+                IF (IMON>0) CALL STOPTIME(TIMERS,89)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,48)
               ENDIF
 
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
-
 C--------------------
 C       ACCELEROMETRE
 C-- // --------------
               IF (NACCELM > 0) THEN
+                call spmd_profile_begin(PROF_ACCEL)
                  CALL PYTHON_BEGIN_OPENMP(PYTHON)
 !$OMP PARALLEL DO PRIVATE(K,N,ISK)
                 DO K=1,NACCELM
@@ -7738,12 +8038,14 @@ C check that proc is concerned. Otherwise necessary exchange for sensor, th
 C implicit barrier on end do
 !$OMP END PARALLEL DO
                   CALL PYTHON_END_OPENMP(PYTHON)
+                  call spmd_profile_end(PROF_ACCEL)
               END IF ! Fin NACCELM > 0
 
 C--------------------
 C       SPH Gauges
 C-- // --------------
               IF (NBGAUGE > 0) THEN
+                call spmd_profile_begin(PROF_SPH_GAUGE)
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC,1) PRIVATE(N)
                 DO K=1,NBGAUGE
@@ -7757,6 +8059,7 @@ C SPH Gauges
                 ENDDO
 C implicit barrier on end do
 !$OMP END PARALLEL DO
+              call spmd_profile_end(PROF_SPH_GAUGE)
               CALL PYTHON_END_OPENMP(PYTHON)
               END IF ! Fin NBGAUGE > 0
 
@@ -7780,11 +8083,13 @@ C implicit barrier on end do
             CALL PYTHON_BEGIN_OPENMP(PYTHON)
 !$OMP PARALLEL
               IF(NRBYKIN>0)THEN
+                call spmd_profile_begin(PROF_RBY)
                 CALL RBYCOR(
      1            RBY ,NODES%X   ,NODES%V    ,NODES%VR     ,SKEWS%SKEW    ,FSAV     ,
      2            LPBY,NPBY,NODES%ISKEW,NODES%ITAB   ,NODES%WEIGHT  ,NODES%A        ,
      3            NODES%AR  ,NODES%MS  ,NODES%IN   ,KINDRBY,IRBKIN_L,NRBYKIN_L,
-     4            NODES%WEIGHT_MD,MS_2D)
+     4            NODES%WEIGHT_MD,MS_2D, NODES%D)
+                call spmd_profile_end(PROF_RBY)
               ENDIF
 C---------RBE2
               IF(NRBE2>0)THEN
@@ -7960,6 +8265,7 @@ C===============================================================================
 C                                         PARALLEL SECTION (SMP)
 C========================================================================================
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_ERR_THK)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -7974,6 +8280,7 @@ C===============================================================================
      .                       THICK_SH4, THICK_SH3, THICK_NOD)
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_ERR_THK)
                 CALL PYTHON_END_OPENMP(PYTHON)
               END IF
 
@@ -8105,6 +8412,7 @@ C===============================================================================
 
               IF(COMPTREAC/=0.AND.(IMPL_S==0 .OR. INCONV==1)) THEN
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_REACTION)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK)
 
                 ITSK = OMP_GET_THREAD_NUM()
@@ -8117,6 +8425,7 @@ C-----------------------------------------------
                 CALL REACTION_FORCES_3(NODFTSK,NODLTSK,NODES%A,NODES%AR,NODES%MS,NODES%IN,FREAC)
 
 !$OMP END PARALLEL
+                call spmd_profile_end(PROF_REACTION)
                 CALL PYTHON_END_OPENMP(PYTHON)
               END IF
 
@@ -8124,8 +8433,8 @@ C-----------------------------------------------
 C========================================================================================
 C                                     PARALLEL SECTION (SMP)
 C========================================================================================
+              call spmd_profile_begin(PROF_IO)
               IF(NCYCLE > 0) THEN
-
                 IF (IMON>0) CALL STARTIME(TIMERS,MACRO_TIMER_GENH3D1)
                 L1 = 1+NIXS*NUMELS + NSVOIS*NIXS
                 L2 = L1+6*NUMELS10
@@ -8411,7 +8720,7 @@ C===============================================================================
 
 
               CALL PYTHON_UPDATE_TIME(TT,DT2)
-
+              call spmd_profile_end(PROF_IO)
 C----------------------------------
 C       IMPLICIT SOLVER
 C----------------------------------
@@ -8625,6 +8934,7 @@ C                                     PARALLEL SECTION (SMP)
 C========================================================================================
 
                 CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                call spmd_profile_begin(PROF_VEL)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK,NODFT_NL,NODLT_NL)
                 ITSK = OMP_GET_THREAD_NUM()
                 NODFTSK   = 1+ITSK*NUMNOD/ NTHREAD
@@ -8657,6 +8967,7 @@ C
 CC
 !$OMP END PARALLEL
             CALL PYTHON_END_OPENMP(PYTHON)
+                call spmd_profile_end(PROF_VEL)
 
 ! inivel w/ Tstart or sensor
                 IF (LOADS%NINIVELT > 0) THEN
@@ -8675,7 +8986,7 @@ CC
      .                                TT,   IRODDL, LOADS%NINIVELT,LOADS%INIVELT,
      .                             NPARG,   NGROUP,       LENGTH,         IPARG,
      .                         ELBUF_TAB,       NODES%MS,         NODES%IN,        NODES%WEIGHT,
-     .                           NXFRAME,   T_KIN )
+     .                           NXFRAME,   T_KIN ,NS10E      ,ICNDS10 )
                   OUTPUT%TH%WFEXT = OUTPUT%TH%WFEXT + T_KIN
                 END IF
 !
@@ -8719,6 +9030,7 @@ C                                     PARALLEL SECTION (SMP)
 C========================================================================================
 
                   CALL PYTHON_BEGIN_OPENMP(PYTHON)
+                  call spmd_profile_begin(PROF_DEPLA)
 !$OMP PARALLEL PRIVATE(ITSK,NODFTSK,NODLTSK,NODFT_NL,NODLT_NL)
 
                   ITSK = OMP_GET_THREAD_NUM()
@@ -8751,6 +9063,7 @@ C
                   ENDIF
 C
 !$OMP END PARALLEL
+                  call spmd_profile_end(PROF_DEPLA)
                   CALL PYTHON_END_OPENMP(PYTHON)
 
                   IF(IMON>0) CALL STOPTIME(TIMERS,TIMER_INTEG)
@@ -8828,7 +9141,7 @@ C===============================================================================
 
               IF (ViperCoupling) THEN
 C                Send positions to Viper
-                 CALL RadiossViper_SendXVE(NUMNOD,VIPER%NUMELEr,VIPER%NUMELEv,NPARG,NGROUP,viper%NUMON,
+                 CALL RadiossViper_SendXVE(NUMNOD,VIPER%NUMELEr,VIPER%NUMELEv,NPARG,NGROUP,viper%NUMON,viper%NUMRIGID,
      .                 NODES%X,NODES%V,VIPER%ITABM1,VIPER%IXEM1,IPARG,ELBUF_TAB)
                  CALL RadiossViper_SendKill(MSTOP,TSTOP,VIPER%TSTOP)
               ENDIF
@@ -9052,7 +9365,7 @@ C mass & velocity
                 ELSE
                   CALL ASSIGN_PTR(ptrX,NODES%X,3,NUMNOD)
                 ENDIF
-
+                call spmd_profile_begin(PROF_I7XVCOM2)
                 CALL SPMD_I7XVCOM2(
      1             IPARI   ,ptrX    ,NODES%V ,NODES%MS      ,
      2             IMSCH   ,I2MSCH ,DT2PREV ,INTLIST ,NBINTC  ,
@@ -9061,7 +9374,8 @@ C mass & velocity
      5             IGRBRIC ,NODES%TEMP   ,1       ,IRLEN7T ,ISLEN7T ,
      6             IRLEN20 ,ISLEN20,IRLEN20T,ISLEN20T,IRLEN20E,
      7             ISLEN20E,NODES%IKINE  ,DIAG_SMS,SENSORS%SENSOR_TAB,INTERFACES%INTBUF_TAB ,INT24E2EUSE,
-     8             FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%NNSH_OSET)
+     8             FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%HAS_OFFSET_GLOBAL)
+                call spmd_profile_end(PROF_I7XVCOM2)
                 IF (IMONM > 0) CALL STOPTIME(TIMERS,23)
                 IF (IMON>0) CALL STOPTIME(TIMERS,13)
               ENDIF
@@ -9169,7 +9483,7 @@ C--- //0 ----------------
      5                    IGRBRIC ,NODES%TEMP   ,2       ,IRLEN7T ,ISLEN7T ,
      6                    IRLEN20 ,ISLEN20,IRLEN20T,ISLEN20T,IRLEN20E,
      7                    ISLEN20E,NODES%IKINE  ,DIAG_SMS,SENSORS%SENSOR_TAB,INTERFACES%INTBUF_TAB ,INT24E2EUSE,
-     8                    FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%NNSH_OSET)
+     8                    FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%HAS_OFFSET_GLOBAL)
                 END IF
 
                 ! Finalize T24 Communication to fill Buffers before restarts
@@ -9316,7 +9630,7 @@ C--- //0 ----------------
      5                IGRBRIC ,NODES%TEMP    ,2       ,IRLEN7T ,ISLEN7T ,
      6                IRLEN20 ,ISLEN20 ,IRLEN20T,ISLEN20T,IRLEN20E,
      7                ISLEN20E,NODES%IKINE   ,DIAG_SMS,SENSORS%SENSOR_TAB,INTERFACES%INTBUF_TAB ,INT24E2EUSE ,
-     8                FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%NNSH_OSET)
+     8                FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%HAS_OFFSET_GLOBAL)
                 END IF
 
                 IF(coupling%active) THEN
@@ -9387,16 +9701,26 @@ C--- //0 ----------------
                   IF(NVOLU > 0)  CALL FVSTATS(MONVOL)
                   CALL STOPTIME(TIMERS,TIMER_RESOL)
                   IF(IMONM>0) CALL PRINTIME_INTERF(INTERFACES%INTBUF_TAB,IPARI,INTLIST,NBINTC,TIMERS%REALTIME(1)*0.01D0)
-                  CALL PRINTIME(TIMERS,GLOB_THERM%ITHERM,OUTPUT)
+                  CALL PRINTIME(TIMERS,GLOB_THERM%ITHERM,OUTPUT,sfem)
                 ELSE
                   CALL ADD_ELAPSED_TIME_MON_OFF(TIMERS)
                 ENDIF
                 CALL TRACE_OUT(3)
+              DO I = 0, NSPMD-1
+                IF(ISPMD == I) THEN
+                  call report_alloc()
+                ENDIF
+                CALL SPMD_BARRIER()  ! ensure all processes reach this point before any process can finalize
+              END DO
+
+
+
                 RETURN
               ENDIF
 C-------------------------------
  500          CONTINUE
 C-------------------------------
+              
 !             CALL PYTHON_FINALIZE()
               IF(MSTOP/=0) THEN
                 PARALLEL_SECTION = 0
@@ -9420,7 +9744,7 @@ C /KILL
      5               IGRBRIC ,NODES%TEMP   ,2       ,IRLEN7T ,ISLEN7T ,
      6               IRLEN20 ,ISLEN20,IRLEN20T,ISLEN20T,IRLEN20E,
      7               ISLEN20E,NODES%IKINE  ,DIAG_SMS,SENSORS%SENSOR_TAB,INTERFACES%INTBUF_TAB,INT24E2EUSE,
-     8               FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%NNSH_OSET)
+     8               FORNEQS ,MULTI_FVM,INTERFACES,SH_OFFSET_TAB%HAS_OFFSET_GLOBAL)
                 ENDIF
 
                 IF(ALLOCATED(ISENDTO))DEALLOCATE(ISENDTO)
@@ -9569,7 +9893,7 @@ C
                   IF(NVOLU > 0)  CALL FVSTATS(MONVOL)
                   CALL STOPTIME(TIMERS,TIMER_RESOL)
                   IF(IMONM>0) CALL PRINTIME_INTERF(INTERFACES%INTBUF_TAB,IPARI,INTLIST,NBINTC,TIMERS%REALTIME(1)*0.01D0)
-                  CALL PRINTIME(TIMERS,GLOB_THERM%ITHERM,OUTPUT)
+                  CALL PRINTIME(TIMERS,GLOB_THERM%ITHERM,OUTPUT,sfem)
                 ELSE
                   CALL ADD_ELAPSED_TIME_MON_OFF(TIMERS)
                 ENDIF
@@ -9621,6 +9945,12 @@ C
                 IF (ALLOCATED(SPH_WORK%VOXEL%DXMAX)) DEALLOCATE(SPH_WORK%VOXEL%DXMAX)                
                 IF (ALLOCATED(SPH_WORK%VOXEL%DYMAX)) DEALLOCATE(SPH_WORK%VOXEL%DYMAX)
                 IF (ALLOCATED(SPH_WORK%VOXEL%DZMAX)) DEALLOCATE(SPH_WORK%VOXEL%DZMAX)
+                DO I = 0, NSPMD-1
+                  IF(ISPMD == I) THEN
+                    call report_alloc()
+                  ENDIF
+                  CALL SPMD_BARRIER()  ! ensure all processes reach this point before any process can finalize
+                END DO
                 RETURN
               ENDIF    ! MSTOP/=0
 
@@ -9642,6 +9972,15 @@ C                Deallocate indexing arrays
                  IF(ALLOCATED(VIPER%IXEM1))DEALLOCATE(VIPER%IXEM1)
                  CLOSE(VIPER%io_dt)
               ENDIF
+
+              DO I = 0, NSPMD-1
+                IF(ISPMD == I) THEN
+                  call report_alloc()
+                ENDIF
+                CALL SPMD_BARRIER()  ! ensure all processes reach this point before any process can finalize
+              END DO
+
+
 c-----------
               RETURN
             END

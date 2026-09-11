@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_material_models       ../starter/source/materials/read_material_models.F
 !||--- called by ------------------------------------------------------
@@ -55,7 +56,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .             BUFMAT      ,SBUFMAT  ,IPM      ,PM       ,UNITAB   ,
      .             MULTI_FVM   ,FAILWAVE ,NLOC_DMG ,LSUBMODEL,TABLE    ,
      .             LTITR       ,USERL_AVAIL,MAT_NUMBER,
-     .             NPC         ,TF       ,SNPC     ,NPTS    ,BUFLEN)
+     .             NPC         ,TF       ,SNPC     ,NPTS    ,BUFLEN    ,
+     .             IRESP       )
 C-----------------------------------------------
 C   D e s c r i p t i o n
 C-----------------------------------------------
@@ -108,7 +110,7 @@ C-----------------------------------------------
       TYPE (UNIT_TYPE_),INTENT(IN) :: UNITAB 
       TYPE(MLAW_TAG_) , DIMENSION(NUMMAT)  , INTENT(INOUT) :: MLAW_TAG
       TYPE(EOS_TAG_)  ,DIMENSION(0:MAXEOS) , INTENT(INOUT) :: EOS_TAG
-      TYPE(FAIL_TAG_) ,DIMENSION(0:MAXFAIL), INTENT(INOUT) :: FAIL_TAG
+      TYPE(FAIL_TAG_) ,DIMENSION(NUMMAT,MAXFAIL), INTENT(INOUT) :: FAIL_TAG
       TYPE(MULTI_FVM_STRUCT) :: MULTI_FVM
       TYPE(FAILWAVE_STR_) :: FAILWAVE 
       TYPE(NLOCAL_STR_) :: NLOC_DMG 
@@ -118,6 +120,7 @@ C-----------------------------------------------
       INTEGER,INTENT(IN) :: SNPC, NPTS
       INTEGER,INTENT(IN) :: NPC(SNPC)
       my_real,INTENT(IN) :: TF(NPTS)
+      INTEGER,INTENT(IN) :: IRESP
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -165,14 +168,14 @@ c-------------------------------------------------------------------
      .     MULTI_FVM   ,UNITAB      ,LSUBMODEL   ,TABLE       ,
      .     SBUFMAT     ,NPROPMI     ,NPROPM      ,
      .     IALELAG     ,NTABLE      ,NUMMAT      ,HM_NUMMAT   ,
-     .     LTITR       ,USERL_AVAIL,MAT_NUMBER   )
+     .     LTITR       ,USERL_AVAIL,MAT_NUMBER   ,IRESP       )
 
 c-------------------------------------------------------------------
 c     /EOS : Equations of State P=P(µ,E)
 c-------------------------------------------------------------------
       CALL HM_READ_EOS(MAT_ELEM%MAT_PARAM ,IPM      ,PM       ,BUFMAT   ,NUMMAT, NFUNCT,
      .                 BUFLEN   ,IADBUF   ,EOS_TAG  ,UNITAB   ,LSUBMODEL,
-     .                 MLAW_TAG ,NPC      ,TF       ,SNPC     ,NPTS     ,SBUFMAT,
+     .                 NPC     ,TF        ,SNPC     ,NPTS     ,SBUFMAT,
      .                 NTABLE   ,TABLE)
 
 c-------------------------------------------------------------------
@@ -204,7 +207,7 @@ c-------------------------------------------------------------------
         CALL READ_EULER_MAT(LSUBMODEL, UNITAB, IPM, PM)
         
 c-------------------------------------------------------------------
-c     /MAT/LAW51 - FILL BUFFER (modern input)
+c     ALE MULTIMAT (51)
 c-------------------------------------------------------------------
       CALL FILL_BUFFER_51_0(MAT_ELEM%MAT_PARAM, IPM, PM, BUFMAT, MAT_ELEM%MAT_PARAM, MLAW_TAG )
 

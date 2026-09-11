@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_prop06           ../starter/source/properties/solid/hm_read_prop06.F
 !||--- called by ------------------------------------------------------
@@ -40,7 +41,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||====================================================================
       SUBROUTINE HM_READ_PROP06(GEO      ,IGEO    ,PROP_TAG,MULTI_FVM ,IGTYP   ,
      .                          IG       ,IDTITL  ,UNITAB  ,LSUBMODEL ,RTRANS  ,
-     .                          SUB_ID   ,ISKN    ,IPART   ,SUB_INDEX,DEFAULTS_SOLID)
+     .                          SUB_ID   ,ISKN    ,IPART   ,SUB_INDEX,DEFAULTS_SOLID,
+     .                          ISMS  )
 C-----------------------------------------------
 C   ROUTINE DESCRIPTION :
 C   ===================
@@ -102,6 +104,7 @@ C-----------------------------------------------
       INTEGER,INTENT(IN) :: IGTYP
       INTEGER,INTENT(IN) :: SUB_ID 
       INTEGER,INTENT(IN) :: SUB_INDEX 
+      INTEGER,INTENT(IN) :: ISMS
 C
       my_real,INTENT(INOUT) :: GEO(NPROPG)
       my_real,INTENT(IN) :: RTRANS(NTRANSF,NRTRANS)
@@ -126,6 +129,7 @@ C-----------------------------------------------
       INTEGER     IHBE_DS,ISST_DS,IFRAME_DS,
      .            ITET4_D,ITET10_D,ICPRE_D
       LOGICAL IS_AVAILABLE, IS_ENCRYPTED
+      CHARACTER(LEN=NCHARLINE) ::  MSGLINE
 C-----------------------------------------------
       IS_ENCRYPTED = .FALSE.
       IS_AVAILABLE = .FALSE.
@@ -206,8 +210,15 @@ C-----removed flags:
       IPLAS = 2
       IET = 0
 C----------------------
+      IGEO(29) = ITET4  !itet4_prev
       IF(ITET4 == 0)  ITET4 = ITET4_D
       IF(ITET10 == 0) ITET10 = ITET10_D
+      IF(ITET4 == 10) THEN ! switched to tetra10 w/ itetra10=2
+        IF (ISMS == 0) ITET10 = 2
+        ITET4 = 0  
+        MSGLINE='   ITETR4 IS CONVERTED TO TETRA10'
+        CALL ANCMSG(MSGID=3146,MSGTYPE=MSGWARNING,ANMODE=ANINFO,I1=IG,C1=IDTITL,I2=10,C2=TRIM(MSGLINE))      
+      ENDIF
 C
 C
       IF (SUB_ID /= 0)
@@ -602,7 +613,7 @@ C---
      & 5X,'NUMBER OF SPH PARTICLES PER DIRECTION .=',I10/,
      & 5X,'CORRESPONDING PART FOR SPH PARTICLES. .=',I10/)
  2001 FORMAT(
-     & 5X,'ORTHOTROPIC DIRECTIONS BY ELEMENT CONNECTIVITY,IP='I10)
+     & 5X,'ORTHOTROPIC DIRECTIONS BY ELEMENT CONNECTIVITY,IP=',I10)
  2002 FORMAT(
      & 5X,'ORTHOTROPIC DIRECTION FLAG IP. . . . . =',I10/,
      & 5X,'REFERENCE POINT PX . . . . . . . . . . =',1PG20.13/,

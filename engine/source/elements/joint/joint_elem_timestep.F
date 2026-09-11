@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    joint_elem_timestep   ../engine/source/elements/joint/joint_elem_timestep.F
 !||--- called by ------------------------------------------------------
@@ -61,7 +62,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,M1,M2,IG,IGTYP,ITYP,NG,JFT,JLT,NEL,
-     .        NFT,NUVAR,IRB,NV
+     .        NFT,NUVAR,IRB,NV,ILAW
       my_real DTRB1,DTRB2,DT
       TYPE(G_BUFEL_),POINTER :: GBUF
 C----------------------------------------------------------      
@@ -74,44 +75,45 @@ C
           NFT = IPARG(3,NG) 
           JFT = 1
           JLT = MIN(NVSIZ,NEL)  
-        GBUF => ELBUF_TAB(NG)%GBUF
+          GBUF => ELBUF_TAB(NG)%GBUF
           IF (ITYP == 6) THEN
 C
 C--------> Loop over spring elements -------
           DO I=JFT,JLT
               J = I + NFT    
             IG = IPART(2,IPARTR(J))
+            ILAW = IPARG(1,NG)
             IGTYP =  IGEO(11,IG)
               NUVAR =  NINT(GEO(25,IG))
             NV = NUVAR*(I-1) + 1
-            IF (IGTYP==45) THEN    
-C           
+C            
+            IF (IGTYP==45 .OR. (IGTYP==23 .AND. ILAW == 135)) THEN               
 C--------> Calcul pas de temps nodal RB1 -------         
-                IRB = NINT(GBUF%VAR(NV + 37))
+              IRB = NINT(GBUF%VAR(NV + 37))
               IF (IRB > 0) THEN
                   M1 = NPBY(1,IRB)
               ELSE
                 M1 = IXR(2,J)
               ENDIF 
-                DTRB1 = DTFAC1(11)*SQRT(TWO*MS(M1)/MAX(EM20,STIFN(M1)))
+              DTRB1 = DTFAC1(11)*SQRT(TWO*MS(M1)/MAX(EM20,STIFN(M1))) !NORMALLY NODAL DT > ELEMENT DT
               IF (IN(M1) > 0) THEN
                   DTRB1 = MIN(DTRB1,DTFAC1(11)*SQRT(TWO*IN(M1)/MAX(EM20,STIFR(M1))))
-              ENDIF                               
+              ENDIF       
 C
 C--------> Calcul pas de temps nodal RB2 ------- 
-                IRB = NINT(GBUF%VAR(NV + 38))
+              IRB = NINT(GBUF%VAR(NV + 38))
               IF (IRB > 0) THEN
-                  M2 = NPBY(1,IRB)
+                M2 = NPBY(1,IRB)
               ELSE
                 M2 = IXR(3,J)
               ENDIF            
-                DTRB2 = DTFAC1(11)*SQRT(TWO*MS(M2)/MAX(EM20,STIFN(M2)))
+              DTRB2 = DTFAC1(11)*SQRT(TWO*MS(M2)/MAX(EM20,STIFN(M2)))
               IF (IN(M2) > 0) THEN
                   DTRB2 = MIN(DTRB2,DTFAC1(11)*SQRT(TWO*IN(M2)/MAX(EM20,STIFR(M2))))
-              ENDIF
-C
-C--------> Calculation of Joint time step -------
-                DT = MIN(DTRB1,DTRB2)                
+              ENDIF       
+
+              DT = MIN(DTRB1,DTRB2) 
+C-------->    Calculation of Joint time step -------               
               IF(DT<DT2T) THEN
                 DT2T=DT
                 ITYPTST=11
@@ -120,9 +122,49 @@ C--------> Calculation of Joint time step -------
                 ELSE
                   NELTST = ITAB(M2)
                 ENDIF
+              ENDIF  
+C
+            ELSEIF(GBUF%OFF(I)>ZERO) THEN
+C
+              M1 = IXR(2,J)
+              IF (GBUF%G_RBODY_NODE > 0) THEN
+                IF (NINT(GBUF%RBODY_NODE(2*(I-1)+1)) > 0) THEN                           
+                  M1 = NINT(GBUF%RBODY_NODE(2*(I-1)+1))
+                ENDIF  
               ENDIF
-                
-            ENDIF                                                                                
+              DTRB1 = DTFAC1(11)*SQRT(TWO*MS(M1)/MAX(EM20,STIFN(M1))) !NORMALLY NODAL DT > ELEMENT DT
+              IF (IN(M1) > 0) THEN
+                DTRB1 = MIN(DTRB1,DTFAC1(11)*SQRT(TWO*IN(M1)/MAX(EM20,STIFR(M1))))
+              ENDIF  
+C
+              M2 = IXR(3,J)
+              IF (GBUF%G_RBODY_NODE > 0) THEN
+                IF (NINT(GBUF%RBODY_NODE(2*(I-1)+2)) > 0) THEN                           
+                  M2 = NINT(GBUF%RBODY_NODE(2*(I-1)+2))
+                ENDIF  
+              ENDIF
+              DTRB2 = DTFAC1(11)*SQRT(TWO*MS(M2)/MAX(EM20,STIFN(M2)))
+              IF (IN(M2) > 0) THEN
+                DTRB2 = MIN(DTRB2,DTFAC1(11)*SQRT(TWO*IN(M2)/MAX(EM20,STIFR(M2))))
+              ENDIF
+              DT = MIN(DTRB1,DTRB2)
+C-------->    Update minimum timestep
+              IF (DT < GBUF%DT(I) .AND. GBUF%DT(I) < DT2T) THEN
+                DT2T    = GBUF%DT(I)
+                NELTST  = IXR(NIXR,J)
+                ITYPTST = 6
+              ELSEIF (DT >= GBUF%DT(I) .AND. DT < DT2T) THEN
+                DT2T    = DT
+                ITYPTST = 11
+                IF (DTRB1 < DTRB2) THEN
+                  NELTST = ITAB(M1)
+                ELSE
+                  NELTST = ITAB(M2)
+                ENDIF
+              ENDIF
+C                
+            ENDIF                  
+C                                                                                    
           ENDDO
 C    
         ENDIF   

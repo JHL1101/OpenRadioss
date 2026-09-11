@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    insol3        ../starter/source/interfaces/inter3d1/insol3.F
 !||--- called by ------------------------------------------------------
@@ -146,7 +147,8 @@ C-----------------------------------------------
        XX3(JJ)=X(3,NN)
        XS1=XS1+FOURTH*X(1,NN)
        YS1=YS1+FOURTH*X(2,NN)
-  100  ZS1=ZS1+FOURTH*X(3,NN)
+       ZS1=ZS1+FOURTH*X(3,NN)
+  100  CONTINUE
 C
        CALL NORMA1(N1,N2,N3,AREA,XX1,XX2,XX3)
        XC=ZERO
@@ -170,7 +172,8 @@ C
         IRECT(2,I)=IY(1)
        ELSE
         DO 120 KK=1,4
-  120   IRECT(KK,I)=IY(4-KK+1)
+        IRECT(KK,I)=IY(4-KK+1)
+  120   CONTINUE
        ENDIF
        RETURN
 C
@@ -398,7 +401,8 @@ C-----------------------------------------------
        XX3(JJ)=X(3,NN)
        XS1=XS1+FOURTH*X(1,NN)
        YS1=YS1+FOURTH*X(2,NN)
-  100  ZS1=ZS1+FOURTH*X(3,NN)       
+       ZS1=ZS1+FOURTH*X(3,NN)
+  100  CONTINUE
 C
        CALL NORMA1D(N1,N2,N3,AREA,XX1,XX2,XX3)
 
@@ -425,7 +429,8 @@ C
         IRECT(2,I)=IY(1)
        ELSE
         DO 120 KK=1,4
-  120   IRECT(KK,I)=IY(4-KK+1)
+        IRECT(KK,I)=IY(4-KK+1)
+  120   CONTINUE
        ENDIF
 c       IF(NINT>0) WRITE (IOUT,1300) I,NOINT
 c       IF(NINT<0) WRITE (IOUT,1400) I,NOINT
@@ -538,7 +543,7 @@ C
          DO K=1,NEL-NUMELS8
           MSEGTYP(K)=10
          ENDDO
-     0   CALL INSOLT10(
+         CALL INSOLT10(
      1     IXS(1,NEL),IXS(1,NUMELS+1),
      2     IRECT(1,I),NOINT,NEL-NUMELS8,ITAB,
      3     KNOD2ELS,NOD2ELS,NTY,IBID,MSEGTYP,
@@ -575,7 +580,8 @@ C-----------------------------------------------
        XX3(JJ)=X(3,NN)
        XS1=XS1+FOURTH*X(1,NN)
        YS1=YS1+FOURTH*X(2,NN)
-  100  ZS1=ZS1+FOURTH*X(3,NN)       
+       ZS1=ZS1+FOURTH*X(3,NN)
+  100  CONTINUE
 C
        CALL NORMA1(N1,N2,N3,AREA,XX1,XX2,XX3)
        XC=ZERO
@@ -597,7 +603,8 @@ C
         IRECT(2,I)=IY(1)
        ELSE
         DO 120 KK=1,4
-  120   IRECT(KK,I)=IY(4-KK+1)
+        IRECT(KK,I)=IY(4-KK+1)
+  120   CONTINUE
        ENDIF
 
        RETURN

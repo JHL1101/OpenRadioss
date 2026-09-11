@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,24 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i2_surfi_mod   ../starter/source/interfaces/inter3d1/i2_surfi.F90
 !||--- called by ------------------------------------------------------
 !||    lecins         ../starter/source/interfaces/interf1/lecins.F
 !||====================================================================
       module i2_surfi_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
 ! ======================================================================================================================
-!! \brief this subroutine doing the initialization of the interface type2 w/ input surf/surf
+!! \brief This subroutine performs the initialization of the interface type2 with input surf/surf
 !||====================================================================
 !||    i2_surfi         ../starter/source/interfaces/inter3d1/i2_surfi.F90
 !||--- called by ------------------------------------------------------
@@ -62,6 +63,8 @@
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use groupdef_mod
+          use MY_ALLOC_MOD,     only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
           use select_s2s_mod,   only : select_s2s
           use message_mod
           use constant_mod,     only : nine,ep20
@@ -137,9 +140,9 @@
           isu2  = ipari(46)
           nsu1  = igrsurf(isu1)%nseg
           nsu2  = igrsurf(isu2)%nseg
-          allocate(itags1(nsu1))
-          allocate(itags2(nsu2))
-          allocate(igrelem(nrtm))
+          call my_alloc(itags1, nsu1, "itags1")
+          call my_alloc(itags2, nsu2, "itags2")
+          call my_alloc(igrelem, nrtm, "igrelem")
           itags1 = 1
           itags2 = 1
 !
@@ -189,7 +192,7 @@
           end if
 !    if (l/=nrtm) print *,'error dimensionning: l,nrtm',l,nrtm
 ! nsn
-          allocate(itagn(numnod))
+          call my_alloc(itagn, numnod, "itagn")
           itagn = 0
           ns = 0
           do i=1,igrsurf(isu1)%nseg
@@ -268,7 +271,7 @@
             end if
             if(nels+nelc+neltg==0) then
               seg_n = msegtyp(i) - nrtm
-              if(i<=l1) then ! 1er surf
+              if(i<=l1) then ! first surface
                 call ancmsg(msgid=3092,msgtype=msgwarning,                          &
                   anmode=aninfo_blind_2,i1=int_id,c1=titr,i2=seg_n)
               else
@@ -287,10 +290,10 @@
 !    if (nsn/=ns) print *,'***error dimensionning: nsn,ns',nsn,ns
 !    if (nsn/=nmn) print *,'***error dimensionning: nsn,nmn',nsn,nmn
           msr(1:nsn) = nsv(1:nsn)
-          deallocate(itags1)
-          deallocate(itags2)
-          deallocate(itagn)
-          deallocate(igrelem)
+          call my_dealloc(itags1)
+          call my_dealloc(itags2)
+          call my_dealloc(itagn)
+          call my_dealloc(igrelem)
 1000      FORMAT(/1X,"SURFACE 1: Number of remain seg and % = ",I10,F10.1)
 2000      FORMAT(/1X,"SURFACE 2: Number of remain seg and % = ",I10,F10.1)
 

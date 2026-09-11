@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25main_crit_tri   ../engine/source/interfaces/intsort/i25main_crit_tri.F
 !||--- called by ------------------------------------------------------
@@ -51,7 +52,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NIN,ITASK,
+      INTEGER NIN,ITASK,NMN_1D,
      .        IPARI(NPARI,NINTER),DELTA_PMAX_GAP_NODE,ITAB(*)
 C     REAL
       my_real 
@@ -71,6 +72,7 @@ C-----------------------------------------------
 C
       NSN   =IPARI(5,NIN)
       NMN   =IPARI(6,NIN)
+      NMN_1D = IPARI(104,NIN)
 C
       ISENS = IPARI(64,NIN)  
       IF(ISENS == 0) THEN
@@ -81,7 +83,8 @@ C
       CALL I25BUCE_CRIT(
      1 X            ,INTBUF_TAB%NSV,INTBUF_TAB%MSR,NSN      ,NMN      ,
      2 ITASK        ,INTBUF_TAB%XSAV,NIN      ,INTBUF_TAB%STFNS,V     ,
-     3 XSLV_L       ,XMSR_L       ,VSLV_L     ,VMSR_L       )
+     3 XSLV_L       ,XMSR_L       ,VSLV_L     ,VMSR_L       ,NMN_1D   ,
+     4 INTBUF_TAB%MSR_1D )
 C
       RETURN
       END

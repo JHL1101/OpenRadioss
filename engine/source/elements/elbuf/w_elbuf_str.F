@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    w_elbuf_str    ../engine/source/elements/elbuf/w_elbuf_str.F
+!||    w_elbuf_str      ../engine/source/elements/elbuf/w_elbuf_str.F
 !||--- called by ------------------------------------------------------
-!||    wrrestp        ../engine/source/output/restart/wrrestp.F
+!||    wrrestp          ../engine/source/output/restart/wrrestp.F
 !||--- calls      -----------------------------------------------------
-!||    write_db       ../common_source/tools/input_output/write_db.F
-!||    write_dpdb     ../common_source/tools/input_output/write_db.F
+!||    write_db         ../common_source/tools/input_output/write_db.F
+!||    write_dpdb       ../common_source/tools/input_output/write_db.F
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE W_ELBUF_STR(IPARG,ELBUF_TAB,FLAG_XFEM)
 C-----------------------------------------------
@@ -38,6 +41,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -55,7 +60,7 @@ C-----------------------------------------------
       INTEGER I,J,K,IL,IR,IS,IT,NG,NEL,NPT,L_REL,BUFLEN,NUVAR,
      .   ITY,IGTYP,ERR,IFAIL,
      .   NFAIL,IXFEM,NPG,NPTT,NPTTOT,INLOC,NONL,IDFAIL,
-     .   IDAMP_FREQ_RANGE
+     .   IDAMP_FREQ_RANGE,NVARTMP
       INTEGER ! global variables
      .   G_GAMA,G_SIG,G_OFF,G_NOFF,G_EINT,G_EINS,G_TEMP,
      .   G_RHO,G_PLA,G_VOL,G_EPSD,G_QVIS,G_DELTAX,G_TB,G_RK,G_RE,G_WPLA,
@@ -73,7 +78,8 @@ C-----------------------------------------------
      .   G_SKEW_ID,G_GAMA_R,G_SLIPRING_ID,G_SLIPRING_STRAND,G_RETRACTOR_ID,G_RINGSLIP,
      .   G_ADD_NODE,G_UPDATE,G_INTVAR,G_BETAORTH,G_AMU,G_SLIPRING_FRAM_ID,G_FRAM_FACTOR,
      .   G_TM_YIELD,G_TM_SEQ,G_TM_EINT,G_TM_DMG,G_TM_SIG,G_TM_STRA,G_TSAIWU,G_DMGSCL,
-     .   G_SH_IOFFSET,G_EINT_DISTOR,G_FOR_G,G_FORPG_G,G_YIELD_IN_COMP,G_XXOLD_IN_COMP
+     .   G_SH_IOFFSET,G_EINT_DISTOR,G_FOR_G,G_FORPG_G,G_YIELD_IN_COMP,G_XXOLD_IN_COMP,
+     .   G_RBODY_NODE
       INTEGER  ! layer variables
      .   LY_DMG,LY_GAMA,LY_DIRA,LY_DIRB,LY_CRKDIR,LY_PLAPT,LY_SIGPT,
      .   LY_HOURG,LY_UELR,LY_UELR1,LY_OFFPG,LY_OFF,LEN_PLAPT,LEN_SIGPT
@@ -155,7 +161,7 @@ c         allocate and fill the transfer table for restart
 c---------------------------------------------------          
           BUFLEN = IPARG(66,NG)                                         
 c          print*,'restart : buflen, NG,igtyp,=',buflen,NG,igtyp,ITY
-          ALLOCATE (RBUF_L(BUFLEN), STAT=ERR)
+          call my_alloc(RBUF_L, BUFLEN, "RBUF_L", stat=ERR)
 
 C
           RBUF_L(1:BUFLEN) = ZERO  
@@ -1075,6 +1081,7 @@ c---
           G_SKEW_ID     = GBUF%G_SKEW_ID
           G_YIELD_IN_COMP = GBUF%G_YIELD_IN_COMP
           G_XXOLD_IN_COMP = GBUF%G_XXOLD_IN_COMP
+          G_RBODY_NODE     = GBUF%G_RBODY_NODE
 c---
 c seatbelt elements
 c---
@@ -1323,6 +1330,8 @@ c---
            RBUF_L(L_REL+1) =  G_YIELD_IN_COMP
              L_REL = L_REL + 1
            RBUF_L(L_REL+1) =  G_XXOLD_IN_COMP
+             L_REL = L_REL + 1
+           RBUF_L(L_REL+1) =  G_RBODY_NODE
              L_REL = L_REL + 1
 c---
 c seatbelt elements
@@ -1597,6 +1606,8 @@ c---
             L_REL = L_REL +NEL*G_YIELD_IN_COMP
           RBUF_L(L_REL+1:L_REL+NEL*G_XXOLD_IN_COMP)= GBUF%XXOLD_IN_COMP(1:NEL*G_XXOLD_IN_COMP)
             L_REL = L_REL +NEL*G_XXOLD_IN_COMP
+          RBUF_L(L_REL+1:L_REL+NEL*G_RBODY_NODE)   = GBUF%RBODY_NODE(1:NEL*G_RBODY_NODE)
+            L_REL = L_REL +NEL*G_RBODY_NODE
 c            
 c         failure model for beams type 3
           IF (IGTYP == 3 .and. G_NOFF == 1) THEN
@@ -1643,6 +1654,10 @@ c
                L_REL = L_REL + NEL*LF_INDX
              RBUF_L(L_REL+1:L_REL+NEL*LF_OFF) = ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF(1:NEL*LF_OFF)
                L_REL = L_REL + NEL*LF_OFF
+             NVARTMP = SIZE(ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP) / NEL
+             RBUF_L(L_REL+1:L_REL+NEL*NVARTMP) = ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP(1:NEL*NVARTMP)
+               L_REL = L_REL + NEL*NVARTMP
+c
           END IF            
 c---
 c seatbelt elements
@@ -1699,7 +1714,7 @@ C SMSTR must be written in separate Buffer (Forced in double precision)
 C
           SDP_RBUF = SDP_RBUF + G_SMSTR *NEL
           IF(SDP_RBUF > 0)THEN
-            ALLOCATE(DP_RBUF(SDP_RBUF))
+            call my_alloc(DP_RBUF, SDP_RBUF, "DP_RBUF")
           L_DPR = 0
 C--------local buf first          
            DO IL = 1,ELBUF%NLAY                                          
@@ -1722,10 +1737,10 @@ c
            ENDDO                                                       
            DP_RBUF(L_DPR+1:L_DPR+NEL*G_SMSTR)= GBUF%SMSTR(1:NEL*G_SMSTR)
             CALL WRITE_DPDB(DP_RBUF,SDP_RBUF)
-            DEALLOCATE(DP_RBUF)
+            call my_dealloc(DP_RBUF)
           ENDIF
 C---------
-          DEALLOCATE (RBUF_L)
+          call my_dealloc(RBUF_L)
 c---------
         ENDIF   ! ity
       ENDDO      ! NG=1,NGROUP

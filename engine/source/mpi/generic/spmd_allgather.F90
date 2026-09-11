@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,12 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
-
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_allgather_mod    ../engine/source/mpi/generic/spmd_allgather.F90
 !||--- called by ------------------------------------------------------
@@ -30,106 +30,440 @@
 !||====================================================================
       module spmd_allgather_mod
         use spmd_comm_world_mod, only: SPMD_COMM_WORLD
-
         implicit none
-        ! Define the interface for spmd_allgahter
 
-        integer, parameter, public :: TAG_ALLGATHER = -7
+        integer, parameter, public :: TAG_ALLGATHER = -12
 
-
-        ! \brief Interface for spmd_allgahter, a wrapper for MPI_ALLGATHER
-        ! This interface allows for gathering data from all processes in a distributed system.
-        ! It supports gathering real numbers, integers, and double precision numbers.
+        !> \brief Interface for spmd_allgather, a wrapper for MPI_ALLGATHER
         interface spmd_allgather
-          module procedure spmd_allgather_reals   !< Allgather real numbers across all processes
-          module procedure spmd_allgather_ints    !< Allgather integers across all processes
-          module procedure spmd_allgather_doubles !< Allgather double precision numbers across all processes
+          module procedure spmd_allgather_reals
+          module procedure spmd_allgather_ints
+          module procedure spmd_allgather_doubles
+          module procedure spmd_allgather_reals2d
+          module procedure spmd_allgather_ints2d
+          module procedure spmd_allgather_doubles2d
+          module procedure spmd_allgather_real
+          module procedure spmd_allgather_int
+          module procedure spmd_allgather_double
         end interface spmd_allgather
 
       contains
-! ======================================================================================================================
-!                                                   PROCEDURES
-! ======================================================================================================================
 
 ! ======================================================================================================================
+!>  \brief Allgather of real       array
 !||====================================================================
 !||    spmd_allgather_reals   ../engine/source/mpi/generic/spmd_allgather.F90
 !||--- calls      -----------------------------------------------------
+!||    spmd_in                ../engine/source/mpi/spmd_error.F90
+!||    spmd_out               ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod         ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_allgather_reals(sendbuf, recvbuf, buf_count,comm)
+        subroutine spmd_allgather_reals(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
           implicit none
 #include "spmd.inc"
-          real, dimension(*), intent(in) :: sendbuf
-          real, dimension(*), intent(inout) :: recvbuf
-          integer, intent(in) :: buf_count
+          integer, intent(in) :: sendcount, recvcount
+          real, dimension(:), intent(in) :: sendbuf
+          real, dimension(:), intent(inout) :: recvbuf
           integer, intent(in), optional :: comm
-          integer :: ierr,  used_comm
-#ifdef MPI
-          !call spmd_in(TAG_ALLGATHER)
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
 
-          ! Determine the communicator to use
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
           if (present(comm)) then
             used_comm = comm
           else
             used_comm = SPMD_COMM_WORLD
           end if
 
-          call MPI_Allgather(sendbuf,buf_count, MPI_REAL, recvbuf, buf_count, MPI_REAL, used_comm, ierr)
-          !call spmd_out(TAG_ALLGATHER,ierr)
+          call MPI_Allgather(sendbuf, sendcount, MPI_REAL, recvbuf, recvcount, MPI_REAL, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
 #endif
         end subroutine spmd_allgather_reals
-! ======================================================================================================================
-!||====================================================================
-!||    spmd_allgather_doubles   ../engine/source/mpi/generic/spmd_allgather.F90
-!||--- calls      -----------------------------------------------------
-!||====================================================================
-        subroutine spmd_allgather_doubles(sendbuf, recvbuf, buf_count,comm)
-          implicit none
-#include "spmd.inc"
-          real(kind=8), dimension(*), intent(in) :: sendbuf
-          real(kind=8), dimension(*), intent(inout) :: recvbuf
-          integer, intent(in) :: buf_count
-          integer, intent(in), optional :: comm
-          integer :: ierr,  used_comm
-#ifdef MPI
-          !call spmd_in(TAG_ALLGATHER)
 
-          ! Determine the communicator to use
-          if (present(comm)) then
-            used_comm = comm
-          else
-            used_comm = SPMD_COMM_WORLD
-          end if
-
-          call MPI_Allgather(sendbuf,buf_count, MPI_DOUBLE_PRECISION, recvbuf, buf_count, MPI_DOUBLE_PRECISION, used_comm, ierr)
-          !call spmd_out(TAG_ALLGATHER,ierr)
-#endif
-        end subroutine spmd_allgather_doubles
 ! ======================================================================================================================
+!>  \brief Allgather of integer       array
 !||====================================================================
 !||    spmd_allgather_ints   ../engine/source/mpi/generic/spmd_allgather.F90
 !||--- calls      -----------------------------------------------------
+!||    spmd_in               ../engine/source/mpi/spmd_error.F90
+!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_allgather_ints(sendbuf, recvbuf, buf_count,comm)
+        subroutine spmd_allgather_ints(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
           implicit none
 #include "spmd.inc"
-          integer, dimension(*), intent(in) :: sendbuf
-          integer, dimension(*), intent(inout) :: recvbuf
-          integer, intent(in) :: buf_count
+          integer, intent(in) :: sendcount, recvcount
+          integer, dimension(:), intent(in) :: sendbuf
+          integer, dimension(:), intent(inout) :: recvbuf
           integer, intent(in), optional :: comm
-          integer :: ierr,  used_comm
-#ifdef MPI
-          !call spmd_in(TAG_ALLGATHER)
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
 
-          ! Determine the communicator to use
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
           if (present(comm)) then
             used_comm = comm
           else
             used_comm = SPMD_COMM_WORLD
           end if
 
-          call MPI_Allgather(sendbuf,buf_count, MPI_INTEGER, recvbuf, buf_count, MPI_INTEGER, used_comm, ierr)
-          !call spmd_out(TAG_ALLGATHER,ierr)
+          call MPI_Allgather(sendbuf, sendcount, MPI_INTEGER, recvbuf, recvcount, MPI_INTEGER, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
 #endif
         end subroutine spmd_allgather_ints
+
+! ======================================================================================================================
+!>  \brief Allgather of double precision       array
+!||====================================================================
+!||    spmd_allgather_doubles   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                  ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                 ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod           ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_doubles(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          double precision, dimension(:), intent(in) :: sendbuf
+          double precision, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          call MPI_Allgather(sendbuf, sendcount, MPI_DOUBLE_PRECISION, recvbuf, recvcount, MPI_DOUBLE_PRECISION, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_doubles
+
+! ======================================================================================================================
+!>  \brief Allgather of real       array
+!||====================================================================
+!||    spmd_allgather_reals2d   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                  ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                 ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod           ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_reals2d(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          real, dimension(:,:), intent(in) :: sendbuf
+          real, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          call MPI_Allgather(sendbuf, sendcount, MPI_REAL, recvbuf, recvcount, MPI_REAL, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_reals2d
+
+! ======================================================================================================================
+!>  \brief Allgather of integer       array
+!||====================================================================
+!||    spmd_allgather_ints2d   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                 ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod          ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_ints2d(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          integer, dimension(:,:), intent(in) :: sendbuf
+          integer, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          call MPI_Allgather(sendbuf, sendcount, MPI_INTEGER, recvbuf, recvcount, MPI_INTEGER, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_ints2d
+
+! ======================================================================================================================
+!>  \brief Allgather of double precision       array
+!||====================================================================
+!||    spmd_allgather_doubles2d   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                    ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                   ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod             ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_doubles2d(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          double precision, dimension(:,:), intent(in) :: sendbuf
+          double precision, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          call MPI_Allgather(sendbuf, sendcount, MPI_DOUBLE_PRECISION, recvbuf, recvcount, MPI_DOUBLE_PRECISION, used_comm, ierr)
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_doubles2d
+
+! ======================================================================================================================
+!>  \brief Allgather of real       scalar
+!||====================================================================
+!||    spmd_allgather_real   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in               ../engine/source/mpi/spmd_error.F90
+!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_real(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          real,  intent(in) :: sendbuf
+          real, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (sendcount .ne. 1) then
+            ierr = -1
+          else
+            call MPI_Allgather(sendbuf, sendcount, MPI_REAL, recvbuf, recvcount, MPI_REAL, used_comm, ierr)
+          end if
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_real
+
+! ======================================================================================================================
+!>  \brief Allgather of integer       scalar
+!||====================================================================
+!||    spmd_allgather_int   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in              ../engine/source/mpi/spmd_error.F90
+!||    spmd_out             ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod       ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_int(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          integer,  intent(in) :: sendbuf
+          integer, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (sendcount .ne. 1) then
+            ierr = -1
+          else
+            call MPI_Allgather(sendbuf, sendcount, MPI_INTEGER, recvbuf, recvcount, MPI_INTEGER, used_comm, ierr)
+          end if
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_int
+
+! ======================================================================================================================
+!>  \brief Allgather of double precision       scalar
+!||====================================================================
+!||    spmd_allgather_double   ../engine/source/mpi/generic/spmd_allgather.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                 ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_error_mod          ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_allgather_double(sendbuf, recvbuf, sendcount, recvcount, comm, tag)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: sendcount, recvcount
+          double precision,  intent(in) :: sendbuf
+          double precision, dimension(:), intent(inout) :: recvbuf
+          integer, intent(in), optional :: comm
+          integer, intent(in), optional :: tag ! for spmd_in/out
+          integer :: ierr, used_comm
+          integer :: tag_local
+
+          if (present(tag)) then
+            tag_local = tag
+          else
+            tag_local = TAG_ALLGATHER
+          end if
+
+#ifdef MPI
+          call spmd_in(tag_local, "MPI_Allgather")
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (sendcount .ne. 1) then
+            ierr = -1
+          else
+            call MPI_Allgather(sendbuf, sendcount, MPI_DOUBLE_PRECISION, recvbuf, recvcount, MPI_DOUBLE_PRECISION, used_comm, ierr)
+          end if
+
+          call spmd_out(tag_local, ierr)
+#else
+          continue
+#endif
+        end subroutine spmd_allgather_double
+
       end module spmd_allgather_mod

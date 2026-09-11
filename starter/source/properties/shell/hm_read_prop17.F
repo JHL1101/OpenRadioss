@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_prop17                ../starter/source/properties/shell/hm_read_prop17.F
 !||--- called by ------------------------------------------------------
@@ -55,6 +56,7 @@ C-----------------------------------------------
       USE STACK_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE DEFAULTS_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -87,20 +89,19 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      CHARACTER LAW_ID*4
       INTEGER :: IGMAT, IHBE , ISMSTR, ISROT, ISHXFEM  ,ISTRAIN, ITHK, IPLAST, IDSK,
-     .           IORTH, IPOS , LAMIN , NSUB , NISUB , NN, NPLY, IDSUB , I, PLY_ID,
+     .           IORTH, IPOS , LAMIN , NSUB , NISUB , NPLY, IDSUB , I, PLY_ID,
      .           IMID_PI,INTER ,IPID1 , IPID2 , IREP, ISHEAR ,IHBEOUTP ,IPID0,
      .           ISK , J, ISS, N1, IMID, K, NC, KK, II, NPT_SUB, M1, IMAT,
-     .           N,IPID,ISHELL,ISH3N,ID,ID1,IUN,NPLY_SUB,IGTYP,FAIL_SHELL,IS,IRP
+     .           N,ISH3N,IUN,NPLY_SUB,IGTYP,FAIL_SHELL,IS,IRP
       my_real :: 
-     .   AN, VX, VY, VZ, THICKT, DT, TMIN, TMAX,PTHK,CVIS,PUN,ZSHIFT, THK ,
+     .   AN, VX, VY, VZ, PTHK,CVIS,PUN,ZSHIFT, THK ,
      .   ASHEAR, ANG, POS, HM, HF, HR, DN, DM,VISC_INT
-      INTEGER     IHBE_D,IPLA_D,ISTR_D,ITHK_D,ISHEA_D,ISST_D,
+      INTEGER     IHBE_D,IPLA_D,ITHK_D,ISHEA_D,ISST_D,
      .           ISH3N_D, ISTRA_D,NPTS_D,IDRIL_D
       INTEGER, DIMENSION(:),ALLOCATABLE :: IDMAT_INTP,IDMAT_SUB
       
-      CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
+      CHARACTER(LEN=NCHARTITLE) :: TITR
       LOGICAL :: IS_AVAILABLE, IS_ENCRYPTED
 C-----------------------------------------------
 C   D a t a
@@ -526,7 +527,8 @@ C---
 !!      ENDIF
 C          
         NC = NPLY        
-        ALLOCATE( IDMAT_INTP(NPLY),IDMAT_SUB(NISUB))
+        call my_alloc(IDMAT_INTP, NPLY, "IDMAT_INTP")
+        call my_alloc(IDMAT_SUB, NISUB, "IDMAT_SUB")
         IDMAT_INTP = 0
         IDMAT_SUB = 0   
         N1 = NPLY
@@ -640,7 +642,8 @@ C
            ENDDO
       ENDIF     
 C      
-      DEALLOCATE (IDMAT_INTP,IDMAT_SUB)
+      CALL MY_DEALLOC(IDMAT_INTP)
+      CALL MY_DEALLOC(IDMAT_SUB)
 C----
       RETURN
  2110 FORMAT(

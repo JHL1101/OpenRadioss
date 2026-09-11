@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
-!||    sptrivox        ../engine/source/elements/sph/sptrivox.F
+!||    sptrivox         ../engine/source/elements/sph/sptrivox.F
 !||--- called by ------------------------------------------------------
-!||    spbuc3          ../engine/source/elements/sph/spbuc3.F
+!||    spbuc3           ../engine/source/elements/sph/spbuc3.F
 !||--- calls      -----------------------------------------------------
-!||    my_barrier      ../engine/source/system/machine.F
-!||    spmd_sphgetdk   ../engine/source/mpi/elements/spmd_sph.F
-!||    sppro3          ../engine/source/elements/sph/sppro3.F
+!||    my_barrier       ../engine/source/system/machine.F
+!||    spmd_sphgetdk    ../engine/source/mpi/elements/spmd_sph.F
+!||    sppro3           ../engine/source/elements/sph/sppro3.F
 !||--- uses       -----------------------------------------------------
-!||    sphbox          ../engine/share/modules/sphbox.F
-!||    tri7box         ../engine/share/modules/tri7box.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    sphbox           ../engine/share/modules/sphbox.F
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPTRIVOX(
      1      NSN    ,NSNR    ,X       ,BMINMA  ,NOD2SP  ,
@@ -48,6 +51,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -124,13 +129,13 @@ c provisional
       INTEGER, DIMENSION(:,:,:), ALLOCATABLE, SAVE :: VOXEL_LOCAL
 C-----------------------------------------------
       IF(ITASK == 0)THEN
-        ALLOCATE(NEXT_NOD(NSN+NSNR))
-        ALLOCATE(IIX(NSN+NSNR))
-        ALLOCATE(IIY(NSN+NSNR))
-        ALLOCATE(IIZ(NSN+NSNR))
-        ALLOCATE(TAB_DK(NUMSPH))
-        ALLOCATE(NEXT_NOD_LOCAL(NSN))
-        ALLOCATE( VOXEL_LOCAL(NBX+2,NBY+2,NBZ+2) )
+        call my_alloc(NEXT_NOD, NSN+NSNR, "NEXT_NOD")
+        call my_alloc(IIX, NSN+NSNR, "IIX")
+        call my_alloc(IIY, NSN+NSNR, "IIY")
+        call my_alloc(IIZ, NSN+NSNR, "IIZ")
+        call my_alloc(TAB_DK, NUMSPH, "TAB_DK")
+        call my_alloc(NEXT_NOD_LOCAL, NSN, "NEXT_NOD_LOCAL")
+        call my_alloc(VOXEL_LOCAL, NBX+2, NBY+2, NBZ+2, "VOXEL_LOCAL")
       END IF
 C Barrier to wait init voxel and allocation NEX_NOD
       CALL MY_BARRIER
@@ -626,13 +631,13 @@ C================================================================
 C
       CALL MY_BARRIER()
       IF(ITASK == 0)THEN
-        DEALLOCATE(NEXT_NOD)
-        DEALLOCATE(IIX)
-        DEALLOCATE(IIY)
-        DEALLOCATE(IIZ)
-        DEALLOCATE(TAB_DK)
-        DEALLOCATE( NEXT_NOD_LOCAL )
-        DEALLOCATE( VOXEL_LOCAL )
+        call my_dealloc(NEXT_NOD)
+        call my_dealloc(IIX)
+        call my_dealloc(IIY)
+        call my_dealloc(IIZ)
+        call my_dealloc(TAB_DK)
+        call my_dealloc(NEXT_NOD_LOCAL)
+        call my_dealloc(VOXEL_LOCAL)
       ENDIF
 
       RETURN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_beam18          ../engine/source/elements/beam/fail_beam18.F
 !||--- called by ------------------------------------------------------
@@ -100,13 +101,14 @@ C-----------------------------------------------
       my_real ,DIMENSION(NEL,NPT)        ,INTENT(IN)    :: SIGY    
 C
       TYPE (ELBUF_STRUCT_)    ,INTENT(INOUT) :: ELBUF_STR
-      TYPE (FAIL_PARAM_)      ,INTENT(IN)    :: FAIL
+C     FAIL_ENERGY_IB declares FAIL as INTENT(INOUT).
+      TYPE (FAIL_PARAM_)      ,INTENT(INOUT) :: FAIL
       TYPE (MATPARAM_STRUCT_) ,INTENT(IN)    :: MAT_PARAM
       TARGET :: ELBUF_STR
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: I,IFL,IPT,NFUNC,IPY,IPZ,IPA,NVARF,NPARAM,IRUPT
+      INTEGER :: I,IFL,IPT,NFUNC,IPY,IPZ,IPA,NUVAR,NVARTMP,NPARAM,IRUPT
       INTEGER :: II(3)
       INTEGER ,DIMENSION(NEL) :: COUNT
       my_real :: T0,TM
@@ -118,7 +120,7 @@ C
       TYPE(L_BUFEL_) ,POINTER :: LBUF
       TYPE(BUF_FAIL_),POINTER :: FBUF
       my_real, DIMENSION(:), POINTER :: UVARF,DFMAX,TDEL
-      INTEGER, DIMENSION(:), POINTER :: FOFF
+      INTEGER, DIMENSION(:), POINTER :: FOFF,VARTMP
 C=======================================================================
 c      to avoid compilation error with unused arguments
 c      they will be necessary for next development step
@@ -134,8 +136,11 @@ C--------------------------------------
         II(I) = NEL*(I-1)
       ENDDO
       COUNT(1:NEL) = 0
+      IRUPT  =  FAIL%IRUPT                             
       NPARAM  = FAIL%NUPARAM
       NFUNC   = FAIL%NFUNC
+      NUVAR   = FAIL%NUVAR                              
+      NVARTMP = FAIL%NVARTMP                               
 C---------------------------------------
 C     START LOOP OVER INTEGRATION POINTS
 C---------------------------------------
@@ -143,8 +148,7 @@ C---------------------------------------
         LBUF   => ELBUF_STR%BUFLY(1)%LBUF(1,1,IPT)
         FBUF   => ELBUF_STR%BUFLY(1)%FAIL(1,1,IPT)  
         UVARF  => FBUF%FLOC(IFL)%VAR
-        NVARF  =  FBUF%FLOC(IFL)%NVAR                                 
-        IRUPT  =  FBUF%FLOC(IFL)%ILAWF                                
+        VARTMP => FBUF%FLOC(IFL)%VARTMP
         DFMAX  => FBUF%FLOC(IFL)%DAMMX 
         TDEL   => FBUF%FLOC(IFL)%TDEL   
         FOFF   => FBUF%FLOC(IFL)%OFF
@@ -209,34 +213,30 @@ c---------------
             TSTAR(1:NEL) = ZERO
           ENDIF
 
-          CALL FAIL_TENSSTRAIN_IB(                                         
-     .          NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM ,
+          CALL FAIL_TENSSTRAIN_IB(FAIL       ,NEL      ,NGL      ,                                         
+     .          NUVAR    ,NVARTMP  ,UVARF    ,VARTMP   ,
      .          TIME     ,EPSD     ,OFF      ,DFMAX,                        
-     .          TDEL     ,IOUT     ,ISTDO    ,FAIL%IFUNC   ,
+     .          TDEL     ,IOUT     ,ISTDO    ,
      .          EPSXX    ,AL       ,TSTAR    ,LBUF%DMGSCL ,
-     .          SNPC     ,NPF      ,STF      ,UVARF  ,NVARF,
-     .          TF       ,IPT      ,FOFF     ,ISMSTR ,ELBUF_STR%GBUF%UELR ,NPT)
+     .          IPT      ,FOFF     ,ISMSTR   ,ELBUF_STR%GBUF%UELR)
 c---------------  
         CASE (11)     ! Energy failure model                                           
-          CALL FAIL_ENERGY_IB(
-     .          NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM ,
-     .          TIME     ,EPSD     ,OFF      ,DFMAX,                        
-     .          TDEL     ,IOUT     ,ISTDO    ,FAIL%IFUNC   ,
-     .          LBUF%DMGSCL,UVARF  ,NVARF    ,
-     .          SNPC     ,NPF      ,STF      ,
-     .          TF       ,IPT      ,FOFF     ,
-     .          SIGNXX   ,SIGNXY   ,SIGNXZ   ,
-     .          DEPSXX   ,DEPSXY   ,DEPSXZ   ,ELBUF_STR%GBUF%UELR ,NPT)
+          CALL FAIL_ENERGY_IB(FAIL ,NEL      ,NGL      ,
+     .          TIME     ,EPSD     ,OFF      ,DFMAX    ,                        
+     .          TDEL     ,IOUT     ,ISTDO    ,LBUF%DMGSCL,
+     .          NUVAR    ,UVARF    ,NVARTMP  ,VARTMP   ,
+     .          IPT      ,FOFF     ,SIGNXX   ,SIGNXY   ,SIGNXZ   ,
+     .          DEPSXX   ,DEPSXY   ,DEPSXZ   ,ELBUF_STR%GBUF%UELR ,NPT   )
 
 c--------------- 
         CASE (30)     !    BIQUAD                                                  
-          CALL FAIL_BIQUAD_IB (
-     .          NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM,
+          
+          CALL FAIL_BIQUAD_IB (FAIL,NEL      ,NGL      ,
+     .          NUVAR    ,NVARTMP  ,UVARF    ,VARTMP   ,
      .          TIME     ,OFF      ,DFMAX    ,TDEL     ,                       
-     .          IOUT     ,ISTDO    ,NFUNC    ,FAIL%IFUNC,LBUF%DMGSCL,
-     .          UVARF    ,NVARF    ,SNPC     ,NPF      ,
-     .          STF      ,TF       ,IPT      ,FOFF     ,
-     .          SIGNXX   ,SIGNXY   ,SIGNXZ   ,DPLA_IPT ,AL,ELBUF_STR%GBUF%UELR ,NPT)
+     .          IOUT     ,ISTDO    ,LBUF%DMGSCL,ELBUF_STR%GBUF%UELR ,
+     .          IPT      ,FOFF     ,AL       ,NPT      ,
+     .          SIGNXX   ,SIGNXY   ,SIGNXZ   ,DPLA_IPT )
 
 c--------------- 
         CASE (34)     ! cockroft failure model                                        
@@ -246,7 +246,7 @@ c---------------
      .          TIME     ,DPLA_IPT ,OFF      ,DFMAX,  
      .          TDEL     ,IOUT     ,ISTDO    ,EPSXX    ,
      .          IPT      ,SIGNXX   ,SIGNXY   ,SIGNXZ   ,
-     .          NVARF    ,UVARF    ,FOFF     ,ELBUF_STR%GBUF%UELR ,NPT)   
+     .          NUVAR    ,UVARF    ,FOFF     ,ELBUF_STR%GBUF%UELR ,NPT)   
 
 C--------------
         CASE (36)     ! visual failure model                                        
@@ -256,50 +256,44 @@ C--------------
      .                       IOUT     ,ISTDO    ,
      .                       SIGNXX   ,SIGNXY   ,SIGNXZ   ,
      .                       EPSXX    ,EPSXY    ,EPSXZ    ,
-     .                       NVARF    ,
+     .                       NUVAR    ,
      .                       UVARF    ,ISMSTR   ,DTIME    , IPT)
 c-------------
         CASE (39)     ! GENE1 failure model                                        
-          CALL FAIL_GENE1_IB(                         
-     .                       NEL  ,FAIL%NUPARAM ,FBUF%FLOC(IFL)%NVAR   ,FAIL%NFUNC,   
-     .                FAIL%IFUNC  ,NPF          ,TF               ,            
-     .                      TIME  ,DTIME     ,FAIL%UPARAM         ,IPT ,    
-     .                       NGL  ,ELBUF_STR%GBUF%DT,EPSD         ,FBUF%FLOC(IFL)%VAR, 
-     .                       OFF  ,EPSXX            ,
-     .                     EPSXY  ,EPSXZ        ,  
-     .                    SIGNXX  ,SIGNXY       ,   
-     .                    SIGNXZ  ,TEMPEL       ,   
-     .                     FBUF%FLOC(IFL)%DAMMX ,  AL, TABLE,    
-     .                     FAIL%NTABLE  ,    
-     .                     FAIL%TABLE       , FBUF%FLOC(IFL)%LF_DAMMX, FAIL%NIPARAM ,FAIL%IPARAM,    
-     .                    SNPC    ,STF      ,NTABLE,  FOFF,ELBUF_STR%GBUF%UELR ,NPT, TDEL)
+          CALL FAIL_GENE1_IB(FAIL,
+     .            NEL  ,NUVAR,FBUF%FLOC(IFL)%VAR,NVARTMP,FBUF%FLOC(IFL)%VARTMP,
+     .           TIME  ,DTIME     ,IPT ,    
+     .            NGL  ,ELBUF_STR%GBUF%DT,EPSD         ,
+     .            OFF  ,EPSXX  ,EPSXY  ,EPSXZ        ,  
+     .         SIGNXX  ,SIGNXY       ,SIGNXZ  ,TEMPEL       ,   
+     .          FBUF%FLOC(IFL)%DAMMX ,  AL, TABLE,FAIL%NTABLE  ,    
+     .          FAIL%TABLE, FBUF%FLOC(IFL)%LF_DAMMX,    
+     .           NTABLE,  FOFF,ELBUF_STR%GBUF%UELR ,NPT, TDEL)
 
 
 c-------------
         CASE (42)     ! Inievo failure model  
 
           CALL FAIL_INIEVO_IB(                         
-     .                       NEL  ,FAIL%NUPARAM ,FBUF%FLOC(IFL)%NVAR ,
-     .                     TABLE  ,FAIL%NTABLE  ,FAIL%TABLE ,TIME    ,FAIL%UPARAM       ,
-     .                       NGL  ,AL           ,DPLA_IPT       ,EPSD , FBUF%FLOC(IFL)%VAR,
-     .                    SIGNXX  ,SIGNXY       ,SIGNXZ     ,
-     .                    PLA_IPT ,SIGY_IPT     ,FOFF ,FBUF%FLOC(IFL)%DAMMX  ,
-     .                    TDEL    ,LBUF%DMGSCL  ,ELBUF_STR%GBUF%UELR ,IPT  ,NPT,
-     .                    FBUF%FLOC(IFL)%DAMINI ,
-     .                    NTABLE  ,OFF)  
+     .         NEL     ,FAIL%NUPARAM ,NUVAR      ,NVARTMP ,FBUF%FLOC(IFL)%VARTMP,
+     .         TABLE   ,FAIL%NTABLE  ,FAIL%TABLE ,TIME    ,FAIL%UPARAM       ,
+     .         NGL     ,AL           ,DPLA_IPT       ,EPSD , FBUF%FLOC(IFL)%VAR,
+     .         SIGNXX  ,SIGNXY       ,SIGNXZ     ,
+     .         PLA_IPT ,SIGY_IPT     ,FOFF ,FBUF%FLOC(IFL)%DAMMX  ,
+     .         TDEL    ,LBUF%DMGSCL  ,ELBUF_STR%GBUF%UELR ,IPT  ,NPT,
+     .         FBUF%FLOC(IFL)%DAMINI ,NTABLE  ,OFF)  
 
 c-------------
         CASE (41)     ! TAB2 failure model         
           
           CALL FAIL_TAB2_IB(                         
-     .                       NEL  ,FAIL%NUPARAM ,FBUF%FLOC(IFL)%NVAR   ,FAIL%NFUNC  ,FAIL%IFUNC  ,
-     .                       NPF  ,TABLE   ,TF        ,TIME  ,FAIL%UPARAM  ,
-     .                       NGL  ,AL           ,DPLA_IPT  ,EPSD  ,FBUF%FLOC(IFL)%VAR,  
-     .                    SIGNXX  ,SIGNXY       ,SIGNXZ  , 
+     .                    NEL  ,FAIL%NUPARAM ,NUVAR   ,FAIL%NFUNC  ,FAIL%IFUNC  ,
+     .                    NPF  ,TABLE   ,TF        ,TIME  ,FAIL%UPARAM  ,
+     .                    NGL  ,AL           ,DPLA_IPT  ,EPSD  ,FBUF%FLOC(IFL)%VAR,  
+     .                    SIGNXX  ,SIGNXY       ,SIGNXZ  ,NVARTMP ,FBUF%FLOC(IFL)%VARTMP, 
      .                    TEMPEL  ,OFF          ,FBUF%FLOC(IFL)%DAMMX ,TDEL  ,LBUF%DMGSCL,
-     .                         IPT, NPT, FOFF, FAIL%NTABLE ,FAIL%TABLE,
-     .         ELBUF_STR%GBUF%UELR, 
-     .                      SNPC  ,STF  ,NTABLE) 
+     .                    IPT, NPT, FOFF, FAIL%NTABLE ,FAIL%TABLE,
+     .                    ELBUF_STR%GBUF%UELR,SNPC  ,STF  ,NTABLE) 
           DO I= 1,NEL
             IF (FOFF(I) == 0) COUNT(I) = COUNT(I) + 1
           END DO

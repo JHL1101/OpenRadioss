@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22main_tri                  ../engine/source/interfaces/intsort/i22main_tri.F
 !||--- called by ------------------------------------------------------
@@ -52,6 +53,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod                  ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    timer_mod                    ../engine/source/system/timer_mod.F90
 !||    tri7box                      ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -81,6 +84,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -113,7 +118,7 @@ C-----------------------------------------------
      .        ISENDTO(NINTER+1,*),IRCVFROM(NINTER+1,*),
      .        WEIGHT(*), IAD_ELEM(2,*) ,FR_ELEM(*),
      .        RENUM(NUMNOD), NSNFIOLD(NSPMD), NODNX_SMS(*),
-     .        IXS(NIXS,*),NSHELL,  COUNT_REMSLV(*)
+     .        IXS(NIXS,*),  COUNT_REMSLV(*)
       INTEGER , INTENT(IN) :: NODADT_THERM
       my_real 
      .   X(3,*), V(3,*), MS(*),TEMP(*)
@@ -128,9 +133,9 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER LOC_PROC, P,
-     .        I, IP0, IP1, IP2, IP21, I_SK_OLD, I_STOK1, 
-     .        ADD1, NB_N_B, NOINT, INACTI, MULTIMP, IGAP, IFQ,
-     .        IAD, J, NF, NL, I1, I2, REM_P(NSPMD-1)
+     .        I, IP1, I_SK_OLD, 
+     .        NB_N_B, NOINT, INACTI, MULTIMP, IFQ,
+     .        J, NF, NL, I1, I2, REM_P(NSPMD-1)
       INTEGER ::
      .        NBRIC_G,  !number of bricks in the whole model
      .        NBRIC_L,  !number of bricks in the domain (not split across threads)
@@ -140,19 +145,19 @@ C-----------------------------------------------
      .        NSHELR_L !number of remote facets in the domain
 ! number of remote facets in the domain (for the current thread)
       INTEGER 
-     .        ILD, NCONT, NCONTACT, INACTII, INACIMP, INTTH,
+     .        ILD, NCONT, NCONTACT, INTTH,
      .        I_MEM,CAND_N_OLD,IDUM1(1),
-     .        ISU1, ISU2, NBF, NBL, IBID, COUNT_CAND, CT,INTFRIC
+     .        ISU1, IBID, COUNT_CAND, CT,INTFRIC
       LOGICAL ::
      .        IS_CONTACT
       my_real
      .   GAP,MAXBOX,MINBOX,TZINF,
      .   XMAXL, YMAXL, ZMAXL, XMINL, YMINL, ZMINL, GAPMIN, GAPMAX,
-     .   C_MAXL,BID,
-     .   CURV_MAX(NRTM_T),RDUM1(1), STFE, 
+     .   C_MAXL,
+     .   CURV_MAX(NRTM_T), STFE, 
      .   BMINMA_AND_R(6), !intersection fluid in local domain and remote lag faces
      .   BMINMA_AND(6),  !intersection fluid in local domain and all faces
-     .   vel(4), vel_max
+     .   vel(4)
       INTEGER :: NRTM,NSN,NTY,NMN
       logical :: need_computation
 C-----------------------------------------------
@@ -217,20 +222,20 @@ C -------------------------------------------------------------
 C     ALLOCATIONS
 C -------------------------------------------------------------
       IF(ITASK==0)THEN
-        ALLOCATE (IRECT_L(SIZ_IRECT_L,NSHEL_G))
-        ALLOCATE(XMINS(NBRIC_L))
-        ALLOCATE(YMINS(NBRIC_L))
-        ALLOCATE(ZMINS(NBRIC_L))
-        ALLOCATE(XMAXS(NBRIC_L))
-        ALLOCATE(YMAXS(NBRIC_L))
-        ALLOCATE(ZMAXS(NBRIC_L))
-        ALLOCATE(NSNR_G(NTHREAD))
-        ALLOCATE(XMINE(NSHEL_L))
-        ALLOCATE(YMINE(NSHEL_L))
-        ALLOCATE(ZMINE(NSHEL_L))
-        ALLOCATE(XMAXE(NSHEL_L))
-        ALLOCATE(YMAXE(NSHEL_L))
-        ALLOCATE(ZMAXE(NSHEL_L))
+        call my_alloc(IRECT_L, SIZ_IRECT_L, NSHEL_G, "IRECT_L")
+        call my_alloc(XMINS, NBRIC_L, "XMINS")
+        call my_alloc(YMINS, NBRIC_L, "YMINS")
+        call my_alloc(ZMINS, NBRIC_L, "ZMINS")
+        call my_alloc(XMAXS, NBRIC_L, "XMAXS")
+        call my_alloc(YMAXS, NBRIC_L, "YMAXS")
+        call my_alloc(ZMAXS, NBRIC_L, "ZMAXS")
+        call my_alloc(NSNR_G, NTHREAD, "NSNR_G")
+        call my_alloc(XMINE, NSHEL_L, "XMINE")
+        call my_alloc(YMINE, NSHEL_L, "YMINE")
+        call my_alloc(ZMINE, NSHEL_L, "ZMINE")
+        call my_alloc(XMAXE, NSHEL_L, "XMAXE")
+        call my_alloc(YMAXE, NSHEL_L, "YMAXE")
+        call my_alloc(ZMAXE, NSHEL_L, "ZMAXE")
         BMINMA_LAG(1) = -EP30
         BMINMA_LAG(2) = -EP30
         BMINMA_LAG(3) = -EP30
@@ -317,7 +322,7 @@ C       BMINMA_LAG_G(1:6) is global model data
 C -------------------------------------------------------------
       IF(NSPMD > 1) THEN
         IF(ITASK==0)THEN
-          ALLOCATE(BMINMA_LAG_SPMD(6,NSPMD))
+          call my_alloc(BMINMA_LAG_SPMD, 6, NSPMD, "BMINMA_LAG_SPMD")
           IF(IMONM > 0) CALL STARTIME(TIMERS,25)
           CALL SPMD_LAGBOUNDS_EXCH_I22(
      .            BMINMA_LAG_SPMD, BMINMA_LAG, ISENDTO  ,IRCVFROM , NIN)
@@ -698,20 +703,20 @@ C--------------------------------------------------------------
       
       IF(ITASK==0)THEN
         !DEALLOCATE(IRECT_L)
-        DEALLOCATE(XMINS)
-        DEALLOCATE(YMINS)
-        DEALLOCATE(ZMINS)
-        DEALLOCATE(XMAXS)
-        DEALLOCATE(YMAXS)
-        DEALLOCATE(ZMAXS)
-        DEALLOCATE(NSNR_G)
-        DEALLOCATE(XMINE)
-        DEALLOCATE(YMINE)
-        DEALLOCATE(ZMINE)
-        DEALLOCATE(XMAXE)
-        DEALLOCATE(YMAXE)
-        DEALLOCATE(ZMAXE)
-        IF(ALLOCATED(BMINMA_LAG_SPMD))DEALLOCATE(BMINMA_LAG_SPMD)
+        call my_dealloc(XMINS)
+        call my_dealloc(YMINS)
+        call my_dealloc(ZMINS)
+        call my_dealloc(XMAXS)
+        call my_dealloc(YMAXS)
+        call my_dealloc(ZMAXS)
+        call my_dealloc(NSNR_G)
+        call my_dealloc(XMINE)
+        call my_dealloc(YMINE)
+        call my_dealloc(ZMINE)
+        call my_dealloc(XMAXE)
+        call my_dealloc(YMAXE)
+        call my_dealloc(ZMAXE)
+        IF(ALLOCATED(BMINMA_LAG_SPMD)) call my_dealloc(BMINMA_LAG_SPMD)
       END IF
 
       RETURN
@@ -761,11 +766,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IB, NE, TAB(8*NBRIC)
+      INTEGER IB, NE
       my_real
-     .   XX(8), YY(8), ZZ(8), DIAG(4)
-      CHARACTER*8 KEY
-      INTEGER I,J, NBF, NBL
+     .   XX(8), YY(8), ZZ(8)
+!      CHARACTER*8 KEY
+      INTEGER NBF, NBL
 C-----------------------------------------------
 
 !---------------debug---------------
@@ -841,14 +846,14 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER ::
-     .        IE, NE, N(4), NRTMR
+     .        IE, N(4)
 
       my_real ::
      .        XX(4), YY(4), ZZ(4),
      .        XMIN,YMIN,ZMIN,
      .        XMAX,YMAX,ZMAX
-      INTEGER TAB(4*NRTM), J, I,  ITAB(*)
-      CHARACTER*8 KEY
+      INTEGER J, ITAB(*)
+!      CHARACTER*8 KEY
 C-----------------------------------------------
 
 !---------------debug---------------

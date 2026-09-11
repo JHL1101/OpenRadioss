@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    lecfvbag        ../engine/source/input/lecfvbag.F
+!||    lecfvbag         ../engine/source/input/lecfvbag.F
 !||--- called by ------------------------------------------------------
-!||    lectur          ../engine/source/input/lectur.F
+!||    lectur           ../engine/source/input/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    arret           ../engine/source/system/arret.F
-!||    spmd_fvb_gath   ../engine/source/mpi/airbags/spmd_fvb_gath.F
+!||    arret            ../engine/source/system/arret.F
+!||    spmd_fvb_gath    ../engine/source/mpi/airbags/spmd_fvb_gath.F
 !||--- uses       -----------------------------------------------------
-!||    fvbag_mod       ../engine/share/modules/fvbag_mod.F
+!||    fvbag_mod        ../engine/share/modules/fvbag_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE LECFVBAG(NFVMESH, MONVOL, VOLMON, X)
 C-----------------------------------------------
@@ -38,6 +41,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -148,7 +153,7 @@ C
                   KI1=KIBALE+MONVOL(K1-1+31)
 C
                   IFV=MONVOL(K1-1+45)
-                  ALLOCATE(XXX(3,NN))
+                  call my_alloc(XXX, 3, NN, "XXX")
                   CALL SPMD_FVB_GATH(IFV, X, XXX, RBID, RBID,
      .                               1  )
                   IF (ISPMD==FVSPMD(IFV)%PMAIN-1) THEN
@@ -164,7 +169,7 @@ C
                         LZMAX=MAX(LZMAX,ABS(ZL))
                      ENDDO
                   ENDIF
-                  DEALLOCATE(XXX)
+                  call my_dealloc(XXX)
 C
                   IF (LXMAX>LX) THEN
                      WRITE(IOUT,'(A14,I8,A9)') 

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !chd|====================================================================
 !chd|  read_mat25_tsaiwu                 source/materials/mat/mat025/read_mat25_tsaiwu.F90
 !chd|-- called by -----------
@@ -67,6 +68,7 @@
           use unitab_mod
           use message_mod
           use submodel_mod
+          use MY_ALLOC_MOD
           use constant_mod ,only : half,one,zero,two,four,pi,em3,em20,ep20
           use constant_mod ,only : onep1,onep2,zep999,four,six_over_5,five_over_6
           use precision_mod, only : WP
@@ -328,10 +330,10 @@
           mat_param%ntable  = 0
           mat_param%nfunc   = 0
 !
-          allocate (mat_param%uparam(mat_param%nuparam))
-          allocate (mat_param%iparam(mat_param%niparam))
-!      allocate (mat_param%ifunc (mat_param%nfunc))
-          allocate (mat_param%table (mat_param%ntable))
+          call my_alloc(mat_param%uparam, mat_param%nuparam, "mat_param%uparam")
+          call my_alloc(mat_param%iparam, mat_param%niparam, "mat_param%iparam")
+!      allocate(mat_param%ifunc (mat_param%nfunc))
+          allocate(mat_param%table(mat_param%ntable))
 !
 ! ----------------------------------------------------------------------------------------------------------------------
           ! material parameters used in the law

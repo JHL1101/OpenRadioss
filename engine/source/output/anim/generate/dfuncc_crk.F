@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dfuncc_crk         ../engine/source/output/anim/generate/dfuncc_crk.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod        ../engine/share/resol/initbuf.F
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE DFUNCC_CRK(
      .             ELBUF_TAB   ,LEN        , IFUNC  ,IPARG  ,GEO     ,
@@ -53,6 +55,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -87,17 +90,14 @@ C     REAL
       INTEGER,DIMENSION(:),ALLOCATABLE::MATLY
       my_real
      .   EVAR(MVSIZ),FUNC(LEN), 
-     .   OFF, P, VONM2, VONM, S1, S2, S12, S3, VALUE,
-     .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3, FAC, DAM1(MVSIZ),DAM2(MVSIZ),
-     .   WPLA(MVSIZ), DMAX(MVSIZ),WPMAX(MVSIZ),
-     .   FAIL(MVSIZ),THK0,THKE0(MVSIZ)
+     .   VONM2, S1, S2, S12,
+     .   THK0,THKE0(MVSIZ)
       INTEGER I, NG, NEL, N, MLW, NUVAR, 
-     .        ISTRAIN,NN,K1,K2,MT,IMID,IPID,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NF,
-     .        OFFSET,K,II,KK,IHBE,I1,MPT,IPT,BUF,NUVARR,
-     .        IPMAT,PID(MVSIZ),MAT(MVSIZ),
-     .        IEXPAN,NEL_CRK,NLEVXF,NI,JTURB,
-     .        NLAY,NPTT,IXEL,ILAY,IL,IUS,JJ(5)
+     .        NN1,NN3,NN4,NN5,NN6,
+     .        OFFSET,IHBE,MPT,IPT,BUF,
+     .        PID(MVSIZ),
+     .        NEL_CRK,NI,JTURB,
+     .        NLAY,IXEL,ILAY,IL,IUS,JJ(5)
       INTEGER IXFEM, CRKS, ICRK, ILAYCRK, ELCRK, NPT0
       INTEGER NELCRK(NCRKPART),IE(NCRKPART)
       REAL R4
@@ -109,8 +109,8 @@ C
       TYPE(G_BUFEL_) ,POINTER :: XGBUF
       TYPE(L_BUFEL_) ,POINTER :: XLBUF
 C=======================================================================
-      CALL MY_ALLOC(WAL,NBF_L)
-      CALL MY_ALLOC(MATLY,MVSIZ*100)
+      call my_alloc(WAL, NBF_L, "WAL")
+      call my_alloc(MATLY, MVSIZ*100, "MATLY")
       NEL_CRK = 0
       FUNC(1:LEN) = ZERO
 c
@@ -650,7 +650,7 @@ C
           CALL SPMD_R4GET_PARTN(1,NBF_L,NBPART,IADG,WAL,BUF)
       ENDIF
 C
-      DEALLOCATE(MATLY)
-      DEALLOCATE(WAL)
+      call my_dealloc(MATLY)
+      call my_dealloc(WAL)
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25trivox_edg   ../starter/source/interfaces/inter3d1/i25trivox_edg.F
 !||--- called by ------------------------------------------------------
@@ -49,13 +50,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      C      CANDM_E2S,CANDS_E2S,CAND_B,CAND_PS,GAPE ,
      D      GAP_E_L  ,DGAPLOAD,FLAG_REMOVED_NODE,
      E      S_KREMNODE_E2S,S_REMNODE_E2S,KREMNODE_E2S,REMNODE_E2S,
-     F      S_KREMNODE_EDG)
+     F      S_KREMNODE_EDG,STFE)
 C============================================================================
 C   M o d u l e s
 C-----------------------------------------------
       USE REALLOC_MOD
       USE TRI7BOX
       USE TRI11
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -101,19 +103,19 @@ C     REAL
      .   MARGE,BGAPEMX,VMAXDT,DRAD
       my_real , INTENT(IN) :: DGAPLOAD
       REAL*4 EDG_BISECTOR(3,4,*), VTX_BISECTOR(3,2,*)
+      my_real , INTENT(IN) :: STFE(NEDGE)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,I_STOK, SOL_EDGE, SH_EDGE, 
-     .        N1,N2,NN,NE,K,L,J_STOK,II,JJ,NA,NB,
+      INTEGER I,J, SOL_EDGE, SH_EDGE, 
+     .        N1,N2,NE,K,L,J_STOK,JJ,
      .        PROV_S(MVSIZ),PROV_M(MVSIZ),
-     .        M,NS1,NS2,NSE,NS,SIZE,Z_FIRST,Z_LAST
+     .        M
 C     REAL
       my_real
-     .   DX,DY,DZ,XS,YS,ZS,XX,SX,SY,SZ,S2,
-     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX, TZ, GAPSMX, GAPL,
-     .   XX1,XX2,XX3,XX4,YY1,YY2,YY3,YY4,ZZ1,ZZ2,ZZ3,ZZ4,
-     .   D1X,D1Y,D1Z,D2X,D2Y,D2Z,DD1,DD2,D2,A2,GS
+     .   DX,DY,DZ,
+     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX,
+     .   XX1,XX2,XX3,XX4,YY1,YY2,YY3,YY4,ZZ1,ZZ2,ZZ3,ZZ4
 c provisional
       INTEGER  TAGEDG(NEDGE)
       INTEGER  IX,IY,IZ,IEDG,
@@ -132,9 +134,6 @@ c provisional
      .   ZMAX_EDGM, ZMIN_EDGM
       INTEGER FIRST_ADD, PREV_ADD, CHAIN_ADD, CURRENT_ADD, MAX_ADD
       INTEGER BITGET
-      INTEGER WORK(70000)
-      INTEGER,  DIMENSION(:,:),ALLOCATABLE :: IIXYZ,LEDGE_TMP
-      INTEGER,  DIMENSION(:),ALLOCATABLE :: INDEX
       EXTERNAL BITGET
 C-----------------------------------------------
 C
@@ -144,7 +143,7 @@ C
       DRAD2 = ZERO
 C--- IREMGAP - array for tag of deactivated lines
       IF(FLAG_REMOVED_NODE)THEN
-        ALLOCATE(TAGREMLINE(NEDGE))
+        call my_alloc(TAGREMLINE, NEDGE, "TAGREMLINE")
         TAGREMLINE(1:NEDGE) = 0
       ENDIF  
 
@@ -162,11 +161,10 @@ C--- IREMGAP - array for tag of deactivated lines
       ! allocation of chained arrays
       !---------------------------------------------------------!
       MAX_ADD = MAX(1,4*NEDGE)
-      ALLOCATE(LCHAIN_ELEM(1:MAX_ADD))
-      ALLOCATE(LCHAIN_NEXT(1:MAX_ADD))
-      ALLOCATE(LCHAIN_LAST(1:MAX_ADD))
+      call my_alloc(LCHAIN_ELEM, MAX_ADD, "LCHAIN_ELEM")
+      call my_alloc(LCHAIN_NEXT, MAX_ADD, "LCHAIN_NEXT")
+      call my_alloc(LCHAIN_LAST, MAX_ADD, "LCHAIN_LAST")
 
-      ALLOCATE(IIXYZ(4,NEDGE),LEDGE_TMP(NLEDGE,NEDGE),INDEX(2*NEDGE))
 C     Barrier to wait init voxel and allocation 
 C     CALL MY_BARRIER
 C
@@ -190,15 +188,15 @@ C 1   placing edges into boxes
 C=======================================================================
       IF(ITASK == 0)THEN
 
-       IIXYZ(1:4,1:NEDGE)=0
-       DO I=1,NEDGE
-        INDEX(I)  =I
-       END DO
 
        DO I=1,NEDGE
 
         NE  =LEDGE(1,I)
-        IF(STF(NE)==0) CYCLE   ! We do not retain the Destruit facets
+        IF(NE /= 0) THEN
+          IF(STF(NE)==0) CYCLE   ! We do not retain the Destruit facets
+        ELSE
+          IF(STFE(I)==ZERO) CYCLE   ! We do not retain the Destruit facets
+        ENDIF
 
 C       if(ledge(3,i)/=0) cycle   ! only retaining border edges
 
@@ -212,7 +210,7 @@ C       if(ledge(3,i)/=0) cycle   ! only retaining border edges
         YY2=X(2,N2) 
         ZZ1=X(3,N1)
         ZZ2=X(3,N2)
-        IF(IGAP0 == 0)THEN
+        IF(IGAP0 == 0.OR.LEDGE(7,I)==3)THEN
           XMAX_EDGS=MAX(XX1,XX2); IF(XMAX_EDGS < XMIN) CYCLE
           XMIN_EDGS=MIN(XX1,XX2); IF(XMIN_EDGS > XMAX) CYCLE
           YMAX_EDGS=MAX(YY1,YY2); IF(YMAX_EDGS < YMIN) CYCLE
@@ -246,30 +244,18 @@ C       if(ledge(3,i)/=0) cycle   ! only retaining border edges
         IY2=MAX(1,2+MIN(NBY,IY2))
         IZ2=MAX(1,2+MIN(NBZ,IZ2))
 
-        IIXYZ(1,I)=MIN(N1,N2)
-        IIXYZ(2,I)=0
-        IIXYZ(3,I)=0
-        IIXYZ(4,I)=0
-
-        INDEX(I)  =I
-
        END DO
-
-       CALL MY_ORDERS(0,WORK,IIXYZ,INDEX,NEDGE,4)
-       LEDGE_TMP(1:NLEDGE,1:NEDGE)=LEDGE(1:NLEDGE,1:NEDGE)
-       DO I=1,NEDGE
-         K=INDEX(I)
-         LEDGE(1:NLEDGE,I)=LEDGE_TMP(1:NLEDGE,K)
-c        write(500,'(3I10)') I,LEDGE(5,I),LEDGE(6,I)
-       END DO
-       DEALLOCATE(IIXYZ,INDEX,LEDGE_TMP)
 
        CURRENT_ADD=1 ! first address
 
        DO I=1,NEDGE
 
         NE  =LEDGE(1,I)
-        IF(STF(NE)==ZERO) CYCLE   ! We do not retain the Destruit facets
+        IF(NE /= 0) THEN
+          IF(STF(NE)==0) CYCLE   ! We do not retain the Destruit facets
+        ELSE
+          IF(STFE(I)==ZERO) CYCLE   ! We do not retain the Destruit facets
+        ENDIF
 
         IF(LEDGE(7,I) < 0) CYCLE   ! Larete is not a second and second
 
@@ -283,7 +269,7 @@ c        write(500,'(3I10)') I,LEDGE(5,I),LEDGE(6,I)
         YY2=X(2,N2) 
         ZZ1=X(3,N1)
         ZZ2=X(3,N2)
-        IF(IGAP0 == 0)THEN
+        IF(IGAP0 == 0.OR.LEDGE(7,I)==3)THEN
           XMAX_EDGS=MAX(XX1,XX2); IF(XMAX_EDGS < XMIN) CYCLE
           XMIN_EDGS=MIN(XX1,XX2); IF(XMIN_EDGS > XMAX) CYCLE 
           YMAX_EDGS=MAX(YY1,YY2); IF(YMAX_EDGS < YMIN) CYCLE
@@ -414,7 +400,11 @@ C=======================================================================
         IEDG=ESHIFT+I
 
         NE=LEDGE(1,IEDG)
-        IF(STF(NE)==ZERO) CYCLE   ! We do not retain the Destruit facets
+        IF(NE /= 0) THEN
+          IF(STF(NE)==0) CYCLE   ! We do not retain the Destruit facets
+        ELSE
+          IF(STFE(IEDG)==ZERO) CYCLE   ! We do not retain the Destruit facets
+        ENDIF
 
         IF(IABS(LEDGE(7,IEDG))==1) CYCLE ! Main solid edge
 
@@ -446,12 +436,22 @@ C=======================================================================
         YY2=X(2,N2)
         ZZ1=X(3,N1)
         ZZ2=X(3,N2)
-        XMAX_EDGM=MAX(XX1,XX2)+GAPE(IEDG) ! +TZINF
-        XMIN_EDGM=MIN(XX1,XX2)-GAPE(IEDG) ! -TZINF
-        YMAX_EDGM=MAX(YY1,YY2)+GAPE(IEDG) ! +TZINF
-        YMIN_EDGM=MIN(YY1,YY2)-GAPE(IEDG) ! -TZINF
-        ZMAX_EDGM=MAX(ZZ1,ZZ2)+GAPE(IEDG) ! +TZINF
-        ZMIN_EDGM=MIN(ZZ1,ZZ2)-GAPE(IEDG) ! -TZINF
+
+        IF(LEDGE(7,IEDG)==3)THEN
+          XMAX_EDGM=MAX(XX1,XX2) ! +TZINF
+          XMIN_EDGM=MIN(XX1,XX2)! -TZINF
+          YMAX_EDGM=MAX(YY1,YY2) ! +TZINF
+          YMIN_EDGM=MIN(YY1,YY2) ! -TZINF
+          ZMAX_EDGM=MAX(ZZ1,ZZ2) ! +TZINF
+          ZMIN_EDGM=MIN(ZZ1,ZZ2) ! -TZINF
+        ELSE
+          XMAX_EDGM=MAX(XX1,XX2)+GAPE(IEDG) ! +TZINF
+          XMIN_EDGM=MIN(XX1,XX2)-GAPE(IEDG) ! -TZINF
+          YMAX_EDGM=MAX(YY1,YY2)+GAPE(IEDG) ! +TZINF
+          YMIN_EDGM=MIN(YY1,YY2)-GAPE(IEDG) ! -TZINF
+          ZMAX_EDGM=MAX(ZZ1,ZZ2)+GAPE(IEDG) ! +TZINF
+          ZMIN_EDGM=MIN(ZZ1,ZZ2)-GAPE(IEDG) ! -TZINF
+        ENDIF
         !-------------------------------------------!
         !  VOXEL OCCUPIED BY THE BRICK              !
         !-------------------------------------------!
@@ -841,10 +841,10 @@ C     CALL MY_BARRIER
           END DO
         END DO 
         !CHAINED LIST DEALLOCATION
-        DEALLOCATE(LCHAIN_NEXT)
-        DEALLOCATE(LCHAIN_ELEM)
-        DEALLOCATE(LCHAIN_LAST)    
-        IF(FLAG_REMOVED_NODE) DEALLOCATE(TAGREMLINE)           
+        CALL MY_DEALLOC(LCHAIN_NEXT)
+        CALL MY_DEALLOC(LCHAIN_ELEM)
+        CALL MY_DEALLOC(LCHAIN_LAST)
+        IF(FLAG_REMOVED_NODE) CALL MY_DEALLOC(TAGREMLINE)
       ENDIF
 C=======================================================================
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    message_mod                        ../engine/share/message_module/message_mod.F
 !||--- called by ------------------------------------------------------
@@ -42,11 +43,10 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ass2sort                           ../engine/source/assembly/ass2sort.F
 !||    ass2sort_pxfem                     ../engine/source/assembly/ass2sort.F
 !||    balph2                             ../engine/source/ale/bimat/balph2.F
-!||    bcs_nrf                            ../engine/source/boundary_conditions/bcs_nrf.F90
 !||    bcsdtth                            ../engine/source/constraints/general/bcs/bcsdtth.F
 !||    bforc2                             ../engine/source/ale/bimat/bforc2.F
 !||    blero2                             ../engine/source/ale/bimat/blero2.F
-!||    build_msg                          ../common_source/tools/memory/my_alloc.F90
+!||    build_msg                          ../common_source/tools/memory/my_alloc_tools.F90
 !||    cfieldrest                         ../engine/source/output/restart/rdresb.F
 !||    check_fi                           ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||    chkv0_cy                           ../engine/source/constraints/general/bcs/bcscyc.F
@@ -253,6 +253,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ini_kisc                           ../engine/source/implicit/lin_solv.F
 !||    ini_msg                            ../engine/source/output/message/ini_msg.F
 !||    iniresa                            ../engine/source/output/restart/rdresa.F
+!||    init_h3d_engine                    ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    inivel_start                       ../engine/source/loads/general/inivel/inivel_start.F90
 !||    int18_law151_init                  ../engine/source/interfaces/int18/int18_law151_init.F
 !||    int18_law151_omp_accumulation      ../engine/source/interfaces/int18/int18_law151_omp_accumulation.F

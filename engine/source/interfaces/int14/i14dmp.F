@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i14dmp         ../engine/source/interfaces/int14/i14dmp.F
 !||--- called by ------------------------------------------------------
@@ -67,17 +68,16 @@ C-----------------------------------------------
       INTEGER ADRBUF, I, IL, IN
       INTEGER NDEB, NREST
       INTEGER DGR
-      INTEGER IPT,NPT,II,JJ
+
       my_real
      .   A, B, C, AN, BN, CN, ROT(9),
-     .   X1, X2, X3, N1, N2, N3, N,
-     .   XPVN1, YPVN1, ZPVN1, SGNXN, SGNYN, SGNZN,
+     .   X1, X2, X3,
      .   XM, YM, ZM, XI, YI, ZI,
      .   V1, V2, V3, VXM, VYM, VZM, VRX, VRY, VRZ,
      .   VXP, VYP, VZP,VXI, VYI, VZI,
-     .   DT1INV, FF
+     .   FF
       my_real
-     .   XPV(3,MVSIZ),NV(3,MVSIZ),FNPV(MVSIZ),VIS(MVSIZ),
+     .   NV(3,MVSIZ),FNPV(MVSIZ),VIS(MVSIZ),
      .   VISC1(MVSIZ),VISC2(MVSIZ),VN(MVSIZ)
 C-----------------------------------------------
       ADRBUF=IGRSURF(KSURF)%IAD_BUFR

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sms_build_diag       ../engine/source/ams/sms_build_diag.F
 !||--- called by ------------------------------------------------------
@@ -39,6 +40,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_sd_cj_2         ../engine/source/mpi/kinematic_conditions/spmd_sd_cj_2.F
 !||--- uses       -----------------------------------------------------
 !||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE SMS_BUILD_DIAG(
      1             ITASK    ,NODFT   ,NODLT  ,MS      ,NODII_SMS   ,
@@ -61,6 +63,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -114,9 +117,9 @@ C-----------------------------------------------
       INTEGER,DIMENSION(:),ALLOCATABLE :: NADI_SMS
       DATA ILOC4/2,4,6,8/
 C-----------------------------------------------
-      CALL MY_ALLOC(NOD2ADD,NUMNOD)
-      CALL MY_ALLOC(KADI_SMS,NUMNOD)
-      CALL MY_ALLOC(NADI_SMS,NUMNOD)
+      call my_alloc(NOD2ADD, NUMNOD, "NOD2ADD")
+      call my_alloc(KADI_SMS, NUMNOD, "KADI_SMS")
+      call my_alloc(NADI_SMS, NUMNOD, "NADI_SMS")
 
       NODII_SMS(NODFT:NODLT)=0
       DO N=NODFT,NODLT
@@ -732,9 +735,9 @@ C
 C
       CALL MY_BARRIER
 C 
-      DEALLOCATE(NOD2ADD)
-      DEALLOCATE(KADI_SMS)
-      DEALLOCATE(NADI_SMS)
+      call my_dealloc(NOD2ADD)
+      call my_dealloc(KADI_SMS)
+      call my_dealloc(NADI_SMS)
 
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    rbyact          ../engine/source/constraints/general/rbody/rbyact.F
@@ -422,7 +423,7 @@ C     MISE A ZERO DES MASSES ET INERTIES SECNDS voir up
 C----------------------------------------------
       IF (ISPMD+1==PMAIN) THEN
         WRITE(IOUT,1000)
-        WRITE(IOUT,1100) NONOD,X(1,M),X(2,M),X(3,M),
+        WRITE(IOUT,1100) ID,NONOD,X(1,M),X(2,M),X(3,M),
      .        MASRB,RBY(1),RBY(5),RBY(9),RBY(2),RBY(3),RBY(6)
       ENDIF
 C----------------------------------------------------------------
@@ -470,12 +471,12 @@ C
 C
       RETURN
 C
-1000  FORMAT(
-     . 44H1     RIGID BODY INITIALIZATION             /
-     . 44H      -------------------------             /)
-1100  FORMAT(/5X,'RIGID BODY ',
+1000  FORMAT(/
+     . 44H*     RIGID BODY INITIALIZATION             /
+     . 44H      -------------------------             )
+1100  FORMAT(/5X,'RIGID BODY       ',I8
      .       /10X,'PRIMARY NODE    ',I8
      .       /10X,'NEW X,Y,Z       ',3G10.3
      .       /10X,'NEW MASS        ',1G10.3
-     .       /10X,'NEW INERTIA     ',6G10.3)
+     .       /10X,'NEW INERTIA     ',6G10.3/)
       END

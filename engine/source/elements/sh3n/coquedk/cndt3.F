@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cndt3         ../engine/source/elements/sh3n/coquedk/cndt3.F
 !||--- called by ------------------------------------------------------
@@ -98,7 +99,7 @@ C
      .                                   .AND. IGMAT > 0 )) THEN
         ELSE
 ! take into account nonlinear stiffnening laws      
-          F_OSET(JFT:JLT)= ONE + ZEP2*ABS(ZOFFSET(JFT:JLT))/THK0(JFT:JLT)
+          F_OSET(JFT:JLT)= ONE + HALF*ABS(ZOFFSET(JFT:JLT))/THK0(JFT:JLT)
           IF (MTN == 58 .or. MTN == 158) THEN 
               IFLAG = 1
               CALL CSSP2A11(PM   ,IMAT  ,SSP  ,A1   ,JLT   ,IFLAG)
@@ -112,7 +113,7 @@ C
           END IF
         END IF
       ELSE
-        F_OSET(JFT:JLT)= ONE + ZEP2*ABS(ZOFFSET(JFT:JLT))/THK0(JFT:JLT)
+        F_OSET(JFT:JLT)= ONE + HALF*ABS(ZOFFSET(JFT:JLT))/THK0(JFT:JLT)
         IF(IGTYP==1.OR.IGTYP==9) THEN 
           DO I=JFT,JLT
             FAC = F_OSET(I)

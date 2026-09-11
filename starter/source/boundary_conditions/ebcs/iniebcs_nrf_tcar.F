@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    iniebcs_nrf_tcar   ../starter/source/boundary_conditions/ebcs/iniebcs_nrf_tcar.F
 !||--- called by ------------------------------------------------------
@@ -63,15 +64,17 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: IMAT,MLN,IADBUF,IMAT_SUB,NIX,NELS,NBPHASE
+      INTEGER :: IMAT,MLN,IMAT_SUB,NIX,NELS
       INTEGER :: TAGMAT(NUMMAT+1),II, NBMAT, KK
-      my_real :: TCP_REF,Xmin,Ymin,Zmin,Xmax,Ymax,Zmax,SSP0,SSP0MAX,LC,LC0MAX
-      INTEGER, DIMENSION(:, :), POINTER  :: IX      
+      my_real :: TCP_REF,Xmin,Ymin,Zmin,Xmax,Ymax,Zmax,SSP0,SSP0MAX,LC,LC0MAX,USED_TCARP
+      INTEGER, DIMENSION(:, :), POINTER  :: IX
+      LOGICAL :: TO_BE_DISPLAYED
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-
+       TO_BE_DISPLAYED = .FALSE. 
        SSP0 = ZERO
+       SSP0MAX = ZERO
        TAGMAT(1:NUMMAT) = 0
        NELS = -HUGE(NELS)
        NIX = -HUGE(NIX)        
@@ -91,37 +94,35 @@ C-----------------------------------------------
        ENDIF
        
        !-----------------------------!
-       ! CALCULATION OF SSP0MAX           !
+       ! CALCULATION OF SSP0MAX      !
        !-----------------------------!
-       NBPHASE = 0
-       DO II=1,NELS                                                                                                 
+       DO II=1,NELS
          IMAT   = IX(1,II)
          IF(IMAT == 0)CYCLE
          IF(TAGMAT(IMAT)==1)CYCLE
          TAGMAT(IMAT)=1                                                                                            
-         MLN    = IPM(2,IMAT)                                                                                         
-         IADBUF = IPM(7,IMAT)                                                                                         
-         IF(MLN == 51)THEN
-           SSP0=PM(27,IMAT)
-           NBPHASE=MAX(NBPHASE,4)
-         ELSEIF(MLN == 151)THEN
-           NBMAT =  MAT_PARAM(IMAT)%MULTIMAT%NB
-           NBPHASE = MAX(NBPHASE,NBMAT)
-           IMAT_SUB =  MAT_PARAM(IMAT)%MULTIMAT%MID(1)
-           SSP0 = IPM(27,IMAT_SUB)
-           DO KK=2,NBMAT
+         MLN    = IPM(2,IMAT)
+         IF(MLN == 51 .OR. MLN == 151)THEN
+           IF(MLN == 51)THEN
+             NBMAT = IPM(5,IMAT)
+           ELSE
+             NBMAT = MAT_PARAM(IMAT)%MULTIMAT%NB
+           ENDIF
+           SSP0 = ZERO
+           DO KK=1,NBMAT
              IMAT_SUB = MAT_PARAM(IMAT)%MULTIMAT%MID(KK)
-             SSP0=MAX(SSP0,PM(27,IMAT_SUB))
+             IF(IMAT_SUB > 0) SSP0 = MAX(SSP0, PM(27,IMAT_SUB))
            ENDDO
          ELSE
            SSP0=PM(27,IMAT)
-         ENDIF                                                                                  
-       ENDDO                                                                                                          
-       SSP0MAX = SSP0                                                                                                 
+         ENDIF
+         SSP0MAX = MAX(SSP0MAX, SSP0)
+       ENDDO
  
        !-----------------------------!
-       ! LC ESTIMATOR            !
+       ! LC ESTIMATOR                !
        !-----------------------------!
+        ! NB: LC0MAX is the largest extent of the GLOBAL model bounding box
         Xmin   = X(1,1)
         Ymin   = X(2,1)
         Zmin   = X(3,1)
@@ -147,38 +148,37 @@ C-----------------------------------------------
        IF(SSP0MAX == ZERO)THEN
          TCP_REF = EP20
        ELSE     
-         TCP_REF    = LC0MAX/TWO/SSP0MAX/LOG(TWO)
+         ! Default pressure relaxation time TCAR_P.
+         ! the HALF-LIFE of that decay is chosen equals the time for an acoustic wave to travel half the domain,
+         !   tau * ln(2) = LC0MAX / (2 * SSP0MAX)   ==>   tau = LC0MAX / (2*SSP0MAX*ln2)
+         TCP_REF = LC0MAX/TWO/SSP0MAX/LOG(TWO)
        ENDIF
        DO KK=1,EBCS_TAB%NEBCS
           select type (twf => EBCS_TAB%tab(KK)%poly)
             type is (t_ebcs_nrf)
-             CALL EBCS_SET_TCARP(twf,TCP_REF)
+             TO_BE_DISPLAYED = .FALSE.
+             CALL EBCS_SET_TCARP(twf,TCP_REF, TO_BE_DISPLAYED, USED_TCARP)
          end select
        ENDDO
-       
-       !-----------------------------!
-       ! ALLOCATION BUFFER VOL FRAC  !
-       !-----------------------------!  
-        !EBCS%NBMAT= NBPHASE   
-        !IF(NBPHASE > 0)THEN            
-        !  ALLOCATE(EBCS%PHASE_ALPHA(NBPHASE,EBCS%NB_ELEM))
-        !  EBCS%PHASE_ALPHA(1:NBPHASE,1:EBCS%NB_ELEM) = ZERO
-        !ENDIF
-        
+
        !-----------------------------!
        ! OUTPUT                      !
        !-----------------------------!          
-        WRITE (IOUT,1001)LC0MAX,SSP0MAX,TCP_REF
-        
+        IF(TO_BE_DISPLAYED) THEN
+          WRITE (IOUT,1001)LC0MAX,SSP0MAX,TCP_REF,USED_TCARP
+        ELSE
+
+        ENDIF
 
  1001 FORMAT(
      .//
      .'     NON REFLECTING FRONTIERS (EBCS)    '/
      .'     -------------------------------    '/
-     & 5X,'INITIALIZATION OF GLOBAL PARAMETERS      ',/    
+     & 5X,'INITIALIZATION OF GLOBAL PARAMETERS      ',/
      & 5X,'CHARACTERISTIC LENGTH. . . . . . . . . .=',E12.4/
-     & 5X,'REFERENCE SOUND SPEED. . . . . . . . .  =',E12.4/
-     & 5X,'CHARACTERISTIC TIME (TCP). . . . . . . .=',E12.4//)
+     & 5X,'REFERENCE SOUND SPEED. . . . . . . . . .=',E12.4/
+     & 5X,'COMPUTED DEFAULT TCP PARAMETER . . . . .=',E12.4/
+     & 5X,'TCP PARAMETER ACTUALLY USED. . . . . . .=',E12.4//)
                            
                                                                
       END SUBROUTINE INIEBCS_NRF_TCAR
@@ -193,13 +193,21 @@ C-----------------------------------------------
 !||    iniebcs_nrf_tcar   ../starter/source/boundary_conditions/ebcs/iniebcs_nrf_tcar.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================
-      SUBROUTINE EBCS_SET_TCARP(EBCS,TCAR_P)
+      SUBROUTINE EBCS_SET_TCARP(EBCS,TCAR_P,TO_BE_DISPLAYED,USED_TCARP)
       USE EBCS_MOD
 #include      "implicit_f.inc"
       
       TYPE(t_ebcs_nrf) :: EBCS
-      my_real :: TCAR_P
-      
-           IF(EBCS%TCAR_P == ZERO) EBCS%TCAR_P = TCAR_P
+      my_real :: TCAR_P,USED_TCARP
+      LOGICAL :: TO_BE_DISPLAYED
+
+      TO_BE_DISPLAYED = .TRUE.  !unconditional display
+
+           USED_TCARP = EBCS%TCAR_P
+           IF(EBCS%TCAR_P == ZERO) THEN
+             EBCS%TCAR_P = TCAR_P
+             !TO_BE_DISPLAYED = .TRUE.
+             USED_TCARP = TCAR_P
+           ENDIF
       
       END SUBROUTINE

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hist1                  ../engine/source/output/th/hist1.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    groupdef_mod           ../common_source/modules/groupdef_mod.F
 !||    inoutfile_mod          ../common_source/modules/inoutfile_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||    th_mod                 ../engine/share/modules/th_mod.F
 !||====================================================================
@@ -57,6 +60,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -285,14 +290,14 @@ C       2EME RECORD : FAC_MASS,FAC_LENGTH,FAC_TIME
         ENDIF
       END IF      
 C-------HIERARCHY INFO------------
-      ALLOCATE(IWA(6))
+      call my_alloc(IWA, 6, "IWA")
       IWA(1)=NPART+NTHPART
       IWA(2)=NUMMAT
       IWA(3)=NUMGEO
       IWA(4)=NSUBS
       IWA(5)=NTHGRP2 
       IF(NSECT==0.AND.NSFLSW/=0) IWA(5)=NTHGRP2+1
-      NGLOBTH=22
+      NGLOBTH=23
       IF (IUNIT /= IUHIS) THEN
         IWA(6)= 0
       ELSE
@@ -302,8 +307,8 @@ c
       
       CALL WRTDES(IWA,IWA,6,ITTYP,0)
       J = IWA(6)
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA) 
-      ALLOCATE(IWA(NGLOBTH)) 
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+      call my_alloc(IWA, NGLOBTH, "IWA")
       DO I=1,J      
           IWA(I)=I
       ENDDO
@@ -313,8 +318,8 @@ c
       DO N=1,NPART+NTHPART
         NVAR=MAX(NVAR,IPARTH(NVPARTH,N))
       ENDDO
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-      ALLOCATE(IWA(NVAR))
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+      call my_alloc(IWA, NVAR, "IWA")
 C-------PART DESCRIPTION------------
       DO N=1,NPART+NTHPART
         NVAR=IPARTH(NVPARTH,N)
@@ -435,19 +440,19 @@ C-------GEO DESCRIPTION------------
         ENDIF
       ENDDO
 C-------HIERARCHY DESCRIPTION------------
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
       NVAR = 0
       DO N=1,NSUBS
         NVAR=MAX(NVAR,SUBSET(N)%NVARTH(ITHFLAG))
       ENDDO
-      ALLOCATE(IWA(NVAR))
+      call my_alloc(IWA, NVAR, "IWA")
       DO N=1,NSUBS
 !!        NVAR=ISUBTH(NVSUBTH,N)
 !!        IAD =ISUBTH(NVSUBTH+1,N)
         NVAR=SUBSET(N)%NVARTH(ITHFLAG)
         IAD =SUBSET(N)%THIAD
 !!        CALL FRETITL2(TITL,ISUBS(LISUB1-LTITR+1,N),40)
-        TITL = SUBSET(N)%TITLE
+        TITL = SUBSET(N)%TITLE(1:100)
         DO I=1,LTITL
           ITITLE(I)=ICHAR(TITL(I:I))
         ENDDO
@@ -594,8 +599,8 @@ C (nstrands elements are treated as a spring group)
         ENDIF
       ENDDO
 C-------TH GROUP + 1 section fluide------------
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-      ALLOCATE(IWA(6))
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+      call my_alloc(IWA, 6, "IWA")
       IF(NSECT==0.AND.NSFLSW/=0) THEN
         NVAR=6
         TITL='FLUID SECTION'
@@ -668,6 +673,6 @@ C
 C
       IF(TH_TITLES == 1) CLOSE(IFILTITL)
 C
-      DEALLOCATE(IWA)
+      call my_dealloc(IWA)
       RETURN
       END

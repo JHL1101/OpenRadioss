@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    iedge_xfem    ../starter/source/elements/xfem/iedge_xfem.F
+!||    iedge_xfem     ../starter/source/elements/xfem/iedge_xfem.F
 !||--- called by ------------------------------------------------------
-!||    lectur        ../starter/source/starter/lectur.F
+!||    lectur         ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../starter/source/output/message/message.F
+!||    ancmsg         ../starter/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod   ../starter/share/message_module/message_mod.F
+!||    message_mod    ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE IEDGE_XFEM(
      .           IBORDNODE ,IXC       ,IXTG    ,IEDGESH4,IEDGESH3,
@@ -36,6 +37,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C=======================================================================
       USE MESSAGE_MOD
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -69,17 +71,17 @@ C=======================================================================
       NLMAX  = 4*ECRKXFEC + 3*ECRKXFETG   ! max edges
       NELALL = ECRKXFEC+ECRKXFETG         ! max elements
 C
-      ALLOCATE (LINEIX(2,NLMAX)      ,STAT=stat)
-      ALLOCATE (LINEIX2(2,NLMAX)     ,STAT=stat)
-      ALLOCATE (INDEX(2*NLMAX)       ,STAT=stat)
-      ALLOCATE (IXWORK(5,NLMAX)      ,STAT=stat)
-      ALLOCATE (IEDWORK4(4,ECRKXFEC) ,STAT=stat)
-      ALLOCATE (IEDWORK3(3,ECRKXFETG),STAT=stat)
-      ALLOCATE (TAGED(NLMAX)         ,STAT=stat)
-      ALLOCATE (ITAGED(NLMAX)        ,STAT=stat)
-      ALLOCATE (NIXEL(NELALL)        ,STAT=stat)
-      ALLOCATE (TAGEL(NELALL)        ,STAT=stat)
-      ALLOCATE (TAGEL_CRK(NELALL)    ,STAT=stat)
+      call my_alloc(LINEIX, 2, NLMAX, "LINEIX", stat=stat)
+      call my_alloc(LINEIX2, 2, NLMAX, "LINEIX2", stat=stat)
+      call my_alloc(INDEX, 2*NLMAX, "INDEX", stat=stat)
+      call my_alloc(IXWORK, 5, NLMAX, "IXWORK", stat=stat)
+      call my_alloc(IEDWORK4, 4, ECRKXFEC, "IEDWORK4", stat=stat)
+      call my_alloc(IEDWORK3, 3, ECRKXFETG, "IEDWORK3", stat=stat)
+      call my_alloc(TAGED, NLMAX, "TAGED", stat=stat)
+      call my_alloc(ITAGED, NLMAX, "ITAGED", stat=stat)
+      call my_alloc(NIXEL, NELALL, "NIXEL", stat=stat)
+      call my_alloc(TAGEL, NELALL, "TAGEL", stat=stat)
+      call my_alloc(TAGEL_CRK, NELALL, "TAGEL_CRK", stat=stat)
       LINEIX  = 0
       LINEIX2 = 0
       INDEX   = 0
@@ -325,7 +327,7 @@ c        IBORDNODE(IXWORK(1,LL)) = 1
 c        IBORDNODE(IXWORK(2,LL)) = 1          
 c      ENDDO
 C
-      ALLOCATE (IEDGE_TMP(NUMEDGES))
+      call my_alloc(IEDGE_TMP, NUMEDGES, "IEDGE_TMP")
       IEDGE_TMP = 0
 C
       DO P = 1,NSPMD
@@ -383,18 +385,18 @@ C---
       ENDDO
 C---
 C-----------
-      DEALLOCATE (INDEX)
-      DEALLOCATE (IXWORK)
-      DEALLOCATE (LINEIX)
-      DEALLOCATE (LINEIX2)
-      DEALLOCATE (IEDWORK4)
-      DEALLOCATE (IEDWORK3)
-      DEALLOCATE (TAGED)
-      DEALLOCATE (ITAGED)
-      DEALLOCATE (NIXEL)
-      DEALLOCATE (TAGEL)
-      DEALLOCATE (TAGEL_CRK)
-      DEALLOCATE (IEDGE_TMP)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(IXWORK)
+      CALL MY_DEALLOC(LINEIX)
+      CALL MY_DEALLOC(LINEIX2)
+      CALL MY_DEALLOC(IEDWORK4)
+      CALL MY_DEALLOC(IEDWORK3)
+      CALL MY_DEALLOC(TAGED)
+      CALL MY_DEALLOC(ITAGED)
+      CALL MY_DEALLOC(NIXEL)
+      CALL MY_DEALLOC(TAGEL)
+      CALL MY_DEALLOC(TAGEL_CRK)
+      CALL MY_DEALLOC(IEDGE_TMP)
 C-----------
       RETURN
       END

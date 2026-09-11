@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    igrsurf_split         ../starter/source/spmd/igrsurf_split.F
 !||--- called by ------------------------------------------------------
@@ -48,6 +49,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
         USE GROUPDEF_MOD
         USE MONVOL_STRUCT_MOD
         USE ARRAY_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -150,9 +152,9 @@ C-----------------------------------------------------
             DO PROC=1,NSPMD
                 IF(.NOT.ALLOCATED(IGRSURF_PROC(IS,PROC)%ELTYP).AND.JJ(PROC)>0) THEN
                     IGRSURF_PROC(IS,PROC)%NSEG = JJ(PROC)
-                    ALLOCATE( IGRSURF_PROC(IS,PROC)%ELTYP( JJ(PROC) ) )
-                    ALLOCATE( IGRSURF_PROC(IS,PROC)%ELEM( JJ(PROC) ) )
-                    ALLOCATE( IGRSURF_PROC(IS,PROC)%LOCAL_SEG(  JJ(PROC) ) )
+                    call my_alloc(IGRSURF_PROC(IS,PROC)%ELTYP, JJ(PROC), "IGRSURF_PROC(IS,PROC)%ELTYP")
+                    call my_alloc(IGRSURF_PROC(IS,PROC)%ELEM, JJ(PROC), "IGRSURF_PROC(IS,PROC)%ELEM")
+                    call my_alloc(IGRSURF_PROC(IS,PROC)%LOCAL_SEG, JJ(PROC), "IGRSURF_PROC(IS,PROC)%LOCAL_SEG")
                 ENDIF
                 ! -----------------------------
                 ! force the NJ1, NJ2, NJ3 nodes on the processor PROC
@@ -223,13 +225,13 @@ C-----------------------------------------------------
             K1 = K1 + NIMV
         ENDDO
         ! --------------------------------------
-        ALLOCATE( I_NEED_IT(NUMNOD) )
-        ALLOCATE( PROC_LIST_PER_NODE(NUMNOD) )
+        call my_alloc(I_NEED_IT, NUMNOD, "I_NEED_IT")
+        allocate(PROC_LIST_PER_NODE(NUMNOD))
         I_NEED_IT(1:NUMNOD) = .FALSE.
         DO IS=1,NSURF
             IF(.NOT.ALREADY_DONE(IS)) THEN
                 NN = IGRSURF(IS)%NSEG ! number of segment
-                ALLOCATE( IGRSURF(IS)%PROC(NN) )
+                call my_alloc(IGRSURF(IS)%PROC, NN, "IGRSURF(IS)%PROC")
                 IGRSURF(IS)%PROC(1:NN) = 0
                 IGRSURF_PROC(IS,1:NSPMD)%NSEG = 0
                 ! -------------
@@ -306,7 +308,7 @@ C-----------------------------------------------------
                             ENDIF
                         ENDDO
                         ! ------------
-                        ALLOCATE( MERGED_LIST(SIZE_MERGED_LIST) )
+                        call my_alloc(MERGED_LIST, SIZE_MERGED_LIST, "MERGED_LIST")
                         MERGED_LIST(1:SIZE_MERGED_LIST) = -1
                         NODE_ID = IGRSURF(IS)%NODES(J,1)
                         SIZE_UNION_PROC_LIST = 0   
@@ -367,7 +369,7 @@ C-----------------------------------------------------
                             ! ------------
                         ENDIF
                         ! ------------
-                        DEALLOCATE( MERGED_LIST )
+                        CALL MY_DEALLOC(MERGED_LIST)
                     ENDIF
                     ! -------------
                     ! save the processor for the segment J
@@ -385,9 +387,9 @@ C-----------------------------------------------------
             IF(.NOT.ALREADY_DONE(IS)) THEN
                 JJ(1:NSPMD) = 0
                 DO J=1,NSPMD
-                    ALLOCATE( IGRSURF_PROC(IS,J)%ELTYP( IGRSURF_PROC(IS,J)%NSEG ) )
-                    ALLOCATE( IGRSURF_PROC(IS,J)%ELEM( IGRSURF_PROC(IS,J)%NSEG ) )
-                    ALLOCATE( IGRSURF_PROC(IS,J)%LOCAL_SEG( IGRSURF_PROC(IS,J)%NSEG ) )
+                    call my_alloc(IGRSURF_PROC(IS,J)%ELTYP, IGRSURF_PROC(IS,J)%NSEG, "IGRSURF_PROC(IS,J)%ELTYP")
+                    call my_alloc(IGRSURF_PROC(IS,J)%ELEM, IGRSURF_PROC(IS,J)%NSEG, "IGRSURF_PROC(IS,J)%ELEM")
+                    call my_alloc(IGRSURF_PROC(IS,J)%LOCAL_SEG, IGRSURF_PROC(IS,J)%NSEG, "IGRSURF_PROC(IS,J)%LOCAL_SEG")
                 ENDDO
                 NN = IGRSURF(IS)%NSEG ! number of segment
                 DO J=1,NN
@@ -404,7 +406,7 @@ C-----------------------------------------------------
             ENDIF
         ENDDO
         ! --------------------------------------
-        DEALLOCATE( I_NEED_IT )
+        CALL MY_DEALLOC(I_NEED_IT)
         DEALLOCATE( PROC_LIST_PER_NODE )
 
         RETURN

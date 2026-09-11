@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mat112_xia_newton     ../engine/source/materials/mat/mat112/mat112_xia_newton.F
 !||--- called by ------------------------------------------------------
@@ -82,30 +83,29 @@ c
       !=======================================================================
       !      Local Variables
       !=======================================================================
-      INTEGER I,K,II,NINDX,INDEX(NEL),NINDX2,INDEX2(NEL),NINDX3,INDEX3(NEL),
+      INTEGER I,II,NINDX,INDEX(NEL),NINDX2,INDEX2(NEL),NINDX3,INDEX3(NEL),
      .        NITER,ITER,ITAB,ISMOOTH,IPOS(NEL,2)
 c
       my_real 
      .   YOUNG1,YOUNG2,YOUNG3,NU12,NU21,
      .   A11,A12,A21,A22,
-     .   G12,G23,G31,DEUXK,E3C,CC,C1,
+     .   G12,G23,G31,DEUXK,E3C,CC,
      .   NU1P,NU2P,NU4P,NU5P,S01,A01,B01,C01,
      .   S02,A02,B02,C02,S03,A03,B03,C03,
      .   S04,A04,B04,C04,S05,A05,B05,C05,
-     .   ASIG,BSIG,CSIG,TAU0,ATAU,BTAU,N3,N6,
-     .   BULK,NU13,NU31,NU23,NU32
+     .   ASIG,BSIG,CSIG,TAU0,ATAU,BTAU,N3,N6
       my_real 
-     .   NORMSIG,H,DPDT,DLAM,DDEP,DEPXX,DEPYY
+     .   NORMSIG,DPDT,DLAM,DDEP
       my_real 
      .   NORMXX,NORMYY,NORMXY,NORMPXX,NORMPYY,NORMPXY,
-     .   DPHI_DLAM,DPHI,DFDSIG2,DPHI_DPLA,DPXX,DPYY,DPXY,
+     .   DPHI_DLAM,DFDSIG2,DPHI_DPLA,DPXX,DPYY,DPXY,
      .   DPHI_DSIGY1,DPHI_DSIGY2,DPHI_DSIGY3,DPHI_DSIGY4,
      .   DPHI_DSIGY5
       my_real
-     .   NORMZZ,DTHETA_DLAM,DTHETA,DTHETA_DPLA,
+     .   NORMZZ,DTHETA_DLAM,DTHETA_DPLA,
      .   DTHETA_DSIGYO
       my_real
-     .   NORMYZ,NORMZX,DPSI_DLAM,DPSI,DPSI_DPLA,
+     .   NORMYZ,NORMZX,DPSI_DLAM,DPSI_DPLA,
      .   DPYZ,DPZX,DPSI_DSIGYS
       my_real
      .   XSCALE1,YSCALE1,XSCALE2,YSCALE2,XSCALE3,YSCALE3,XSCALE4,YSCALE4,
@@ -116,8 +116,8 @@ c
 c
       my_real, DIMENSION(NEL) ::
      .   KHI1,KHI2,KHI3,KHI4,KHI5,KHI6,SIGY1,SIGY2,SIGY3,SIGY4,SIGY5,DPLA2,DPLA3,
-     .   DPLA4,SIGYS,SIGYO,DSIGXX,DSIGYY,DSIGXY,DSIGYZ,DSIGZX,HARDP,PHI,PHI0,PSI,PSI0,
-     .   THETA,THETA0,DSIGZZ,EEZZ,GAM1,GAM2,GAM3,GAM4,GAM5,GAM6,DSIGY1_DP,DSIGY2_DP,
+     .   DPLA4,SIGYS,SIGYO,HARDP,PHI,PSI,
+     .   THETA,EEZZ,GAM1,GAM2,GAM3,GAM4,GAM5,GAM6,DSIGY1_DP,DSIGY2_DP,
      .   DSIGY3_DP,DSIGY4_DP,DSIGY5_DP,DSIGYO_DP,DSIGYS_DP,HARDR
 c     
       !=======================================================================

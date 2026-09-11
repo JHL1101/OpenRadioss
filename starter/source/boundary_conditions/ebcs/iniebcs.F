@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    iniebcs                            ../starter/source/boundary_conditions/ebcs/iniebcs.F
 !||--- called by ------------------------------------------------------
@@ -47,6 +48,7 @@ C-----------------------------------------------
       USE SENSOR_MOD
       use element_mod , only : nixs,nixc,nixq,nixtg
       USE EBCS_CYCLIC_SURFACE_MATCHING_MOD, ONLY : EBCS_CYCLIC_SURFACE_MATCHING
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -93,7 +95,7 @@ C=======================================================================
       ICELL = 0
       IF (N2D == 0) THEN
          LENMWA = NUMNOD+2+8*NUMELS
-         ALLOCATE(MWA(LENMWA),  STAT=ERR)
+         call my_alloc(MWA, LENMWA, "MWA", stat=ERR)
          IF(ERR /= 0) THEN
             CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='EBCS')
          ENDIF      
@@ -103,7 +105,7 @@ C=======================================================================
           NELEM = NUMELS
       ELSEIF (NUMELQ /= 0) THEN
          LENMWA = NUMNOD + 2 + 4 * NUMELQ
-         ALLOCATE(MWA(LENMWA), STAT=ERR)
+         call my_alloc(MWA, LENMWA, "MWA", stat=ERR)
          IF(ERR /= 0) THEN
             CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='EBCS')
          ENDIF      
@@ -113,7 +115,7 @@ C=======================================================================
          NELEM = NUMELQ
       ELSEIF (NUMELTG /= 0 .AND. MULTI_FVM_IS_USED) THEN
          LENMWA = NUMNOD + 2 + 3 * NUMELTG
-         ALLOCATE(MWA(LENMWA), STAT=ERR)
+         call my_alloc(MWA, LENMWA, "MWA", stat=ERR)
          IF(ERR /= 0) THEN
             CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='EBCS')
          ENDIF      
@@ -133,126 +135,126 @@ C=======================================================================
            TYPE IS (t_ebcs_gradp0)
              !     vold
              EBCS%has_vold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, EBCS%nb_node, "EBCS%vold")
              EBCS%vold(1:EBCS%nb_node) = ZERO
              !     pold
              EBCS%has_pold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%pold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%pold, EBCS%nb_node, "EBCS%pold")
              EBCS%pold(1:EBCS%nb_node) = ZERO
              !     p0
              EBCS%has_p0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%p0(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%p0, EBCS%nb_node, "EBCS%p0")
              EBCS%p0(1:EBCS%nb_node) = ZERO
              !     iface
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, EBCS%nb_elem, "EBCS%iface")
              EBCS%iface(1:EBCS%nb_elem) = 0             
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
            TYPE IS (t_ebcs_iniv)
              !     reso
              EBCS%has_reso = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%reso(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%reso, 3, EBCS%nb_node, "EBCS%reso")
              EBCS%reso(1:3, 1:EBCS%nb_node) = ZERO
              !     ro0
              EBCS%has_ro0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%ro0(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%ro0, EBCS%nb_elem, "EBCS%ro0")
              EBCS%ro0(1:EBCS%nb_elem) = ZERO
              !     en0
              EBCS%has_en0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%en0(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%en0, EBCS%nb_elem, "EBCS%en0")
              EBCS%en0(1:EBCS%nb_elem) = ZERO
              !     v0
              EBCS%has_v0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%v0(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%v0, 3, EBCS%nb_node, "EBCS%v0")
              EBCS%v0(1:3, 1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
            TYPE IS (t_ebcs_pres)
              !     vold
              EBCS%has_vold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, EBCS%nb_node, "EBCS%vold")
              EBCS%vold(1:EBCS%nb_node) = ZERO
              !     pold
              EBCS%has_pold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%pold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%pold, EBCS%nb_node, "EBCS%pold")
              EBCS%pold(1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
            TYPE IS (t_ebcs_valvin)
              !     vold
              EBCS%has_vold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, EBCS%nb_node, "EBCS%vold")
              EBCS%vold(1:EBCS%nb_node) = ZERO
              !     pold
              EBCS%has_pold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%pold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%pold, EBCS%nb_node, "EBCS%pold")
              EBCS%pold(1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO          
            TYPE IS (t_ebcs_valvout)
              !     vold
              EBCS%has_vold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, EBCS%nb_node, "EBCS%vold")
              EBCS%vold(1:EBCS%nb_node) = ZERO
              !     pold
              EBCS%has_pold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%pold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%pold, EBCS%nb_node, "EBCS%pold")
              EBCS%pold(1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO 
            TYPE IS(t_ebcs_vel)
              !     reso
              EBCS%has_reso = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%reso(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%reso, 3, EBCS%nb_node, "EBCS%reso")
              EBCS%reso(1:3, 1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO 
            TYPE IS(t_ebcs_normv)
              !     reso
              EBCS%has_reso = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%reso(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%reso, 3, EBCS%nb_node, "EBCS%reso")
              EBCS%reso(1:3, 1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
            TYPE IS (t_ebcs_inip)
              !     ro0
              EBCS%has_ro0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%ro0(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%ro0, EBCS%nb_elem, "EBCS%ro0")
              EBCS%ro0(1:EBCS%nb_elem) = ZERO
              !     en0
              EBCS%has_en0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%en0(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%en0, EBCS%nb_elem, "EBCS%en0")
              EBCS%en0(1:EBCS%nb_elem) = ZERO
              !     p0
              EBCS%has_p0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%p0(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%p0, EBCS%nb_node, "EBCS%p0")
              EBCS%p0(1:EBCS%nb_node) = ZERO
              !     vold
              EBCS%has_vold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, EBCS%nb_node, "EBCS%vold")
              EBCS%vold(1:EBCS%nb_node) = ZERO
              !     pold
              EBCS%has_pold = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%pold(EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%pold, EBCS%nb_node, "EBCS%pold")
              EBCS%pold(1:EBCS%nb_node) = ZERO
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO 
            TYPE IS (t_ebcs_monvol)
              VOLU = EBCS%monvol_id
@@ -272,33 +274,33 @@ C=======================================================================
              ENDIF
            TYPE IS (t_ebcs_inlet)
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, EBCS%nb_elem, "EBCS%iface")
              EBCS%iface(1:EBCS%nb_elem) = 0
              IF(.NOT. MULTI_FVM_IS_USED)THEN
                !     la
                EBCS%has_la = .true.
-               IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+               IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
                EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
                !     area
                EBCS%has_area = .true.
-               IF(IFLAG==0)ALLOCATE(EBCS%area(EBCS%nb_elem))
+               IF(IFLAG==0) call my_alloc(EBCS%area, EBCS%nb_elem, "EBCS%area")
                EBCS%area(1:EBCS%nb_elem) = ZERO
                !     dvnf
                EBCS%has_dvnf = .true.
-               IF(IFLAG==0)ALLOCATE(EBCS%dvnf(EBCS%nb_elem))
+               IF(IFLAG==0) call my_alloc(EBCS%dvnf, EBCS%nb_elem, "EBCS%dvnf")
                EBCS%dvnf(1:EBCS%nb_elem) = ZERO
                !     ng
                EBCS%has_ng = .true.
-               IF(IFLAG==0)ALLOCATE(EBCS%ng(EBCS%nb_elem))
+               IF(IFLAG==0) call my_alloc(EBCS%ng, EBCS%nb_elem, "EBCS%ng")
                EBCS%ng(1:EBCS%nb_elem) = 0
                !     iloc
                EBCS%has_iloc = .true.
-               IF(IFLAG==0)ALLOCATE(EBCS%iloc(EBCS%nb_elem))
+               IF(IFLAG==0) call my_alloc(EBCS%iloc, EBCS%nb_elem, "EBCS%iloc")
                EBCS%iloc(1:EBCS%nb_elem) = 0
              ENDIF
            TYPE IS (t_ebcs_fluxout)
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, EBCS%nb_elem, "EBCS%iface")
              EBCS%iface(1:EBCS%nb_elem) = 0
            TYPE IS (t_ebcs_nrf)
              IF(EBCS%is_multifluid) THEN
@@ -308,55 +310,66 @@ C=======================================================================
              ENDIF
              !     iface
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(NSEG))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, NSEG, "EBCS%iface")
              EBCS%iface(1:NSEG) = 0
              !     vold
              EBCS%has_vold = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%vold(SIZ))
+             IF(IFLAG==0) call my_alloc(EBCS%vold, SIZ, "EBCS%vold")
              EBCS%vold(1:SIZ) = 0
              !     Pold
              EBCS%has_Pold = .TRUE.
-             IF(IFLAG==0) ALLOCATE(EBCS%Pold(SIZ))
+             IF(IFLAG==0) call my_alloc(EBCS%Pold, SIZ, "EBCS%Pold")
              EBCS%Pold(1:SIZ) = 0
+             !     Pref (fixed far-field reference pressure, captured at TIME=0 in the engine)
+             EBCS%has_Pref = .TRUE.
+             IF(IFLAG==0) ALLOCATE(EBCS%Pref(SIZ))
+             EBCS%Pref(1:SIZ) = 0
+             !     multifluid law 151 only; NRF relaxation
+             !     filled by the engine at the first cycle
+             IF(EBCS%is_multifluid)THEN
+               EBCS%has_phase_alpha_ref = .TRUE.
+               IF(IFLAG==0) ALLOCATE(EBCS%phase_alpha_ref(21, SIZ))
+               EBCS%phase_alpha_ref(1:21, 1:SIZ) = ZERO
+             ENDIF
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO
              !     dp0
              EBCS%has_dp0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%dp0(NSEG))
+             IF(IFLAG==0) call my_alloc(EBCS%dp0, NSEG, "EBCS%dp0")
              EBCS%dp0(1:NSEG) = ZERO
 
            TYPE IS (t_ebcs_propellant)
              !     iface
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(NSEG))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, NSEG, "EBCS%iface")
              EBCS%iface(1:NSEG) = 0 
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:EBCS%nb_node) = ZERO  
              !     dp0
              EBCS%has_dp0 = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%dp0(NSEG))
+             IF(IFLAG==0) call my_alloc(EBCS%dp0, NSEG, "EBCS%dp0")
              EBCS%dp0(1:NSEG) = ZERO
 
           TYPE IS (t_ebcs_cyclic)
              !     iface
              EBCS%has_iface = .TRUE.
-             IF(IFLAG==0)ALLOCATE(EBCS%iface(2*NSEG))
+             IF(IFLAG==0) call my_alloc(EBCS%iface, 2*NSEG, "EBCS%iface")
              EBCS%iface(1:2*NSEG) = 0
              !     la
              EBCS%has_la = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%la(3, 2*EBCS%nb_node))
+             IF(IFLAG==0) call my_alloc(EBCS%la, 3, 2*EBCS%nb_node, "EBCS%la")
              EBCS%la(1:3, 1:2*EBCS%nb_node) = ZERO
              !     ng
              EBCS%has_ng = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%ng(2*EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%ng, 2*EBCS%nb_elem, "EBCS%ng")
              EBCS%ng(1:2*EBCS%nb_elem) = 0
              !     iloc
              EBCS%has_iloc = .true.
-             IF(IFLAG==0)ALLOCATE(EBCS%iloc(2*EBCS%nb_elem))
+             IF(IFLAG==0) call my_alloc(EBCS%iloc, 2*EBCS%nb_elem, "EBCS%iloc")
              EBCS%iloc(1:2*EBCS%nb_elem) = 0
                                                           
         END SELECT
@@ -399,7 +412,7 @@ C=======================================================================
      .                     IGRSURF(ISU2)%NODES,MWA,MWA(1+(2+NUMNOD)),PM,X,TYP,IGEO,ITAB)
                   ENDIF
                   ! check link between two surfaces and order faces consequently
-                  CALL EBCS_CYCLIC_SURFACE_MATCHING(TWF, EBCS, N2D, NUMNOD, X)
+                  CALL EBCS_CYCLIC_SURFACE_MATCHING(TWF, EBCS, N2D, NUMNOD, X, IFLAG)
                   IF(IFLAG/=0)THEN
                     EBCS%NB_ELEM = 2*EBCS%NB_ELEM
                     EBCS%NB_NODE = 2*EBCS%NB_NODE
@@ -446,7 +459,7 @@ C=======================================================================
         ENDIF
       ENDDO
             
-      IF (ALLOCATED(MWA)) DEALLOCATE(MWA)
+      IF (ALLOCATED(MWA)) CALL MY_DEALLOC(MWA)
 C-----------
       RETURN
       END

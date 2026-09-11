@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    read_joint   ../engine/source/output/restart/read_joint.F
+!||    read_joint       ../engine/source/output/restart/read_joint.F
 !||--- called by ------------------------------------------------------
-!||    rdresb       ../engine/source/output/restart/rdresb.F
+!||    rdresb           ../engine/source/output/restart/rdresb.F
 !||--- calls      -----------------------------------------------------
-!||    read_i_c     ../common_source/tools/input_output/write_routines.c
+!||    read_i_c         ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
-!||    joint_mod    ../engine/share/modules/joint_mod.F
-!||    restmod      ../engine/share/modules/restart_mod.F
+!||    joint_mod        ../engine/share/modules/joint_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    restmod          ../engine/share/modules/restart_mod.F
 !||====================================================================
         SUBROUTINE READ_JOINT()
 !$COMMENT
@@ -45,6 +48,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -64,7 +69,7 @@ C-----------------------------------------------
         IF(NJOINT>0) THEN
             NUMBER_NODE(1:NJOINT) = 0
             !   number of node per proc (all proc --> size=nspmd)
-            CALL READ_I_C(NUMBER_NODE,NJOINT)
+            CALL READ_I_C(NUMBER_NODE(1),NJOINT)
             !   ------------------------------
             DO N=1,NJOINT     
                 !   number of node and node with weight=1
@@ -92,7 +97,7 @@ C-----------------------------------------------
                     CALL READ_I_C(CYL_JOIN(N)%WEIGHT,CYL_JOIN(N)%NUMBER_NODE)
                     !   -----------
                     !   weight array index for the current joint                 
-                    ALLOCATE( NODE_WEIGHT( CYL_JOIN(N)%NUMBER_NODE ) )
+                    call my_alloc(NODE_WEIGHT, CYL_JOIN(N)%NUMBER_NODE, "NODE_WEIGHT")
                     DO  I=1,CYL_JOIN(N)%NUMBER_NODE
                         IF(CYL_JOIN(N)%WEIGHT(I)==1) THEN
                             CYL_JOIN(N)%NUMBER_NODE_WEIGHT = CYL_JOIN(N)%NUMBER_NODE_WEIGHT + 1
@@ -103,7 +108,7 @@ C-----------------------------------------------
                     DO I=1,CYL_JOIN(N)%NUMBER_NODE_WEIGHT
                         CYL_JOIN(N)%NODE_WEIGHT(I) = NODE_WEIGHT(I)
                     ENDDO                 
-                    DEALLOCATE( NODE_WEIGHT )
+                    call my_dealloc(NODE_WEIGHT)
                     !   -----------
                 ENDIF
                 !   ------------------------------

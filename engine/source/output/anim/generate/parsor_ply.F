@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    parsor_ply            ../engine/source/output/anim/generate/parsor_ply.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    element_mod           ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    plyxfem_mod           ../engine/share/modules/plyxfem_mod.F
 !||====================================================================
       SUBROUTINE PARSOR_PLY(NEL_PLY, X,       D,       XNORM,  CDG,
@@ -45,6 +47,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -73,7 +76,6 @@ C-----------------------------------------------
 C     REAL
       INTEGER II(4), IE, NG, ITY, LFT, LLT, N, I, 
      . NEL, IAD, NPAR, NFT,MTN,
-     . NN90,
      . JJ,BUF,ISHPLYXFEM,
      .        IPT,ELC,PLYS,IPLY,IE_EL2FA,
      .        NPCC,IDPLYN
@@ -83,8 +85,8 @@ C     REAL
 C-----------------------------------------------
 C     PLY ELEMS INIT
 C-----------------------------------------------
-      CALL MY_ALLOC(PLYELEMS, NUMELC)
-      CALL MY_ALLOC(NP, PLYNUMC*4)
+      call my_alloc(PLYELEMS, NUMELC, "PLYELEMS")
+      call my_alloc(NP, PLYNUMC*4, "NP")
       NPCC = 0
       DO PLYS = 1,NPLYPART
         IPLY = INDX_PLY(PLYS)
@@ -191,8 +193,8 @@ C   build global part array on proc 0
         ENDIF
 
       ENDIF
-      DEALLOCATE(PLYELEMS)
-      DEALLOCATE(NP)
+      call my_dealloc(PLYELEMS)
+      call my_dealloc(NP)
 C-----------------------------------------------
       RETURN
       END

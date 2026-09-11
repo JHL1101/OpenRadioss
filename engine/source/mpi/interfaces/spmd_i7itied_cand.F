@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_i7itied_cand     ../engine/source/mpi/interfaces/spmd_i7itied_cand.F
+!||    spmd_i7itied_cand   ../engine/source/mpi/interfaces/spmd_i7itied_cand.F
 !||--- called by ------------------------------------------------------
-!||    inttri                ../engine/source/interfaces/intsort/inttri.F
+!||    inttri              ../engine/source/interfaces/intsort/inttri.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    intbufdef_mod       ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod         ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod            ../engine/source/mpi/spmd_mod.F90
+!||    tri7box             ../engine/share/modules/tri7box.F
 !||====================================================================
         SUBROUTINE SPMD_I7ITIED_CAND(FLAG,NBINTC,IPARI,INTLIST,INTBUF_TAB)
 
@@ -39,10 +41,12 @@ C-----------------------------------------------
       USE TRI7BOX
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD 
+      use my_alloc_mod
+
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : SPMD_IRECV, SPMD_ISEND, SPMD_WAIT
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -75,13 +79,12 @@ C-----------------------------------------------
 #ifdef MPI
         INTEGER :: STATUS(MPI_STATUS_SIZE),REQ_S(PARASIZ),REQ_R(PARASIZ)
         INTEGER :: P,LENSD,LENRV,IADS(PARASIZ+1),IADR(PARASIZ+1),IERROR,
-     *        SIZ,LOC_PROC,MSGTYP,IDEB(NINTER),PROC,MSGOFF
+     *        SIZ,LOC_PROC,MSGTYP,IDEB(NINTER),MSGOFF
         INTEGER :: ITIED
 
-        INTEGER :: I,J,L,NB,NL,NN,K,N,NOD,LEN,ND,NIN,NTY,
-     *        NSN,SN,NBI,NSI,
-     *        I_STOK,IT,LEN_NSNSI,MS,NSNR,
-     *        NI,NII,LL,ILEN,RLEN,LI,NUMERO,P2
+        INTEGER :: L,NB,NN,K,NIN,NTY,
+     *        NSN,SN,
+     *        NI,NII,LL,NUMERO,P2
         INTEGER, DIMENSION(NINTER) :: LLL
         INTEGER, DIMENSION(:), ALLOCATABLE :: BBUFS, BBUFR
         INTEGER:: LEN_CANDF
@@ -89,7 +92,7 @@ C-----------------------------------------------
         DATA MSGOFF/9000/
 
         SAVE IADS,IADR,BBUFS,BBUFR,REQ_S,
-     *     REQ_R,ILEN,RLEN,LEN,LENSD,LENRV 
+     *     REQ_R,LENSD,LENRV 
 !       ----------------------------------------------     
 !       FI proc send to SI proc the ITIED+CAND_F/=0 
 !       nodes
@@ -169,11 +172,11 @@ C-----------------------------------------------
                 IADR(NSPMD+1)=LENRV+1
         !       allocate the sent/received buffer
                 IF(LENSD>0) THEN
-                        ALLOCATE(BBUFS(LENSD))
+                        call my_alloc(BBUFS, LENSD, "BBUFS")
                         BBUFS(1:LENSD) = 0
                 ENDIF
                 IF(LENRV>0) THEN
-                        ALLOCATE(BBUFR(LENRV))
+                        call my_alloc(BBUFR, LENRV, "BBUFR")
                         BBUFR(1:LENRV) = 0
                 ENDIF
 
@@ -182,8 +185,9 @@ C-----------------------------------------------
                         SIZ=IADR(P+1)-IADR(P)
                         IF (SIZ > 0) THEN
                                 MSGTYP = MSGOFF
-                                CALL MPI_IRECV( BBUFR(IADR(P)),SIZ,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     .                                          SPMD_COMM_WORLD,REQ_R(P),IERROR )
+                                CALL SPMD_IRECV(
+     .                                BBUFR(IADR(P):IADR(P)+SIZ-1),SIZ,
+     .                                IT_SPMD(P),MSGTYP,REQ_R(P))
 
                         ENDIF
                 ENDDO
@@ -230,8 +234,9 @@ C-----------------------------------------------
                                 IF(SIZ>0)THEN
                                         MSGTYP = MSGOFF
 
-                                        CALL MPI_ISEND(BBUFS(IADS(P)),SIZ,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     .                                                 SPMD_COMM_WORLD,REQ_S(P),IERROR)
+                                        CALL SPMD_ISEND(
+     .                                  BBUFS(IADS(P):IADS(P)+SIZ-1),SIZ,
+     .                                  IT_SPMD(P),MSGTYP,REQ_S(P))
                                 ENDIF
                         ENDIF ! ENDIF P/= LOC_PROC
                 ENDDO  ! DO P=1, NSPMD
@@ -260,7 +265,7 @@ C-----------------------------------------------
                         SIZ=IADR(P+1)-IADR(P)
                         IF (SIZ > 0) THEN
                                 MSGTYP = MSGOFF
-                                CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+                                CALL SPMD_WAIT(REQ_R(P),STATUS)
                                 DO NI=1,NBINTC
                                         NIN = INTLIST(NI)
                                         NTY   =IPARI(7,NIN)
@@ -296,12 +301,12 @@ C-----------------------------------------------
                                 SIZ=IADS(P+1)-IADS(P)
                         ENDIF
                         IF(SIZ>0) THEN
-                                CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
+                                CALL SPMD_WAIT(REQ_S(P),STATUS)
                         ENDIF
                 ENDDO
                 
-                IF (ALLOCATED(BBUFS)) DEALLOCATE(BBUFS)
-                IF (ALLOCATED(BBUFR)) DEALLOCATE(BBUFR)
+                IF (ALLOCATED(BBUFS)) call my_dealloc(BBUFS)
+                IF (ALLOCATED(BBUFR)) call my_dealloc(BBUFR)
 
         !       end of receveid part
         !       -----------------------------

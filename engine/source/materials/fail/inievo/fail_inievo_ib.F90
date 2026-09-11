@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_inievo_ib_mod   ../engine/source/materials/fail/inievo/fail_inievo_ib.F90
 !||--- called by ------------------------------------------------------
 !||    fail_beam18          ../engine/source/elements/beam/fail_beam18.F
 !||====================================================================
       module fail_inievo_ib_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 ! \brief   inievo failure criteria for type18 beam elements
@@ -43,11 +44,13 @@
 !||    elbufdef_mod          ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    interface_table_mod   ../engine/share/modules/table_mod.F
 !||    message_mod           ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod         ../common_source/modules/precision_mod.F90
 !||    table_mod             ../engine/share/modules/table_mod.F
 !||====================================================================
-        subroutine fail_inievo_ib (                                               &
-          nel     ,nuparam  ,nuvar    ,                                  &
+        subroutine fail_inievo_ib (                                      &
+          nel     ,nuparam  ,nuvar    ,nvartmp ,vartmp     ,             &
           table   ,ntablf   ,itablf   ,time    ,uparam     ,             &
           ngl     ,aldt     ,dpla     ,epsp    ,uvar       ,             &
           signxx  ,signxy   ,signzx   ,                                  &
@@ -67,6 +70,8 @@
 !c-----------------------------------------------
 !                                               c i m p l i c i t t y p e
 !c-----------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 #include      "units_c.inc"
 !c-----------------------------------------------
@@ -75,6 +80,8 @@
           integer                     ,intent(in)     :: nel      ! size of element group
           integer                     ,intent(in)     :: nuparam  ! size of parameter array
           integer                     ,intent(in)     :: nuvar    ! size of user variable array
+          integer                     ,intent(in)     :: nvartmp  !
+          integer, dimension(nel,nvartmp), intent(inout)   :: vartmp
           type(ttable), dimension(ntable), intent(inout)   :: table      ! table data
           integer                     ,intent(in)     :: ntablf   ! number of table functions
           integer, dimension(ntablf)  ,intent(in)     :: itablf   ! table function identifiers
@@ -104,9 +111,8 @@
 !c-----------------------------------------------
 !                                                  local variables
 !c-----------------------------------------------
-          integer :: i, j, nindx, failip, ninievo, ilen
+          integer :: i, j, k, l, nindx, failip, ninievo, ilen
           integer, dimension(nel) :: indx, nrot
-          integer, dimension(nel, 2) :: ipos
 
           integer, dimension(:), allocatable :: initype, evotype, evoshap, comptyp, tab_id, &
             tab_el, fcrit
@@ -141,20 +147,20 @@
           ilen = 1
           failip  = min(nint(uparam(4)),npg) ! 	number of failed integration point prior to solid element deletion. default = 1 (integer)
 
-          allocate(initype(ninievo))
-          allocate(evotype(ninievo))
-          allocate(evoshap(ninievo))
-          allocate(comptyp(ninievo))
-          allocate(tab_id (ninievo))
-          allocate(sr_ref (ninievo))
-          allocate(fscale (ninievo))
-          allocate(ini_p1 (ninievo))
-          allocate(tab_el (ninievo))
-          allocate(el_ref (ninievo))
-          allocate(elscal (ninievo))
-          allocate(disp   (ninievo))
-          allocate(ener   (ninievo))
-          allocate(alpha2 (ninievo))
+          call my_alloc(initype, ninievo, "initype")
+          call my_alloc(evotype, ninievo, "evotype")
+          call my_alloc(evoshap, ninievo, "evoshap")
+          call my_alloc(comptyp, ninievo, "comptyp")
+          call my_alloc(tab_id, ninievo, "tab_id")
+          call my_alloc(sr_ref, ninievo, "sr_ref")
+          call my_alloc(fscale, ninievo, "fscale")
+          call my_alloc(ini_p1, ninievo, "ini_p1")
+          call my_alloc(tab_el, ninievo, "tab_el")
+          call my_alloc(el_ref, ninievo, "el_ref")
+          call my_alloc(elscal, ninievo, "elscal")
+          call my_alloc(disp, ninievo, "disp")
+          call my_alloc(ener, ninievo, "ener")
+          call my_alloc(alpha2, ninievo, "alpha2")
 !c
           tab_id(1:ninievo) = itablf(1:ninievo)  !failure initiation criterion table identifier.
           tab_el(1:ninievo) = itablf(ninievo+1:ninievo*2)  !element size scaling for failure initiation criterion.
@@ -188,9 +194,9 @@
           ! positive stress triaxiality bounded plastic strain
           epsmod(1:nel) = uvar(1:nel,2)
           ! damage initiation and evolution variable
-          allocate(dmgini(nel,ninievo))
-          allocate(dmgevo(nel,ninievo))
-          allocate(fcrit(nel))
+          call my_alloc(dmgini, nel, ninievo, "dmgini")
+          call my_alloc(dmgevo, nel, ninievo, "dmgevo")
+          call my_alloc(fcrit, nel, "fcrit")
           do j = 1,ninievo
             do i=1,nel
               ! initiation damage
@@ -296,8 +302,8 @@
               end do
             end select
             xvec(1:nel,2)   = epsp(1:nel)/sr_ref(j)
-            ipos(1:nel,1:2) = 1
-            call table_vinterp(table(tab_id(j)),nel,nel,ipos,xvec,epsf,depsf)
+            k = j*2 - 1
+            call table_vinterp(table(tab_id(j)),nel,nel,vartmp(1:nel,k:k+1),xvec,epsf,depsf)
 
             epsf(1:nel) = epsf(1:nel)*fscale(j)
 !c
@@ -318,8 +324,8 @@
                   xvec(i,2) = (svm(i) + ini_p1(j)*p(i))/max(sigpmaj(i),em08)
                 end do
               end select
-              ipos(1:nel,1:2) = 1
-              call table_vinterp(table(tab_el(j)),nel,nel,ipos,xvec,sizefac,dsize)
+              l = k + ninievo*2
+              call table_vinterp(table(tab_el(j)),nel,nel,vartmp(1:nel,l:l+1),xvec,sizefac,dsize)
               sizefac(1:nel) = sizefac(1:nel)*elscal(j)
               epsf(1:nel) = epsf(1:nel)*sizefac(1:nel)
             end if
@@ -527,23 +533,23 @@
           !====================================================================
           ! - tables deallocation
           !====================================================================
-          if (allocated(initype)) deallocate(initype)
-          if (allocated(evotype)) deallocate(evotype)
-          if (allocated(evoshap)) deallocate(evoshap)
-          if (allocated(comptyp)) deallocate(comptyp)
-          if (allocated(tab_id))  deallocate(tab_id)
-          if (allocated(sr_ref))  deallocate(sr_ref)
-          if (allocated(fscale))  deallocate(fscale)
-          if (allocated(ini_p1))  deallocate(ini_p1)
-          if (allocated(tab_el))  deallocate(tab_el)
-          if (allocated(el_ref))  deallocate(el_ref)
-          if (allocated(elscal))  deallocate(elscal)
-          if (allocated(disp))    deallocate(disp)
-          if (allocated(ener))    deallocate(ener)
-          if (allocated(alpha2))  deallocate(alpha2)
-          if (allocated(dmgini))  deallocate(dmgini)
-          if (allocated(dmgevo))  deallocate(dmgevo)
-          if (allocated(fcrit))   deallocate(fcrit)
+          if (allocated(initype)) call my_dealloc(initype)
+          if (allocated(evotype)) call my_dealloc(evotype)
+          if (allocated(evoshap)) call my_dealloc(evoshap)
+          if (allocated(comptyp)) call my_dealloc(comptyp)
+          if (allocated(tab_id)) call my_dealloc(tab_id)
+          if (allocated(sr_ref)) call my_dealloc(sr_ref)
+          if (allocated(fscale)) call my_dealloc(fscale)
+          if (allocated(ini_p1)) call my_dealloc(ini_p1)
+          if (allocated(tab_el)) call my_dealloc(tab_el)
+          if (allocated(el_ref)) call my_dealloc(el_ref)
+          if (allocated(elscal)) call my_dealloc(elscal)
+          if (allocated(disp)) call my_dealloc(disp)
+          if (allocated(ener)) call my_dealloc(ener)
+          if (allocated(alpha2)) call my_dealloc(alpha2)
+          if (allocated(dmgini)) call my_dealloc(dmgini)
+          if (allocated(dmgevo)) call my_dealloc(dmgevo)
+          if (allocated(fcrit)) call my_dealloc(fcrit)
 !c-----------------------------------------------------------------------
 1000      format(1x,"FOR BEAM ELEMENT NUMBER ",i10, &
             " FAILURE (INIEVO) WITH CRITERION NUMBER ",i3, &

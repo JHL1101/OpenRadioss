@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    deallocate_joint   ../engine/source/constraints/general/cyl_joint/deallocate_joint.F
 !||--- called by ------------------------------------------------------
 !||    resol              ../engine/source/engine/resol.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    joint_mod          ../engine/share/modules/joint_mod.F
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE DEALLOCATE_JOINT()
 !$COMMENT
@@ -41,6 +44,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -54,12 +58,12 @@ C-----------------------------------------------
             !   ------------------------------        
             DO N=1,NJOINT     
                 IF(CYL_JOIN(N)%NUMBER_NODE>0) THEN
-                    IF(ALLOCATED(CYL_JOIN(N)%LIST_PROC) )DEALLOCATE( CYL_JOIN(N)%LIST_PROC )
-                    IF( ALLOCATED(CYL_JOIN(N)%NODE) ) DEALLOCATE( CYL_JOIN(N)%NODE )
-                    IF( ALLOCATED(CYL_JOIN(N)%WEIGHT) ) DEALLOCATE( CYL_JOIN(N)%WEIGHT )
+                    IF(ALLOCATED(CYL_JOIN(N)%LIST_PROC) ) call my_dealloc(CYL_JOIN(N)%LIST_PROC)
+                    IF( ALLOCATED(CYL_JOIN(N)%NODE) ) call my_dealloc(CYL_JOIN(N)%NODE)
+                    IF( ALLOCATED(CYL_JOIN(N)%WEIGHT) ) call my_dealloc(CYL_JOIN(N)%WEIGHT)
                 ENDIF
-                IF(ALLOCATED(CYL_JOIN(N)%MAIN_NODE) )DEALLOCATE( CYL_JOIN(N)%MAIN_NODE )
-                IF(ALLOCATED(CYL_JOIN(N)%COMM_MPI%SIZE_SR) )DEALLOCATE( CYL_JOIN(N)%COMM_MPI%SIZE_SR )
+                IF(ALLOCATED(CYL_JOIN(N)%MAIN_NODE) ) call my_dealloc(CYL_JOIN(N)%MAIN_NODE)
+                IF(ALLOCATED(CYL_JOIN(N)%COMM_MPI%SIZE_SR) ) call my_dealloc(CYL_JOIN(N)%COMM_MPI%SIZE_SR)
             ENDDO
             !   ------------------------------
         ENDIF

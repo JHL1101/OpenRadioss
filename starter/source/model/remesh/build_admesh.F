@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    father        ../starter/source/model/remesh/build_admesh.F
 !||--- called by ------------------------------------------------------
@@ -240,9 +241,11 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARKEY
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -302,6 +305,8 @@ C
 C     Reverse connectivity at the previous level
 C
       ALLOCATE(KNOD2SH(0:NUMNOD_NEW),STAT=stat)
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
       IF(STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                          MSGTYPE=MSGERROR,
      .                         C1='KNOD2SH')     
@@ -325,7 +330,7 @@ C
         KNOD2SH(N)=KNOD2SH(N)+KNOD2SH(N-1)
       END DO
 C
-      ALLOCATE(NOD2SH(4*NUMELC_LEV+3*NUMELTG_LEV),STAT=stat)
+      call my_alloc(NOD2SH, 4*NUMELC_LEV+3*NUMELTG_LEV, "NOD2SH", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='NOD2SH')     
@@ -354,7 +359,7 @@ C
       KNOD2SH(0)=0
 C
 C     allocation tag
-      ALLOCATE(TAG(5,NUMELC_LEV+NUMELTG_LEV),STAT=stat)
+      call my_alloc(TAG, 5, NUMELC_LEV+NUMELTG_LEV, "TAG", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='TAG')     
@@ -592,9 +597,9 @@ C
       END DO
 
 C     next level
-      DEALLOCATE(TAG)
-      DEALLOCATE(NOD2SH)
-      DEALLOCATE(KNOD2SH)
+      CALL MY_DEALLOC(TAG)
+      CALL MY_DEALLOC(NOD2SH)
+      call my_dealloc(KNOD2SH)
  100  CONTINUE
 
 C

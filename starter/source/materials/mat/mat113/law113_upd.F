@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    law113_upd             ../starter/source/materials/mat/mat113/law113_upd.F
 !||--- called by ------------------------------------------------------
@@ -59,15 +60,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,K,FUNC,NUPAR,NPT, J,J1,NUPARAM,
-     . IF1,IF2,IF3,IF4,IC1,IC2,II,JJ,LOAD,UNLOAD,
-     . NP1,NP2,ILENG2,I7,I11,I13,I5,I4,K1,
-     . K2,I14,I15,IFUN
+      INTEGER K,FUNC,NPT, J,J1,
+     . IF1,IF3,IF4,IC1,IC2,II,JJ,LOAD,UNLOAD,
+     . NP1,NP2,I7,I11,I13,I5,K1,
+     . I14,I15,IFUN
       my_real
      .   XK,  HARD,X1,X2,Y1,Y2,LSCALE,XK_INI,YFAC,
      .   X0,EMAX,DX,DY,Y0,DERI,H,XSCALE,ALPHA1,ALPHA2,
      .   S1,S2,T1,T2,TY,SX,XX1,YY1,DYDX,DTDS,F_X0
-      CHARACTER(LEN=NCHARTITLE)  :: TITR1
 C=======================================================================
 c     Transform FUNC_ID ->  Function number , leakmat only
 cc

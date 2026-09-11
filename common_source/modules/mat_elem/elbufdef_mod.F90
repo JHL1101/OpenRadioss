@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    elbufdef_mod                        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||--- called by ------------------------------------------------------
@@ -56,7 +57,6 @@
 !||    alew6                               ../engine/source/ale/grid/alew6.F
 !||    alewdx                              ../engine/source/ale/grid/alewdx.F
 !||    alloc_elbuf_imp                     ../engine/source/elements/elbuf/alloc_elbuf_imp.F
-!||    allocbuf_auto                       ../engine/source/elements/elbuf/allocbuf_auto.F
 !||    anim_nodal_p_elems                  ../engine/source/output/anim/generate/anim_nodal_p_elems.F
 !||    anim_nodal_ssp_elems                ../engine/source/output/anim/generate/anim_nodal_ssp_elems.F90
 !||    animig3d                            ../engine/source/output/anim/generate/animig3d.F
@@ -70,7 +70,6 @@
 !||    aniskew                             ../engine/source/output/anim/generate/aniskew.F
 !||    arezon                              ../engine/source/ale/arezon.F90
 !||    atherm                              ../engine/source/ale/atherm.F
-!||    bcs_nrf                             ../engine/source/boundary_conditions/bcs_nrf.F90
 !||    bforc2                              ../engine/source/ale/bimat/bforc2.F
 !||    binit2                              ../starter/source/ale/bimat/binit2.F
 !||    bsigini                             ../starter/source/elements/beam/bsigini.F
@@ -229,6 +228,7 @@
 !||    failini                             ../starter/source/elements/solid/solide/failini.F
 !||    forint                              ../engine/source/elements/forint.F
 !||    forintc                             ../engine/source/elements/forintc.F
+!||    forintc_prepare_gpu                 ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    forintp                             ../engine/source/elements/forintp.F
 !||    forints                             ../engine/source/elements/forints.F
 !||    funct_python_update_elements        ../engine/source/tools/curve/funct_python_update_elements.F90
@@ -334,11 +334,13 @@
 !||    inigrav_load                        ../starter/source/initial_conditions/inigrav/inigrav_load.F
 !||    inigrav_m37                         ../starter/source/initial_conditions/inigrav/inigrav_m37.F
 !||    inigrav_m51                         ../starter/source/initial_conditions/inigrav/inigrav_m51.F
+!||    inigrav_m51_any_eos                 ../starter/source/initial_conditions/inigrav/inigrav_m51_any_eos.F90
 !||    inintr_thkvar                       ../starter/source/interfaces/interf1/inintr_thkvar.F
 !||    iniphase                            ../starter/source/initial_conditions/inivol/iniphase.F
 !||    inirig_mat                          ../starter/source/elements/initia/inirig_mat.F
 !||    init_ale                            ../engine/source/ale/init_ale.F90
 !||    init_ale_arezon                     ../engine/source/ale/init_ale_arezon.F90
+!||    init_h3d_engine                     ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    init_inivol                         ../starter/source/initial_conditions/inivol/init_inivol.F90
 !||    init_inivol_2d_polygons             ../starter/source/initial_conditions/inivol/init_inivol_2D_polygons.F90
 !||    init_rwall_penalty                  ../starter/source/constraints/general/rwall/init_rwall_penalty.F90
@@ -422,6 +424,9 @@
 !||    multifluid_init2t                   ../starter/source/multifluid/multifluid_init2t.F
 !||    multifluid_init3                    ../starter/source/multifluid/multifluid_init3.F
 !||    multifluid_init3t                   ../starter/source/multifluid/multifluid_init3t.F
+!||    my_alloc_impl_idx4_mod              ../common_source/tools/memory/my_alloc_impl_idx4.F90
+!||    my_alloc_impl_idx8_mod              ../common_source/tools/memory/my_alloc_impl_idx8.F90
+!||    my_dealloc_mod                      ../common_source/tools/memory/my_dealloc.F90
 !||    nloc_dmg_init                       ../starter/source/materials/fail/nloc_dmg_init.F
 !||    nlocal_init_sta                     ../starter/source/materials/fail/nlocal_init_sta.F
 !||    nodal_schlieren                     ../engine/source/output/anim/generate/nodal_schlieren.F
@@ -463,6 +468,10 @@
 !||    prelecflow                          ../engine/source/elements/solid/solide/prelecflow.F
 !||    prelech3d                           ../engine/source/output/h3d/h3d_build_fortran/prelech3d.F90
 !||    projecig3d                          ../engine/source/elements/ige3d/projecig3d.F
+!||    q1np_forc3                          ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
+!||    q1np_init_lbuf_vol_mod              ../starter/source/elements/solid/solid_q1np/q1np_init_lbuf_vol.F90
+!||    q1np_init_mod                       ../starter/source/elements/solid/solid_q1np/q1np_init.F90
+!||    q1np_mass3_mod                      ../starter/source/elements/solid/solid_q1np/q1np_mass3.F90
 !||    q4forc2                             ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    q4init2                             ../starter/source/elements/solid_2d/quad4/q4init2.F
 !||    q4ke2                               ../engine/source/elements/solid_2d/quad4/q4ke2.F
@@ -474,9 +483,11 @@
 !||    r23law108                           ../engine/source/elements/spring/r23law108.F
 !||    r23law113                           ../engine/source/elements/spring/r23law113.F
 !||    r23law114                           ../engine/source/elements/spring/r23law114.F
+!||    r23law135                           ../engine/source/elements/spring/r23law135.F90
 !||    r4ke3                               ../engine/source/elements/spring/r4ke3.F
 !||    r8ke3                               ../engine/source/elements/spring/r8ke3.F
 !||    radiatoff                           ../engine/source/constraints/thermic/radiatoff.F
+!||    rbody_spring_check                  ../starter/source/elements/spring/rbody_spring_check.F90
 !||    rbyonf                              ../engine/source/constraints/general/rbody/rbyonf.F
 !||    rbypid                              ../engine/source/constraints/general/rbody/rbypid.F
 !||    rbysens                             ../engine/source/constraints/general/rbody/rbyonf.F
@@ -552,7 +563,6 @@
 !||    sigeps02g                           ../engine/source/materials/mat/mat002/sigeps02g.F
 !||    sigeps104                           ../engine/source/materials/mat/mat104/sigeps104.F
 !||    sigeps104c                          ../engine/source/materials/mat/mat104/sigeps104c.F
-!||    sigeps105                           ../engine/source/materials/mat/mat105/sigeps105.F
 !||    sigeps107                           ../engine/source/materials/mat/mat107/sigeps107.F
 !||    sigeps107c                          ../engine/source/materials/mat/mat107/sigeps107c.F
 !||    sigeps112                           ../engine/source/materials/mat/mat112/sigeps112.F
@@ -656,7 +666,6 @@
 !||    tensorc_crk                         ../engine/source/output/anim/generate/tensorc_crk.F
 !||    tensorc_ply                         ../engine/source/output/anim/generate/tensorc_ply.F
 !||    tensors                             ../engine/source/output/anim/generate/tensor6.F
-!||    test_jc_shell_detach                ../engine/source/engine/node_spliting/detach_node.F90
 !||    tforc3                              ../engine/source/elements/truss/tforc3.F
 !||    thcluster                           ../engine/source/output/th/thcluster.F
 !||    thcoq                               ../engine/source/output/th/thcoq.F
@@ -840,6 +849,7 @@
           integer  :: g_skew_id
           integer  :: g_yield_in_comp
           integer  :: g_xxold_in_comp
+          integer  :: g_rbody_node
 !
 !    -  for seatbelt elements
           integer  :: g_slipring_id
@@ -971,6 +981,7 @@
           integer, dimension(:) , pointer ::   skew_id => null()
           real(kind=WP), dimension(:) , pointer ::   yield_in_comp => null()
           real(kind=WP), dimension(:) , pointer ::   xxold_in_comp => null()
+          real(kind=WP), dimension(:) , pointer ::   rbody_node => null()
           type (fail_loc_) , dimension(:) , pointer ::   fail => null()
 !
 !    -  for seatbelt elements
@@ -1107,6 +1118,11 @@
           real(kind=WP), dimension(:)  , pointer ::  var => null()
         end type buf_poro_
 
+        Type buf_q1np_      ! Q1NP Gauss point data buffer
+          real(kind=WP), dimension(:) , pointer :: gp_coord => null()   ! 3*NEL: (ξ, η, ζ) per element
+          real(kind=WP), dimension(:) , pointer :: gp_weight => null() ! NEL: weight per element
+        end type buf_q1np_
+
         Type buf_visc_
 !        integer  ilaw    ! type de loi de viscosite
 !        integer  nvar
@@ -1143,6 +1159,7 @@
           integer  :: lf_off
           integer, dimension(:)  , pointer ::  indx => null()
           integer, dimension(:)  , pointer ::  off => null()
+          integer, dimension(:)  , pointer ::  vartmp => null()
           real(kind=WP), dimension(:)  , pointer ::  dam => null()
           real(kind=WP), dimension(:)  , pointer ::  var => null()
           real(kind=WP), dimension(:)  , pointer ::  dammx => null()
@@ -1279,6 +1296,7 @@
           type (buf_poro_) , dimension(:,:,:)  , pointer :: poro => null()
           type (buf_xfem_) , dimension(:)      , pointer :: xfem => null()      ! xfem (nxel)
           type (l_bufel_dir_) , dimension(:)  , pointer :: lbuf_dir => null()   ! local direction by int point in the thickness for slice)
+          type (buf_q1np_) , dimension(:,:,:)  , pointer :: q1np => null()      ! Q1NP buffer (only for Q1NP groups)
         end type buf_lay_
 !
 !--------------------

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i5keg3   ../engine/source/interfaces/inter3d/i5keg3.F
 !||--- called by ------------------------------------------------------
@@ -53,12 +54,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J1, J, K,IG,ISF,NN,NS,JLTF,NE,L
+      INTEGER I, J, K
       my_real
-     .   S2,FAC,FACF, H0, LA1, LA2, LA3, LA4,FACT(MVSIZ),
-     .   D1,D2,D3,D4,A1,A2,A3,A4,KN(4,MVSIZ),Q(3,3,MVSIZ)
+     .   FAC,FACT(MVSIZ),
+     .   KN(4,MVSIZ),Q(3,3,MVSIZ)
       my_real
-     .   PREC,Q11,Q12,Q13,Q22,Q23,Q33,H00,VTX,VTY,VTZ,VT,
+     .   Q11,Q12,Q13,Q22,Q23,Q33,
      .   KT1,KT2,KT3,KT4,Q1,Q2
 C-----------------------------------------------
 C    ---- Without friction first --- 
@@ -192,7 +193,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER IPARI(*),LFT, LLT, NFT,I_N(*),I_E(*)
+      INTEGER IPARI(*),LFT, LLT, I_N(*),I_E(*)
 C     REAL
       my_real
      .   FRIC
@@ -206,16 +207,14 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, IL, LOLD, JJ, NN, J3,
-     .   J2, J1, IG, I3, I2, I1, K, IFQ, MFROT,L
-      INTEGER NISKYL
-C     REAL
+      INTEGER I, IL, LOLD, JJ, NN,
+     .   K, IFQ, L
+
       my_real
      .   H(4), XX1(4), XX2(4), XX3(4),
-     .   SS0, TT0, XC, ECONVT, ALPHA, ALPHI,
+     .   SS0, TT0, XC, ALPHA, ALPHI,
      .   YC, ZC, XC0, YC0, ZC0, SP, SM, TP, TM, ANSX, ANSY, ANSZ, FMAX,
-     .   STF, FTI, FN, TN1, TN2, TN3, TN, DTM, XMU, VX,VY,VZ,VV,V2,P,
-     .   VV1,VV2,V21,DMU,AA
+     .   STF, FTI, FN, TN1, TN2, TN3, TN
       my_real, DIMENSION(MVSIZ) :: FXI,FYI,FZI,FNI
 C-----------------------------------------------
       DO I=LFT,LLT

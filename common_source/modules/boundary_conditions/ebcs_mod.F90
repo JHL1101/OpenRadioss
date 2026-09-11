@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ebcs_mod                          ../common_source/modules/boundary_conditions/ebcs_mod.F90
 !||--- called by ------------------------------------------------------
@@ -156,6 +157,10 @@
           real(kind=WP), dimension(:), allocatable :: vold
           logical :: has_pold = .false.
           real(kind=WP), dimension(:), allocatable :: pold
+          logical :: has_pref = .false.                       !<     fixed far-field reference pressure (NRF relaxation target)
+          real(kind=WP), dimension(:), allocatable :: pref
+          logical :: has_phase_alpha_ref = .false.            !<     initial phase volume fractions (NRF volume-fraction relaxation target, multifluid law 151)
+          real(kind=WP), dimension(:, :), allocatable :: phase_alpha_ref
           logical :: has_v0 = .false.
           real(kind=WP), dimension(:, :), allocatable :: v0
           logical :: has_reso = .false.
@@ -312,6 +317,7 @@
 !     ----------------------
         type, public, extends(t_ebcs) :: t_ebcs_nrf
           integer :: nbmat=21
+          integer :: iform
           real(kind=WP) :: tcar_p = 0., tcar_vf = 1E20
           !real(kind=WP), dimension(:,:), allocatable :: phase_alpha
           type(fvm_inlet_data_struct) :: fvm_inlet_data
@@ -394,6 +400,8 @@
           if(allocated(this%en0)) deallocate(this%en0)
           if(allocated(this%vold)) deallocate(this%vold)
           if(allocated(this%pold)) deallocate(this%pold)
+          if(allocated(this%pref)) deallocate(this%pref)
+          if(allocated(this%phase_alpha_ref)) deallocate(this%phase_alpha_ref)
           if(allocated(this%v0)) deallocate(this%v0)
           if(allocated(this%reso)) deallocate(this%reso)
           if(allocated(this%area)) deallocate(this%area)
@@ -873,6 +881,31 @@
             leni = leni + 1
           end if
 
+!     write pref
+          if (this%has_pref) then
+            siz=this%nb_elem
+            call write_i_c(1, 1)
+            leni = leni + 1
+            if (this%debug_print) print*, "pref ", this%pref
+            call write_db(this%pref, siz)
+            leni = leni + siz
+          else
+            call write_i_c(0, 1)
+            leni = leni + 1
+          end if
+
+!     write phase_alpha_ref (NRF multifluid volume-fraction relaxation target)
+          if (this%has_phase_alpha_ref) then
+            call write_i_c(1, 1)
+            leni = leni + 1
+            if (this%debug_print) print*, "phase_alpha_ref ", this%phase_alpha_ref
+            call write_db(this%phase_alpha_ref, 21 * this%nb_elem)
+            leni = leni + 21 * this%nb_elem
+          else
+            call write_i_c(0, 1)
+            leni = leni + 1
+          end if
+
 !     write v0
           if (this%has_v0) then
             call write_i_c(1, 1)
@@ -937,7 +970,8 @@
 
           integer, dimension(10) :: integer_data
           integer :: ihas_la, ihas_iface, ihas_p0, ihas_dp0, ihas_ro0, ihas_en0,&
-          &ihas_pold, ihas_vold, ihas_v0, ihas_reso,ihas_area,ihas_dvnf,siz
+          &ihas_pold, ihas_vold, ihas_v0, ihas_reso,ihas_area,ihas_dvnf,siz,ihas_pref
+          integer :: ihas_phase_alpha_ref
 
           call read_i_array_c(integer_data, 10)
           this%type = integer_data(1)
@@ -1081,6 +1115,30 @@
             if (this%debug_print) print*, "vold ", this%vold
           else
             this%has_vold = .false.
+          end if
+
+!     read pref
+          call read_i_c(ihas_pref, 1)
+          if (ihas_pref == 1) then
+            this%has_pref = .true.
+            siz=this%nb_elem
+            allocate(this%pref(siz))
+            call read_db_array(this%pref, siz)
+            if (this%debug_print) print*, "pref ", this%pref
+          else
+            this%has_pref = .false.
+          end if
+
+!     read phase_alpha_ref (NRF multifluid volume-fraction relaxation target)
+          call read_i_c(ihas_phase_alpha_ref, 1)
+          if (ihas_phase_alpha_ref == 1) then
+            this%has_phase_alpha_ref = .true.
+            if(allocated(this%phase_alpha_ref)) deallocate(this%phase_alpha_ref)
+            allocate(this%phase_alpha_ref(21, this%nb_elem))
+            call read_db_array(this%phase_alpha_ref, 21 * this%nb_elem)
+            if (this%debug_print) print*, "phase_alpha_ref ", this%phase_alpha_ref
+          else
+            this%has_phase_alpha_ref = .false.
           end if
 
 !     read v0
@@ -1784,6 +1842,8 @@
           lenr = lenr + 2
           !call write_db(this%phase_alpha, this%nbmat*this%nb_elem)
           !lenr = lenr + this%nbmat*this%nb_elem
+          call write_i_c(this%iform, 1)
+          leni = leni + 1
           if(this%is_multifluid)then
             call write_i_c(this%fvm_inlet_data%vector_velocity, 1)
             leni = leni + 1
@@ -1826,6 +1886,7 @@
           !  allocate(this%phase_alpha(this%nbmat,this%nb_elem))
           !  call read_db(this%phase_alpha, this%nbmat*this%nb_elem)
           !endif
+          call read_i_c(this%iform, 1)
           if(this%is_multifluid)then
             call read_i_c(this%fvm_inlet_data%vector_velocity, 1)
             call read_i_c(this%fvm_inlet_data%formulation, 1)

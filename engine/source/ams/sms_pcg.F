@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sms_pcg            ../engine/source/ams/sms_pcg.F
 !||--- called by ------------------------------------------------------
@@ -1695,6 +1696,7 @@ C-------------produit {w}=[K]{v} using full matrix K ----
 !||    stoptime           ../engine/source/system/timer_mod.F90
 !||--- uses       -----------------------------------------------------
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    timer_mod          ../engine/source/system/timer_mod.F90
 !||====================================================================
       SUBROUTINE SMS_MAV_LT(TIMERS, NODFT  ,NODLT ,NUMNOD ,IADL  ,JDIL  ,
@@ -1713,6 +1715,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1753,8 +1756,8 @@ C-----------------------------------------------
         my_real, DIMENSION(:),ALLOCATABLE :: SBUF
 C-----------------------------------------------
         IF (ITASK == 0)THEN
-           CALL MY_ALLOC(RBUF,3*(FR_RMS(NSPMD+1)+FR_SMS(NSPMD+1)))
-           CALL MY_ALLOC(SBUF,3*(FR_RMS(NSPMD+1)+FR_SMS(NSPMD+1)))
+           call my_alloc(RBUF, 3*(FR_RMS(NSPMD+1)+FR_SMS(NSPMD+1)), "RBUF")
+           call my_alloc(SBUF, 3*(FR_RMS(NSPMD+1)+FR_SMS(NSPMD+1)), "SBUF")
         ENDIF
 C-----------------------------
 
@@ -2285,8 +2288,8 @@ C
         END IF
 
         IF (ITASK==0)THEN
-          DEALLOCATE(RBUF)
-          DEALLOCATE(SBUF)
+          call my_dealloc(RBUF)
+          call my_dealloc(SBUF)
         ENDIF
 C--------------------------------------------
         RETURN

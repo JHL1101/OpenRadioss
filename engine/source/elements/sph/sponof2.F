@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sponof2               ../engine/source/elements/sph/sponof2.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod          ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    groupdef_mod          ../common_source/modules/groupdef_mod.F
 !||    initbuf_mod           ../engine/share/resol/initbuf.F
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    sphbox                ../engine/share/modules/sphbox.F
 !||====================================================================
       SUBROUTINE SPONOF2(X ,V       ,D        ,MS      ,SPBUF   ,
@@ -53,6 +56,8 @@ C-----------------------------------------------
 C----6------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -120,8 +125,8 @@ C-----------------------------------------------
       EXTERNAL GET_U_GEO
       DATA IUN/1/
 C-----------------------------------------------
-      ALLOCATE(TAG_SPH(NSPHR))
-      ALLOCATE(OFF_SPH(NUMSPH))
+      call my_alloc(TAG_SPH, NSPHR, "TAG_SPH")
+      call my_alloc(OFF_SPH, NUMSPH, "OFF_SPH")
       OFF_SPH(1:NUMSPH) = ZERO
       TAG_SPH(1:NSPHR) = ZERO
 
@@ -451,7 +456,7 @@ C------
             DPS_OLD=WA(NP2SORT)
             CALL SPH_NODSEG(XI,YI,ZI,XX,TFLAG,NP2SORT,LONFSPH,MWA,WA,WA(KVNORM),1)
             DPS=WA(NP2SORT)
-            IF (DPS _OLD*DPS<ZERO) THEN
+            IF (DPS_OLD*DPS<ZERO) THEN
 C       Pure outlet/Silent Boundaries we swap the counting direction
               IF (ISPHIO(1,I)/=4) DPS_OLD = -DPS_OLD
 C       the particle crossed the surface in the + direction
@@ -813,7 +818,8 @@ C-------------------------------------------
 !$OMP ATOMIC
        WFEXT=WFEXT+WFEXTT
 C-------------------------------------------
-        DEALLOCATE(OFF_SPH,TAG_SPH)
+        call my_dealloc(OFF_SPH)
+        call my_dealloc(TAG_SPH)
 
       RETURN
       END

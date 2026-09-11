@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_visc_lprony        ../starter/source/materials/visc/hm_read_visc_lprony.F
 !||--- called by ------------------------------------------------------
@@ -44,6 +45,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD 
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -74,9 +76,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,NUPARAM,NIPARAM,NUVAR,NPRONY,IMOD,IVISC_FLAG,FORM
-      INTEGER :: FctID_G,FctID_K,ITAB,ISHAPE,
-     .           FctID_Gs,FctID_Ks,FctID_Gl,FctID_Kl
+      INTEGER I,NUPARAM,NIPARAM,NUVAR,NPRONY,IVISC_FLAG,FORM
       my_real :: GAMA(100),TAU(100)
 C      
       LOGICAL :: IS_AVAILABLE,IS_ENCRYPTED
@@ -118,8 +118,8 @@ c-------------------------------------------------
       NUVAR   = (1 + NPRONY)*6
       NIPARAM = 3
       NUPARAM = 2*NPRONY
-      ALLOCATE (VISC%UPARAM(NUPARAM))
-      ALLOCATE (VISC%IPARAM(NIPARAM))
+      call my_alloc(VISC%UPARAM, NUPARAM, "VISC%UPARAM")
+      call my_alloc(VISC%IPARAM, NIPARAM, "VISC%IPARAM")
       VISC%NUVAR     = NUVAR
       VISC%NUPARAM   = NUPARAM
       VISC%NIPARAM   = NIPARAM
@@ -154,7 +154,7 @@ C-----------
  1100 FORMAT(
      & 5X,'ORDER OF PRONY SERIES . . . . . . . . . . . . . . . . . . . . . . . . =',I10/)    
  1200 FORMAT(
-     & 5X,'SHEAR RELAXATION RATIO   . . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
+     & 5X,'SHEAR RELAXATION RATIO   . . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13/
      & 5X,'RELAXATION TIME . . . . .  . . . . . . . . . . . . . . . . . . . . . .=',1PG20.13) 
  1300 FORMAT(/
      & 5X,'VISCOUS STRESS FORMULATION . . . . . . . . . . . . . . . . . . . . . . =',I8 /

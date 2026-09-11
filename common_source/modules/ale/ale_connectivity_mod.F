@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ale_connectivity_mod             ../common_source/modules/ale/ale_connectivity_mod.F
 !||--- called by ------------------------------------------------------
@@ -106,7 +107,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    eigp                             ../engine/stub/eigp.F
 !||    eikonal_compute_adjacent         ../starter/source/initial_conditions/detonation/eikonal_compute_adjacent.F90
 !||    eikonal_fast_marching_method     ../starter/source/initial_conditions/detonation/eikonal_fast_marching_method.F90
-!||    eikonal_init_start_list_2d       ../starter/source/initial_conditions/detonation/eikonal_init_start_list_2d.F90
+!||    eikonal_init_start_list          ../starter/source/initial_conditions/detonation/eikonal_init_start_list.F90
 !||    eikonal_solver                   ../starter/source/initial_conditions/detonation/eikonal_solver.F90
 !||    eporin3                          ../starter/source/ale/ale3d/eporin3.F
 !||    findele                          ../starter/source/boundary_conditions/ebcs/findele.F
@@ -136,6 +137,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    iniebcs                          ../starter/source/boundary_conditions/ebcs/iniebcs.F
 !||    inigrav_load                     ../starter/source/initial_conditions/inigrav/inigrav_load.F
 !||    inigrav_m51                      ../starter/source/initial_conditions/inigrav/inigrav_m51.F
+!||    inigrav_m51_any_eos              ../starter/source/initial_conditions/inigrav/inigrav_m51_any_eos.F90
 !||    inint3                           ../starter/source/interfaces/inter3d1/inint3.F
 !||    inintr                           ../starter/source/interfaces/interf1/inintr.F
 !||    init_ale                         ../engine/source/ale/init_ale.F90
@@ -171,6 +173,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    nrf51ini                         ../starter/source/materials/mat/mat051/nrf51ini.F
 !||    ns_fvm_diffusion                 ../engine/source/multifluid/ns_fvm_diffusion.F
 !||    output_schlieren                 ../engine/source/output/anim/generate/output_schlieren.F
+!||    q1np_forc3                       ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2                          ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    q4init2                          ../starter/source/elements/solid_2d/quad4/q4init2.F
 !||    qforc2                           ../engine/source/elements/solid_2d/quad/qforc2.F

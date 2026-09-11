@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    suser43                   ../engine/source/elements/solid/sconnect/suser43.F
 !||--- called by ------------------------------------------------------
@@ -33,7 +34,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sdef43                    ../engine/source/elements/solid/sconnect/sdef43.F
 !||    sfint43                   ../engine/source/elements/solid/sconnect/sfint43.F
 !||    sigeps116                 ../engine/source/materials/mat/mat116/sigeps116.F
-!||    sigeps117                 ../engine/source/materials/mat/mat117/sigeps117.F
+!||    sigeps117                 ../engine/source/materials/mat/mat117/sigeps117.F90
 !||    sigeps120_connect_main    ../engine/source/materials/mat/mat120/sigeps120_connect_main.F
 !||    sigeps169_connect         ../engine/source/materials/mat/mat169/sigeps169_connect.F90
 !||    sigeps59                  ../engine/source/materials/mat/mat059/sigeps59.F
@@ -46,6 +47,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod              ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    mat_elem_mod              ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    mvsiz_mod                 ../engine/share/spe_inc/mvsiz_mod.F90
+!||    sigeps117_mod             ../engine/source/materials/mat/mat117/sigeps117.F90
 !||    sigeps169_connect_mod     ../engine/source/materials/mat/mat169/sigeps169_connect.F90
 !||    table_mod                 ../engine/share/modules/table_mod.F
 !||    timer_mod                 ../engine/source/system/timer_mod.F90
@@ -73,7 +75,8 @@ C   M o d u l e s
 C-----------------------------------------------
       USE TIMER_MOD
       USE TABLE_MOD
-      USE MAT_ELEM_MOD            
+      USE MAT_ELEM_MOD  
+      USE SIGEPS117_MOD          
       USE SIGEPS169_CONNECT_MOD
       USE ELBUFDEF_MOD
       use MVSIZ_MOD,only : MVSIZ
@@ -184,7 +187,7 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
-      INTEGER I,J,IR,IPG,IEL,ISRATE,
+      INTEGER I,IR,IPG,IEL,ISRATE,
      .  NPAR,NPARF,NVARF,NFUNC,NFUNCR,NFAILS,ISMSTR,ILAW_USER,IPTR,IPTS,IPTT,
      .  IADBUF,IFAIL,NUVAR,MTN,NDAMF,ISOLID,ISOLIDF,NUMTABL,NVARTMP,LF_DAMMX
       INTEGER IFUNC(MAXFUNC),IFUNCR(MAXFUNC)
@@ -435,14 +438,13 @@ c
 c
           CASE (117)
 c
-c
             CALL SIGEPS117(
-     1        NEL      ,NPAR     ,NUVAR    ,JSMS     ,TIME     ,TIMESTEP ,
-     2        UPARAM   ,UVAR     ,AREA     ,GBUF%OFF ,LBUF%OFF ,   
+     1        NEL      ,MAT_PARAM(IMAT),NUVAR,UVAR   ,JSMS     ,TIME     ,
+     2        AREA     ,GBUF%OFF ,LBUF%OFF ,IPG      ,ISOLIDF  ,NGL      ,
      3        EPSZZ    ,EPSYZ    ,EPSZX    ,DEPSZZ   ,DEPSYZ   ,DEPSZX   ,
      4        SIGNZZ   ,SIGNYZ   ,SIGNZX   ,STIFM    ,DMELS    ,LBUF%DMG ,
-     5        IPG      ,ISOLIDF  ,NGL      ,NFUNC    ,IFUNC    ,NPF    ,TF)
-
+     5        IDTMINS  ,DTFACS   ,DTMINS   ,NVARTMP  ,VARTMP   )
+c
           CASE (120) ! TAPO model
             CALL SIGEPS120_CONNECT_MAIN(
      1         NEL      ,NGL      ,TIME     ,TIMESTEP ,UPARAM   ,GBUF%OFF     ,  

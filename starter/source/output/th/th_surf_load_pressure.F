@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !> \brief OPTION /TH/SURF output for P and A 
 !! \details  Subroutine to define for each segment 
@@ -104,8 +105,8 @@ C     ! Initialisations and allocation
            NSEGPLOAD = NSEGPL
 
            IF(NSEGPL > 0) THEN
-              CALL MY_ALLOC(TH_SURF%PLOAD_KSEGS,NSEGPL+1)
-              CALL MY_ALLOC(TH_SURF%PLOAD_SEGS,TH_SURF%NSURF*NSEGPL)
+              CALL MY_ALLOC(TH_SURF%PLOAD_KSEGS,NSEGPL+1,"TH_SURF%PLOAD_KSEGS")
+              CALL MY_ALLOC(TH_SURF%PLOAD_SEGS,TH_SURF%NSURF*NSEGPL,"TH_SURF%PLOAD_SEGS")
               TH_SURF%PLOAD_KSEGS = 0
               TH_SURF%PLOAD_SEGS = 0         
            ENDIF
@@ -115,14 +116,14 @@ C
               NSEGPL = NSEGPL + ILOADP(1,NL)/4 
            ENDDO
            IF(NSEGPL > 0) THEN 
-              CALL MY_ALLOC(TH_SURF%LOADP_KSEGS,NSEGPL+1)
-              CALL MY_ALLOC(TH_SURF%LOADP_SEGS,TH_SURF%NSURF*NSEGPL)
+              CALL MY_ALLOC(TH_SURF%LOADP_KSEGS,NSEGPL+1,"TH_SURF%LOADP_KSEGS")
+              CALL MY_ALLOC(TH_SURF%LOADP_SEGS,TH_SURF%NSURF*NSEGPL,"TH_SURF%LOADP_SEGS")
               TH_SURF%LOADP_KSEGS = 0
               TH_SURF%LOADP_SEGS = 0
            ENDIF
            NSEGLOADP = NSEGPL
 C
-           CALL MY_ALLOC(TAG,NUMNOD)
+           CALL MY_ALLOC(TAG,NUMNOD,"TAG")
            TAG(1:NUMNOD) = 0
 
 C     ! list of th surfaces to which each segment of PLOAD is included
@@ -138,7 +139,7 @@ C     ! list of th surfaces to which each segment of PLOAD is included
                    TAG(N1) = 1
                    TAG(N2) = 1
                    TAG(N3) = 1
-                   TAG(N4) = 1
+                   IF(N4 > 0) TAG(N4) = 1
                    NSEGPL = NSEGPL + 1
                    NS = 0
                    ADSEG = TH_SURF%PLOAD_KSEGS(NSEGPL)     
@@ -162,7 +163,7 @@ C     ! list of th surfaces to which each segment of PLOAD is included
                    TAG(N1) = 0
                    TAG(N2) = 0
                    TAG(N3) = 0
-                   TAG(N4) = 0
+                   IF(N4 > 0) TAG(N4) = 0
                 ENDIF
              ENDDO
 C
@@ -182,7 +183,7 @@ C     ! list of th surfaces to which each segment of LOADP (PDFLUID, PBLAST, LOA
                    TAG(N1) = 1
                    TAG(N2) = 1
                    TAG(N3) = 1
-                   TAG(N4) = 1 
+                   IF(N4 > 0) TAG(N4) = 1 
                    NSEGPL = NSEGPL + 1
                    NS = 0
                    ADSEG = TH_SURF%LOADP_KSEGS(NSEGPL)  
@@ -206,14 +207,14 @@ C     ! list of th surfaces to which each segment of LOADP (PDFLUID, PBLAST, LOA
                    TAG(N1) = 0
                    TAG(N2) = 0
                    TAG(N3) = 0
-                   TAG(N4) = 0
+                   IF(N4 > 0) TAG(N4) = 0
                 ENDDO        
              ENDDO 
 C
              IF(TH_SURF%LOADP_KSEGS(NSEGPL+1) > 0) TH_SURF%LOADP_FLAG = 1
            ENDIF
 C
-           IF(ALLOCATED(TAG)) DEALLOCATE(TAG)
+           IF(ALLOCATED(TAG)) CALL MY_DEALLOC(TAG)
 
 C
 C     ! Reallocate table to the right size
@@ -224,19 +225,19 @@ C
               TH_SURF%S_PLOAD_KSEGS= NSEGPLOAD + 1
               TH_SURF%S_PLOAD_SEGS= TH_SURF%PLOAD_KSEGS(NSEGPLOAD + 1)
 
-              CALL MY_ALLOC (OLD_TAB,SIZE_NEW)
+              CALL MY_ALLOC(OLD_TAB,SIZE_NEW,"OLD_TAB")
               DO I=1,SIZE_NEW
                  OLD_TAB(I)=TH_SURF%PLOAD_SEGS(I)
               ENDDO      
 
 C            !reallocate with new size and copy saved values 
-              IF(ALLOCATED(TH_SURF%PLOAD_SEGS)) DEALLOCATE(TH_SURF%PLOAD_SEGS)    
+              IF(ALLOCATED(TH_SURF%PLOAD_SEGS)) CALL MY_DEALLOC(TH_SURF%PLOAD_SEGS)
       
-              CALL MY_ALLOC(TH_SURF%PLOAD_SEGS,TH_SURF%S_PLOAD_SEGS)
+              CALL MY_ALLOC(TH_SURF%PLOAD_SEGS,TH_SURF%S_PLOAD_SEGS,"TH_SURF%PLOAD_SEGS")
               DO I=1,SIZE_NEW
                  TH_SURF%PLOAD_SEGS(I) = OLD_TAB(I)
               ENDDO   
-              IF(ALLOCATED(OLD_TAB)) DEALLOCATE(OLD_TAB)
+              IF(ALLOCATED(OLD_TAB)) CALL MY_DEALLOC(OLD_TAB)
 C
            ENDIF
 
@@ -246,18 +247,18 @@ C
              TH_SURF%S_LOADP_KSEGS= NSEGLOADP + 1
              TH_SURF%S_LOADP_SEGS= TH_SURF%LOADP_KSEGS(NSEGLOADP + 1)
 
-             CALL MY_ALLOC (OLD_TAB,SIZE_NEW)
+             CALL MY_ALLOC(OLD_TAB,SIZE_NEW,"OLD_TAB")
              DO I=1,SIZE_NEW
                 OLD_TAB(I)=TH_SURF%LOADP_SEGS(I)
              ENDDO      
-             IF(ALLOCATED(OLD_TAB)) DEALLOCATE(TH_SURF%LOADP_SEGS)
+             IF(ALLOCATED(OLD_TAB)) CALL MY_DEALLOC(TH_SURF%LOADP_SEGS)
 
 C            !reallocate with new size and copy saved values 
-             CALL MY_ALLOC(TH_SURF%LOADP_SEGS,TH_SURF%LOADP_KSEGS( NSEGLOADP + 1))
+             CALL MY_ALLOC(TH_SURF%LOADP_SEGS,TH_SURF%LOADP_KSEGS( NSEGLOADP + 1),"TH_SURF%LOADP_SEGS")
              DO I=1,SIZE_NEW
                 TH_SURF%LOADP_SEGS(I) = OLD_TAB(I)
              ENDDO   
-             IF(ALLOCATED(OLD_TAB)) DEALLOCATE(OLD_TAB)
+             IF(ALLOCATED(OLD_TAB)) CALL MY_DEALLOC(OLD_TAB)
 
            ENDIF
 

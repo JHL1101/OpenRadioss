@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,29 +15,31 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !===================================================================================================
 
 !||====================================================================
-!||    rwall_mod         ../common_source/modules/constraints/rwall_mod.F90
+!||    rwall_mod                 ../common_source/modules/constraints/rwall_mod.F90
 !||--- called by ------------------------------------------------------
-!||    radioss2          ../engine/source/engine/radioss2.F
-!||    rdcomi            ../engine/source/output/restart/rdcomm.F
-!||    rdresa            ../engine/source/output/restart/rdresa.F
-!||    rdresb            ../engine/source/output/restart/rdresb.F
-!||    read_rrwallpen    ../engine/source/output/restart/restart_rwallpen.F90
-!||    resol             ../engine/source/engine/resol.F
-!||    resol_head        ../engine/source/engine/resol_head.F
-!||    restalloc         ../engine/source/output/restart/arralloc.F
-!||    rgwal0_pen        ../engine/source/constraints/general/rwall/rgwall_pen.F90
-!||    write_rrwallpen   ../engine/source/output/restart/restart_rwallpen.F90
-!||    wrrestp           ../engine/source/output/restart/wrrestp.F
+!||    detach_node_from_rwalls   ../engine/source/engine/node_spliting/detach_node.F90
+!||    radioss2                  ../engine/source/engine/radioss2.F
+!||    rdcomi                    ../engine/source/output/restart/rdcomm.F
+!||    rdresa                    ../engine/source/output/restart/rdresa.F
+!||    rdresb                    ../engine/source/output/restart/rdresb.F
+!||    read_rrwallpen            ../engine/source/output/restart/restart_rwallpen.F90
+!||    resol                     ../engine/source/engine/resol.F
+!||    resol_head                ../engine/source/engine/resol_head.F
+!||    restalloc                 ../engine/source/output/restart/arralloc.F
+!||    rgwal0_pen                ../engine/source/constraints/general/rwall/rgwall_pen.F90
+!||    write_rrwallpen           ../engine/source/output/restart/restart_rwallpen.F90
+!||    wrrestp                   ../engine/source/output/restart/wrrestp.F
 !||--- uses       -----------------------------------------------------
-!||    precision_mod     ../common_source/modules/precision_mod.F90
+!||    precision_mod             ../common_source/modules/precision_mod.F90
 !||====================================================================
       module rwall_mod
         use precision_mod, only: WP
@@ -61,10 +63,10 @@
           integer :: nrwall                                 !< Number of RWALL
           integer :: nrwlag                                 !< Number of RWALL with lagrange multipliers
           integer :: nnprw                                  !< 2nd dimension of nprw
-          integer :: nrwlp                                  !< 1er dimension of rwbuf
+          integer :: nrwlp                                  !< first dimension of rwbuf
           integer :: sz_lprw                                !< size of lprw
           integer :: sz_rwsav                               !< size of rwsav
-          integer :: nrwall_pen                             !< Number of RWALL w/ penalty
+          integer :: nrwall_pen                             !< Number of RWALL with penalty
 !                    
           integer,dimension(:,:),allocatable   ::  nprw        !< nprw(nrwall,nprw)  IRWALL interger array
           integer,dimension(:),  allocatable   ::  lprw        !< nprw secondary node listes

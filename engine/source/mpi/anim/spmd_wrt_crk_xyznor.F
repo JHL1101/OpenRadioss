@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_wrt_crk_xyznor   ../engine/source/mpi/anim/spmd_wrt_crk_xyznor.F
 !||--- called by ------------------------------------------------------
 !||    xyznor_crk            ../engine/source/output/anim/generate/xyznor_crk.F
 !||--- calls      -----------------------------------------------------
+!||    spmd_get_count_int    ../engine/source/mpi/generic/spmd_get_count.F90
 !||    write_s_c             ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
 !||    crackxfem_mod         ../engine/share/modules/crackxfem_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
        SUBROUTINE SPMD_WRT_CRK_XYZNOR(ICRK,XNORM,NUM)
 C-----------------------------------------------
@@ -36,7 +38,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -56,7 +58,7 @@ C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER STATUS(MPI_STATUS_SIZE),IERROR,MSGOFF,EMPL
+      INTEGER STATUS(MPI_STATUS_SIZE),MSGOFF,EMPL
       INTEGER SIZ,MSGTYP,I,K,NREC,MSGOFF2,SIZ0
 C
       INTEGER,DIMENSION(:,:),ALLOCATABLE ::  RNGLOB,IBUF
@@ -98,8 +100,7 @@ C   In the floating buffer because there are only 2 24 bits available ~ 16 milli
 C   maximum number of nodes
 
          MSGTYP = MSGOFF2
-         CALL MPI_SEND(IBUF,4*SIZ,MPI_INTEGER,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL SPMD_SEND(IBUF(1:4,1:SIZ),4*SIZ,IT_SPMD(1),MSGTYP)
 
        ELSE
 
@@ -127,14 +128,13 @@ c          RNGLOB(3,NG) = XN3
 
             MSGTYP = MSGOFF2
 
-            CALL MPI_PROBE(IT_SPMD(I),MSGTYP,
-     .                    SPMD_COMM_WORLD,STATUS,ierror)
-              CALL MPI_GET_COUNT(STATUS,MPI_INTEGER,SIZ,ierror)
-
-            CALL MPI_RECV(IBUF,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL SPMD_PROBE(IT_SPMD(I),MSGTYP,STATUS)
+             CALL SPMD_GET_COUNT_INT(STATUS,SIZ)
 
             NREC = SIZ / 4
+
+            CALL SPMD_RECV(IBUF(1:4,1:NREC),SIZ,IT_SPMD(I),MSGTYP,
+     .                     STATUS)
 
 
             DO K = 1, NREC

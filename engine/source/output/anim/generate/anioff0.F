@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    anioff0           ../engine/source/output/anim/generate/anioff0.F
 !||--- called by ------------------------------------------------------
@@ -30,6 +31,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod      ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE ANIOFF0(ELBUF_TAB ,IPARG   ,IOFF      ,EL2FA   ,
      .                   NBF       ,NBPART  ,IADG      ,SIOFF   ,SPH2SOL)
@@ -41,6 +43,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -67,8 +70,8 @@ C     REAL
       INTEGER, DIMENSION(:),ALLOCATABLE :: IOFF_LOC
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     
 C=======================================================================
-      CALL MY_ALLOC(IOFFBUF,NBF)
-      CALL MY_ALLOC(IOFF_LOC,SIOFF)
+      call my_alloc(IOFFBUF, NBF, "IOFFBUF")
+      call my_alloc(IOFF_LOC, SIOFF, "IOFF_LOC")
       NN1 = 1
       NN2 = NN1 + (NUMSPH+MAXPJET)
 C-----------------------------------------------
@@ -133,7 +136,7 @@ C-----------------------------------------------
 
       ENDIF
 C-----------
-      DEALLOCATE(IOFFBUF)
-      DEALLOCATE(IOFF_LOC)
+      call my_dealloc(IOFFBUF)
+      call my_dealloc(IOFF_LOC)
       RETURN
       END

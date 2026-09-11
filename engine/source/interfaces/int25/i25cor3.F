@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25cor3_1   ../engine/source/interfaces/int25/i25cor3.F
 !||--- called by ------------------------------------------------------
@@ -38,7 +39,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      8               NNX     ,NNY    ,NNZ    ,
      9               GAP_M   ,GAPM   ,GAPN_M ,GAPNM ,SUBTRIA     ,
      A               MVOISIN ,MVOISN ,GAP_S_L,GAP_M_L,GAPMXL     ,
-     B               LBOUND  ,IBOUND )
+     B               LBOUND  ,IBOUND ,ETYP  ,MSEGTYP,NRTM       )
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -54,7 +55,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER JLT, NSN, NIN, IGAP,
+      INTEGER JLT, NSN, NIN, IGAP,ISH ,
      .        IRECT(4,*), NSV(*), CAND_E(*), CAND_N(*), IRTLM(4,NSN)
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ), 
      .        NSVG(MVSIZ), ADMSR(4,*), SUBTRIA(MVSIZ),
@@ -70,6 +71,9 @@ C     REAL
      .   XX(MVSIZ,5), YY(MVSIZ,5), ZZ(MVSIZ,5),
      .   NNX(MVSIZ,5), NNY(MVSIZ,5), NNZ(MVSIZ,5)
       REAL*4 NOD_NORMAL(3,4,*)
+      INTEGER , INTENT(INOUT) ::ETYP(MVSIZ)
+      INTEGER , INTENT(IN) ::MSEGTYP(NRTM)
+      INTEGER , INTENT(IN) ::NRTM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -127,6 +131,7 @@ C
         GAPM(I)     =GAP_M(L)
         GAPNM(1:4,I)=GAPN_M(1:4,L)
 C
+        ETYP(I) = MSEGTYP(L)
       END DO
 C
       IF(IGAP/=3)THEN
@@ -275,7 +280,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I ,J , K, L, NN, IG, IX,  NI, NOR, II(4)
+      INTEGER I ,J , K, L, NN, IG, IX,  NI, NOR, II(4),ISH
       my_real
      .        XN
 C-----------------------------------------------
@@ -469,7 +474,7 @@ C
      J               GAP_M   ,GAPM  ,GAPN_M  ,GAPNM  ,
      L               MVOISIN ,NRTM  ,MSEGTYP ,ISHEL  ,
      P               MVOISA  ,MVOISB,GAP_S_L,GAP_M_L,GAPMXL     ,
-     Q               LBOUND  ,IBOUNDA,IBOUNDB)
+     Q               LBOUND  ,IBOUNDA,IBOUNDB,ETYP)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -508,6 +513,7 @@ C     REAL
      .   NAX(MVSIZ,5), NAY(MVSIZ,5), NAZ(MVSIZ,5),
      .   NBX(MVSIZ,5), NBY(MVSIZ,5), NBZ(MVSIZ,5)
       REAL*4 NOD_NORMAL(3,4,*)
+      INTEGER  , INTENT(INOUT)    :: ETYP(MVSIZ)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -589,6 +595,8 @@ C
           IF(ISH > NRTM)ISH=ISH-NRTM
           ISHEL(I)=ISH
         END IF
+C
+        ETYP(I) = MSEGTYP(L)   
 C
       END DO
 C
@@ -789,7 +797,8 @@ C
      K               Y3        ,Z3    ,X4      ,Y4     ,Z4          ,
      L               INTTH     ,TEMP  ,TEMPI   ,IELES  ,IELESI      ,
      M               IELEM     ,IELEMI,ISTIF_MSDT,DTSTIF,STIFMSDT_S ,
-     N               STIFMSDT_M,NRTM  ,PARAMETERS) 
+     N               STIFMSDT_M,NRTM  ,PARAMETERS,NCYCLE,ETYP      ,
+     M               MSEGTYP    ) 
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -821,6 +830,7 @@ C-----------------------------------------------
      .        IREP_FRICM(*),IREP_FRICMI(MVSIZ),IELESI(MVSIZ),IELEMI(MVSIZ)
       INTEGER , INTENT(IN) :: ISTIF_MSDT
       INTEGER , INTENT(IN) :: NRTM
+      INTEGER , INTENT(IN) :: NCYCLE
 C     REAL
       my_real
      .   X(3,*), STF(*), STFN(*), MS(*), V(3,*), 
@@ -848,6 +858,8 @@ C     REAL
       my_real , INTENT(IN) :: DTSTIF
       my_real , INTENT(IN) ::  STIFMSDT_S(NSN) ,STIFMSDT_M(NRTM)
       TYPE (PARAMETERS_) ,INTENT(INOUT):: PARAMETERS
+      INTEGER , INTENT(INOUT) ::ETYP(MVSIZ)
+      INTEGER , INTENT(IN) ::MSEGTYP(NRTM)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -946,6 +958,7 @@ C
              IF(LBOUND(ADMSR(J,L))/=0)IBOUND(J,I)=ADMSR(J,L)
            END DO
 C
+           ETYP(I)=MSEGTYP(L)
       END DO
 C
       IF(IGAP/=3)THEN
@@ -1074,7 +1087,7 @@ c          STIF(I)=MAX(KMIN,MIN(STIF(I),KMAX))
 C------------------------------------------
 C   Stiffness based on mass and time step
 C------------------------------------------
-      IF(ISTIF_MSDT > 0) THEN
+      IF(ISTIF_MSDT > 0.AND.NCYCLE >= 1) THEN
          IF(DTSTIF > ZERO) THEN
             DTS = DTSTIF
          ELSE

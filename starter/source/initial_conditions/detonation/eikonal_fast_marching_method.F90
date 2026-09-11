@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    eikonal_fast_marching_method_mod   ../starter/source/initial_conditions/detonation/eikonal_fast_marching_method.F90
 !||--- called by ------------------------------------------------------
 !||    eikonal_solver                     ../starter/source/initial_conditions/detonation/eikonal_solver.F90
 !||====================================================================
       module eikonal_fast_marching_method_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -36,24 +37,26 @@
 !! \details Connectivity is provided with nod2el and knod2el arrays
 !! \details updown(:) array is used to define narrow band 1:frozen, 0:narrow_band, -1:far
 !||====================================================================
-!||    eikonal_fast_marching_method     ../starter/source/initial_conditions/detonation/eikonal_fast_marching_method.F90
+!||    eikonal_fast_marching_method   ../starter/source/initial_conditions/detonation/eikonal_fast_marching_method.F90
 !||--- called by ------------------------------------------------------
-!||    eikonal_solver                   ../starter/source/initial_conditions/detonation/eikonal_solver.F90
+!||    eikonal_solver                 ../starter/source/initial_conditions/detonation/eikonal_solver.F90
 !||--- calls      -----------------------------------------------------
-!||    eikonal_compute_adjacent         ../starter/source/initial_conditions/detonation/eikonal_compute_adjacent.F90
-!||    eikonal_init_mixture_vel         ../starter/source/initial_conditions/detonation/eikonal_ini_mixture_vel.F90
-!||    eikonal_init_sorting             ../starter/source/initial_conditions/detonation/eikonal_init_sorting.F90
-!||    eikonal_init_start_list_2d       ../starter/source/initial_conditions/detonation/eikonal_init_start_list_2d.F90
-!||    eikonal_remove_first             ../starter/source/initial_conditions/detonation/eikonal_remove_first.F90
-!||    eikonal_sort_narrow_band         ../starter/source/initial_conditions/detonation/eikonal_sort_narrow_band.F90
+!||    eikonal_compute_adjacent       ../starter/source/initial_conditions/detonation/eikonal_compute_adjacent.F90
+!||    eikonal_init_mixture_vel       ../starter/source/initial_conditions/detonation/eikonal_ini_mixture_vel.F90
+!||    eikonal_init_sorting           ../starter/source/initial_conditions/detonation/eikonal_init_sorting.F90
+!||    eikonal_init_start_list        ../starter/source/initial_conditions/detonation/eikonal_init_start_list.F90
+!||    eikonal_lmax                   ../starter/source/initial_conditions/detonation/eikonal_Lmax.F90
+!||    eikonal_remove_first           ../starter/source/initial_conditions/detonation/eikonal_remove_first.F90
+!||    eikonal_sort_narrow_band       ../starter/source/initial_conditions/detonation/eikonal_sort_narrow_band.F90
 !||--- uses       -----------------------------------------------------
-!||    detonators_mod                   ../starter/share/modules1/detonators_mod.F
-!||    eikonal_compute_adjacent_mod     ../starter/source/initial_conditions/detonation/eikonal_compute_adjacent.F90
-!||    eikonal_init_mixture_vel_mod     ../starter/source/initial_conditions/detonation/eikonal_ini_mixture_vel.F90
-!||    eikonal_init_sorting_mod         ../starter/source/initial_conditions/detonation/eikonal_init_sorting.F90
-!||    eikonal_init_start_list_2d_mod   ../starter/source/initial_conditions/detonation/eikonal_init_start_list_2d.F90
-!||    eikonal_remove_first_mod         ../starter/source/initial_conditions/detonation/eikonal_remove_first.F90
-!||    eikonal_sort_narrow_band_mod     ../starter/source/initial_conditions/detonation/eikonal_sort_narrow_band.F90
+!||    detonators_mod                 ../starter/share/modules1/detonators_mod.F
+!||    eikonal_compute_adjacent_mod   ../starter/source/initial_conditions/detonation/eikonal_compute_adjacent.F90
+!||    eikonal_init_mixture_vel_mod   ../starter/source/initial_conditions/detonation/eikonal_ini_mixture_vel.F90
+!||    eikonal_init_sorting_mod       ../starter/source/initial_conditions/detonation/eikonal_init_sorting.F90
+!||    eikonal_init_start_list_mod    ../starter/source/initial_conditions/detonation/eikonal_init_start_list.F90
+!||    eikonal_lmax_mod               ../starter/source/initial_conditions/detonation/eikonal_Lmax.F90
+!||    eikonal_remove_first_mod       ../starter/source/initial_conditions/detonation/eikonal_remove_first.F90
+!||    eikonal_sort_narrow_band_mod   ../starter/source/initial_conditions/detonation/eikonal_sort_narrow_band.F90
 !||====================================================================
         subroutine eikonal_fast_marching_method(&
           ix,nix,numel,x,numnod, &
@@ -68,11 +71,14 @@
           use eikonal_sort_narrow_band_mod , only : eikonal_sort_narrow_band
           use eikonal_remove_first_mod , only : eikonal_remove_first
           use eikonal_compute_adjacent_mod , only : eikonal_compute_adjacent
-          use eikonal_init_start_list_2d_mod , only : eikonal_init_start_list_2d
+          use eikonal_init_start_list_mod , only : eikonal_init_start_list
           use eikonal_init_mixture_vel_mod , only : eikonal_init_mixture_vel
           use detonators_mod , only : detonators_struct_
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
           use eikonal_init_sorting_mod , only : eikonal_init_sorting
+          use eikonal_Lmax_mod , only : eikonal_Lmax
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -120,7 +126,9 @@
           integer :: n_queue
           integer, allocatable, dimension(:) :: idx_ng  !< group identifier for a given solid elem
           integer, allocatable, dimension(:) :: idx_i   !< local id in group
-          integer, allocatable, dimension(:) :: elem_list, uelem_list !< user identifier
+          integer, allocatable, dimension(:) :: elem_list !< local to global ids
+          integer, allocatable, dimension(:) ::  uelem_list !< user ids
+          integer, allocatable, dimension(:) :: elem_list_bij !< global to local ids
           real(kind=WP), allocatable, dimension(:) :: vel
           real(kind=WP) :: vel_adj(6)   ! tria 3<6, quad:4<6, hexa 6
           real(kind=WP), allocatable, dimension(:) :: tdet   !< detonation time
@@ -133,7 +141,6 @@
           integer :: nstart !< number of deotnation points (centroids)  ! can be adapt later from mesh nodes to elem centroid (spherical wave from node to centroid)
           integer,allocatable,dimension(:) :: start_elem_list
           real(kind=WP),allocatable,dimension(:) :: start_elem_tdet
-          integer, allocatable, dimension(:) :: elem_list_bij
           integer :: num_new_activated, list_new_activated(6)
           real(kind=WP) :: dx,dy,dz,dl,s, tmp
           real(kind=WP) :: Dcj !< Detonation velocity (law5 and 97)
@@ -141,11 +148,15 @@
           integer :: mid
           integer :: ishadow !< shadowing option for detonators (Eikonal equation solver)
           real(kind=WP) :: fac
+          integer :: isym(2) !< flag for symmetry condition (0: no symmetry, 1 : iframe defined)
+          integer,allocatable,dimension(:,:) :: itag_boundFaces ! for a given explosive element, several faces may be related by planes of symmetry
+          real(kind=WP) :: Lmax
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
 
           mat_det = detonators%point(idet)%mat
+          isym(1:2) = 0
 
           !numbering
           neldet = 0
@@ -168,19 +179,19 @@
           end do
 
           ! size neldet
-          allocate(elem_list(neldet)) ; elem_list(:) = 0
-          allocate(uelem_list(neldet)); uelem_list(:) = 0
-          allocate(idx_ng(neldet))    ; idx_ng(:) = 0
-          allocate(idx_i(neldet))     ; idx_i(:) = 0
-          allocate(updown(neldet))    ; updown(:) = -1
-          allocate(tdet(neldet))      ; tdet(:) = ep21
-          allocate(vel(neldet))       ; vel(:) = ep20 !lowest chosen for stability
-          allocate(Xel(3,neldet))     ; Xel(:,:) = zero
-          allocate(priority_queue_id(neldet)) ; priority_queue_id(:) = 0
-          allocate(priority_queue_tt(neldet)) ; priority_queue_tt(:) = ep21
+          call my_alloc(elem_list, neldet, "elem_list") ; elem_list(:) = 0
+          call my_alloc(uelem_list, neldet, "uelem_list"); uelem_list(:) = 0
+          call my_alloc(idx_ng, neldet, "idx_ng")    ; idx_ng(:) = 0
+          call my_alloc(idx_i, neldet, "idx_i")     ; idx_i(:) = 0
+          call my_alloc(updown, neldet, "updown")    ; updown(:) = -1
+          call my_alloc(tdet, neldet, "tdet")      ; tdet(:) = ep21
+          call my_alloc(vel, neldet, "vel")       ; vel(:) = ep20 !lowest chosen for stability
+          call my_alloc(Xel, 3, neldet, "Xel")     ; Xel(:,:) = zero
+          call my_alloc(priority_queue_id, neldet, "priority_queue_id") ; priority_queue_id(:) = 0
+          call my_alloc(priority_queue_tt, neldet, "priority_queue_tt") ; priority_queue_tt(:) = ep21
 
           ! size numel
-          allocate(elem_list_bij(numel)) ; elem_list_bij = 0
+          call my_alloc(elem_list_bij, numel, "elem_list_bij") ; elem_list_bij = 0
 
           ! list of relevant centroids
           !   and group id and local id in this group : elem_list(k) -> (idx_ng(k), idx_i(k))   ! used to set burning time ELBUF_TAB(NG)MGBUF%TB(I)
@@ -261,28 +272,32 @@
             end if
           end do
 
+          call eikonal_Lmax(neldet, xel, Lmax, nvois)
+
           !parith/on requires same order of treatment whatever is the domain decomposition (renumbered occurred in ddsplit)
           ! ensuring same order of treatment
           call eikonal_init_sorting(neldet, numel, elem_list, uelem_list, idx_ng , idx_i, elem_list_bij, xel, vel)
 
-          call eikonal_init_start_list_2d(nstart, start_elem_list, start_elem_tdet, detonators, numel, numnod, &
+          call my_alloc(itag_boundFaces, neldet, nvois, "itag_boundFaces") ; itag_boundFaces(:,:) = 0
+          call eikonal_init_start_list(nstart, start_elem_list, start_elem_tdet, detonators, numel, numnod, &
             nvois, nod2el, knod2el, ale_connectivity, elem_list_bij, neldet, xel, x,&
-            nix, ix, mat_det, vel, uelem_list)
+            nix, ix, mat_det, vel, uelem_list, elem_list, isym, itag_boundFaces, Lmax)
 
           if(nstart == 0)then
             !DEALLOCATE
-            if(allocated(start_elem_list))deallocate(start_elem_list)
-            if(allocated(start_elem_tdet))deallocate(start_elem_tdet)
-            if(allocated(uelem_list))deallocate(uelem_list)
-            if(allocated(idx_ng))deallocate(idx_ng)
-            if(allocated(idx_i))deallocate(idx_i)
-            if(allocated(updown))deallocate(updown)
-            if(allocated(tdet))deallocate(tdet)
-            if(allocated(vel))deallocate(vel)
-            if(allocated(Xel))deallocate(Xel)
-            if(allocated(priority_queue_id))deallocate(priority_queue_id)
-            if(allocated(priority_queue_tt))deallocate(priority_queue_tt)
-            if(allocated(elem_list_bij))deallocate(elem_list_bij)
+            if(allocated(start_elem_list))call my_dealloc(start_elem_list)
+            if(allocated(start_elem_tdet))call my_dealloc(start_elem_tdet)
+            if(allocated(uelem_list))call my_dealloc(uelem_list)
+            if(allocated(elem_list))call my_dealloc(elem_list)
+            if(allocated(idx_ng))call my_dealloc(idx_ng)
+            if(allocated(idx_i))call my_dealloc(idx_i)
+            if(allocated(updown))call my_dealloc(updown)
+            if(allocated(tdet))call my_dealloc(tdet)
+            if(allocated(vel))call my_dealloc(vel)
+            if(allocated(Xel))call my_dealloc(Xel)
+            if(allocated(priority_queue_id))call my_dealloc(priority_queue_id)
+            if(allocated(priority_queue_tt))call my_dealloc(priority_queue_tt)
+            if(allocated(elem_list_bij))call my_dealloc(elem_list_bij)
             return
           end if
 
@@ -340,7 +355,7 @@
             call eikonal_compute_adjacent(ie, ALE_CONNECTIVITY,neldet, &
               tdet,tdet_adj,vel,vel_adj,xel,xel_adj,numel,elem_list_bij, &
               updown, num_new_activated, list_new_activated,  mat_det, &
-              nix,ix, nvois )
+              nix,ix,nvois,itag_boundFaces,numnod,x)
 
             !we may init only updated tdet from previous call above
             do ii=1,n_queue
@@ -370,18 +385,19 @@
           end do
 
           !DEALLOCATE
-          if(allocated(start_elem_list))deallocate(start_elem_list)
-          if(allocated(start_elem_tdet))deallocate(start_elem_tdet)
-          if(allocated(elem_list))deallocate(elem_list)
-          if(allocated(idx_ng))deallocate(idx_ng)
-          if(allocated(idx_i))deallocate(idx_i)
-          if(allocated(updown))deallocate(updown)
-          if(allocated(tdet))deallocate(tdet)
-          if(allocated(vel))deallocate(vel)
-          if(allocated(Xel))deallocate(Xel)
-          if(allocated(priority_queue_id))deallocate(priority_queue_id)
-          if(allocated(priority_queue_tt))deallocate(priority_queue_tt)
-          if(allocated(elem_list_bij))deallocate(elem_list_bij)
+          if(allocated(start_elem_list))call my_dealloc(start_elem_list)
+          if(allocated(start_elem_tdet))call my_dealloc(start_elem_tdet)
+          if(allocated(elem_list))call my_dealloc(elem_list)
+          if(allocated(idx_ng))call my_dealloc(idx_ng)
+          if(allocated(idx_i))call my_dealloc(idx_i)
+          if(allocated(updown))call my_dealloc(updown)
+          if(allocated(tdet))call my_dealloc(tdet)
+          if(allocated(vel))call my_dealloc(vel)
+          if(allocated(Xel))call my_dealloc(Xel)
+          if(allocated(priority_queue_id))call my_dealloc(priority_queue_id)
+          if(allocated(priority_queue_tt))call my_dealloc(priority_queue_tt)
+          if(allocated(elem_list_bij))call my_dealloc(elem_list_bij)
+          if(allocated(itag_boundFaces))call my_dealloc(itag_boundFaces)
 
         end subroutine eikonal_fast_marching_method
 ! ----------------------------------------------------------------------------------------------------------------------

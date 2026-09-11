@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    eikonal_godunov_operator_2d_mod   ../starter/source/initial_conditions/detonation/eikonal_godunov_operator_2d.F90
 !||--- called by ------------------------------------------------------
@@ -68,12 +69,13 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           integer :: k,l
           real(kind=WP) :: dy, dz, dist
-          real(kind=WP) :: tt_candidate
+          real(kind=WP) :: tt_candidate, tt_1d_k, tt_1d_l
           real(kind=WP) :: a, b
           real(kind=WP) :: s
           real(kind=WP) :: delta
           real(kind=WP) :: A1,A2,B1,B2,C1,C2,AA,BB,CC,DENOM
           real(kind=WP) :: fac
+          logical :: causality_ok
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -85,37 +87,49 @@
           a = min(tt_adj(1),tt_adj(3))
           b = min(tt_adj(2),tt_adj(4))
           if (a == ep21 .and. b == ep21) return
-          if (a == ep21)then
-            l=2
-            if(b==tt_adj(4))l=4
-            dy = (xel(2)-xel_adj(2,l))
-            dz = (xel(3)-xel_adj(3,l))
-            dist = sqrt(dy*dy + dz*dz)
-            s = max(Velocity, Velocity_adj(l))
-            s = s/fac
-            s = one / s
-            tt_candidate = b+s*dist
-            tt = min(tt, tt_candidate)
-          else if (b == ep21) then
-            k=1
-            if(a==tt_adj(3))k=3
+
+          ! --- Identify best upwind neighbor index in each direction ---
+          k=1
+          if(a==tt_adj(3))k=3
+          l=2
+          if(b==tt_adj(4))l=4
+
+          ! --- 1D fallback candidates (always computed when direction is available) ---
+          tt_1d_k = ep21
+          tt_1d_l = ep21
+
+          if(a < ep21)then
             dy = (xel(2)-xel_adj(2,k))
             dz = (xel(3)-xel_adj(3,k))
             dist = sqrt(dy*dy + dz*dz)
             s = max(Velocity, Velocity_adj(k))
             s = s/fac
             s = one / s
-            tt_candidate = a+s*dist
-            tt = min(tt, tt_candidate)
-          else
-            s = maxval(Velocity_adj)
-            s= max(s, Velocity)
+            tt_1d_k = a + s*dist
+          end if
+
+          if(b < ep21)then
+            dy = (xel(2)-xel_adj(2,l))
+            dz = (xel(3)-xel_adj(3,l))
+            dist = sqrt(dy*dy + dz*dz)
+            s = max(Velocity, Velocity_adj(l))
             s = s/fac
             s = one / s
-            k=1
-            if(a==tt_adj(3))k=3
-            l=2
-            if(b==tt_adj(4))l=4
+            tt_1d_l = b + s*dist
+          end if
+
+          if (a == ep21)then
+            ! only direction b available -> 1D update
+            tt = min(tt, tt_1d_l)
+          else if (b == ep21) then
+            ! only direction a available -> 1D update
+            tt = min(tt, tt_1d_k)
+          else
+            ! both directions available -> try 2D update with causality check
+            s = max(Velocity, Velocity_adj(k))
+            s = max(s, Velocity_adj(l))
+            s = s/fac
+            s = one / s
 
             A1 = (xel_adj(3,k)-xel_adj(3,l))
             A2 = (xel_adj(2,l)-xel_adj(2,k))
@@ -138,12 +152,21 @@
 
             delta = BB*BB-FOUR*AA*CC
 
+            causality_ok = .false.
             if(delta >= zero)then
               tt_candidate = (-BB + sqrt(delta)) / two / AA
-            else
-              tt_candidate = (-BB + ZERO) / TWO / AA
+              ! causality check : solution must be >= max of upwind neighbors used
+              if(tt_candidate >= max(a,b)) causality_ok = .true.
             end if
-            tt = min(tt, tt_candidate)
+
+            if(causality_ok)then
+              ! 2D update is valid
+              tt = min(tt, tt_candidate)
+            else
+              ! 2D update failed (delta<0 or causality violated) -> fallback to best 1D-path
+              tt = min(tt, tt_1d_k)
+              tt = min(tt, tt_1d_l)
+            end if
 
           end if
 

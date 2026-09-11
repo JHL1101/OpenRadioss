@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_init_component_list_mod   ../engine/source/interfaces/generic/inter_init_component_list.F90
 !||--- called by ------------------------------------------------------
 !||    inter_init_component            ../engine/source/interfaces/generic/inter_init_component.F90
 !||====================================================================
       module inter_init_component_list_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -37,8 +38,11 @@
 !||    inter_init_component_list   ../engine/source/interfaces/generic/inter_init_component_list.F90
 !||--- called by ------------------------------------------------------
 !||    inter_init_component        ../engine/source/interfaces/generic/inter_init_component.F90
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    inter_sorting_mod           ../engine/share/modules/inter_sorting_mod.F
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         subroutine inter_init_component_list( nsn,nrtm,numnod,nsv,irectm,s_node_color,m_node_color, &
           component )
@@ -49,6 +53,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -107,10 +113,10 @@
             component%s_list(i)%node_nb = sm_node_nb(i)
           end do
 
-          deallocate(sm_node_nb)
+          call my_dealloc(sm_node_nb)
 
-          allocate(seg_nb(component%m_comp_nb))
-          allocate(sm_node_nb(component%m_comp_nb))
+          call my_alloc(seg_nb, component%m_comp_nb, "seg_nb")
+          call my_alloc(sm_node_nb, component%m_comp_nb, "sm_node_nb")
           seg_nb(1:component%m_comp_nb) = 0
           sm_node_nb(1:component%m_comp_nb) = 0
           do i=1,nrtm
@@ -124,7 +130,7 @@
             component%m_list(i)%node_nb = 0
           end do
           seg_nb(1:component%m_comp_nb) = 0
-          allocate(not_yet(numnod))
+          call my_alloc(not_yet, numnod, "not_yet")
           not_yet(:) = .true.
           do i=1,nrtm
             my_color = m_node_color(i)
@@ -138,14 +144,14 @@
               component%m_list(my_color)%node(sm_node_nb(my_color)) = irectm((i-1)*4+j)
             end do
           end do
-          deallocate(not_yet)
+          call my_dealloc(not_yet)
           my_size = 0
           do i=1,component%m_comp_nb
             my_size = my_size + sm_node_nb(i)
             component%m_list(i)%node_nb = sm_node_nb(i)
           end do
-          deallocate(seg_nb)
-          deallocate(sm_node_nb)
+          call my_dealloc(seg_nb)
+          call my_dealloc(sm_node_nb)
 
         end subroutine inter_init_component_list
       end module inter_init_component_list_mod

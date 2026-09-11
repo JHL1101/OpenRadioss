@@ -1,25 +1,26 @@
-//Copyright>    OpenRadioss
-//Copyright>    Copyright (C) 1986-2026 Altair Engineering Inc.
+//Copyright>        OpenRadioss
+//Copyright>        Copyright (C) 2026 Siemens
 //Copyright>
-//Copyright>    This program is free software: you can redistribute it and/or modify
-//Copyright>    it under the terms of the GNU Affero General Public License as published by
-//Copyright>    the Free Software Foundation, either version 3 of the License, or
-//Copyright>    (at your option) any later version.
+//Copyright>        This program is free software: you can redistribute it and/or modify
+//Copyright>        it under the terms of the GNU Affero General Public License as published by
+//Copyright>        the Free Software Foundation, either version 3 of the License, or
+//Copyright>        (at your option) any later version.
 //Copyright>
-//Copyright>    This program is distributed in the hope that it will be useful,
-//Copyright>    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//Copyright>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//Copyright>    GNU Affero General Public License for more details.
+//Copyright>        This program is distributed in the hope that it will be useful,
+//Copyright>        but WITHOUT ANY WARRANTY; without even the implied warranty of
+//Copyright>        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//Copyright>        GNU Affero General Public License for more details.
 //Copyright>
-//Copyright>    You should have received a copy of the GNU Affero General Public License
-//Copyright>    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//Copyright>        You should have received a copy of the GNU Affero General Public License
+//Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //Copyright>
 //Copyright>
-//Copyright>    Commercial Alternative: Altair Radioss Software
+//Copyright>        Commercial Alternative: Simcenter Radioss Software
 //Copyright>
-//Copyright>    As an alternative to this open-source version, Altair also offers Altair Radioss
-//Copyright>    software under a commercial license.  Contact Altair to discuss further if the
-//Copyright>    commercial version may interest you: https://www.altair.com/radioss/.
+//Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+//Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+//Copyright>        commercial version may interest you: 
+//Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 //
 #include <stdio.h>
 #include <string.h>
@@ -92,7 +93,7 @@ void c_h3d_create_rbe3_(int *ITAB, int *NUMNOD, int *IRBE3, int *NRBE3L, int *LR
         if(*COMPID_RBE3S != 0 && *NRBE3 != 0)
         {
             rc = Hyper3DElement2Begin(h3d_file, *NRBE3, rbe3_poolname_id, 
-                                    H3D_ELEM_CONFIG_RIGIDLINK, *COMPID_RBE3S, 
+                                    H3D_ELEM_CONFIG_RIGIDLINK, H3D_NULL_ID, *COMPID_RBE3S,
                                     rbe3_poolname_id, node_poolname_id);
             for(i=0;i<*NRBE3;i++)  
             {
@@ -148,7 +149,7 @@ void c_h3d_create_rbe3_(int *ITAB, int *NUMNOD, int *IRBE3, int *NRBE3L, int *LR
 
 
                  rc = Hyper3DElement2Begin(h3d_file, elem_count, rbe3_poolname_id, 
-                                        H3D_ELEM_CONFIG_RIGIDLINK, RigidElem, 
+                                        H3D_ELEM_CONFIG_RIGIDLINK, H3D_NULL_ID, RigidElem, 
                                         rbe3_poolname_id, node_poolname_id);
                  if( !rc ) throw rc;
                  rc = Hyper3DElement2Write(h3d_file, elem_id, conn1, dof1 , coef1 , 1 ,conn, dof, coef, nsn);
@@ -214,7 +215,7 @@ void c_h3d_create_rbe3_impi_(int *ITAB,int *NRBE3,int *IADRBE3,int *SLAVENODS,in
         if(*COMPID_RBE3S != 0 && *NRBE3 != 0)
         {
              rc = Hyper3DElement2Begin(h3d_file, *NRBE3, rbe3_poolname_id, 
-                                    H3D_ELEM_CONFIG_RIGIDLINK, *COMPID_RBE3S, 
+                                    H3D_ELEM_CONFIG_RIGIDLINK, H3D_NULL_ID, *COMPID_RBE3S, 
                                     rbe3_poolname_id, node_poolname_id);
             for(i=0;i<*NRBE3;i++)  
             {
@@ -276,7 +277,7 @@ void c_h3d_create_rbe3_impi_(int *ITAB,int *NRBE3,int *IADRBE3,int *SLAVENODS,in
 
 
                  rc = Hyper3DElement2Begin(h3d_file, elem_count, rbe3_poolname_id, 
-                                        H3D_ELEM_CONFIG_RIGIDLINK, elem_id, 
+                                        H3D_ELEM_CONFIG_RIGIDLINK, H3D_NULL_ID, elem_id, 
                                         rbe3_poolname_id, node_poolname_id);
                  if( !rc ) throw rc;
                  rc = Hyper3DElement2Write(h3d_file, elem_id, conn1, dof1 , coef1 , 1 ,conn, dof, coef, nsn);

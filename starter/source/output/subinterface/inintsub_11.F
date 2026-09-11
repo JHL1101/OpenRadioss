@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inintsub_11            ../starter/source/output/subinterface/inintsub_11.F
 !||--- called by ------------------------------------------------------
@@ -63,13 +64,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,JGRN,ISU,ISU1,ISU2,
-     .   JSUB, KSUB, NNE, IS, ISV, CUR, ID1,
-     .   NEXT, IM, KM, JAD, IN, II, N,STAT,K1,K2,INOD,IFNRT
-      CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
+      INTEGER I,J,K,ISU,ISU1,ISU2,
+     .   JSUB, KSUB, NNE, IS, CUR, ID1,
+     .   NEXT, IM, KM, JAD, IN, II, INOD
+      CHARACTER(LEN=NCHARTITLE) :: TITR1
       INTEGER ISLIN1,ISLIN2,FOUND,FOUND_LINE
 C-----------------------------------------------
-      TYPE (GROUP_)  , DIMENSION(NGRNOD)  :: IGRNOD
       TYPE (SURF_)   , DIMENSION(NSURF)   :: IGRSURF
       TYPE (SURF_)   , DIMENSION(NSLIN)   :: IGRSLIN
 C-----------------------------------------------

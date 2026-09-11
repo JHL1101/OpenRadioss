@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_gatheritab       ../engine/source/mpi/anim/spmd_gatheritab.F
+!||    spmd_gatheritab      ../engine/source/mpi/anim/spmd_gatheritab.F
 !||--- called by ------------------------------------------------------
-!||    genani                ../engine/source/output/anim/generate/genani.F
+!||    genani               ../engine/source/output/anim/generate/genani.F
 !||--- calls      -----------------------------------------------------
-!||    write_i_c             ../common_source/tools/input_output/write_routines.c
+!||    spmd_get_count_int   ../engine/source/mpi/generic/spmd_get_count.F90
+!||    write_i_c            ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
        SUBROUTINE SPMD_GATHERITAB(V,WEIGHT,NODGLOB,NUM)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -53,16 +55,13 @@ C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER STATUS(MPI_STATUS_SIZE),IERROR,MSGOFF
-      INTEGER SIZ,MSGTYP,I,K,NG,NREC,MSGOFF2
+      INTEGER STATUS(MPI_STATUS_SIZE),MSGOFF
+      INTEGER SIZ,MSGTYP,I,K,NG,NREC
 
       INTEGER, DIMENSION(:,:) , ALLOCATABLE :: BUFSR 
       INTEGER, DIMENSION(:) , ALLOCATABLE :: XGLOB
 C-----------------------------------------------
       DATA MSGOFF/7018/
-      DATA MSGOFF2/7019/
-
-
 C-----------------------------------------------
        ALLOCATE(BUFSR(2,NUMNODM))
        ALLOCATE(XGLOB(NUM))
@@ -80,8 +79,7 @@ C-----------------------------------------------
 
 
          MSGTYP = MSGOFF 
-         CALL MPI_SEND(BUFSR,2*SIZ,MPI_INTEGER,IT_SPMD(1),MSGTYP,
-     .     SPMD_COMM_WORLD,ierror)
+         CALL spmd_send(BUFSR,2*SIZ,IT_SPMD(1),MSGTYP)
 
        ELSE
           DO I=1,NUMNOD
@@ -96,12 +94,10 @@ C-----------------------------------------------
 C   reception of the entire buffer of NODGLOB addresses
             MSGTYP = MSGOFF
 
-            CALL MPI_PROBE(IT_SPMD(I),MSGTYP,
-     .                    SPMD_COMM_WORLD,STATUS,ierror)
-              CALL MPI_GET_COUNT(STATUS,MPI_INTEGER,SIZ,ierror)
+            CALL spmd_probe(IT_SPMD(I),MSGTYP,STATUS)
+              CALL spmd_get_count_int(STATUS,SIZ)
 
-            CALL MPI_RECV(BUFSR,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+            CALL spmd_recv(BUFSR,SIZ,IT_SPMD(I),MSGTYP)
          
             NREC = SIZ/2
  

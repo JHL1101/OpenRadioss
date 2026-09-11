@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat126_mod   ../starter/source/materials/mat/mat126/hm_read_mat126.F90
 !||--- called by ------------------------------------------------------
@@ -59,6 +60,7 @@
           use elbuftag_mod
           use constant_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                 implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -83,6 +85,7 @@
           real(kind=WP) ::                                                     &
             rho0,shear,aa,bb,nn,fc,t0,cc,eps0,asrate,sfmax,efmin,pc,muc,       &
             pl,mul,k0,k1,k2,k3,d1,d2,young,nu,eps_max,h,cst,powt,csc,powc
+          real(kind=WP) :: muplock,mu_star,lambda
           logical :: is_encrypted, is_available
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                      body
@@ -140,6 +143,12 @@
           k0 = pc/muc
           !< Initial young modulus
           young = nine*k0*shear/(three*k0+shear)
+          !< Volumetric strain at which P = PL
+          muplock = mul + pl/k1
+          !< Define mu_star for a smooth transition between 
+          !  region 2 and region 3
+          mu_star = muplock + 0.05d0*muplock
+          lambda = -log(em01)*muplock/(mu_star - muplock)
           !< Initial Poisson ratio
           nu = (three*k0-two*shear)/(six*k0+two*shear)
           !< Tangent bulk modulus
@@ -154,7 +163,7 @@
           idel = min(idel,4)
           idel = max(0,idel)
           !< Check flag for post-failure behavior
-          ifailso = min(ifailso,4)
+          ifailso = min(ifailso,5)
           ifailso = max(1,ifailso)
           !< Default values
           if (efmin   == zero) efmin   = em20
@@ -181,13 +190,13 @@
           !< Number of integer material parameters
           matparam%niparam = 3
           !< Number of real material parameters
-          matparam%nuparam = 24
+          matparam%nuparam = 26
           !< Number of user variables
-          nuvar = 4
+          nuvar = 5
 !
           !< Allocation of material parameters tables
-          allocate (matparam%iparam(matparam%niparam))
-          allocate (matparam%uparam(matparam%nuparam))
+          call my_alloc(matparam%iparam, matparam%niparam, "matparam%iparam")
+          call my_alloc(matparam%uparam, matparam%nuparam, "matparam%uparam")
 !
           !< Integer material parameter
           matparam%iparam(1)  = idel
@@ -223,6 +232,8 @@
           matparam%uparam(22) = powt
           matparam%uparam(23) = csc
           matparam%uparam(24) = powc
+          matparam%uparam(25) = lambda
+          matparam%uparam(26) = muplock
 !
           !< PARMAT table
           parmat(1) = k1
@@ -327,7 +338,7 @@
             5X,"COWPER-SYMONDS COMPRESSION PARAMETER (CC). .=",1PG20.13/, &
             5X,"COWPER-SYMONDS COMPRESSION EXPONENT (POWC) .=",1PG20.13/, &
             5X,"NORMALIZED MAXIMUM STRENGTH (SFMAX)  . . . .=",1PG20.13/, &
-            5X,"MINIMUM FRACTURE STRAIN (EFMIN). . . . . . .=",1PG20.13/)            
+            5X,"MINIMUM FRACTURE STRAIN (EFMIN). . . . . . .=",1PG20.13/)
 1600      format(/                                                        &
             5X,"CRUSHING PRESSURE (PC) . . . . . . . . . . .=",1PG20.13/, &
             5X,"CRUSHING VOLUMETRIC STRAIN (MUC) . . . . . .=",1PG20.13/, &
@@ -352,7 +363,8 @@
             5X,"  IFAILSO = 2: DEVIATORIC STRESS TENSOR IS VANISHED ",/,  &
             5X,"  IFAILSO = 3: DEVIATORIC STRESS TENSOR IS VANISHED IN COMPR.",/,&
             5X,"               STRESS TENSOR IS VANISHED IN TENSION ",/,  &
-            5X,"  IFAILSO = 4: STRESS TENSOR IS VANISHED",/)
+            5X,"  IFAILSO = 4: STRESS TENSOR IS VANISHED",/,              &
+            5X,"  IFAILSO = 5: STRESS TENSOR IS VANISHED IN TENSION ONLY",/)
 !
         end subroutine hm_read_mat126
 ! ----------------------------------------------------------------------------------------------------------------------

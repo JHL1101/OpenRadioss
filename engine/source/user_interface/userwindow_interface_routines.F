@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    userwi_read        ../engine/source/user_interface/userwindow_interface_routines.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    read_i_c           ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
 !||    message_mod        ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
 !||    user_windows_mod   ../common_source/modules/user_windows_mod.F
 !||====================================================================
       SUBROUTINE USERWI_READ(USER_WINDOWS,ISPMD,NSPMD,NUMNOD)
@@ -56,6 +58,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -81,9 +84,9 @@ C-----------------------------------------------
              CALL READ_I_C(USER_WINDOWS%S_USER,1)
              CALL READ_I_C(USER_WINDOWS%N_USERNODS,1)
 
-             ALLOCATE(USER_WINDOWS%IUSER(USER_WINDOWS%S_IUSER))
-             ALLOCATE(USER_WINDOWS%USER(USER_WINDOWS%S_USER))
-             ALLOCATE(USER_WINDOWS%USERNODS(USER_WINDOWS%N_USERNODS))
+             call my_alloc(USER_WINDOWS%IUSER, USER_WINDOWS%S_IUSER, "USER_WINDOWS%IUSER")
+             call my_alloc(USER_WINDOWS%USER, USER_WINDOWS%S_USER, "USER_WINDOWS%USER")
+             call my_alloc(USER_WINDOWS%USERNODS, USER_WINDOWS%N_USERNODS, "USER_WINDOWS%USERNODS")
 
              CALL READ_I_C(USER_WINDOWS%IUSER,USER_WINDOWS%S_IUSER)
              CALL READ_DB(USER_WINDOWS%USREINT,1)
@@ -92,25 +95,25 @@ C-----------------------------------------------
 
              ! SPMD Structures
              CALL READ_I_C(USER_WINDOWS%S_FR_USERW,1)
-             ALLOCATE(USER_WINDOWS%IAD_USERW(NSPMD+1))
-             ALLOCATE(USER_WINDOWS%FR_USERW(USER_WINDOWS%S_FR_USERW))
+             call my_alloc(USER_WINDOWS%IAD_USERW, NSPMD+1, "USER_WINDOWS%IAD_USERW")
+             call my_alloc(USER_WINDOWS%FR_USERW, USER_WINDOWS%S_FR_USERW, "USER_WINDOWS%FR_USERW")
 
              CALL READ_I_C(USER_WINDOWS%IAD_USERW,NSPMD+1)
              CALL READ_I_C(USER_WINDOWS%FR_USERW,USER_WINDOWS%S_FR_USERW)
 
              ! SAV & AR_SAV on ispmd==0
-             ALLOCATE(USER_WINDOWS%A_SAV(3,NUMNOD))
-             ALLOCATE(USER_WINDOWS%AR_SAV(3,NUMNOD))
+             call my_alloc(USER_WINDOWS%A_SAV, 3, NUMNOD, "USER_WINDOWS%A_SAV")
+             call my_alloc(USER_WINDOWS%AR_SAV, 3, NUMNOD, "USER_WINDOWS%AR_SAV")
              CALL READ_DB(USER_WINDOWS%A_SAV,3*NUMNOD)
              CALL READ_DB(USER_WINDOWS%AR_SAV,3*NUMNOD)
 
              ! ALLOCATE WA to 3x NUMNOD
              USER_WINDOWS%S_WA = 3*NUMNOD
-             ALLOCATE(USER_WINDOWS%WA(3*NUMNOD))
+             call my_alloc(USER_WINDOWS%WA, 3*NUMNOD, "USER_WINDOWS%WA")
          ELSE
              CALL READ_I_C(USER_WINDOWS%S_FR_USERW,1)
 
-             ALLOCATE(USER_WINDOWS%FR_USERW(USER_WINDOWS%S_FR_USERW))
+             call my_alloc(USER_WINDOWS%FR_USERW, USER_WINDOWS%S_FR_USERW, "USER_WINDOWS%FR_USERW")
 
              CALL READ_I_C(USER_WINDOWS%FR_USERW,USER_WINDOWS%S_FR_USERW)
 

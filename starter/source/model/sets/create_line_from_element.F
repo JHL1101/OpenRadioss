@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_line_from_element   ../starter/source/model/sets/create_line_from_element.F
 !||--- called by ------------------------------------------------------
@@ -69,9 +70,9 @@ C=======================================================================
       IF (SZELMAX == 0) RETURN
 !
       LINE_NENTITY = 4 ! NOD1, NOD2, ELTYP, ELEM
-      ALLOCATE(BUFTMPLINE(SZELMAX*LINE_NENTITY))
-      ALLOCATE(ITRI(3,SZELMAX))
-      ALLOCATE(INDEX(2*SZELMAX))
+      call my_alloc(BUFTMPLINE, SZELMAX*LINE_NENTITY, "BUFTMPLINE")
+      call my_alloc(ITRI, 3, SZELMAX, "ITRI")
+      call my_alloc(INDEX, 2*SZELMAX, "INDEX")
 !
       IAD_LINE = 1
 !------------------
@@ -104,7 +105,7 @@ C=======================================================================
 ! ----------------------------------------------------------------------------
       IF (GO_IN_ARRAY .EQV. .TRUE.) THEN
         DELBUF%SZ_LINE = NSEG
-        ALLOCATE(DELBUF%LINE(NSEG,4))
+        call my_alloc(DELBUF%LINE, NSEG, 4, "DELBUF%LINE")
         DO I=1,NSEG
           DELBUF%LINE(I,1) = BUFTMPLINE((INDEX(I)-1)*NIX+1)
           DELBUF%LINE(I,2) = BUFTMPLINE((INDEX(I)-1)*NIX+2)
@@ -112,14 +113,14 @@ C=======================================================================
           DELBUF%LINE(I,4) = BUFTMPLINE((INDEX(I)-1)*NIX+4)
         ENDDO
       ELSE
-        IF(ALLOCATED( CLAUSE%LINE_NODES )) DEALLOCATE( CLAUSE%LINE_NODES )
-        IF(ALLOCATED( CLAUSE%LINE_ELTYP )) DEALLOCATE( CLAUSE%LINE_ELTYP )
-        IF(ALLOCATED( CLAUSE%LINE_ELEM ))  DEALLOCATE( CLAUSE%LINE_ELEM )
+        IF(ALLOCATED( CLAUSE%LINE_NODES )) CALL MY_DEALLOC(CLAUSE%LINE_NODES)
+        IF(ALLOCATED( CLAUSE%LINE_ELTYP )) CALL MY_DEALLOC(CLAUSE%LINE_ELTYP)
+        IF(ALLOCATED( CLAUSE%LINE_ELEM ))  CALL MY_DEALLOC(CLAUSE%LINE_ELEM)
 !
         CLAUSE%NB_LINE_SEG = NSEG
-        CALL MY_ALLOC(CLAUSE%LINE_NODES,NSEG,2)
-        CALL MY_ALLOC(CLAUSE%LINE_ELTYP,NSEG)
-        CALL MY_ALLOC(CLAUSE%LINE_ELEM,NSEG)
+        CALL MY_ALLOC(CLAUSE%LINE_NODES,NSEG,2,"CLAUSE%LINE_NODES")
+        CALL MY_ALLOC(CLAUSE%LINE_ELTYP,NSEG,"CLAUSE%LINE_ELTYP")
+        CALL MY_ALLOC(CLAUSE%LINE_ELEM,NSEG,"CLAUSE%LINE_ELEM")
 !
         DO I=1,NSEG
           CLAUSE%LINE_NODES(I,1) = BUFTMPLINE((INDEX(I)-1)*NIX+1)
@@ -129,9 +130,9 @@ C=======================================================================
         ENDDO
       ENDIF ! IF (GO_IN_ARRAY .EQV. .TRUE.)
 !------------------
-      IF(ALLOCATED(ITRI))       DEALLOCATE(ITRI)
-      IF(ALLOCATED(INDEX))      DEALLOCATE(INDEX)
-      IF(ALLOCATED(BUFTMPLINE)) DEALLOCATE(BUFTMPLINE)
+      IF(ALLOCATED(ITRI))       CALL MY_DEALLOC(ITRI)
+      IF(ALLOCATED(INDEX))      CALL MY_DEALLOC(INDEX)
+      IF(ALLOCATED(BUFTMPLINE)) CALL MY_DEALLOC(BUFTMPLINE)
 !------------------
 !-----------
       RETURN

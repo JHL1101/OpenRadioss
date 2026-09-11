@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    ini_ifront   ../starter/source/spmd/node/ddtools.F
+!||    ini_ifront           ../starter/source/spmd/node/ddtools.F
 !||--- called by ------------------------------------------------------
-!||    lectur       ../starter/source/starter/lectur.F
+!||    lectur               ../starter/source/starter/lectur.F
+!||    q1np_generate_main   ../starter/source/elements/solid/solid_q1np/q1np_generate_main.F90
 !||--- uses       -----------------------------------------------------
-!||    front_mod    ../starter/share/modules1/front_mod.F
+!||    front_mod            ../starter/share/modules1/front_mod.F
 !||====================================================================
       SUBROUTINE INI_IFRONT()
 C-----------------------------------------------
@@ -75,6 +77,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
       USE FRONT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -92,7 +95,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
-      ALLOCATE(IFRONT_SAVE%P(2,SIFRONT),STAT=stat)  
+      call my_alloc(IFRONT_SAVE%P, 2, SIFRONT, "IFRONT_SAVE%P", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='IFRONT_SAVE')
@@ -104,8 +107,8 @@ c save IFRONT in IFRONT_SAVE
       ENDDO  
 
 c dealloc and realloc with bigger size (SIFRONT+NUMNOD)   
-      DEALLOCATE(IFRONT%P)
-      ALLOCATE(IFRONT%P(2,SIFRONT+NUMNOD),STAT=stat) 
+      CALL MY_DEALLOC(IFRONT%P)
+      call my_alloc(IFRONT%P, 2, SIFRONT+NUMNOD, "IFRONT%P", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='IFRONT REALLOC')        
@@ -119,7 +122,7 @@ c dealloc and realloc with bigger size (SIFRONT+NUMNOD)
         IFRONT%P(2,I) = -1      
       ENDDO  
       
-      DEALLOCATE(IFRONT_SAVE%P)   
+      CALL MY_DEALLOC(IFRONT_SAVE%P)
       
 c set new size of SIFRONT      
       SIFRONT = SIFRONT+NUMNOD
@@ -401,6 +404,7 @@ C-----------------------------------------------
 !||    set_front8      ../starter/source/spmd/node/ddtools.F
 !||--- called by ------------------------------------------------------
 !||    lectur          ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    front_mod       ../starter/share/modules1/front_mod.F
 !||====================================================================
@@ -411,6 +415,7 @@ C-----------------------------------------------
       USE FRONT_MOD
       USE INTBUFDEF_MOD  
       USE INT8_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -439,9 +444,9 @@ C-----------------------------------------------
       INTEGER N1,N2,N3,N4
       INTEGER ITY,NMN,NRTM,NM_SHARED
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: TAG,INDEX_IN_COMM
-      INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX_IN_FRONT
       INTEGER :: S_FRONT8(NSPMD,NSPMD),IDX(NSPMD)
       INTEGER :: LOCAL_ID,II,JJ,KK,NSN
+      INTEGER :: NPROC_K, PROC_LIST(NSPMD)
 C--------------------------------------------------------------
 
 
@@ -453,12 +458,9 @@ C--------------------------------------------------------------
         NRTM = IPARI(4,NI)
         NSN  = IPARI(5,NI)
 
-        LOCAL_ID = 0
         IF(ITY == 8) THEN
-          ALLOCATE(INDEX_IN_FRONT(NMN))
-          INDEX_IN_FRONT(1:NMN) = 0
-          ALLOCATE(TAG(NSPMD,NMN))
-          ALLOCATE(INDEX_IN_COMM(NSPMD,NMN))
+          call my_alloc(TAG, NSPMD, NMN, "TAG")
+          call my_alloc(INDEX_IN_COMM, NSPMD, NMN, "INDEX_IN_COMM")
           TAG(1:NSPMD,1:NMN) = 0
           DO K=1,NRTM
              N1 = INTBUF_TAB(NI)%IRECTM(4*(K-1)+1)
@@ -474,22 +476,32 @@ C--------------------------------------------------------------
 
           ! Compute the number of main nodes shared between 
           ! each possible couple of proc (i,j) => S_FRONT8(i,j)
+          ! Optimized: iterate over nodes, collect per-node proc list,
+          ! then update only the relevant pairs.
+          ! Cost: O(NMN * (NSPMD + nk^2)) where nk is the number of
+          ! procs sharing node k (typically 1-2, so nk^2 << NSPMD)
           S_FRONT8 = 0
-          DO P = 1,NSPMD
-             DO Q = P+1,NSPMD
-               DO K = 1,NMN
-                 IF(TAG(P,K) == 1 .AND. TAG(Q,K) == 1) THEN
-                 !The main is shared between procs P and Q
-                   LOCAL_ID = LOCAL_ID + 1
-                   S_FRONT8(P,Q) = S_FRONT8(P,Q) + 1
-                   S_FRONT8(Q,P) = S_FRONT8(Q,P) + 1
-                   ! the kth main node will have to be communucated
-                   IF( INDEX_IN_FRONT(k) == 0) THEN 
-                     INDEX_IN_FRONT(k) = LOCAL_ID
-                   ENDIF
-                 ENDIF
-               ENDDO
-             ENDDO 
+          DO K = 1,NMN
+            ! Collect list of procs that own node K
+            NPROC_K = 0
+            DO P = 1,NSPMD
+              IF(TAG(P,K) == 1) THEN
+                NPROC_K = NPROC_K + 1
+                PROC_LIST(NPROC_K) = P
+              ENDIF
+            ENDDO
+            ! If node K is shared by more than one proc,
+            ! update S_FRONT8 for all pairs
+            IF(NPROC_K > 1) THEN
+              DO II = 1,NPROC_K
+                DO JJ = II+1,NPROC_K
+                  P = PROC_LIST(II)
+                  Q = PROC_LIST(JJ)
+                  S_FRONT8(P,Q) = S_FRONT8(P,Q) + 1
+                  S_FRONT8(Q,P) = S_FRONT8(Q,P) + 1
+                ENDDO
+              ENDDO
+            ENDIF
           ENDDO
           IDX(1:NSPMD) = 0
           INDEX_IN_COMM(1:NSPMD,1:NMN) = 0
@@ -516,14 +528,14 @@ C--------------------------------------------------------------
              DO Q = P+1,NSPMD
               NM_SHARED = S_FRONT8(P,Q)
               T8(P,NBT8)%BUFFER(Q)%NBMAIN = 0! NM_SHARED
-              ALLOCATE(T8(P,NBT8)%BUFFER(Q)%MAIN_ID(NM_SHARED))  
-              ALLOCATE(T8(P,NBT8)%BUFFER(Q)%MAIN_UID(NM_SHARED)) 
-              ALLOCATE(T8(P,NBT8)%BUFFER(Q)%NBSECND(NM_SHARED))     
+              call my_alloc(T8(P,NBT8)%BUFFER(Q)%MAIN_ID, NM_SHARED, "T8(P,NBT8)%BUFFER(Q)%MAIN_ID")
+              call my_alloc(T8(P,NBT8)%BUFFER(Q)%MAIN_UID, NM_SHARED, "T8(P,NBT8)%BUFFER(Q)%MAIN_UID")
+              call my_alloc(T8(P,NBT8)%BUFFER(Q)%NBSECND, NM_SHARED, "T8(P,NBT8)%BUFFER(Q)%NBSECND")
               T8(P,NBT8)%BUFFER(Q)%NBSECND(1:NM_SHARED) = 0
               T8(Q,NBT8)%BUFFER(P)%NBMAIN = 0 !NM_SHARED
-              ALLOCATE(T8(Q,NBT8)%BUFFER(P)%MAIN_ID(NM_SHARED))     
-              ALLOCATE(T8(Q,NBT8)%BUFFER(P)%MAIN_UID(NM_SHARED))     
-              ALLOCATE(T8(Q,NBT8)%BUFFER(P)%NBSECND(NM_SHARED))     
+              call my_alloc(T8(Q,NBT8)%BUFFER(P)%MAIN_ID, NM_SHARED, "T8(Q,NBT8)%BUFFER(P)%MAIN_ID")
+              call my_alloc(T8(Q,NBT8)%BUFFER(P)%MAIN_UID, NM_SHARED, "T8(Q,NBT8)%BUFFER(P)%MAIN_UID")
+              call my_alloc(T8(Q,NBT8)%BUFFER(P)%NBSECND, NM_SHARED, "T8(Q,NBT8)%BUFFER(P)%NBSECND")
               T8(Q,NBT8)%BUFFER(P)%NBSECND(1:NM_SHARED) = 0
              ENDDO 
           ENDDO
@@ -534,13 +546,13 @@ C--------------------------------------------------------------
           DO P = 1,NSPMD
              K = IDX(P)
              T8(P,NBT8)%S_COMM = K
-             ALLOCATE(T8(P,NBT8)%SPMD_COMM_PATTERN(K))
+             allocate(T8(P,NBT8)%SPMD_COMM_PATTERN(K))
              DO Q = 1,K
                T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%NUMLOC = 0
                T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%NBCOM = 0
-               ALLOCATE(T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%PROCLIST(NSPMD))
+      call my_alloc(T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%PROCLIST, NSPMD, "T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%PROCLIST")
                T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%PROCLIST(1:NSPMD) = 0
-               ALLOCATE(T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%BUF_INDEX(NSPMD))
+      call my_alloc(T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%BUF_INDEX, NSPMD, "T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%BUF_INDEX")
                T8(P,NBT8)%SPMD_COMM_PATTERN(Q)%BUF_INDEX(1:NSPMD) = 0
              ENDDO
           ENDDO
@@ -689,9 +701,8 @@ C--------------------------------------------------------------
 
 
 
-          DEALLOCATE(TAG)
-          DEALLOCATE(INDEX_IN_COMM)
-          DEALLOCATE(INDEX_IN_FRONT)
+          CALL MY_DEALLOC(TAG)
+          CALL MY_DEALLOC(INDEX_IN_COMM)
           NBT8 = NBT8 + 1
         ENDIF !ITY == 8
       ENDDO
@@ -717,6 +728,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE FRONT_MOD
       USE INTBUFDEF_MOD  
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -743,9 +755,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ITY,NRTM,N,N1,N2,N3,N4,NSN,
+      INTEGER ITY,NRTM,N1,N2,N3,N4,
      .        NRTS,N1L,N2L,N3L,N4L,NLINM,NLINS
-      INTEGER NI,K,I,PROC,IE
+      INTEGER NI,K,PROC,IE
 C--------------------------------------------------------------
       DO NI=1,NINTER
       
@@ -760,13 +772,13 @@ C--------------------------------------------------------------
 
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTM))
+            call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
             IF(ITY==25) ALLOCATE(INTERCEP(2,NI)%P(NRTM))
           ENDIF   
           INTERCEP(1,NI)%P(1:NRTM)=0
           IF(ITY==25) THEN
             IF (.NOT.(ASSOCIATED(INTERCEP(2,NI)%P)))THEN
-                  ALLOCATE(INTERCEP(2,NI)%P(NRTM))
+                  call my_alloc(INTERCEP(2,NI)%P, NRTM, "INTERCEP(2,NI)%P")
             ENDIF
             INTERCEP(2,NI)%P(1:NRTM) = 0
           ENDIF
@@ -785,11 +797,12 @@ C Allocate CEP INTERFACE
                INTERCEP(1,NI)%P(K) = PROC       
              ENDIF   
           ENDDO
-        ELSEIF (FLAG==0.AND.ITY==25.AND.IPARI(100,NI) > 0)THEN ! in case of solid erosion : split interface according to element proc
+        ELSEIF (FLAG==0.AND.ITY==25.AND.IPARI(100,NI) > 0)THEN
+! in case of solid erosion : split interface according to element proc
             NRTM   = IPARI(4,NI)
 C Allocate CEP INTERFACE
             IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-               ALLOCATE(INTERCEP(1,NI)%P(NRTM))
+               call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
             ENDIF   
             INTERCEP(1,NI)%P(1:NRTM)=0
             DO K=1,NRTM
@@ -804,7 +817,7 @@ C Allocate CEP INTERFACE
              NRTS   = IPARI(3,NI)
 
              IF (.NOT.(ASSOCIATED(INTERCEP(3,NI)%P)))THEN
-                ALLOCATE(INTERCEP(3,NI)%P(NRTS))
+                call my_alloc(INTERCEP(3,NI)%P, NRTS, "INTERCEP(3,NI)%P")
              ENDIF        
              INTERCEP(3,NI)%P(1:NRTS)=0
               
@@ -823,7 +836,7 @@ C Allocate CEP INTERFACE
 
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTM))
+            call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
           ENDIF   
           INTERCEP(1,NI)%P(1:NRTM)=0
               
@@ -849,10 +862,10 @@ C Allocate CEP INTERFACE
 
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTM))        
+            call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
           ENDIF  
           IF (.NOT.(ASSOCIATED(INTERCEP(2,NI)%P)))THEN
-            ALLOCATE(INTERCEP(2,NI)%P(NRTS))        
+            call my_alloc(INTERCEP(2,NI)%P, NRTS, "INTERCEP(2,NI)%P")
           ENDIF            
           INTERCEP(1,NI)%P(1:NRTM)=0
           INTERCEP(2,NI)%P(1:NRTS)=0      
@@ -884,13 +897,13 @@ C Allocate CEP INTERFACE
      
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTM))        
+            call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
           ENDIF  
           IF (.NOT.(ASSOCIATED(INTERCEP(2,NI)%P)))THEN
-            ALLOCATE(INTERCEP(2,NI)%P(NLINM))       
+            call my_alloc(INTERCEP(2,NI)%P, NLINM, "INTERCEP(2,NI)%P")
           ENDIF  
           IF (.NOT.(ASSOCIATED(INTERCEP(3,NI)%P)))THEN
-            ALLOCATE(INTERCEP(3,NI)%P(NLINS))       
+            call my_alloc(INTERCEP(3,NI)%P, NLINS, "INTERCEP(3,NI)%P")
           ENDIF            
           INTERCEP(1,NI)%P(1:NRTM) =0
           INTERCEP(2,NI)%P(1:NLINM)=0
@@ -939,7 +952,7 @@ C Allocate CEP INTERFACE
           
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTS))        
+            call my_alloc(INTERCEP(1,NI)%P, NRTS, "INTERCEP(1,NI)%P")
           ENDIF                   
           INTERCEP(1,NI)%P(1:NRTS) =0   
                   
@@ -978,6 +991,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE FRONT_MOD
       USE INTBUFDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -1004,9 +1018,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ITY,NRTM,N,N1,N2,N3,N4,NSN,
-     .        NRTS,N1L,N2L,N3L,N4L,NLINM,NLINS
-      INTEGER NI,K,I,PROC
+      INTEGER ITY,NRTM,N1,N2,N3,N4
+      INTEGER NI,K,PROC
 C--------------------------------------------------------------
       DO NI=1,NINTER
       
@@ -1018,7 +1031,7 @@ C--------------------------------------------------------------
           NRTM   = IPARI(4,NI)
 C Allocate CEP INTERFACE
           IF (.NOT.(ASSOCIATED(INTERCEP(1,NI)%P)))THEN
-            ALLOCATE(INTERCEP(1,NI)%P(NRTM))
+            call my_alloc(INTERCEP(1,NI)%P, NRTM, "INTERCEP(1,NI)%P")
           ENDIF   
           INTERCEP(1,NI)%P(1:NRTM)=0
 
@@ -1070,7 +1083,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------    
       INTEGER IAD1,IAD2,IAD3,IAD4,
      .        P1,P2,P3,P4,PMAX
-      INTEGER TAB(4),NN 
+
       LOGICAL SEARCH
 C-----------------------------------------------
 C   S o u r c e  L i n e s
@@ -1160,6 +1173,8 @@ C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
       USE FRONT_MOD
+      use my_alloc_mod
+      use my_move_alloc_mod, only : my_move_alloc
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -1177,7 +1192,7 @@ C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       STAT = 0
-      ALLOCATE(IDDCONNECT_SAVE(2,SIDDCONNECT+NELEM),STAT=stat)  
+      call my_alloc(IDDCONNECT_SAVE, 2, SIDDCONNECT+NELEM, "IDDCONNECT_SAVE", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='IDDCONNECT_SAVE')
@@ -1192,7 +1207,7 @@ C-----------------------------------------------
         IDDCONNECT_SAVE(2,I) = -1       
       ENDDO    
 
-      CALL MOVE_ALLOC(IDDCONNECT_SAVE, IDDCONNECT%PDOM)
+      CALL MY_MOVE_ALLOC(IDDCONNECT_SAVE, IDDCONNECT%PDOM)
       SIDDCONNECT = SIDDCONNECT+NELEM
       
       RETURN
@@ -1269,7 +1284,6 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER TAILLE
       INTEGER N,ADJNCY(*),XADJ(*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -1313,6 +1327,7 @@ C-----------------------------------------------
 C            MODULES
 C-----------------------------------------------
       USE FRONT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -1332,8 +1347,8 @@ C-----------------------------------------------
       INTEGER :: CPT,IAD
 C-----------------------------------------------
 
-      ALLOCATE(FILE_V(NELEM))
-      ALLOCATE(XADJ(NELEM+1))
+      call my_alloc(FILE_V, NELEM, "FILE_V")
+      call my_alloc(XADJ, NELEM+1, "XADJ")
       XADJ(1:NELEM+1)=0
       XADJ(1) = 1
       DO I=1,NELEM
@@ -1382,7 +1397,7 @@ C
         END DO
       END DO
 
-      DEALLOCATE(FILE_V)
+      CALL MY_DEALLOC(FILE_V)
       RETURN
       END
 

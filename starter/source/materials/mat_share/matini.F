@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    matini                 ../starter/source/materials/mat_share/matini.F
 !||--- called by ------------------------------------------------------
@@ -51,6 +52,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    athlen                 ../starter/source/ale/athlen.F
 !||    fretitl2               ../starter/source/starter/freform.F
 !||    law129_init            ../starter/source/materials/mat/mat129/law129_init.F90
+!||    law137_init            ../starter/source/materials/mat/mat137/law137_init.F90
 !||    m105init               ../starter/source/materials/mat/mat105/m105init.F
 !||    m24in2                 ../starter/source/materials/mat/mat024/m24in2.F
 !||    m24in3                 ../starter/source/materials/mat/mat024/m24in3.F
@@ -71,6 +73,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    detonators_mod         ../starter/share/modules1/detonators_mod.F
 !||    law129_init_mod        ../starter/source/materials/mat/mat129/law129_init.F90
+!||    law137_init_mod        ../starter/source/materials/mat/mat137/law137_init.F90
 !||    m36init_mod            ../starter/source/materials/mat/mat036/m36init.F90
 !||    message_mod            ../starter/share/message_module/message_mod.F
 !||====================================================================
@@ -92,6 +95,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE M36INIT_MOD
       USE LAW129_INIT_MOD
+      USE LAW137_INIT_MOD
       USE MATPARAM_DEF_MOD , ONLY : MATPARAM_STRUCT_
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -391,6 +395,9 @@ C=======================================================================
 
         ELSEIF (MTN == 129) THEN
           CALL LAW129_INIT(MAT_PARAM(IMAT) ,NEL   ,NUVAR ,MBUF%VAR)
+
+        ELSEIF (MTN == 137) THEN
+          CALL LAW137_INIT(MAT_PARAM(IMAT) ,NEL   ,LBUF%PLA(1:NEL))
 
         ENDIF
       ENDIF

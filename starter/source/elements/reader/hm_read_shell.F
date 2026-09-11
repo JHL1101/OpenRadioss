@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
 !||    hm_read_shell          ../starter/source/elements/reader/hm_read_shell.F
@@ -70,6 +71,7 @@ C-----------------------------------------------
       USE READER_OLD_MOD , ONLY : LINE
       USE USER_ID_MOD , ONLY : ID_LIMIT
       use element_mod , only : nixc
+      use my_alloc_mod
 C--------------------------------------------------------
 C     READING DES ELEMENTS COQUES 4 NODES
 C     VERSIION NUMEROTATION DES NODES LIBRE/MARS 90/DIM
@@ -133,19 +135,19 @@ C--------------------------------------------------
 C      ALLOCS & INITS
 c      use NUMELC0 IN PLACE OF NUMELC ( NBADMESH routine is modifying NUMELC )
 C--------------------------------------------------
-      ALLOCATE (SUB_SHELL(NUMELC0),STAT=stat)
+      call my_alloc(SUB_SHELL, NUMELC0, "SUB_SHELL", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SUB_SHELL') 
-      ALLOCATE (UID_SHELL(NUMELC0),STAT=stat)
+      call my_alloc(UID_SHELL, NUMELC0, "UID_SHELL", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='UID_SHELL') 
-      ALLOCATE (HM_THK(NUMELC0),STAT=stat)
+      call my_alloc(HM_THK, NUMELC0, "HM_THK", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='HM_THK') 
-      ALLOCATE (HM_ANGLE(NUMELC0),STAT=stat)
+      call my_alloc(HM_ANGLE, NUMELC0, "HM_ANGLE", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='HM_ANGLE') 
@@ -253,10 +255,10 @@ C--------------------------------------------------
       ENDDO
 c
 C      
-      IF(ALLOCATED(SUB_SHELL)) DEALLOCATE(SUB_SHELL)
-      IF(ALLOCATED(UID_SHELL)) DEALLOCATE(UID_SHELL)
-      IF(ALLOCATED(HM_THK)) DEALLOCATE(HM_THK)
-      IF(ALLOCATED(HM_ANGLE)) DEALLOCATE(HM_ANGLE)
+      IF(ALLOCATED(SUB_SHELL)) CALL MY_DEALLOC(SUB_SHELL)
+      IF(ALLOCATED(UID_SHELL)) CALL MY_DEALLOC(UID_SHELL)
+      IF(ALLOCATED(HM_THK)) CALL MY_DEALLOC(HM_THK)
+      IF(ALLOCATED(HM_ANGLE)) CALL MY_DEALLOC(HM_ANGLE)
 C
       I1=1
       I2=MIN0(50,NUMELC0)

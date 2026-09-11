@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25main_slid             ../engine/source/interfaces/int25/i25main_slid.F
 !||--- called by ------------------------------------------------------
@@ -44,6 +45,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod            ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod              ../engine/share/message_module/message_mod.F
 !||    mpi_commod               ../engine/share/modules/mpi_comm_mod.F
+!||    my_alloc_mod             ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod           ../common_source/tools/memory/my_dealloc.F90
 !||    parameters_mod           ../common_source/modules/interfaces/parameters_mod.F
 !||    sensor_mod               ../common_source/modules/sensor_mod.F90
 !||    tri7box                  ../engine/share/modules/tri7box.F
@@ -69,6 +72,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -105,7 +110,6 @@ C-----------------------------------------------
       INTEGER NIN, NI25, LENT25, IERROR, ITYP, 
      .        IFQ, IGAP, INTTH, ILEV, IVIS2,
      . I_STOK_GLO, I,J, NSNR, INACTI, NADMSR,
-     . N_OLD_IMPACT,
      . P, RSIZ(NINTER25), ISIZ(NINTER25), SIZBUFS(NSPMD),
      .        NADMAX, LADMAX, NSLIDMX, NSENDTOT, NSNF, NSNL, NSNRF, NSNRL,INTFRIC ,
      .        FLAGREMN, LREMNORMAX, ISTIF_MSDT, IFSUB_CAREA
@@ -248,22 +252,25 @@ C precalculer LENS
 C-----------------------------------------------------------------------
         IF(NSPMD == 1) THEN
 
-          ALLOCATE(NADD(1),KADD(1))
-          ALLOCATE(NSLIDE(1),FR_SLIDE(1),INDXTOSEND(1))
+          call my_alloc(NADD, 1, "NADD")
+          call my_alloc(KADD, 1, "KADD")
+          call my_alloc(NSLIDE, 1, "NSLIDE")
+          call my_alloc(FR_SLIDE, 1, "FR_SLIDE")
+          call my_alloc(INDXTOSEND, 1, "INDXTOSEND")
 
         ELSE
 C-----------------------------------------------------------------------
 C         spmd only <=> sending secondary nodes that slide on a boundary vertex
 C-----------------------------------------------------------------------
 C
-          ALLOCATE(NADD(NADMAX+1),STAT=IERROR)
+          call my_alloc(NADD, NADMAX+1, "NADD", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
           ENDIF
 C
           LADMAX = 4*NSLIDMX
-          ALLOCATE(KADD(LADMAX),STAT=IERROR)
+          call my_alloc(KADD, LADMAX, "KADD", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -312,7 +319,8 @@ C           compute size of buffer for send
      3        ITAB   ,INTBUF_TAB(NIN)%NSV,IAD_FRNOR,FR_NOR ,NADD ,
      4        KADD   ,SIZBUFS,NSENDTOT)
 C
-            ALLOCATE(FR_SLIDE(4*NSENDTOT),INDXTOSEND(NSENDTOT),STAT=IERROR)
+            call my_alloc(FR_SLIDE, 4*NSENDTOT, "FR_SLIDE", stat=IERROR)
+            call my_alloc(INDXTOSEND, NSENDTOT, "INDXTOSEND", stat=IERROR)
             IF(IERROR/=0) THEN
               CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
               CALL ARRET(2)
@@ -370,8 +378,8 @@ C           Send buffers
      .                    ,1                  ,NI25, COMM_PATTERN)
 C ==========================================================================
 
-            DEALLOCATE(FR_SLIDE)
-            DEALLOCATE(INDXTOSEND)
+            call my_dealloc(FR_SLIDE)
+            call my_dealloc(INDXTOSEND)
 
 
           END DO ! NI25 = 1:NINTER25
@@ -429,10 +437,10 @@ C  Ici on teste (2)
                SIZBUFS(P) = SIZBUFR_GLOB(P,NI25)
                NB_TOT = NB_TOT +SIZBUFS(P)
             ENDDO
-            IF(ALLOCATED(XREM)) DEALLOCATE(XREM)
-            IF(ALLOCATED(IREM)) DEALLOCATE(IREM)
-            ALLOCATE(XREM(RSIZ(NI25),NB_TOT))
-            ALLOCATE(IREM(ISIZ(NI25),NB_TOT))
+            IF(ALLOCATED(XREM)) call my_dealloc(XREM)
+            IF(ALLOCATED(IREM)) call my_dealloc(IREM)
+            call my_alloc(XREM, RSIZ(NI25), NB_TOT, "XREM")
+            call my_alloc(IREM, ISIZ(NI25), NB_TOT, "IREM")
 
 
             NB_TOT = 0
@@ -532,8 +540,8 @@ C
           ENDDO
         ENDIF
 !       DEALLOCATE(BUFR)
-        DEALLOCATE(NADD)
-        DEALLOCATE(KADD)
+        call my_dealloc(NADD)
+        call my_dealloc(KADD)
 
 C
 C-----------------------------------------------------------------------

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i18main_kine_1               ../engine/source/interfaces/int18/i18main_kine.F
 !||--- called by ------------------------------------------------------
@@ -40,6 +41,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod                      ../engine/share/modules/h3d_mod.F
 !||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                   ../common_source/modules/output/output_mod.F90
 !||    tri7box                      ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -68,6 +70,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -101,7 +104,9 @@ C-----------------------------------------------
       INTEGER NB_JLT(PARASIZ),NB_JLT_NEW(PARASIZ),NB_STOK_N(PARASIZ),
      * P,NODFI,IERROR1,IERROR2,IERROR3,IERROR4
       my_real
-     .    STARTT,STOPT,BID,VBID
+     .    STARTT,STOPT
+      my_real VBID(3,1)
+      INTEGER BID_I(1)
       SAVE NB_JLT,NB_JLT_NEW,NB_STOK_N
 C=======================================================================
 C     initialisation MTF(1:14,1:NUMNOD)
@@ -142,16 +147,15 @@ C
           END DO
 
           IF(NODFI > 0)THEN
-            IF(ASSOCIATED(MTFI_PENE(N)%P)) DEALLOCATE(MTFI_PENE(N)%P)
+            IF(ASSOCIATED(MTFI_PENE(N)%P)) call my_dealloc(MTFI_PENE(N)%P)
             ALLOCATE(MTFI_PENE(N)%P(NODFI),STAT=IERROR1)
             MTFI_PENE(N)%P(1:NODFI)=ZERO
 c
-            IF(ASSOCIATED(MTFI_PENEMIN(N)%P))
-     *                                     DEALLOCATE(MTFI_PENEMIN(N)%P)
+            IF(ASSOCIATED(MTFI_PENEMIN(N)%P)) call my_dealloc(MTFI_PENEMIN(N)%P)
             ALLOCATE(MTFI_PENEMIN(N)%P(NODFI),STAT=IERROR2)
             MTFI_PENEMIN(N)%P(1:NODFI)=ZERO
 
-            IF(ASSOCIATED(MTFI_V(N)%P)) DEALLOCATE(MTFI_V(N)%P)
+            IF(ASSOCIATED(MTFI_V(N)%P)) call my_dealloc(MTFI_V(N)%P)
             ALLOCATE(MTFI_V(N)%P(6,NODFI),STAT=IERROR3)
             MTFI_V(N)%P(1,1:NODFI)=ZERO
             MTFI_V(N)%P(2,1:NODFI)=ZERO
@@ -160,7 +164,7 @@ c
             MTFI_V(N)%P(5,1:NODFI)=ZERO
             MTFI_V(N)%P(6,1:NODFI)=ZERO
 
-            IF(ASSOCIATED(MTFI_A(N)%P)) DEALLOCATE(MTFI_A(N)%P)
+            IF(ASSOCIATED(MTFI_A(N)%P)) call my_dealloc(MTFI_A(N)%P)
             ALLOCATE(MTFI_A(N)%P(7,NODFI),STAT=IERROR4)
             MTFI_A(N)%P(1,1:NODFI)=ZERO
             MTFI_A(N)%P(2,1:NODFI)=ZERO
@@ -170,13 +174,13 @@ c
             MTFI_A(N)%P(6,1:NODFI)=ZERO
             MTFI_A(N)%P(7,1:NODFI)=ZERO
 
-            IF(ASSOCIATED(MTFI_N(N)%P)) DEALLOCATE(MTFI_N(N)%P)
+            IF(ASSOCIATED(MTFI_N(N)%P)) call my_dealloc(MTFI_N(N)%P)
             ALLOCATE(MTFI_N(N)%P(3,NODFI),STAT=IERROR4)
             MTFI_N(N)%P(1,1:NODFI)=ZERO
             MTFI_N(N)%P(2,1:NODFI)=ZERO
             MTFI_N(N)%P(3,1:NODFI)=ZERO
 
-            IF(ASSOCIATED(I18KAFI(N)%P)) DEALLOCATE(I18KAFI(N)%P)
+            IF(ASSOCIATED(I18KAFI(N)%P)) call my_dealloc(I18KAFI(N)%P)
             ALLOCATE(I18KAFI(N)%P(3,NODFI),STAT=IERROR4)
             I18KAFI(N)%P(1,1:NODFI)=ZERO
             I18KAFI(N)%P(2,1:NODFI)=ZERO
@@ -219,7 +223,7 @@ C LINDMAX = NCONT*MULTIMP
      1                       N           ,IPARI(1,N)    ,INTBUF_TAB(N)         ,X                , 
      2                       STIFN       ,V             ,A                     ,MS               , NMN             ,
      3                       ITAB        ,LINDMAX       ,CAND_SAV(INT18ADD(N)) ,MTF              , ALE_NE_CONNECT  ,
-     4                       NRTMDIM     ,JTASK         ,NB_JLT(JTASK)         ,NB_JLT_NEW(JTASK),N B_STOK_N(JTASK),
+     4                       NRTMDIM     ,JTASK         ,NB_JLT(JTASK)         ,NB_JLT_NEW(JTASK), NB_STOK_N(JTASK),
      5                       KINET       ,MULTI_FVM     ,XCELL,XCELL_REMOTE(N)%SIZE_MY_REAL_ARRAY_1D,
      .                            XCELL_REMOTE(N)%MY_REAL_ARRAY_1D)
        ENDIF
@@ -235,7 +239,7 @@ c   2: accumulate (or min) on secondary 18 boundary nodes
 c   2: accumulate on secondary 18 boundary nodes
       IF (NSPMD > 1)THEN
          CALL SPMD_I18KINE_PENE_COM_POFF(output, IPARI,INTBUF_TAB,VBID,
-     *                                   MTF,A,IAD_ELEM,FR_ELEM,1,BID,TAGPENE,ITAB,
+     *                                   MTF,A,IAD_ELEM,FR_ELEM,1,BID_I,TAGPENE,ITAB,
      .                                   H3D_DATA  )
 
 c     need accelerations for the second node
@@ -321,6 +325,8 @@ C
 !||--- uses       -----------------------------------------------------
 !||    h3d_mod                      ../engine/share/modules/h3d_mod.F
 !||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                   ../common_source/modules/output/output_mod.F90
 !||    tri7box                      ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -339,6 +345,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -372,10 +380,10 @@ C=======================================================================
 C     initialisation MTF(1:14,1:NUMNOD)
 C=======================================================================
       IF (NSPMD > 1)THEN
-         ALLOCATE(SLVNDTAG(NUMNOD))
+         call my_alloc(SLVNDTAG, NUMNOD, "SLVNDTAG")
          SLVNDTAG = 0
       ELSE
-         ALLOCATE(SLVNDTAG(1))
+         call my_alloc(SLVNDTAG, 1, "SLVNDTAG")
          SLVNDTAG = 0
       ENDIF
 C=======================================================================
@@ -489,7 +497,7 @@ c   1: send to the proc that owns the node that overwrites the acceleration
 
 C=======================================================================
 
-      DEALLOCATE(SLVNDTAG)
+      call my_dealloc(SLVNDTAG)
 !$OMP END SINGLE
 
       RETURN
@@ -796,7 +804,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NSN, 
-     . NME_TGNGE,NOINT,NTY,IVIS2,
+     . NOINT,NTY,IVIS2,
      . IGAP,INACTI,IBAG,I_STOK, I_STOK_LOC,
      . JLT, NFT,DEBUT,NB_LOC,IGSTI,ICURV,IADM
       my_real
@@ -1023,7 +1031,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NSN, 
-     . NME_TGNGE,NOINT,NTY,IVIS2,
+     . NOINT,NTY,IVIS2,
      . IGAP,INACTI,IBAG,I_STOK, I_STOK_LOC,DEBUT,
      . JLT, NFT,NB_LOC,IADM
       my_real

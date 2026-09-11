@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps70                ../starter/source/materials/mat/mat070/sigeps70.F
 !||--- called by ------------------------------------------------------
@@ -100,8 +101,8 @@ C---------+---------+---+---+--------------------------------------------
 C
       INTEGER ,INTENT(IN)    :: NVARTMP,IMAT
       INTEGER ,INTENT(INOUT) :: VARTMP(NEL,NVARTMP)
-      INTEGER NEL, NUPARAM, NUVAR,IPT,
-     .   NGL(NEL),MAT(NEL),IPLA,IPM(NPROPMI,*)
+      INTEGER NEL, NUPARAM, NUVAR,
+     .   NGL(NEL),IPM(NPROPMI,*)
       my_real
      .   TIME,TIMESTEP,UPARAM(*),
      .   RHO(NEL),RHO0(NEL),VOLUME(NEL),EINT(NEL),
@@ -126,7 +127,7 @@ C-----------------------------------------------
 C   I N P U T   O U T P U T   A r g u m e n t s 
 C-----------------------------------------------
       my_real 
-     .        UVAR(NEL,NUVAR), OFF(NEL),  PLA(NEL)
+     .        UVAR(NEL,NUVAR), OFF(NEL)
 C-----------------------------------------------
 C   VARIABLES FOR FUNCTION INTERPOLATION 
 C-----------------------------------------------
@@ -145,17 +146,17 @@ C        NPF,TF  : FUNCTION PARAMETER
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,J1,J2,I1,I2,II,IADBUF,NC,NFUNC,ILOAD(MVSIZ),
+      INTEGER I,J,II,IADBUF,NFUNC,ILOAD(MVSIZ),
      .        IFUNC(MVSIZ,100),NLOAD,NUNLOAD,
      .        IE_CST(MVSIZ),ILOAD0,IDAMAGE,IFLAG,IPFUNC,NUMTABL
       INTEGER :: NINDEX_EPSSM,NINDEX_EPST
       INTEGER, DIMENSION(MVSIZ) :: INDEX_EPSSM,INDEX_EPST
-      my_real R,FAC,E,DELTA,ALPHA,SVM2,P,YFACC,
-     .        SVM,INTER_0,EMAX,EPSSMAX,EPS_MAX,DSIG,EXPO,HYS,DE,DF,MU
+      my_real R,E,DELTA,ALPHA,SVM2,P,YFACC,
+     .        SVM,INTER_0,EMAX,EPSSMAX,DSIG,EXPO,HYS,DE,DF,MU
       my_real YLDELAS(MVSIZ),YLDMIN(MVSIZ),YLDMAX(MVSIZ),EPSS(MVSIZ),
      .        E0(MVSIZ),G(MVSIZ),NU(MVSIZ),AA1(MVSIZ),AA2(MVSIZ),
-     .        EPST(MVSIZ),AA(MVSIZ),RATE(MVSIZ,2),
-     .        YFAC(MVSIZ,2),SIG0(MVSIZ),EPS0(MVSIZ)
+     .        EPST(MVSIZ),AA(MVSIZ),
+     .        SIG0(MVSIZ),EPS0(MVSIZ)
       INTEGER, DIMENSION(NEL)   :: IPOS1
       my_real, DIMENSION(NEL)   :: XVEC1
       INTEGER, DIMENSION(NEL,2) :: IPOS

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s10edg_rlink   ../starter/source/elements/solid/solide10/s10edg_rlink.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .                       ITAGND,ICNDS10,ITAB,IPRI,NUMNOD,NS10E)
 C=======================================================================
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -138,7 +140,7 @@ C----removed from INN directly----------
        END DO
 C-------nodes removed from       
        IF (NNEW>0) THEN
-         ALLOCATE(LL_TMP(NUMLINK))
+         call my_alloc(LL_TMP, NUMLINK, "LL_TMP")
          LL_TMP = LNLINK
          K = 0
          NN = 0
@@ -156,7 +158,7 @@ C-------nodes removed from
            K = K + NSL
            NN = NN + NNSL
          END DO
-         DEALLOCATE(LL_TMP)
+         CALL MY_DEALLOC(LL_TMP)
        END IF
 C       
       RETURN

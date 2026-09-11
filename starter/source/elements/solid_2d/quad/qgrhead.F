@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    qgrhead                ../starter/source/elements/solid_2d/quad/qgrhead.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    fretitl2               ../starter/source/starter/freform.F
 !||--- uses       -----------------------------------------------------
 !||    message_mod            ../starter/share/message_module/message_mod.F
+!||    reorder_mod            ../starter/share/modules1/reorder_mod.F
 !||====================================================================
       SUBROUTINE QGRHEAD(
      1       IXQ     ,PM      ,GEO     ,INUM    ,ISEL    ,
@@ -42,6 +44,7 @@ C-----------------------------------------------
       USE GROUPDEF_MOD
       USE MATPARAM_DEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use reorder_mod
 C-----------------------------------------------
 C            A R G U M E N T S
 C-----------------------------------------------
@@ -61,6 +64,8 @@ C     IQUAOFF(NUMELQ)   FLAG ELEM RBY ON/OFF                       E/S
 C-----------------------------------------------
 C   I M P L I C I T   T Y P E S
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C O M M O N   B L O C K S
@@ -96,8 +101,9 @@ C-----------------------------------------------
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE)::TITR
       INTEGER WORK(70000)
-      EXTERNAL MY_SHIFTL,MY_SHIFTR,MY_AND
-      INTEGER MY_SHIFTL,MY_SHIFTR,MY_AND
+      EXTERNAL MY_AND
+      INTEGER MY_AND
+      integer, dimension(:), allocatable :: index2
 C
       DATA MSKMLN /O'07770000000'/
       DATA MSKJAL /O'00000070000'/
@@ -114,6 +120,9 @@ C----------------------------------------------------------
 C   GLOBAL SORT ON ALL CRITERIA FOR ALL ELEMENTS
 C----------------------------------------------------------
 C
+      call my_alloc(index2, numelq, "index2")
+      index2(1:numelq) = permutation%quad(1:numelq)
+      
       DO I=1,NUMELQ
         EADD(I)=1
         ITRI(4,I)=I
@@ -205,28 +214,28 @@ C IRB = 2: Elem inactive but optimized to be active in SPMD
 C
 C Npt = 1;Jhbe = 0;Jivf = 0 and jlag not used
 C Key 1---------------------------------
-        JPOR=MY_SHIFTL(JPOR,0)
-        JTHE=MY_SHIFTL(JTHE,3)
-        JTUR=MY_SHIFTL(JTUR,6)
-        JEUL=MY_SHIFTL(JEUL,9)
-        JALE=MY_SHIFTL(JALE,12)
-        MLN=MY_SHIFTL(MLN,21)
+        JPOR=ISHFT(JPOR,0)
+        JTHE=ISHFT(JTHE,3)
+        JTUR=ISHFT(JTUR,6)
+        JEUL=ISHFT(JEUL,9)
+        JALE=ISHFT(JALE,12)
+        MLN=ISHFT(MLN,21)
 c        IRB=MY_SHIFTL(IRB,0)
         ITRI(1,I)=MLN+JALE+JEUL+JTUR+JTHE+JPOR+IRB 
 C Key 2---------------------------------
-        IPLAST=MY_SHIFTL(IPLAST,0)
-        IFAIL = MY_SHIFTL(IFAIL,3)
-        ML1=MY_SHIFTL(ML1,5)
-        ML2=MY_SHIFTL(ML2,13)
-        IGT=MY_SHIFTL(IGT,21)
-        JCVT=MY_SHIFTL(JCVT,28)
+        IPLAST=ISHFT(IPLAST,0)
+        IFAIL = ISHFT(IFAIL,3)
+        ML1=ISHFT(ML1,5)
+        ML2=ISHFT(ML2,13)
+        IGT=ISHFT(IGT,21)
+        JCVT=ISHFT(JCVT,28)
         ITRI(2,I)=IPLAST+ML1+ML2+IGT+JCVT + IFAIL
 C Key 3---------------------------------
         ITRI(3,I)=MID
 C Key 4---------------------------------
         ITRI(4,I)=PID
 C Key 5---------------------------------
-        IEOS = MY_SHIFTL(IEOS,0) 
+        IEOS = ISHFT(IEOS,0)
 C       next = MY_SHIFTL(next,4) 
         ITRI(5,I)=IEOS
 
@@ -241,6 +250,7 @@ C
       ENDDO
       DO I=1,NUMELQ
         CEP(I)=XEP(INDEX(I))
+        permutation%quad(i) = index2(index(i))
       ENDDO
       DO  K=1,7
         DO  I=1,NUMELQ
@@ -300,6 +310,7 @@ C--------------------------------------------------------------
         ENDIF
       ENDDO
       EADD(ND+1) = NUMELQ+1
+      call my_dealloc(index2)
 C
       RETURN
       END

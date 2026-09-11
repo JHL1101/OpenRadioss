@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    find_dt_for_targeted_added_mass   ../engine/source/time_step/find_dt_for_targeted_added_mass.F
 !||--- called by ------------------------------------------------------
 !||    resol                             ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
 !||    find_dt_target                    ../common_source/tools/time_step/find_dt_target.F
-!||    myqsort                           ../common_source/tools/sort/myqsort.F
 !||    spmd_gather_dtnoda                ../engine/source/mpi/generic/spmd_gather_dtnoda.F
 !||    spmd_glob_imax9                   ../engine/source/mpi/generic/spmd_glob_imax9.F
 !||    spmd_glob_isum9                   ../engine/source/mpi/interfaces/spmd_th.F
@@ -34,23 +34,28 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    groupdef_mod                      ../common_source/modules/groupdef_mod.F
 !||    message_mod                       ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                    ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE FIND_DT_FOR_TARGETED_ADDED_MASS(MS,STIFN,DTSCA,IGRP_USR,TARGET_DT,
      .                                           PERCENT_ADDMASS,PERCENT_ADDMASS_OLD,TOTMAS,WEIGHT,IGRNOD,
-     .                                           ICNDS10)
+     .                                           ICNDS10,ITAB)
 C-----------------------------------------------
 C   A n a l y s e   M o d u l e
 C-----------------------------------------------
       USE GROUPDEF_MOD
       USE MESSAGE_MOD
+      USE CPPSORT_MOD, ONLY : SORT_REAL_INT2_PERM
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C----------------------------------------------- 
-      INTEGER WEIGHT(*),IGRP_USR,ICNDS10(3,*)
+      INTEGER WEIGHT(*),IGRP_USR,ICNDS10(3,*),ITAB(*)
       my_real
      .   MS(*),STIFN(*),TARGET_DT,DTSCA,PERCENT_ADDMASS,PERCENT_ADDMASS_OLD,TOTMAS
 C-----------------------------------------------
@@ -70,10 +75,11 @@ C-----------------------------------------------
      .   DT2_L
       my_real, DIMENSION(:),ALLOCATABLE :: 
      .   STF_L,MS_L
+      INTEGER, DIMENSION(:),ALLOCATABLE ::
+     .   UID_L
       my_real, DIMENSION(:),POINTER ::
      .   TMP
       my_real SUMK,SUMM,TARGET_PERCENT
-      INTEGER :: IERROR
       INTEGER, DIMENSION(:), ALLOCATABLE :: PERM
 C=======================================================================
 C
@@ -82,7 +88,7 @@ C     DERIVED FROM ADD_MS_L_STAT in starter - computation of time step according
 C--------------------------------------------------------------------------------------
 C 
       SIZ = 0
-      ALLOCATE(TAGN(NUMNOD))
+      call my_alloc(TAGN, NUMNOD, "TAGN")
       TAGN(1:NUMNOD) = 0
 C
 C---  Condensed nodes of TETRA10 are excluded
@@ -125,45 +131,51 @@ C---  Counstruction of arrays
         CALL SPMD_GLOB_IMAX9(SIZ_MAX,1)
         CALL SPMD_GLOB_ISUM9(SIZG,1)
         IF (ISPMD == 0) THEN
-          ALLOCATE(DT2_L(2*SIZG),STF_L(SIZG),MS_L(SIZG))
-          SIZ = SIZ_MAX
-        ENDIF
-        CALL SPMD_GATHER_DTNODA(TAGN,STIFN,MS,WEIGHT,SIZ,DT2_L,STF_L,MS_L)
+          call my_alloc(DT2_L, 2*SIZG, "DT2_L")
+          call my_alloc(STF_L, SIZG, "STF_L")
+          call my_alloc(MS_L, SIZG, "MS_L")
+          call my_alloc(UID_L, SIZG, "UID_L")
+        SIZ = SIZ_MAX
+      ENDIF
+      CALL SPMD_GATHER_DTNODA(TAGN,STIFN,MS,WEIGHT,ITAB,SIZ,DT2_L,STF_L,MS_L,UID_L)
       ELSE
-        ALLOCATE(DT2_L(2*SIZG),STF_L(SIZG),MS_L(SIZG))
-        COMPT = 0
-        DO I=1,NUMNOD
-          IF (TAGN(I) > 0) THEN
-            COMPT = COMPT + 1
-            DT2_L(COMPT) = MS(I)/STIFN(I)
-            MS_L(COMPT) = MS(I)
-            STF_L(COMPT) = STIFN(I)
-          ENDIF
-        ENDDO
+      call my_alloc(DT2_L, 2*SIZG, "DT2_L")
+      call my_alloc(STF_L, SIZG, "STF_L")
+      call my_alloc(MS_L, SIZG, "MS_L")
+      call my_alloc(UID_L, SIZG, "UID_L")
+      COMPT = 0
+      DO I=1,NUMNOD
+        IF (TAGN(I) > 0) THEN
+          COMPT = COMPT + 1
+          DT2_L(COMPT) = MS(I)/STIFN(I)
+          MS_L(COMPT) = MS(I)
+          STF_L(COMPT) = STIFN(I)
+          UID_L(COMPT) = ITAB(I)
+        ENDIF
+      ENDDO
       ENDIF
 C
-      DEALLOCATE(TAGN)
+      call my_dealloc(TAGN)
 C
       IF (ISPMD == 0) THEN     
 C
         TMP => DT2_L(SIZG+1:SIZG*2)
-        ALLOCATE( PERM(SIZG ))
+        call my_alloc(PERM, SIZG, "PERM")
 C
 C  --- Sorting
 C
         SUMM = ZERO
         SUMK = ZERO
         DO I=1,SIZG
-          TMP(I)=I
           PERM(I) = I
           SUMM = SUMM + MS_L(I)
           SUMK = SUMK + STF_L(I)
         ENDDO
 
-        CALL MYQSORT(SIZG,DT2_L,PERM,IERROR)
+        CALL SORT_REAL_INT2_PERM(SIZG, DT2_L, UID_L, PERM)
         TMP(1:SIZG) = PERM(1:SIZG)
 
-        DEALLOCATE( PERM )
+        call my_dealloc(PERM)
 C
 C----- determination of target time step
 C
@@ -178,7 +190,10 @@ C
         NVAL = 1
         CALL FIND_DT_TARGET(MS_L,STF_L,TARGET_DT,TARGET_PERCENT,DT2_L,TMP,DTSCA,TOTMAS,NVAL,SIZG)
 C
-        DEALLOCATE(DT2_L,STF_L,MS_L)  
+        call my_dealloc(DT2_L)
+        call my_dealloc(STF_L)
+        call my_dealloc(MS_L)
+        call my_dealloc(UID_L)
 C
       ENDIF
 C

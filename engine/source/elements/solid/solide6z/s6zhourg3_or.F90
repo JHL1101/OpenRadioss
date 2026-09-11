@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s6zhour3_or_mod   ../engine/source/elements/solid/solide6z/s6zhourg3_or.F90
 !||--- called by ------------------------------------------------------
@@ -229,14 +230,14 @@
       real(kind=wp), dimension(nel) :: jr0, js0, jt0
       real(kind=wp), dimension(nel) :: h11, h22, h33, h12, h13, h23
       real(kind=wp), dimension(6) :: dsig
-      real(kind=wp) :: ds,de
+      real(kind=wp) :: ds,de,ss(3)
       real(kind=wp), dimension(nel) :: f11_hgl, f12_hgl, f13_hgl, f14_hgl, f15_hgl, f16_hgl
       real(kind=wp), dimension(nel) :: f17_hgl, f18_hgl
       real(kind=wp), dimension(nel) :: f21_hgl, f22_hgl, f23_hgl, f24_hgl, f25_hgl, f26_hgl
       real(kind=wp), dimension(nel) :: f27_hgl, f28_hgl
       real(kind=wp), dimension(nel) :: f31_hgl, f32_hgl, f33_hgl, f34_hgl, f35_hgl, f36_hgl
       real(kind=wp), dimension(nel) :: f37_hgl, f38_hgl
-      real(kind=wp), dimension(mvsiz) :: deint,sm1,sm2,smo1,smo2
+      real(kind=wp), dimension(mvsiz) :: deint,sm1,sm2,smo1,smo2,svm2_0
       real(kind=wp), dimension(mvsiz,3,4) :: dfhour, nfhour
       real(kind=wp), dimension(mvsiz,3,3) :: cc,cg,g33
       real(kind=wp) :: gm,gmin
@@ -315,6 +316,15 @@
       nu = nuu                         !< poisson's ratio
       iplast = elbuf_str%gbuf%g_pla              !< plasticity flag
 
+      if (iplast==1) then
+        do i=1,nel 
+          ss(1) =sig0(i,1)-sig0(i,2)
+          ss(2) =sig0(i,2)-sig0(i,3)
+          ss(3) =sig0(i,1)-sig0(i,3)
+          svm2_0(i) = (ss(1)*ss(1)+ss(2)*ss(2)+ss(3)*ss(3))*half + three*   &
+               (sig0(i,4)*sig0(i,4)+sig0(i,5)*sig0(i,5)+sig0(i,6)*sig0(i,6))
+        end do
+      end if
 
 
       call mmodul(1     ,nel     ,pm    ,mat    ,mtn    , &
@@ -707,11 +717,11 @@
 !
           if (iplast == 1) then
 
-        call szsvm_or( &
-        jr0,     js0,     jt0,     cc,   &
-        cg,      g33,     fhour,   sigy, &
-        sigold,  nuu,      smo1,    smo2, &
-        nel,     iint)
+            call szsvm_or( &
+            jr0,     js0,     jt0,     cc,   &
+            cg,      g33,     fhour,   sigy, &
+            svm2_0,  nuu,      smo1,    smo2, &
+            nel,     iint)
           end if
 !
      ! -----------for energy calculation------------
@@ -784,11 +794,11 @@
           enddo
 !
           if (iplast == 1) then
-        call szsvm_or(   &
-        jr0,     js0,     jt0,     cc, &
-        cg,      g33,     fhour,   sigy, &
-        sig0,    nuu,      sm1,     sm2,&
-        nel,     iint)
+            call szsvm_or(                  &
+            jr0,     js0,     jt0,     cc,  &
+            cg,      g33,     fhour,   sigy, &
+            svm2_0,   nuu,      sm1,     sm2,&
+            nel,     iint)
           end if
 !
           if (iplast == 1) then

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ssurftag               ../starter/source/groups/ssurftag.F
 !||--- called by ------------------------------------------------------
@@ -43,6 +44,7 @@ C-----------------------------------------------
       USE SURF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARKEY
       use element_mod , only : nixs,nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -90,7 +92,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER N,J,K,JS,KS,II,JJ,K1,K2,LL,FACE(4),FC10(3),NN,KK,I1,
+      INTEGER J,K,JS,KS,II,JJ,K1,K2,LL,FACE(4),FC10(3),NN,KK,I1,
      .        NI(4),NS(4),MI(4),MS(4),NMIN,MMIN,NF,MF,IPERM,N1,N2,I
       INTEGER FACES(4,6),PWR(7),
      .        FACES10(3,6),NNS,ISHEL,ISEG
@@ -115,7 +117,8 @@ C-----------------------------------------------
      .             4,5,1/
       DATA PWR/1,2,4,8,16,32,64/
 C=======================================================================
-      ALLOCATE(NODTAG(NUMNOD),FASTAG(NUMELS))
+      call my_alloc(NODTAG, NUMNOD, "NODTAG")
+      call my_alloc(FASTAG, NUMELS, "FASTAG")
 
       FASTAG=0
 C
@@ -508,7 +511,8 @@ C---
         ENDDO   !       end of JS_ELM=1,NUM_ELM
       ENDDO     !       end JS_PART=1,NUM_PART
 C-----------
-      DEALLOCATE(NODTAG,FASTAG)
+      CALL MY_DEALLOC(NODTAG)
+      CALL MY_DEALLOC(FASTAG)
       RETURN
       END
 
@@ -541,13 +545,17 @@ C-----------------------------------------------
       RETURN
       END
 !||====================================================================
-!||    surfext_tagn   ../starter/source/groups/ssurftag.F
+!||    surfext_tagn              ../starter/source/groups/ssurftag.F
 !||--- called by ------------------------------------------------------
-!||    lectur         ../starter/source/starter/lectur.F
+!||    lectur                    ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE SURFEXT_TAGN(IXS    ,KNOD2ELS,NOD2ELS  ,IXS10   ,FASTAG,itab)
       use element_mod , only : nixs
+      use my_alloc_mod
+      use q1np_restart_mod , only : numelq1np_g, kq1np_tab_inv
+      use q1np_get_elem_nodes_mod , only : q1np_get_elem_nodes
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -561,11 +569,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER N,J,K,JS,KS,II,JJ,K1,K2,LL,FACE(4),FC10(3),NN,KK,I1,
-     .        NI(4),NS(4),MI(4),MS(4),NMIN,MMIN,NF,MF,IPERM,N1,N2,I
+      INTEGER K,JS,KS,II,JJ,K1,K2,NN,KK,
+     .        NI(4),NS(4),MI(4),MS(4),NMIN,MMIN,NF,MF,IPERM,N1
       INTEGER FACES(4,6),PWR(7)
       INTEGER, DIMENSION(:), ALLOCATABLE :: NODTAG
-      INTEGER ::  FACES10(3,6),NNS
+      INTEGER ::  FACES10(3,6)
+      INTEGER NSJS8(8),NSKS8(8),IQ_JS,IQ_KS
       DATA FACES/4,3,2,1,
      .           5,6,7,8,
      .           1,2,6,5,
@@ -580,13 +589,22 @@ C-----------------------------------------------
      .             4,5,1/
       DATA PWR/1,2,4,8,16,32,64/
 Co=======================================================================
-        ALLOCATE(NODTAG(NUMNOD))
+        call my_alloc(NODTAG, NUMNOD, "NODTAG")
         FASTAG=0
 C       Tag nodes External surface (solid)
         DO JS=1,NUMELS
+C         Q1NP element : rebuild the 8 corner nodes from the Q1NP tables
+          IQ_JS=0
+          IF(NUMELQ1NP_G>0) IQ_JS=KQ1NP_TAB_INV(JS)
+          IF(IQ_JS>0)CALL Q1NP_GET_ELEM_NODES(IQ_JS,NSJS8)
+C          
           DO JJ=1,6
             DO II=1,4
-              NS(II)=IXS(FACES(II,JJ)+1,JS)
+              IF(IQ_JS>0)THEN
+                NS(II)=NSJS8(FACES(II,JJ))
+              ELSE
+                NS(II)=IXS(FACES(II,JJ)+1,JS)
+              END IF
             END DO
 C
 C           keep only 1 occurrence of each node (triangles, degenerated cases...)
@@ -624,11 +642,19 @@ C           looks for an elt sharing the face.
             DO K=KNOD2ELS(NI(1))+1,KNOD2ELS(NI(1)+1)
               KS=NOD2ELS(K)
               IF(KS==JS .OR. KS > NUMELS8+NUMELS10)CYCLE
+C             Q1NP neighbour : rebuild the 8 corner nodes from the Q1NP tables
+              IQ_KS=0
+              IF(NUMELQ1NP_G>0)IQ_KS=KQ1NP_TAB_INV(KS)
+              IF(IQ_KS>0) CALL Q1NP_GET_ELEM_NODES(IQ_KS,NSKS8)
               DO II=1,NF
                 NODTAG(NI(II))=0
               END DO
               DO II=1,8
-                NODTAG(IXS(II+1,KS))=1
+                IF(IQ_KS>0)THEN
+                  NODTAG(NSKS8(II))=1
+                ELSE
+                  NODTAG(IXS(II+1,KS))=1
+                END IF
               END DO
               NN=0
               DO II=1,NF
@@ -637,7 +663,11 @@ C           looks for an elt sharing the face.
               IF(NN==NF)THEN
                 DO KK=1,6
             DO II=1,4
-              MS(II)=IXS(FACES(II,KK)+1,KS)
+              IF(IQ_KS>0)THEN
+                MS(II)=NSKS8(FACES(II,KK))
+              ELSE
+                MS(II)=IXS(FACES(II,KK)+1,KS)
+              END IF
             END DO
 C
 C                 keep only 1 occurrence of each node (triangles, degenerated cases...)
@@ -682,7 +712,7 @@ C                    Factag (JS) Less Face JJ
           END DO
         END DO
 C-----------
-      DEALLOCATE(NODTAG)
+      CALL MY_DEALLOC(NODTAG)
       RETURN
       END
 

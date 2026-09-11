@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !> \brief Writing TH/SURF tabs in restart file
 !! \details  Load pressures option
@@ -58,7 +59,7 @@ C-----------------------------------------------
       INTEGER , INTENT(IN) :: ILOADP(SIZLOADP,NLOADP)     !< Integer tabs for load pressures (/PFLUID, /PBLAST, /LOAD/PRESSURE )
       INTEGER , INTENT(IN) :: NODLOCAL(NUMNOD)   !< table of local nodes
       INTEGER , INTENT(IN) :: CEP(LEN_CEP)          !< Proc to which belong the element
-      TYPE (TH_SURF_) , INTENT(INOUT) :: TH_SURF !< Type for /TH/SURF and load pressures output tabs
+      TYPE (TH_SURF_) , INTENT(IN) :: TH_SURF !< Type for /TH/SURF and load pressures output tabs
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -73,8 +74,8 @@ C         Writing TH/SURF tabs in restart file
 C          /PFLUID , /PBLAST, /LOADP_HYD option
 C-----------------------------------------------
 
-      CALL MY_ALLOC(KSEGS_L,TH_SURF%S_LOADP_KSEGS)
-      CALL MY_ALLOC(SEGS_L,TH_SURF%S_LOADP_SEGS)
+      CALL MY_ALLOC(KSEGS_L,TH_SURF%S_LOADP_KSEGS,"KSEGS_L")
+      CALL MY_ALLOC(SEGS_L,TH_SURF%S_LOADP_SEGS,"SEGS_L")
       KSEGS_L = 0
       SEGS_L = 0
       NSEGP  = 0      
@@ -102,7 +103,8 @@ C-----------------------------------------------
       CALL WRITE_I_C(SEGS_L,KSEGS_L(NSEGPL+1))
       LEN_IA = LEN_IA + NSEGPL+3+ KSEGS_L(NSEGPL+1)
 
-      DEALLOCATE(KSEGS_L,SEGS_L)
+      CALL MY_DEALLOC(KSEGS_L)
+      CALL MY_DEALLOC(SEGS_L)
 
       RETURN
       END

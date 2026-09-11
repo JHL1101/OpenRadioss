@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i7ass33      ../engine/source/interfaces/int07/i7ass3.F
 !||--- called by ------------------------------------------------------
@@ -1790,15 +1791,17 @@ C
       RETURN
       END
 !||====================================================================
-!||    i7assigeo0     ../engine/source/interfaces/int07/i7ass3.F
+!||    i7assigeo0       ../engine/source/interfaces/int07/i7ass3.F
 !||--- called by ------------------------------------------------------
-!||    i7ass33        ../engine/source/interfaces/int07/i7ass3.F
+!||    i7ass33          ../engine/source/interfaces/int07/i7ass3.F
 !||--- calls      -----------------------------------------------------
-!||    ig3donebasis   ../engine/source/elements/ige3d/ig3donebasis.F
+!||    ig3donebasis     ../engine/source/elements/ige3d/ig3donebasis.F
 !||--- uses       -----------------------------------------------------
-!||    h3d_mod        ../engine/share/modules/h3d_mod.F
-!||    message_mod    ../engine/share/message_module/message_mod.F
-!||    tri7box        ../engine/share/modules/tri7box.F
+!||    h3d_mod          ../engine/share/modules/h3d_mod.F
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE I7ASSIGEO0(JLT   ,IX1  ,IX2  ,IX3  ,IX4    ,
      2                  NSVG  ,H1   ,H2   ,H3   ,H4     ,STIF ,
@@ -1816,6 +1819,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -1910,7 +1915,9 @@ c      print*,'JS main ', JS, KXIG3D(2,JS)
           W_IGEO(J)=1!WIGE(K)
         ENDDO
 
-        ALLOCATE(KNOTLOCX(PX+1,NCTRL),KNOTLOCY(PY+1,NCTRL),KNOTLOCZ(PZ+1,NCTRL))
+        call my_alloc(KNOTLOCX, PX+1, NCTRL, "KNOTLOCX")
+        call my_alloc(KNOTLOCY, PY+1, NCTRL, "KNOTLOCY")
+        call my_alloc(KNOTLOCZ, PZ+1, NCTRL, "KNOTLOCZ")
 
         DO J=1,NCTRL
           DO K=1,PX+1
@@ -1959,7 +1966,9 @@ c      print*,'JS main ', JS, KXIG3D(2,JS)
           STIFN(K) = STIFN(K) + STIF(I)*ABS(H1(I))*R(J)
         ENDDO
 
-        DEALLOCATE(KNOTLOCX,KNOTLOCY,KNOTLOCZ)
+        call my_dealloc(KNOTLOCX)
+        call my_dealloc(KNOTLOCY)
+        call my_dealloc(KNOTLOCZ)
 
       ENDDO
 
@@ -2000,7 +2009,9 @@ c      print*,'JS main ', JS, KXIG3D(2,JS)
           W_IGEO(J)=1!WIGE(K)
         ENDDO
 
-        ALLOCATE(KNOTLOCX(PX+1,NCTRL),KNOTLOCY(PY+1,NCTRL),KNOTLOCZ(PZ+1,NCTRL))
+        call my_alloc(KNOTLOCX, PX+1, NCTRL, "KNOTLOCX")
+        call my_alloc(KNOTLOCY, PY+1, NCTRL, "KNOTLOCY")
+        call my_alloc(KNOTLOCZ, PZ+1, NCTRL, "KNOTLOCZ")
 
         DO J=1,NCTRL
           DO K=1,PX+1
@@ -2058,7 +2069,9 @@ c     7     PY-1      ,PZ-1      ,0)
           STIFN(K) = STIFN(K) + STIF(I)*ABS(H2(I))*R(J)
         ENDDO
 
-        DEALLOCATE(KNOTLOCX,KNOTLOCY,KNOTLOCZ)
+        call my_dealloc(KNOTLOCX)
+        call my_dealloc(KNOTLOCY)
+        call my_dealloc(KNOTLOCZ)
 
       ENDDO
 
@@ -2099,7 +2112,9 @@ c     7     PY-1      ,PZ-1      ,0)
           W_IGEO(J)=1!WIGE(K)
         ENDDO
 
-        ALLOCATE(KNOTLOCX(PX+1,NCTRL),KNOTLOCY(PY+1,NCTRL),KNOTLOCZ(PZ+1,NCTRL))
+        call my_alloc(KNOTLOCX, PX+1, NCTRL, "KNOTLOCX")
+        call my_alloc(KNOTLOCY, PY+1, NCTRL, "KNOTLOCY")
+        call my_alloc(KNOTLOCZ, PZ+1, NCTRL, "KNOTLOCZ")
 
         DO J=1,NCTRL
           DO K=1,PX+1
@@ -2157,7 +2172,9 @@ c     7     PY-1      ,PZ-1      ,0)
           STIFN(K) = STIFN(K) + STIF(I)*ABS(H3(I))*R(J)
         ENDDO
 
-        DEALLOCATE(KNOTLOCX,KNOTLOCY,KNOTLOCZ)
+        call my_dealloc(KNOTLOCX)
+        call my_dealloc(KNOTLOCY)
+        call my_dealloc(KNOTLOCZ)
 
       ENDDO
 
@@ -2198,7 +2215,9 @@ c     7     PY-1      ,PZ-1      ,0)
           W_IGEO(J)=1!WIGE(K)
         ENDDO
 
-        ALLOCATE(KNOTLOCX(PX+1,NCTRL),KNOTLOCY(PY+1,NCTRL),KNOTLOCZ(PZ+1,NCTRL))
+        call my_alloc(KNOTLOCX, PX+1, NCTRL, "KNOTLOCX")
+        call my_alloc(KNOTLOCY, PY+1, NCTRL, "KNOTLOCY")
+        call my_alloc(KNOTLOCZ, PZ+1, NCTRL, "KNOTLOCZ")
 
         DO J=1,NCTRL
           DO K=1,PX+1
@@ -2251,7 +2270,9 @@ c        print*,'A(J)',A(1,K),A(2,K),A(3,K)
           STIFN(K) = STIFN(K) + STIF(I)*ABS(H4(I))*R(J)
         ENDDO
 
-        DEALLOCATE(KNOTLOCX,KNOTLOCY,KNOTLOCZ)
+        call my_dealloc(KNOTLOCX)
+        call my_dealloc(KNOTLOCY)
+        call my_dealloc(KNOTLOCZ)
 C
       ENDDO
 
@@ -2307,7 +2328,9 @@ C-------------------------------------
         IDZ2 = KXIG3D(11,JS)
 
 
-        ALLOCATE(KNOTLOCX(PX+1,NCTRL),KNOTLOCY(PY+1,NCTRL),KNOTLOCZ(PZ+1,NCTRL))
+        call my_alloc(KNOTLOCX, PX+1, NCTRL, "KNOTLOCX")
+        call my_alloc(KNOTLOCY, PY+1, NCTRL, "KNOTLOCY")
+        call my_alloc(KNOTLOCZ, PZ+1, NCTRL, "KNOTLOCZ")
 
         DO J=1,NCTRL
           DO K=1,PX+1
@@ -2361,7 +2384,9 @@ C-------------------------------------
           FZ(J) = FZ(J) + R(J)*FZI(I)
         ENDDO
 
-        DEALLOCATE(KNOTLOCX,KNOTLOCY,KNOTLOCZ)
+        call my_dealloc(KNOTLOCX)
+        call my_dealloc(KNOTLOCY)
+        call my_dealloc(KNOTLOCZ)
 
       ENDDO
 

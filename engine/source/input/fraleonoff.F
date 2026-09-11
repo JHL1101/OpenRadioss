@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fraleonoff             ../engine/source/input/fraleonoff.F
 !||--- called by ------------------------------------------------------
@@ -28,6 +29,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    wriusc2                ../engine/source/input/wriusc2.F
 !||--- uses       -----------------------------------------------------
 !||    message_mod            ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||====================================================================
       SUBROUTINE FRALEONOFF (IKAD, KEY0, KALEONOFF, NBALEONOFF)
@@ -39,6 +42,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -60,7 +65,7 @@ C-----------------------------------------------
       DO II = 1, NBALEONOFF
          READ (IUSC1, REC = IKAD(IKEY) + K, FMT = '(7X, A, 37X, I10)')
      .        KEY1, NB_PARTS
-         ALLOCATE (PART_IDS(NB_PARTS))
+         call my_alloc(PART_IDS, NB_PARTS, "PART_IDS")
          IF (KEY1(1:2) == 'ON') THEN
             DO KK = 1, NB_PARTS
                CALL WRIUSC2 (IKAD(IKEY) + KK + K, 1, KEY0(IKEY))
@@ -75,7 +80,7 @@ C-----------------------------------------------
                WRITE (IIN, '(I10, I10)') PART_IDS(KK), 0
             ENDDO
          ENDIF
-         DEALLOCATE (PART_IDS)
+         call my_dealloc(PART_IDS)
          K = K + 1 + NB_PARTS
       ENDDO
  9990 CONTINUE

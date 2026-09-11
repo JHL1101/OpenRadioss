@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cbainit3                  ../starter/source/elements/shell/coqueba/cbainit3.F
 !||--- called by ------------------------------------------------------
@@ -152,11 +153,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,N,II,IUN,NDEPAR,IGTYP,IGMAT,NUVAR,IMAT,IPROP,PROPID,
+      INTEGER I,J,K,N,II,NDEPAR,IGTYP,IGMAT,NUVAR,IMAT,IPROP,PROPID,
      .   IPG,NPG,PTF,PTM,PTS,IXEL,IREP,NLAY,NPTR,NPTS,NPTT,IFAIL,
-     .   IL,IR,IS,IT,LENF,LENM,LENS,
+     .   IL,IR,IS,LENF,LENM,LENS,
      .   LENFP,LENMP,LENEPINCHXZ,LENEPINCHYZ,LENEPINCHZZ,
-     .   IPANG,IPTHK,IPPOS, ILAY,I4,MPT,LAYNPT_MAX,LAY_MAX,NPT_ALL
+     .   MPT,LAYNPT_MAX,LAY_MAX,NPT_ALL
       INTEGER JJ(9)
       INTEGER , DIMENSION(MVSIZ) :: IX1,IX2,IX3,IX4,IORTHLOC,MAT,PID,NGL
 c
@@ -174,13 +175,11 @@ c
       INTEGER, DIMENSION(:),ALLOCATABLE::MATLY
       my_real, DIMENSION(:,:),ALLOCATABLE :: POSLY
 C-----------------------------------------------
-      TYPE(BUF_LAY_) ,POINTER :: BUFLY
-      TYPE(L_BUFEL_) ,POINTER :: LBUF     
       TYPE(G_BUFEL_) ,POINTER :: GBUF     
 C=======================================================================
       ! Allocate buffers
-      CALL MY_ALLOC(MATLY,MVSIZ*LAY_MAX)
-      CALL MY_ALLOC(POSLY,MVSIZ,LAY_MAX*LAYNPT_MAX)
+      CALL MY_ALLOC(MATLY,MVSIZ*LAY_MAX,"MATLY")
+      CALL MY_ALLOC(POSLY,MVSIZ,LAY_MAX*LAYNPT_MAX,"POSLY")
 
       GBUF => ELBUF_STR%GBUF
 c
@@ -226,13 +225,13 @@ C
       IF(NPT_ALL == 0 ) NPT_ALL = NLAY
       IF (IPARG(6) == 0.OR.NPT==0) MPT=0
       IF((IGTYP == 51 .OR. IGTYP == 52) .AND. IDRAPE > 0) THEN
-         ALLOCATE(DIR_A(NPT_ALL*NEL*2))
-         ALLOCATE(DIR_B(NPT_ALL*NEL*2))
+         call my_alloc(DIR_A, NPT_ALL*NEL*2, "DIR_A")
+         call my_alloc(DIR_B, NPT_ALL*NEL*2, "DIR_B")
          DIR_A = ZERO
          DIR_B = ZERO
       ELSE
-         ALLOCATE(DIR_A(NLAY*NEL*2))
-         ALLOCATE(DIR_B(NLAY*NEL*2))
+         call my_alloc(DIR_A, NLAY*NEL*2, "DIR_A")
+         call my_alloc(DIR_B, NLAY*NEL*2, "DIR_B")
          DIR_A = ZERO
          DIR_B = ZERO
          NPT_ALL = NLAY 
@@ -716,10 +715,10 @@ C------------
         ENDDO
       ENDIF
 c-----------
-      DEALLOCATE(DIR_A)
-      DEALLOCATE(DIR_B)      
-      DEALLOCATE(MATLY)
-      DEALLOCATE(POSLY)
+      CALL MY_DEALLOC(DIR_A)
+      CALL MY_DEALLOC(DIR_B)      
+      CALL MY_DEALLOC(MATLY)
+      CALL MY_DEALLOC(POSLY)
 
       RETURN
       END

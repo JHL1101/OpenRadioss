@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
         
 !||====================================================================
 !||    split_cfd_solide       ../starter/source/spmd/split_cfd_solide.F
@@ -49,9 +50,11 @@ C-----------------------------------------------
         USE SPLIT_CFD_MOD
         USE ALE_CONNECTIVITY_MOD
         use element_mod , only : nixs
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_move_alloc_mod, only : my_move_alloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -88,7 +91,7 @@ C ----------------------------------------
         !       allocation of ALE_ELM (overestimation of the size)
         SIZE_ALE_ELM(1:NSPMD) = NUMELS/NSPMD+1
         DO ISPMD=1,NSPMD
-                ALLOCATE( ALE_ELM(ISPMD)%SOL_ID(SIZE_ALE_ELM(ISPMD)) )
+                call my_alloc(ALE_ELM(ISPMD)%SOL_ID, SIZE_ALE_ELM(ISPMD), "ALE_ELM(ISPMD)%SOL_ID")
         ENDDO
         !       -----------------------------
         II(1:NSPMD) = 0
@@ -122,9 +125,9 @@ C ----------------------------------------
                       !       need to check the size for small test, ie. when NUMELS < NSPMS
                       MIN_SIZE=MAX(1,5* NUMELS/ ( 4*NSPMD ))
                       NEW_SIZE_II = SIZE_ALE_ELM(ISPMD) + MIN_SIZE
-                      ALLOCATE( TMP( NEW_SIZE_II ) )
+                      call my_alloc(TMP, NEW_SIZE_II, "TMP")
                       TMP(1:SIZE_ALE_ELM(ISPMD)) = ALE_ELM(ISPMD)%SOL_ID( 1:SIZE_ALE_ELM(ISPMD) )
-                      CALL MOVE_ALLOC(FROM=TMP,TO=ALE_ELM(ISPMD)%SOL_ID)
+                      call my_move_alloc(TMP, ALE_ELM(ISPMD)%SOL_ID, "ALE_ELM(ISPMD)%SOL_ID")
                       SIZE_ALE_ELM(ISPMD) = NEW_SIZE_II
                     ENDIF
                     ALE_ELM(ISPMD)%SOL_ID(II(ISPMD)) = I
@@ -145,6 +148,7 @@ C ----------------------------------------
 !||    deallocate_split_cfd_solide   ../starter/source/spmd/split_cfd_solide.F
 !||--- called by ------------------------------------------------------
 !||    lectur                        ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    split_cfd_mod                 ../starter/share/modules1/split_cfd_mod.F
 !||====================================================================
@@ -159,6 +163,7 @@ C ----------------------------------------
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
+        USE MY_ALLOC_MOD
         USE SPLIT_CFD_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -182,7 +187,7 @@ C-----------------------------------------------
         INTEGER :: ISPMD
 C ----------------------------------------
         DO ISPMD=1,NSPMD
-                IF( ALLOCATED(ALE_ELM(ISPMD)%SOL_ID) ) DEALLOCATE( ALE_ELM(ISPMD)%SOL_ID )
+                IF( ALLOCATED(ALE_ELM(ISPMD)%SOL_ID) ) CALL MY_DEALLOC(ALE_ELM(ISPMD)%SOL_ID)
         ENDDO
         RETURN
         END SUBROUTINE DEALLOCATE_SPLIT_CFD_SOLIDE

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    double_flot_ieee   ../starter/source/elements/shell/coque/cinmas.F
 !||====================================================================
@@ -45,9 +46,7 @@ C-----------------------------------------------
 c___________________________________________________          
       double precision
      .    R8_LOCAL,R8_DEUXP43,AA
-      INTEGER*8 I8_DEUXP43
-      DATA I8_DEUXP43 /'80000000000'x/
-      DATA R8_DEUXP43 /'42A0000000000000'x/
+      PARAMETER (R8_DEUXP43 = 2.D0**43)
       INTEGER I
 c___________________________________________________          
 C-----------------------------------------------
@@ -101,11 +100,13 @@ C-----------------------------------------------
       USE DRAPE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use element_mod , only : nixc
+      use my_alloc_mod
 C----------------------------------------------
 C     initialization of nodal masses and inertias
 C----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -237,12 +238,15 @@ C
           DO ILAY=1,NLAY   !  NPT  
               MAX_NPTT = MAX(MAX_NPTT ,ELBUF_STR%BUFLY(ILAY)%NPTT)
           ENDDO
-          ALLOCATE(THK_IT(MAX_NPTT),POS_IT(MAX_NPTT))
+          call my_alloc(THK_IT, MAX_NPTT, "THK_IT")
+          call my_alloc(POS_IT, MAX_NPTT, "POS_IT")
        ELSE
-          ALLOCATE(THK_IT(0),POS_IT(0))  
+          call my_alloc(THK_IT, 0, "THK_IT")
+          call my_alloc(POS_IT, 0, "POS_IT")
        ENDIF 
        NLAY_MAX = MAX(NLAY, NPT)
-       ALLOCATE(POSLY(NLAY_MAX*MAX_NPTT),RATIO_THKLY(NLAY_MAX*MAX_NPTT)) 
+       call my_alloc(POSLY, NLAY_MAX*MAX_NPTT, "POSLY")
+       call my_alloc(RATIO_THKLY, NLAY_MAX*MAX_NPTT, "RATIO_THKLY")
 c-----------------------------
       IF ((IGTYP == 17 .OR. IGTYP == 51) .AND. IGMAT < 0 ) THEN
 c-----------------------------
@@ -559,7 +563,7 @@ C
         IPOS = IGEO(99,IPROP)                   
         THICKT = STACK%GEO(1,ISUBSTACK)
         ZSHIFT = GEO(199,IPROP)
-        IF(IPOS == 2 ) ZSHIFT =  -  ZSHIFT /MAX(THICKT,EM20)       
+        IF(IPOS == 2 ) ZSHIFT =ZSHIFT /MAX(THICKT,EM20)       
         IF(IDRAPE == 0 ) THEN                                  
           DO I=LFT,LLT
             EMS(I)=ZERO
@@ -610,7 +614,6 @@ C
                        POS_IT(IT) = POSLY(IPT)*THK(I) 
                     ENDDO 
              ENDIF  ! iint
-            !!SCALE = THK(I)/THICKT
              DO IT=1,NPTT
                   THK_IT(IT) = THK_IT(IT)*SCALE
                   EMS_NPTT = PM(89,MATLY)*THK_IT(IT)*AREA(I)*FOURTH
@@ -727,7 +730,7 @@ C------
                      DO IT=1,NPTT
                        IPT = IPT_ALL + IT
                        THINNING = DRAPE_PLY%RDRAPE(IT,1)
-                       THK_IT(IT)   = THKLY*THINNING/NPTT
+                       THK_IT(IT)   = THKLY*THINNING
                        RATIO_THKLY(IPT) = THK_IT(IT)/THICK_DRAPE
                        IF (IPT  == 1) THEN
                          POSLY(IPT) = ZSHIFT + HALF*RATIO_THKLY(IPT)
@@ -737,7 +740,7 @@ C------
                        ENDIF ! IF (IPT ==  1)
                        POS_IT(IT)   = POSLY(IPT)*THK(I)
                      ENDDO  ! nptt
-                ELSEIF(IINT == 2) THEN
+                ELSEIF(IINT == 2) THEN !  available only with old thinning 
                      THKLY   = STACK%GEO(I3 ,ISUBSTACK)*THICKT ! initial
                      IPID_LY = STACK%IGEO(I1,ISUBSTACK)
                      MATLY   = STACK%IGEO(I2,ISUBSTACK) 
@@ -952,7 +955,7 @@ C----------------------------------------------
         IPOS = IGEO(99,IPROP)                   
         THICKT  = STACK%GEO(1,ISUBSTACK)
         ZSHIFT = GEO(199,IPROP)
-        IF(IPOS == 2 ) ZSHIFT =  -  ZSHIFT /MAX(THICKT,EM20)       
+        IF(IPOS == 2 ) ZSHIFT =ZSHIFT /MAX(THICKT,EM20)       
 C         
         IF(IDRAPE == 0) THEN
            DO I=LFT,LLT
@@ -1050,10 +1053,10 @@ C
         IPPOS  =  IPTHK + NLAY   !  NPT
         NTHK   =  IPPOS + NLAY   !  NPT 
         IPOS = IGEO(99,IPROP) 
-       IINT = IGEO(47,IPROP)                   
+        IINT = IGEO(47,IPROP)                   
         THICKT  = STACK%GEO(1,ISUBSTACK)
         ZSHIFT = GEO(199,IPROP)
-        IF(IPOS == 2 ) ZSHIFT =  -  ZSHIFT /MAX(THICKT,EM20)       
+        IF(IPOS == 2 ) ZSHIFT = ZSHIFT /MAX(THICKT,EM20)       
 C       
         IF(IDRAPE == 0) THEN   
           IF(IPOS == 1) THEN
@@ -1080,7 +1083,7 @@ C
                           IPT = IPT_ALL + IT                                                                            
                           THK_IT(IT) =  RATIO_SLICE*THICKT ! uniform distribution of NPTT through layer    
                           RATIO_THKLY(IPT) = RATIO_SLICE   
-                          IF(IT == 1) THEN
+                          IF(IPT == 1) THEN
                               POSLY(IPT) = ZSHIFT + HALF*RATIO_SLICE ! integr. point "IT" position ratio
                            ELSE
                               POSLY(IPT) = POSLY(IPT-1) + RATIO_SLICE ! integr. point "IT" position ratio
@@ -1282,7 +1285,7 @@ C
                        DO IT=1,NPTT                                                                               
                          IPT = IPT_ALL + IT                                                                       
                          THINNING = DRAPE_PLY%RDRAPE(IT,1)                                       
-                         THK_IT(IT)   = THKLY*THINNING/NPTT                                                            
+                         THK_IT(IT)   = THKLY*THINNING                                                           
                          RATIO_THKLY(IPT) = THK_IT(IT)/THICK_DRAPE                                                 
                          IF (IPT == 1) THEN                                                                      
                            POSLY(IPT) = ZSHIFT + HALF*RATIO_THKLY(IPT)                                          
@@ -1292,7 +1295,7 @@ C
                          ENDIF ! IF (IPT == 1)                                                                   
                          POS_IT(IT)   = POSLY(IPT)*THK(I)
                        ENDDO  ! nptt                                                                             
-                    ELSEIF(IINT == 2) THEN
+                    ELSEIF(IINT == 2) THEN ! available only with old thinning 
                        THICKT = STACK%GEO(1,ISUBSTACK)                              
                        THKLY  = STACK%GEO(I3 ,ISUBSTACK)*THICKT ! initial           
                        DO IT=1,NPTT                                                                                  
@@ -1753,7 +1756,10 @@ C----------------------------------------------
            ENDDO
          ENDIF
       ENDIF ! igmat      
-      DEALLOCATE(POSLY,RATIO_THKLY,THK_IT,POS_IT ) 
+      call my_dealloc(POSLY)
+      call my_dealloc(RATIO_THKLY)
+      call my_dealloc(THK_IT)
+      call my_dealloc(POS_IT)
 C-----------
       RETURN
       END

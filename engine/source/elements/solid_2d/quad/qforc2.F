@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    qforc2                 ../engine/source/elements/solid_2d/quad/qforc2.F
 !||--- called by ------------------------------------------------------
@@ -52,6 +53,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    qrota2                 ../engine/source/elements/solid_2d/quad/qrota2.F
 !||    qrrota2                ../engine/source/elements/solid_2d/quad/qrrota2.F
 !||    qvolu2                 ../engine/source/elements/solid_2d/quad/qvolu2.F
+!||    sstra3                 ../engine/source/elements/solid/solide/sstra3.F
 !||--- uses       -----------------------------------------------------
 !||    ale_connectivity_mod   ../common_source/modules/ale/ale_connectivity_mod.F
 !||    ale_mod                ../common_source/modules/ale/ale_mod.F
@@ -230,10 +232,12 @@ C-----------------------------------------------
       my_real :: SUM_EPS(9),SUM_M,SUM_VOL
 
       TYPE(G_BUFEL_) ,POINTER :: GBUF
+      TYPE(L_BUFEL_) ,POINTER :: LBUF     
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
       GBUF => ELBUF_TAB(NG)%GBUF
+      LBUF => ELBUF_TAB(NG)%BUFLY(1)%LBUF(1,1,1)
 c
       IBIDON=0
       IBID = 0
@@ -450,6 +454,14 @@ c
      .   IDEL7NOK,    IDTMIN,      MAXFUNC,
      .   IMON_MAT,    USERL_AVAIL, impl_s,
      .   idyna,       DT         , BID      ,SENSORS)
+ !---------true strain compute w/ laws (type not users-laws)
+       IF (ISTRAIN == 1.AND.MTN /= 11)THEN 
+         CALL SSTRA3(
+     1   EYY,     EZZ,       ETT,      EYZ,
+     2   EZT,     EYT,       LBUF%STRA,WYZ,
+     3   WYY,     WZZ,  GBUF%OFF,      NEL,
+     4   JCVT)
+       ENDIF
 C--------------------------
 C       SYNTHESIS PER MATERIAL (thermics)
 C--------------------------

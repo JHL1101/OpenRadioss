@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !-----------------------------------------------------------------------
 !||====================================================================
 !||    loads_mod                   ../common_source/modules/loads/loads_mod.F90
@@ -40,6 +41,7 @@
 !||    hm_read_cload               ../starter/source/loads/general/cload/hm_read_cload.F
 !||    hm_read_pcyl                ../starter/source/loads/general/load_pcyl/hm_read_pcyl.F
 !||    hm_read_pload               ../starter/source/loads/general/pload/hm_read_pload.F
+!||    init_h3d_engine             ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    lech3d                      ../engine/source/output/h3d/h3d_build_fortran/lech3d.F
 !||    lectur                      ../engine/source/input/lectur.F
 !||    prelech3d                   ../engine/source/output/h3d/h3d_build_fortran/prelech3d.F90
@@ -75,8 +77,8 @@
           integer :: nload_cyl
           integer :: nload_cload                                          !< nb of concentrated loads
           integer :: nload_pload                                          !< nb of pressure loads
-          integer :: ninivelt                                             !< nb of inivel (/inivel) w/ t_start
-          integer :: ninivelt_g                                           !< max nb of inivel (each domain) w/ t_start
+          integer :: ninivelt                                             !< nb of inivel (/inivel) with t_start
+          integer :: ninivelt_g                                           !< max nb of inivel (each domain) with t_start
           type (press_cyl_) ,dimension(:) ,allocatable   :: load_cyl
           type (domdec_load_), dimension(:), allocatable :: cyl_restart
           type (inivel_), dimension(:), allocatable      :: inivelt

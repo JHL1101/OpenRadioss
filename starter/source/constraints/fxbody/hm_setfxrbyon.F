@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_setfxrbyon          ../starter/source/constraints/fxbody/hm_setfxrbyon.F
 !||--- called by ------------------------------------------------------
@@ -49,6 +50,7 @@ C-----------------------------------------------
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use element_mod , only : nixs,nixc,nixt,nixp,nixr,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -94,7 +96,7 @@ C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
       INTEGER USR2SYS
 C=====================================================================  
-      ALLOCATE (ITAG(NUMNOD))
+      call my_alloc(ITAG, NUMNOD, "ITAG")
 C
       LENMAT = 0
       ADRNOD = 1
@@ -395,11 +397,11 @@ C
       ENDDO ! end loop on flexible bodies
      
 
-      IF (ALLOCATED(ITAG)) DEALLOCATE (ITAG)
+      IF (ALLOCATED(ITAG)) CALL MY_DEALLOC(ITAG)
 C
       RETURN
  999  CALL FREERR(3)
-      IF (ALLOCATED(ITAG)) DEALLOCATE (ITAG)
+      IF (ALLOCATED(ITAG)) CALL MY_DEALLOC(ITAG)
       RETURN
 9999  CALL ANCMSG(MSGID=566,
      .            MSGTYPE=MSGERROR,
@@ -408,7 +410,7 @@ C
      .            C1=TITR,
      .            C2=FXBFILE,
      .            C3=NWLINE)
-      IF (ALLOCATED(ITAG)) DEALLOCATE (ITAG)
+      IF (ALLOCATED(ITAG)) CALL MY_DEALLOC(ITAG)
       RETURN
 C
       END SUBROUTINE HM_SETFXRBYON

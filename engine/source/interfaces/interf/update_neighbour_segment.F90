@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    update_neighbour_segment_mod   ../engine/source/interfaces/interf/update_neighbour_segment.F90
 !||--- called by ------------------------------------------------------
@@ -56,6 +57,8 @@
 !||    get_hashtable_for_neighbour_segment_mod   ../engine/source/interfaces/interf/get_hashtable_for_neighbour_segment.F90
 !||    get_segment_criteria_mod                  ../engine/source/interfaces/interf/get_segment_criteria.F90
 !||    intbufdef_mod                             ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod                              ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                            ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod                             ../common_source/modules/precision_mod.F90
 !||    shooting_node_mod                         ../engine/share/modules/shooting_node_mod.F90
 !||====================================================================
@@ -74,6 +77,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   arguments
@@ -93,7 +98,7 @@
 !                                                   local variables
 ! ----------------------------------------------------------------------------------------------------------------------
           integer :: i,j,k,ijk
-          integer :: nin
+          integer :: nin,nin_2
           integer :: nb_new_segment,total_nb_segment,local_nb_new_segment
           integer :: next_segment
           integer :: nb_connected_segment,nb_r_connected_segment
@@ -148,14 +153,14 @@
 
           ! ------------
           ! allocate some arrays + initialization
-          allocate( list_new_segment(nb_new_segment,6) )
+          call my_alloc(list_new_segment, nb_new_segment, 6, "list_new_segment")
           list_new_segment(1:nb_new_segment,1:6) = 0
-          allocate( new_segment_id(nb_new_segment) )
-          allocate( permutation(nb_new_segment) )
+          call my_alloc(new_segment_id, nb_new_segment, "new_segment_id")
+          call my_alloc(permutation, nb_new_segment, "permutation")
           new_segment_id(1:nb_new_segment) = 0
           permutation(1:nb_new_segment) = 0
           updated_interface_bool = .false. ! global flag to know if the neighbourhood is changing
-          allocate( updated_interface(ninter) ) ! flag per interfaces
+          call my_alloc(updated_interface, ninter, "updated_interface") ! flag per interfaces
           updated_interface(1:ninter) = .false.
           ! ------------
 
@@ -227,9 +232,8 @@
             end if
           end do
           ! ------------
-
-          allocate( segment_pair(total_nb_segment,4,5) )
-          allocate( criteria(total_nb_segment,4) )
+          call my_alloc(segment_pair, total_nb_segment, 4, 5, "segment_pair")
+          call my_alloc(criteria, total_nb_segment, 4, "criteria")
           segment_pair(1:total_nb_segment,1:4,1:5) = 0
           criteria(1:nb_new_segment,1:4) = -ONEP01
           ! --------------------------
@@ -237,7 +241,6 @@
           !   for each new active segment :
           !     * loop the local segment to compute the criteria (r_buffer)
           !     * loop the remote segment to compute the criteria (r_buffer_2)
-          seg_id = nb_new_segment
           do i=1,nb_new_segment
             segment_id = list_new_segment(permutation(i),3) ! get the global segment id
             local_segment_id = list_new_segment(permutation(i),6) ! get the local segment id
@@ -284,16 +287,15 @@
 
                 ierror = -1
                 call c_hash_find( segment_hash_id,n_segment_id+ &
-                  shoot_struct%shift_interface2(list_new_segment(permutation(i),5)) ,ierror ) ! check if "n_segment id" is already in the hash table
+                  shoot_struct%shift_interface2(nin) ,ierror ) ! check if "n_segment id" is already in the hash table
                 if(ierror==-1) then  ! no --> need to add it
                   seg_id = seg_id + 1
                   call c_hash_insert( segment_hash_id,n_segment_id+  &
-                    shoot_struct%shift_interface2(list_new_segment(permutation(i),5)),seg_id )
+                    shoot_struct%shift_interface2(nin),seg_id )
                   n_seg_id = seg_id
                 else
                   n_seg_id = ierror
                 endif
-
                 n_normal(1) = r_buffer(proc_id)%my_real_array_1d(my_offset_3 + 3*(j-1)+1)
                 n_normal(2) = r_buffer(proc_id)%my_real_array_1d(my_offset_3 + 3*(j-1)+2)
                 n_normal(3) = r_buffer(proc_id)%my_real_array_1d(my_offset_3 + 3*(j-1)+3)
@@ -301,7 +303,6 @@
                 n_vconvexity(1) = r_buffer(proc_id)%my_real_array_1d(my_offset_8 + 3*(j-1)+1)
                 n_vconvexity(2) = r_buffer(proc_id)%my_real_array_1d(my_offset_8 + 3*(j-1)+2)
                 n_vconvexity(3) = r_buffer(proc_id)%my_real_array_1d(my_offset_8 + 3*(j-1)+3)
-
                 ! -------
                 if(segment_id/=n_segment_id.and.already_a_neighbour==0.and.segment_pair(n_seg_id,n_iedge_id,1)==0) then
                   call get_segment_criteria( convexity,normal,n_vconvexity )
@@ -356,9 +357,11 @@
                   my_iedge_2 = my_integer
                   my_integer = transfer(r_buffer_2(r_proc_id)%my_real_array_1d(r_address + 7),my_int_variable) ! get the number of r connected segment
                   nb_r_connected_segment = my_integer
+                  my_integer = transfer(r_buffer_2(r_proc_id)%my_real_array_1d(r_address+5),my_int_variable) ! get the interface id
+                  nin_2 = my_integer
 
                   ! check if the segment in the r_buffer_2 is the same new segment
-                  if((segment_id_2==segment_id).and.(my_iedge_2==my_iedge)) then
+                  if((segment_id_2==segment_id).and.(my_iedge_2==my_iedge).and.(nin==nin_2)) then
 
 
                     my_offset_1 = r_address + 7
@@ -391,11 +394,11 @@
 
                       ierror = -1
                       call c_hash_find( segment_hash_id,n_segment_id+ &
-                        shoot_struct%shift_interface2(list_new_segment(permutation(i),5)) ,ierror ) ! check if "n_segment id" is already in the hash table
+                        shoot_struct%shift_interface2(nin) ,ierror ) ! check if "n_segment id" is already in the hash table
                       if(ierror==-1) then  ! no --> need to add it
                         seg_id = seg_id + 1
                         call c_hash_insert( segment_hash_id,n_segment_id+  &
-                          shoot_struct%shift_interface2(list_new_segment(permutation(i),5)),seg_id )
+                          shoot_struct%shift_interface2(nin),seg_id )
                         n_seg_id = seg_id
                       else
                         n_seg_id = ierror
@@ -517,10 +520,10 @@
           endif
           ! ---------------------------
 
-          deallocate( list_new_segment )
-          deallocate( new_segment_id )
-          deallocate( permutation )
-          deallocate( criteria )
+          call my_dealloc(list_new_segment)
+          call my_dealloc(new_segment_id)
+          call my_dealloc(permutation)
+          call my_dealloc(criteria)
 
           call c_delete_hash( segment_hash_id )
 

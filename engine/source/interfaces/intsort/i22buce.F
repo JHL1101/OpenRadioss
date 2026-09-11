@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22buce                ../engine/source/interfaces/intsort/i22buce.F
 !||--- called by ------------------------------------------------------
@@ -39,6 +40,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i22edge_mod            ../common_source/modules/interfaces/cut-cell-buffer_mod.F
 !||    i22tri_mod             ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    message_mod            ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    tri7box                ../engine/share/modules/tri7box.F
 !||====================================================================
        SUBROUTINE I22BUCE(
@@ -71,6 +74,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -84,8 +89,8 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER IPARI(NPARI), ISKIP
-      INTEGER NMN,  NSN, NOINT,IDT,INACTI,IFQ, NIN, NSNR,NSNROLD
-      INTEGER N_CAND_B
+      INTEGER NMN,  NSN, NOINT,INACTI,IFQ, NIN, NSNROLD
+!      INTEGER N_CAND_B
       INTEGER IRECT(4,*),NSV(*),MWAG(*), RENUM(*),NUM_IMP, ITASK
       INTEGER CAND_E(*),CAND_B(*),IFPEN(*), IXS(NIXS,*), BUFBRIC(NBRIC)
       INTEGER NCONTACT,ESHIFT,ILD,NB_N_B,IGAP,NCONT,INTTH,I_MEM,NBRIC
@@ -96,29 +101,25 @@ C-----------------------------------------------
       my_real
      .   X(3,*),  STFN(*),
      .   STF(*)
-      INTEGER :: CANDB, CANDE, NB_SHORT, IPOS_, IREF,ILEN,IVAL
+!      INTEGER :: CANDB, CANDE, NB_SHORT, IPOS_, IREF,ILEN,IVAL
       TYPE(t_ale_connectivity), INTENT(IN) :: ALE_CONNECTIVITY
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      TYPE(BRICK_ENTITY),  DIMENSION(:),ALLOCATABLE :: BRICK_GRID
-      TYPE(EDGE_ENTITY),   DIMENSION(:),ALLOCATABLE ::  EDGE_GRID
+!      TYPE(BRICK_ENTITY),  DIMENSION(:),ALLOCATABLE :: BRICK_GRID
+!      TYPE(EDGE_ENTITY),   DIMENSION(:),ALLOCATABLE ::  EDGE_GRID
             
-      INTEGER I_ADD_MAX,ICUR
-      PARAMETER (I_ADD_MAX = 1001)
 
-      INTEGER I, J,  I_ADD, IP0, IP1, MAXSIZ,
-     .        ADD(2,I_ADD_MAX), LOC_PROC, N, ISZNSNR,
-     .        NSNFIOLD(NSPMD)
+      INTEGER I, J, IP0, ISZNSNR
      
       my_real MARGE, AAA, BID
 
-      CHARACTER*8 KEY
+!      CHARACTER*8 KEY
 
-      INTEGER                            :: NCAND, NBF, NBL, SOMB, SOME, IPA
-      INTEGER                            :: TMP1, TMP2, IPOS
+      INTEGER                            :: NCAND
+      INTEGER                            :: IPOS
       INTEGER, ALLOCATABLE, DIMENSION(:) :: IFIRST, ILAST
-      CHARACTER*12 ::filename    
+!      CHARACTER*12 ::filename    
       
       INTEGER, ALLOCATABLE, DIMENSION(:) :: order, VALUE
       
@@ -248,7 +249,8 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
       print *, "  |------------i22buce.F----------|"
       print *, "  |       LISTE DES CANDIDATS     |"
       print *, "  |-------------------------------|"
-        allocate(order(ii_stok) ,VALUE(II_STOK))
+        call my_alloc(order, ii_stok, "order")
+        call my_alloc(VALUE, II_STOK, "VALUE")
         MIN2 = MINVAL(ABS(CAND_E(1:II_STOK)))
         R2 = MAXVAL(ABS(CAND_E(1:II_STOK)))-MIN2
         DO I=1,II_STOK
@@ -265,7 +267,8 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
      .           "avec-",NINT(IRECT_L(1:4,IABS(CAND_E(ORDER(I)))))   !negative value means that there is no intersection at all for this couple.
           endif
         END DO
-        deallocate(order,value)
+        call my_dealloc(order)
+        call my_dealloc(value)
       end if
 !-----------------debug
 
@@ -301,8 +304,11 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
       ! these are necessary to load the appropriate contact forces
       IF(ITASK==0)THEN
         ALLOCATE(ITAGB(1:NBRIC))
+! TODO: non-default lower bound, convert manually
         ALLOCATE(IFIRST(1:NBRIC))  !first occurrence of the brick in the candidate list
+! TODO: non-default lower bound, convert manually
         ALLOCATE(ILAST(1:NBRIC))   !last occurrence of the brick in the candidate list
+! TODO: non-default lower bound, convert manually
         ITAGB(:)  = 0
         IFIRST(:) = 0
         ILAST(:)  = 0
@@ -319,9 +325,9 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
           ENDIF                          
         ENDDO!next I
         NCANDB = SUM(ITAGB(:))    !all intersected or non-intersected bricks without multiple occurrences
-        ALLOCATE(LIST_B(NCANDB))
-        ALLOCATE(IADF(NCANDB))   !start address in CAND_B
-        ALLOCATE(IADL(NCANDB))   !end address in CAND_B
+        call my_alloc(LIST_B, NCANDB, "LIST_B")
+        call my_alloc(IADF, NCANDB, "IADF") !start address in CAND_B
+        call my_alloc(IADL, NCANDB, "IADL") !end address in CAND_B
         IPOS = 0
         DO I=1,NBRIC
           IF(ITAGB(I) == 0)CYCLE                       
@@ -341,13 +347,14 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
       ! negative facet ids designate non-intersecting facets for the concerned brick
       IF(ITASK==0)THEN
         ALLOCATE(ITAGE(1:NIRECT_L))
+! TODO: non-default lower bound, convert manually
         ITAGE(:) = 0
         !loop over the candidate list and tag present bricks
         DO I=1,II_STOK
             ITAGE(IABS(CAND_E(I))) = 1
         ENDDO
         NCANDE = SUM(ITAGE(:))    !all intersected or non-intersected bricks without multiple occurrences
-        ALLOCATE(LIST_E(NCANDE))
+        call my_alloc(LIST_E, NCANDE, "LIST_E")
         IPOS = 0
         DO I=1,NIRECT_L
           IF(ITAGE(I) == 0)CYCLE                                           
@@ -385,7 +392,7 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
       ! #  LINK CAND_E(IDX1) TO LIST_E(IDX2)     #
       ! ########################################## 
       IF(ITASK==0)THEN
-        ALLOCATE(GET_LIST_E_POS_FROM_CAND_E_POS(II_STOK))
+        call my_alloc(GET_LIST_E_POS_FROM_CAND_E_POS, II_STOK, "GET_LIST_E_POS_FROM_CAND_E_POS")
         DO I=1,II_STOK
           GET_LIST_E_POS_FROM_CAND_E_POS(I) = ITAGE(IABS(CAND_E(I)))
         ENDDO
@@ -397,7 +404,8 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
    
       if(itask==0.AND.ibug22_tri==1)then
       
-        allocate(order(NCANDB) ,VALUE(NCANDB))
+        call my_alloc(order, NCANDB, "order")
+        call my_alloc(VALUE, NCANDB, "VALUE")
         order = 0
         !CALL QUICKSORT_I2 !(ORDER,NCANDB,list_b)
       
@@ -421,7 +429,8 @@ C        Tzinf = three_over_4*tzinf! No otherwise we lose neighboring candidates
         !print *, "  IADF=", IADF
         !print *, "  IADL=", IADL
         !print *, ""
-        deallocate(order,VALUE)
+        call my_dealloc(order)
+        call my_dealloc(VALUE)
         
       end if
 
@@ -489,15 +498,15 @@ C -------------------------------------------------------------
       ! #       DECHARGEMENT MEMOIRE             #
       ! ##########################################      
       IF(ITASK==0)THEN
-        DEALLOCATE(ITAGB)
-        DEALLOCATE(ITAGE) 
-        DEALLOCATE(IFIRST)
-        DEALLOCATE(ILAST)
-        DEALLOCATE(IADF)
-        DEALLOCATE(IADL)                
-        DEALLOCATE(LIST_B)      
-        DEALLOCATE(LIST_E)
-        DEALLOCATE(GET_LIST_E_POS_FROM_CAND_E_POS)                              
+        call my_dealloc(ITAGB)
+        call my_dealloc(ITAGE)
+        call my_dealloc(IFIRST)
+        call my_dealloc(ILAST)
+        call my_dealloc(IADF)
+        call my_dealloc(IADL)
+        call my_dealloc(LIST_B)
+        call my_dealloc(LIST_E)
+        call my_dealloc(GET_LIST_E_POS_FROM_CAND_E_POS)
       ENDIF      
 
 

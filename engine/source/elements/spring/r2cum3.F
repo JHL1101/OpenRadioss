@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2cum3      ../engine/source/elements/spring/r2cum3.F
 !||--- called by ------------------------------------------------------
 !||    r23law108   ../engine/source/elements/spring/r23law108.F
+!||    r23law135   ../engine/source/elements/spring/r23law135.F90
 !||    rforc3      ../engine/source/elements/spring/rforc3.F
 !||====================================================================
       SUBROUTINE R2CUM3(
@@ -37,7 +39,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      8   X2,      Y2,      Z2,      IEQUIL,
      9   EXX,     EYX,     EZX,     EXY,
      A   EYY,     EZY,     EXZ,     EYZ,
-     B   EZZ,     NC1,     NC2,     NEL)
+     B   EZZ,     NC1,     NC2,     NEL,
+     C   MTN )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -53,7 +56,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER, INTENT(IN) :: NEL
+      INTEGER, INTENT(IN) :: NEL,MTN
       INTEGER NC1(*),NC2(*),IEQUIL(*)
 C     REAL
       my_real
@@ -93,11 +96,19 @@ C-------------------------
         F(1,NC1(I))=F(1,NC1(I))-FX1(I)
         F(2,NC1(I))=F(2,NC1(I))-FY1(I)
         F(3,NC1(I))=F(3,NC1(I))-FZ1(I)
-        STIFN(NC1(I))=STIFN(NC1(I))+STI(1,I)
+        IF (MTN == 135) THEN
+            STIFN(NC1(I))=STIFN(NC1(I))+TWO*STI(1,I) 
+        ELSE      
+            STIFN(NC1(I))=STIFN(NC1(I))+STI(1,I)
+        ENDIF
         F(1,NC2(I))=F(1,NC2(I))-FX2(I)
         F(2,NC2(I))=F(2,NC2(I))-FY2(I)
         F(3,NC2(I))=F(3,NC2(I))-FZ2(I)
-        STIFN(NC2(I))=STIFN(NC2(I))+STI(2,I)
+        IF (MTN == 135) THEN
+            STIFN(NC2(I))=STIFN(NC2(I))+TWO*STI(2,I)
+        ELSE
+            STIFN(NC2(I))=STIFN(NC2(I))+STI(2,I)
+        ENDIF
       ENDDO
 C-------------------------
 C     MOMENTS

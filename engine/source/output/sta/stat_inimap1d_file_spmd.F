@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_inimap1d_file_spmd         ../engine/source/output/sta/stat_inimap1d_file_spmd.F
 !||--- called by ------------------------------------------------------
@@ -42,6 +43,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    message_mod                     ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod                   ../common_source/modules/ale/multi_fvm_mod.F90
 !||    multimat_param_mod              ../common_source/modules/multimat_param_mod.F90
+!||    my_alloc_mod                    ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                  ../common_source/tools/memory/my_dealloc.F90
 !||    state_inimap_mod                ../engine/share/modules/state_inimap_mod.F
 !||====================================================================
       SUBROUTINE STAT_INIMAP1D_FILE_SPMD(
@@ -71,6 +74,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -110,7 +115,7 @@ C-----------------------------------------------
       my_real LX,LY,LZ
       my_real DX,DY,DZ
       my_real DOTPROD,TOL,XYZ(3),VEL(3),DIST,VECT(3)
-      CHARACTER FILNAM*2048, SHORTNAME*128, CHSTAT*4
+      CHARACTER FILNAM*2048, SHORTNAME*256, CHSTAT*4
       INTEGER XMIN_CELL_ID,YMIN_CELL_ID,ZMIN_CELL_ID,XMAX_CELL_ID,YMAX_CELL_ID,ZMAX_CELL_ID
       INTEGER IS_ITY_1, IS_ITY_2, IS_ITY_7, LAST_CELL,FIRST_CELL,IMAT,NPAR,IADBUF
       INTEGER, ALLOCATABLE, DIMENSION(:) :: IDX     
@@ -151,9 +156,9 @@ C-----------------------------------------------
       !
       IF(.NOT.(ALLOCATED(STATE_INIMAP_BUF))) THEN
         IF(ISPMD/=0)THEN
-          ALLOCATE(STATE_INIMAP_BUF(1))                                                                      
+          ALLOCATE(STATE_INIMAP_BUF(1))
         ELSE
-          ALLOCATE(STATE_INIMAP_BUF(NSPMD))  !process 0 will gather all data
+          ALLOCATE(STATE_INIMAP_BUF(NSPMD)) !process 0 will gather all data
         ENDIF       
       ENDIF
                                                                                                                   
@@ -248,7 +253,7 @@ C-----------------------------------------------
       IF(.NOT.ALLOCATED(MAP_NODES))ALLOCATE(MAP_NODES(3,NNOD))          
       IF(.NOT.ALLOCATED(STATE_INIMAP_BUF(1)%POS_CENTROIDS))ALLOCATE(STATE_INIMAP_BUF(1)%POS_CENTROIDS(NUM_CENTROIDS)) 
       IF(.NOT.ALLOCATED(GET_CELL_FOM_CENTROID))THEN
-        ALLOCATE(GET_CELL_FOM_CENTROID(2,NUM_CENTROIDS))
+        call my_alloc(GET_CELL_FOM_CENTROID, 2, NUM_CENTROIDS, "GET_CELL_FOM_CENTROID")
       ENDIF
   
       IF(NUM_CENTROIDS > 0)THEN
@@ -490,8 +495,8 @@ C-----------------------------------------------
                K=K+1
              ENDIF
           ENDDO
-          IF(ALLOCATED(IDX))DEALLOCATE(IDX)
-          ALLOCATE(IDX(NNOD))
+          IF(ALLOCATED(IDX)) call my_dealloc(IDX)
+          call my_alloc(IDX, NNOD, "IDX")
           DO K=1,NNOD ; IDX(K)=K; ENDDO
           CALL QUICKSORT(MAP_NODES(2,:), IDX, 1, NNOD) 
           TOL=EM10*LENGTH
@@ -572,7 +577,8 @@ C-----------------------------------------------
           NCELL(I)= STATE_INIMAP_BUF(I)%NUM_CENTROIDS ;  
           NCELL_TOT = NCELL_TOT + NCELL(I)         
         ENDDO
-        ALLOCATE(WORK(NPTS_TOT,3),WORK_INDX(NPTS_TOT))
+        call my_alloc(WORK, NPTS_TOT, 3, "WORK")
+        call my_alloc(WORK_INDX, NPTS_TOT, "WORK_INDX")
         !stat_inimap1d_mp.F
         !--gathering velocity into working_array
         !
@@ -620,20 +626,20 @@ C-----------------------------------------------
         !
         !---store in relevant buffer (reallocate)
         !
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%VEL_NODES))DEALLOCATE(STATE_INIMAP_BUF(1)%VEL_NODES)
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_NODES))DEALLOCATE(STATE_INIMAP_BUF(1)%POS_NODES)
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%VEL_NODES)) call my_dealloc(STATE_INIMAP_BUF(1)%VEL_NODES)
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_NODES)) call my_dealloc(STATE_INIMAP_BUF(1)%POS_NODES)
         ALLOCATE(STATE_INIMAP_BUF(1)%VEL_NODES(NPTS_TOT))
         ALLOCATE(STATE_INIMAP_BUF(1)%POS_NODES(NPTS_TOT)) 
         STATE_INIMAP_BUF(1)%NUM_POINTS=NPTS_TOT
         STATE_INIMAP_BUF(1)%POS_NODES(1:NPTS_TOT)=WORK(1:NPTS_TOT,1)
         STATE_INIMAP_BUF(1)%VEL_NODES(1:NPTS_TOT)=WORK(1:NPTS_TOT,2)  
-        IF(ALLOCATED(WORK))DEALLOCATE(WORK)
-        IF(ALLOCATED(WORK_INDX))DEALLOCATE(WORK_INDX)
+        IF(ALLOCATED(WORK)) call my_dealloc(WORK)
+        IF(ALLOCATED(WORK_INDX)) call my_dealloc(WORK_INDX)
         
         
         NBMAT=STATE_INIMAP_BUF(1)%NSUBMAT
-        ALLOCATE(WORK(NCELL_TOT,1+4*NBMAT))
-        ALLOCATE(WORK_INDX(NCELL_TOT))
+        call my_alloc(WORK, NCELL_TOT, 1+4*NBMAT, "WORK")
+        call my_alloc(WORK_INDX, NCELL_TOT, "WORK_INDX")
         !
         !--gathering submaterial data into working_array (duplicates are not possible with centroids)
         !
@@ -659,13 +665,13 @@ C-----------------------------------------------
         !
         !---store in relevant buffer (reallocate)
         !
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_CENTROIDS))DEALLOCATE(STATE_INIMAP_BUF(1)%POS_CENTROIDS)
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_CENTROIDS)) call my_dealloc(STATE_INIMAP_BUF(1)%POS_CENTROIDS)
         NBMAT = STATE_INIMAP_BUF(1)%NSUBMAT
         DO JJ=1,NBMAT
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%VFRAC))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%VFRAC)
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%RHO))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%RHO)
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%E))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%E)                    
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%PRES))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%PRES)   
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%VFRAC)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%VFRAC)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%RHO)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%RHO)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%E)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%E)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%PRES)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(JJ)%PRES)
         ENDDO
         ALLOCATE(STATE_INIMAP_BUF(1)%POS_CENTROIDS(NCELL_TOT))
         DO JJ=1,NBMAT
@@ -766,28 +772,28 @@ C-----------------------------------------------
         WRITE (ISTDO,500) SHORTNAME(1:LEN_TRIM(TRIM(SHORTNAME)))  
         CALL CLOSE_C()
         !---DEALLOCATE 
-        IF(ALLOCATED(MAP_NODES))DEALLOCATE(MAP_NODES)
-        IF(ALLOCATED(GET_CELL_FOM_CENTROID))DEALLOCATE(GET_CELL_FOM_CENTROID)
-        IF(ALLOCATED(IDX))DEALLOCATE(IDX)
+        IF(ALLOCATED(MAP_NODES)) call my_dealloc(MAP_NODES)
+        IF(ALLOCATED(GET_CELL_FOM_CENTROID)) call my_dealloc(GET_CELL_FOM_CENTROID)
+        IF(ALLOCATED(IDX)) call my_dealloc(IDX)
         DO JJ=1,NSPMD
           NBMAT = STATE_INIMAP_BUF(JJ)%NSUBMAT
           IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT))THEN        
             DO I=1,NBMAT
-              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%VFRAC))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%VFRAC)    
-              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%RHO))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%RHO) 
-              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%E))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%E)
-              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%PRES))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%PRES)
+              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%VFRAC)) call my_dealloc(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%VFRAC)
+              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%RHO)) call my_dealloc(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%RHO)
+              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%E)) call my_dealloc(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%E)
+              IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%PRES)) call my_dealloc(STATE_INIMAP_BUF(JJ)%SUBMAT(I)%PRES)
             ENDDO
           ENDIF            
           IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT       ))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT)
-          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%POS_NODES    ))DEALLOCATE(STATE_INIMAP_BUF(JJ)%POS_NODES)          
-          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%VEL_NODES    ))DEALLOCATE(STATE_INIMAP_BUF(JJ)%VEL_NODES)
-          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%POS_CENTROIDS))DEALLOCATE(STATE_INIMAP_BUF(JJ)%POS_CENTROIDS)                              
+          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%POS_NODES    )) call my_dealloc(STATE_INIMAP_BUF(JJ)%POS_NODES)
+          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%VEL_NODES    )) call my_dealloc(STATE_INIMAP_BUF(JJ)%VEL_NODES)
+          IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%POS_CENTROIDS)) call my_dealloc(STATE_INIMAP_BUF(JJ)%POS_CENTROIDS)
           IF(ALLOCATED(STATE_INIMAP_BUF(JJ)%SUBMAT))DEALLOCATE(STATE_INIMAP_BUF(JJ)%SUBMAT)
         ENDDO
       ENDIF  
       
-      IF(ALLOCATED(STATE_INIMAP_BUF))DEALLOCATE(STATE_INIMAP_BUF)
+      IF(ALLOCATED(STATE_INIMAP_BUF)) DEALLOCATE(STATE_INIMAP_BUF)
       
 C-----------------------------------------------
 C   O u t p u t   F o r m a t

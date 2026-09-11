@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    restmod                     ../starter/share/modules1/restart_mod.F
 !||--- called by ------------------------------------------------------
@@ -28,6 +29,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    lecsec42                    ../starter/source/tools/sect/hm_read_sect.F
 !||    lectur                      ../starter/source/starter/lectur.F
 !||    new_link                    ../starter/source/coupling/rad2rad/new_link.F
+!||    q1np_generate_main          ../starter/source/elements/solid/solid_q1np/q1np_generate_main.F90
 !||    r2r_check                   ../starter/source/coupling/rad2rad/r2r_check.F
 !||    r2r_check_seg               ../starter/source/coupling/rad2rad/routines_r2r.F
 !||    r2r_clean_inter             ../starter/source/coupling/rad2rad/r2r_clean_inter.F
@@ -106,7 +108,7 @@ C 2D to avoid integer limitation
       INTEGER, DIMENSION(:), ALLOCATABLE :: IBFTEMP, IBCV, IBCR, IBFFLUX
 
       INTEGER, DIMENSION(:), POINTER ::
-     .    IFRAME, MADPRT,  MADSH4,  MADSH3,   MADSOL,  MADNOD, MADFAIL,
+     .    IFRAME, MADPRT,  MADSH4,  MADSH3,   MADSOL,  MADNOD,
      .    NPBYL, LPBYL, NIGE
       TARGET :: 
      .    ISKWN,IPARI,IPART,NPC,IXTG,IXS,IBCL,IGRV,IBMPC,NPBY,LPBY,

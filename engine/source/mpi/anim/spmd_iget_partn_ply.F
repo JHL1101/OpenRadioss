@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_iget_partn_ply   ../engine/source/mpi/anim/spmd_iget_partn_ply.F
 !||--- called by ------------------------------------------------------
@@ -27,11 +28,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    parsor_ply            ../engine/source/output/anim/generate/parsor_ply.F
 !||--- calls      -----------------------------------------------------
 !||    get_ply_nod           ../engine/source/output/anim/generate/anin_ply_init.F
+!||    spmd_get_count_int    ../engine/source/mpi/generic/spmd_get_count.F90
 !||    write_c_c             ../common_source/tools/input_output/write_routines.c
 !||    write_i_c             ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
 !||    plyxfem_mod           ../engine/share/modules/plyxfem_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_IGET_PARTN_PLY(SIZE,NBF_L,NP,NBPART,IADG,
      *           SRBUF,IFLAG,IDPLY)
@@ -43,7 +45,7 @@ C gather on p0 of the wa table according to the parts (IADG)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -69,7 +71,7 @@ C-----------------------------------------------
      .        I,IPLY
 
       INTEGER, DIMENSION(:),ALLOCATABLE :: RBUF,RBUF2,NPT
-      INTEGER STATUS(MPI_STATUS_SIZE),IERROR
+      INTEGER STATUS(MPI_STATUS_SIZE)
       INTEGER  GET_PLY_NOD
       EXTERNAL GET_PLY_NOD
       DATA MSGOFF/7057/
@@ -83,8 +85,7 @@ C-----------------------------------------------
       IF (ISPMD/=0) THEN
         MSGTYP=MSGOFF
 
-        CALL MPI_SEND(NP,NBF_L,MPI_INTEGER,IT_SPMD(1),MSGTYP,
-     .                SPMD_COMM_WORLD,ierror)
+        CALL SPMD_SEND(NP(1:NBF_L),NBF_L,IT_SPMD(1),MSGTYP)
 
       ELSE
         DO K=1,NBF_L
@@ -97,12 +98,11 @@ C
         IADP(K) = IDEB
         MSGTYP=MSGOFF
 
-         CALL MPI_PROBE(IT_SPMD(K),MSGTYP,
-     .                   SPMD_COMM_WORLD,STATUS,ierror)
-         CALL MPI_GET_COUNT(STATUS,MPI_INTEGER,NB_TMP,ierror)
+         CALL SPMD_PROBE(IT_SPMD(K),MSGTYP,STATUS)
+         CALL SPMD_GET_COUNT_INT(STATUS,NB_TMP)
 
-         CALL MPI_RECV(RBUF(IDEB),NB_TMP,MPI_INTEGER,IT_SPMD(K),MSGTYP,
-     .                  SPMD_COMM_WORLD,STATUS,ierror)
+         CALL SPMD_RECV(RBUF(IDEB:IDEB+NB_TMP-1),NB_TMP,IT_SPMD(K),
+     .                  MSGTYP,STATUS)
 
         IDEB = IDEB + NB_TMP
         END DO

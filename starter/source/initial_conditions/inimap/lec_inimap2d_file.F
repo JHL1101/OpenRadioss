@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lec_inimap2d_file      ../starter/source/initial_conditions/inimap/lec_inimap2d_file.F
 !||--- called by ------------------------------------------------------
 !||    hm_read_inimap2d       ../starter/source/initial_conditions/inimap/hm_read_inimap2d.F
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                 ../starter/source/output/message/message.F
-!||    usr2sys                ../starter/source/system/sysfus.F
 !||--- uses       -----------------------------------------------------
 !||    func2d_mod             ../starter/share/modules1/func2d_mod.F
 !||    inimap2d_mod           ../starter/share/modules1/inimap2d_mod.F
@@ -58,20 +58,15 @@ C-----------------------------------------------
       INTEGER, INTENT(IN) :: ID
       CHARACTER(LEN=NCHARTITLE)::TITLE
 C-----------------------------------------------
-C   E x t e r n a l   F u n c t i o n s
-C-----------------------------------------------
-      INTEGER USR2SYS
-C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      CHARACTER MESS*40,BUFFER*14
-      CHARACTER(LEN=NCHARLINE) :: ROOTNAME
+      CHARACTER MESS*40
       DATA MESS/'INFILE'/
-      INTEGER NUM_CENTROIDS,N_CYCLE,K,ISUBMAT,NBMAT,NUM_NODE_VEL,INPUT_VERSION,NB_COMP
-      my_real X_SCALE,Y_SCALE,X_SHIFT,Y_SHIFT,TT
+      INTEGER NUM_CENTROIDS,K,ISUBMAT,NBMAT,NUM_NODE_VEL
+      my_real TT
       INTEGER :: LEN, LEN_TMP_NAME
       CHARACTER :: TMP_NAME*2048, FILNAM*204
-      INTEGER :: IFILNAM(2048),II, NCYCLE, NCELL_TOT, INIVERS
+      INTEGER :: IFILNAM(2048),II, NCYCLE, INIVERS
       LOGICAL FILE_EXIST
 C-----------------------------------------------
 C   S o u r c e   L i n e s
@@ -191,8 +186,5 @@ C-----------------------------------------------
            
         
         RETURN
-        
- 999    CALL ANCMSG(MSGID = 1885, ANMODE = ANINFO, MSGTYPE = MSGERROR,
-     .              I1 = INIMAP2D%ID, C1 = INIMAP2D%TITLE)
 
       END SUBROUTINE LEC_INIMAP2D_FILE

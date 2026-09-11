@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    w_cluster     ../starter/source/restart/ddsplit/w_cluster.F
+!||    w_cluster        ../starter/source/restart/ddsplit/w_cluster.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit       ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit          ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    cluster_mod   ../starter/share/modules1/cluster_mod.F
+!||    cluster_mod      ../starter/share/modules1/cluster_mod.F
 !||====================================================================
       SUBROUTINE W_CLUSTER(CLUSTER,IPARG,NODLOCAL,
      .                     NCLUSTER_L,CEP,PROC,
@@ -38,6 +39,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -65,9 +68,9 @@ C=======================================================================
       ESHIFT(1) = 0                                   ! brick  cluster                                  
       ESHIFT(2) = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP  ! spring cluster
       ESHIFT(3) = NUMELS+NUMELQ+NUMELC+NUMELT+NUMELP  ! spring cluster special 
-      ALLOCATE(INDX(NCLUSTER_L)) ! INDeXes of local clusters 
-      ALLOCATE(ILCLUSTER(NCLUSTER_L)) ! Integer Lengths of local CLUSTERs
-      ALLOCATE(RLCLUSTER(NCLUSTER_L)) ! Real Lengths of local CLUSTERs
+      call my_alloc(INDX, NCLUSTER_L, "INDX") ! INDeXes of local clusters
+      call my_alloc(ILCLUSTER, NCLUSTER_L, "ILCLUSTER") ! Integer Lengths of local CLUSTERs
+      call my_alloc(RLCLUSTER, NCLUSTER_L, "RLCLUSTER") ! Real Lengths of local CLUSTERs
       J = 0
       ILCLUSTER(1:NCLUSTER_L)  = 0 
       RLCLUSTER(1:NCLUSTER_L) =  0
@@ -100,8 +103,8 @@ c-----
       CALL WRITE_I_C(RLCLUSTER,NCLUSTER_L)
       LEN_IA = LEN_IA + NCLUSTER_L   
 c-----
-      ALLOCATE (ICLTAB(ILCLUSTER_MAX)) ! Integer CLuster TABle
-      ALLOCATE (RCLTAB(RLCLUSTER_MAX)) ! Real CLuster TABle
+      call my_alloc(ICLTAB, ILCLUSTER_MAX, "ICLTAB") ! Integer CLuster TABle
+      call my_alloc(RCLTAB, RLCLUSTER_MAX, "RCLTAB") ! Real CLuster TABle
       DO I = 1, NCLUSTER_L
         II = INDX(I) ! global number of the cluster
 
@@ -182,11 +185,11 @@ c-----
 
 c-----
       ENDDO  !  I = 1, NCLUSTER_L
-      DEALLOCATE (INDX)
-      DEALLOCATE (ILCLUSTER)
-      DEALLOCATE (RLCLUSTER)
-      DEALLOCATE (RCLTAB)
-      DEALLOCATE (ICLTAB)
+      call my_dealloc(INDX)
+      call my_dealloc(ILCLUSTER)
+      call my_dealloc(RLCLUSTER)
+      call my_dealloc(RCLTAB)
+      call my_dealloc(ICLTAB)
 
 C-----------
       RETURN

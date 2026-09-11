@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    initvars_auto   ../starter/source/elements/elbuf_init/initvars_auto.F
 !||--- called by ------------------------------------------------------
@@ -58,7 +59,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ILAY,NLAY,NPG,NPTT,NPTR,NPTS,IL,IR,IS,IT
+      INTEGER ILAY,NLAY,NPG,NPTT,NPTR,NPTS,IL,IR,IS,IT,IF_LAW
       TYPE(G_BUFEL_)     , POINTER :: GBUF
       TYPE(BUF_LAY_)     , POINTER :: BUFLY
       TYPE(MLAW_TAG_)    , POINTER :: MTAG
@@ -127,6 +128,8 @@ c---------------------
           IF (GBUF%G_EPSDNL == 0) GBUF%G_EPSDNL = MTAG%G_EPSDNL
           IF (GBUF%G_DMGSCL == 0) GBUF%G_DMGSCL = MTAG%G_DMGSCL                 
           IF (GBUF%G_TSAIWU == 0) GBUF%G_TSAIWU = MTAG%G_TSAIWU      
+          IF (GBUF%G_EINTTH == 0) GBUF%G_EINTTH = MTAG%G_EINTTH
+          IF (GBUF%G_FORTH  == 0) GBUF%G_FORTH  = MTAG%G_FORTH
           BUFLY%NVAR_MAT= MTAG%NUVAR
           BUFLY%NVARTMP = MTAG%NVARTMP
           IF(BUFLY%NVAR_EOS==0 .AND. IEOS>0 )BUFLY%NVAR_EOS=ETAG%NVAR
@@ -245,8 +248,14 @@ c
 c     global property variables                                            
 c
       IF(IGTYP > 0)THEN
+        IF_LAW=GLAW
+        IF (IGTYP==22.AND.IF_LAW/=25) THEN
+          DO IL = 1, NLAY                                                    
+            IF (ELBUF_STR%BUFLY(IL)%ILAW==25) IF_LAW=25                     
+          END DO
+        END IF
         IF (GBUF%G_OFF    == 0) GBUF%G_OFF    = PTAG%G_OFF
-        IF (IFAIL > 0) GBUF%G_NOFF = 1
+        IF (IFAIL > 0 .OR. IF_LAW ==25) GBUF%G_NOFF = 1
         IF (GBUF%G_NOFF   == 0) GBUF%G_NOFF   = PTAG%G_NOFF
         GBUF%G_GAMA = MAX(GBUF%G_GAMA, PTAG%G_GAMA)
         GBUF%G_EINT = MAX(GBUF%G_EINT, PTAG%G_EINT)
@@ -310,6 +319,10 @@ c---
         IF (GBUF%G_SKEW_ID     == 0) GBUF%G_SKEW_ID      = PTAG%G_SKEW_ID
       ENDIF ! IGTYP > 0
 C
+      IF ((IGTYP==23).OR.(IGTYP==8).OR.(IGTYP==13).OR.(IGTYP==25)) THEN
+        GBUF%G_RBODY_NODE = 2
+      ENDIF
+C
       IF (IGTYP == 23 .AND. GMAT > 0) THEN   ! spring with Material
         MTAG  => MLAW_TAG(GMAT)
         IF (GBUF%G_TOTDEPL     == 0) GBUF%G_TOTDEPL      = MTAG%G_TOTDEPL
@@ -319,7 +332,7 @@ C
         IF (GBUF%G_ROT_IN_TENS == 0) GBUF%G_ROT_IN_TENS  = MTAG%G_ROT_IN_TENS
         IF (GBUF%G_ROT_IN_COMP == 0) GBUF%G_ROT_IN_COMP  = MTAG%G_ROT_IN_COMP
         IF (GBUF%G_POSX        == 0) GBUF%G_POSX         = MTAG%G_POSX
-        IF (GBUF%G_POSY        == 0) GBUF%G_POSY         = MTAG%G_POSY
+        IF (GBUF%G_POSY        == 0) GBUF%G_POSY         = MTAG%G_POSY  
         IF (GBUF%G_POSZ        == 0) GBUF%G_POSZ         = MTAG%G_POSZ
         IF (GBUF%G_POSXX       == 0) GBUF%G_POSXX        = MTAG%G_POSXX
         IF (GBUF%G_POSYY       == 0) GBUF%G_POSYY        = MTAG%G_POSYY

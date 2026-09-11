@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inintsub               ../starter/source/interfaces/interf1/inintsub.F
 !||--- called by ------------------------------------------------------
@@ -44,6 +45,7 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD
       USE GROUPDEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -69,17 +71,17 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE :: NOD2NSV,NOD2RTM,NOD2RTMS,NOD2RTMM,KAD,TAGNOD,TAGRTM
-      INTEGER, DIMENSION(:), ALLOCATABLE :: TAGLINS,TAGLINM
+      INTEGER, DIMENSION(:), ALLOCATABLE :: TAGLINS,TAGLINM,TAGEDG,NOD2EDG
       TARGET NOD2NSV
        INTEGER, DIMENSION(:), POINTER :: IADD
-      INTEGER IOK(NINTER)
-      INTEGER I,J,K,JGRN,ISU,ISU1,ISU2,
+      INTEGER J,K,
      .   NI,NOINT,NTY,NRTS,NRTM,NSN,NMN,MULTIMP,IFQ,NRTM_SH,NRTM0,
-     .   NISUB, NISUBS, NISUBM, JSUB, KSUB, NNE, IS, ISV, CUR,
-     .   NEXT, IM, KM, JAD, IN, II, N,STAT,K1,K2,NT19,INOD,S_KAD,NSNE,NRTSE
+     .   NISUB, NISUBS, NISUBM, JSUB, IS,
+     .   IM, N,STAT,NT19,NSNE,NRTSE,
+     .   NEDGE_1D,MAXEDG,NEDGE,NISUBE
       CHARACTER MESS*40
-      INTEGER ID,ID1
-      CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
+      INTEGER ID
+      CHARACTER(LEN=NCHARTITLE) :: TITR
 C-----------------------------------------------
       TYPE (GROUP_)  , DIMENSION(NGRNOD)  :: IGRNOD
       TYPE (SURF_)   , DIMENSION(NSURF)   :: IGRSURF
@@ -94,15 +96,23 @@ C-----------------------------------------------
       INTEGER BITSET
       EXTERNAL BITSET
 C=======================================================================
-      ALLOCATE (NOD2NSV(NUMNOD+1)      ,STAT=stat) 
-      ALLOCATE (NOD2RTM(4*MAXRTM)      ,STAT=stat)
-      ALLOCATE (NOD2RTMS(2*MAXRTMS)      ,STAT=stat)
-      ALLOCATE (NOD2RTMM(2*MAXRTMS)      ,STAT=stat)  
-      ALLOCATE (KAD(MAX(NUMNOD+MAXNSNE,MAXRTM,MAXRTMS)),STAT=stat)
-      ALLOCATE (TAGNOD(NUMNOD)      ,STAT=stat)
-      ALLOCATE (TAGRTM(MAXRTM)      ,STAT=stat)
-      ALLOCATE (TAGLINS(MAXRTMS)      ,STAT=stat)
-      ALLOCATE (TAGLINM(MAXRTMS)      ,STAT=stat)
+      call my_alloc(NOD2NSV, NUMNOD+1, "NOD2NSV", stat=stat)
+      call my_alloc(NOD2RTM, 4*MAXRTM, "NOD2RTM", stat=stat)
+      call my_alloc(NOD2RTMS, 2*MAXRTMS, "NOD2RTMS", stat=stat)
+      call my_alloc(NOD2RTMM, 2*MAXRTMS, "NOD2RTMM", stat=stat)
+      call my_alloc(TAGNOD, NUMNOD, "TAGNOD", stat=stat)
+      call my_alloc(TAGRTM, MAXRTM, "TAGRTM", stat=stat)
+      call my_alloc(TAGLINS, MAXRTMS, "TAGLINS", stat=stat)
+      call my_alloc(TAGLINM, MAXRTMS, "TAGLINM", stat=stat)
+      MAXEDG = 0
+      DO NI=1,NINTER
+        NTY  =IPARI(7,NI)
+        NEDGE_1D=IPARI(101,NI)
+        IF (NTY==25) MAXEDG = MAX(MAXEDG,NEDGE_1D)
+      ENDDO
+      call my_alloc(NOD2EDG, 2*MAXEDG, "NOD2EDG", stat=stat)
+      call my_alloc(TAGEDG, MAXEDG, "TAGEDG", stat=stat)
+      call my_alloc(KAD, MAX(NUMNOD+MAXNSNE,MAXRTM,MAXRTMS,MAXEDG), "KAD", stat=stat)
 C
       IADD => NOD2NSV(1:NUMNOD+1)
       DO NI=1,NINTER
@@ -135,13 +145,20 @@ C
                NSNE   = IPARI(55,NI)
                NRTSE  = IPARI(55,NI)
             ENDIF
+            NEDGE_1D = 0
+            IF(NTY==25) THEN
+              NEDGE_1D=IPARI(101,NI)
+            ENDIF
+            NEDGE = IPARI(68,NI)
+            NISUBE = IPARI(90,NI)
 C
             IF(NISUB/=0)THEN    
                CALL ININTSUB_25(ITAB      ,IGRNOD ,IGRSURF ,NOM_OPT ,INTBUF_TAB,
      .                        NRTM      ,NRTM0  ,NSN     ,NISUBS  ,NISUBM    ,
      .                        NOINT     ,NI     ,NOD2NSV ,NOD2RTM ,KAD       ,
      .                        TAGNOD    ,TAGRTM ,IADD    ,NSNE    ,NTY       ,
-     .                        NRTSE     )   
+     .                        NRTSE     ,NEDGE_1D,NOD2EDG,TAGEDG  ,MAXEDG    ,
+     .                        NEDGE     ,NISUBE  ,NLEDGE)   
             END IF
 
 C------------------------------------------
@@ -343,13 +360,16 @@ C
 C
       END DO
 C
-      DEALLOCATE (KAD) 
-      DEALLOCATE (NOD2RTM)
-      DEALLOCATE (NOD2RTMS) 
-      DEALLOCATE (NOD2NSV)
-      DEALLOCATE (TAGRTM)
-      DEALLOCATE (TAGNOD)
-      DEALLOCATE (TAGLINS,TAGLINM)
+      CALL MY_DEALLOC(KAD)
+      CALL MY_DEALLOC(NOD2RTM)
+      CALL MY_DEALLOC(NOD2RTMS)
+      CALL MY_DEALLOC(NOD2NSV)
+      CALL MY_DEALLOC(TAGRTM)
+      CALL MY_DEALLOC(TAGNOD)
+      CALL MY_DEALLOC(TAGLINS)
+      CALL MY_DEALLOC(TAGLINM)
+      CALL MY_DEALLOC(TAGEDG)
+      CALL MY_DEALLOC(NOD2EDG)
 C 
 C-------------------------------------
  1000 FORMAT(    /1X,'   STRUCTURE OF SUB-INTERFACES OUTPUT TO TH'/

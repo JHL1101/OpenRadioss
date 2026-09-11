@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    t3grhead               ../starter/source/elements/solid_2d/tria/t3grhead.F
 !||--- called by ------------------------------------------------------
@@ -138,8 +139,8 @@ C-----------------------------------------------
 C
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX2, INUM_PTSH3N
 
-      EXTERNAL MY_SHIFTL,MY_SHIFTR,MY_AND
-      INTEGER MY_SHIFTL,MY_SHIFTR,MY_AND
+      EXTERNAL MY_AND
+      INTEGER MY_AND
       my_real, DIMENSION(:,:), ALLOCATABLE :: XNUM_RNOISE
 C
 Clef 1---------------------------------
@@ -164,38 +165,38 @@ C
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7--
        IWARNHB=0
       IF(NADMESH/=0)THEN
-        ALLOCATE( ISTOR(KSH3TREE+1,NUMELTG) )
+        call my_alloc(ISTOR, KSH3TREE+1, NUMELTG, "ISTOR")
       ELSE
-        ALLOCATE( ISTOR(0,0) )
+        call my_alloc(ISTOR, 0, 0, "ISTOR")
       ENDIF
         IF (NDRAPE > 0 .AND. NUMELTG_DRAPE > 0) THEN
-         ALLOCATE(XNUM_DRAPE(NUMELTG))                                                  
-         ALLOCATE(XNUM_DRAPEG%INDX(NUMELTG))
+         allocate(XNUM_DRAPE(NUMELTG))
+         call my_alloc(XNUM_DRAPEG%INDX, NUMELTG, "XNUM_DRAPEG%INDX")
          XNUM_DRAPEG%INDX = 0                                             
          DO I =1, NUMELTG
            IEL = DRAPEG%INDX(NUMELC + I)
            IF(IEL == 0) CYCLE                                                                         
            NPT_DRP = DRAPE(IEL)%NPLY_DRAPE
            NPT = DRAPE(IEL)%NPLY                                              
-           ALLOCATE(XNUM_DRAPE(I)%INDX_PLY(NPT))                                              
-           ALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY(NPT_DRP))        
+           call my_alloc(XNUM_DRAPE(I)%INDX_PLY, NPT, "XNUM_DRAPE(I)%INDX_PLY")
+           allocate(XNUM_DRAPE(I)%DRAPE_PLY(NPT_DRP))
             XNUM_DRAPE(I)%INDX_PLY= 0                                                       
            DO J = 1,NPT_DRP                            
                 NSLICE = DRAPE(IEL)%DRAPE_PLY(J)%NSLICE    
-                ALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE(NSLICE,2))    
-                ALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE(NSLICE,2))                                       
+                call my_alloc(XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE, NSLICE, 2, "XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE")
+                call my_alloc(XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE, NSLICE, 2, "XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE")
                 XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE = 0             
                 XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE = 0                               
            ENDDO                                                                           
          ENDDO      
         ELSE
-            ALLOCATE( XNUM_DRAPE(0) )
+            allocate(XNUM_DRAPE(0))
         ENDIF 
         IF(ABS(ISIGI) == 3 .OR. ABS(ISIGI) == 4 .OR. ABS(ISIGI) == 5) THEN
-           ALLOCATE(INUM_PTSH3N(NUMELTG))
+           call my_alloc(INUM_PTSH3N, NUMELTG, "INUM_PTSH3N")
            INUM_PTSH3N = 0
         ELSE
-           ALLOCATE(INUM_PTSH3N(0))
+           call my_alloc(INUM_PTSH3N, 0, "INUM_PTSH3N")
         ENDIF 
 C
 C----------------------------------------------------------
@@ -203,13 +204,13 @@ C   GLOBAL SORT ON ALL CRITERIA FOR ALL ELEMENTS
 C----------------------------------------------------------
 C
       IF (NPERTURB > 0) THEN
-        ALLOCATE(XNUM_RNOISE(NPERTURB,NUMELTG),STAT=stat)
+        call my_alloc(XNUM_RNOISE, NPERTURB, NUMELTG, "XNUM_RNOISE", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                           C1='XNUM_RNOISE')
       ENDIF
 C
-      CALL MY_ALLOC(INDEX2,NUMELTG)
+      CALL MY_ALLOC(INDEX2,NUMELTG,"INDEX2")
 
       IF(NDRAPE > 0 .AND. NUMELTG_DRAPE > 0) THEN 
          DO I=1,NUMELTG                                                          
@@ -258,10 +259,11 @@ C
                  XNUM_DRAPE(I)%DRAPE_PLY(JJ)%RDRAPE(KK,1)=DRAPE_PLY%RDRAPE(KK,1)
                  XNUM_DRAPE(I)%DRAPE_PLY(JJ)%RDRAPE(KK,2)=DRAPE_PLY%RDRAPE(KK,2)
                ENDDO  
-               DEALLOCATE(DRAPE_PLY%IDRAPE, DRAPE_PLY%RDRAPE)                                                           
+               CALL MY_DEALLOC(DRAPE_PLY%IDRAPE)
+               CALL MY_DEALLOC(DRAPE_PLY%RDRAPE)
              ENDDO
              DEALLOCATE(DRAPE(IEL)%DRAPE_PLY)  
-             DEALLOCATE(DRAPE(IEL)%INDX_PLY)                                                                   
+             CALL MY_DEALLOC(DRAPE(IEL)%INDX_PLY)
           ENDDO  
         ELSE  
           DO I=1,NUMELTG                                                      
@@ -476,28 +478,28 @@ C
 C---     Clef3 
 C
 C       IPLA   = MY_SHIFTL(IPLA,0)
-        ISTRAIN= MY_SHIFTL(ISTRAIN,3)
-        ISSN   = MY_SHIFTL(ISSN,6)
+        ISTRAIN= ISHFT(ISTRAIN,3)
+        ISSN   = ISHFT(ISSN,6)
 C
-        IGTYP  = MY_SHIFTL(IGTYP,9)
-        MLN    = MY_SHIFTL(MLN,18)    
+        IGTYP  = ISHFT(IGTYP,9)
+        MLN    = ISHFT(MLN,18)
 C       Beware full;
 C       ICO must remain the heaviest weight in this key.
-        ICO   = MY_SHIFTL(ICO,29) 
+        ICO   = ISHFT(ICO,29)
         ITRI(3,I)=IPLA+ISTRAIN+ISSN+IGTYP+MLN+ICO 
 C
 C---clef4
 C
 C       IRB    = MY_SHIFTL(IRB,0)
-        IFAIL  = MY_SHIFTL(IFAIL,4)
-        IEXPAN = MY_SHIFTL(IEXPAN,5)
-        JTHE =  MY_SHIFTL(JTHE,6)
-        ISH3N  = MY_SHIFTL(ISH3N,11)
-        ICSEN = MY_SHIFTL(ICSEN,16)
-        NPN   = MY_SHIFTL(NPN,17)
-        IREP  = MY_SHIFTL(IREP,26)
-        ITHK  = MY_SHIFTL(ITHK,30)
-        IF(IXFEM > 0)IXFEM  = MY_SHIFTL(IXFEM,9)
+        IFAIL  = ISHFT(IFAIL,4)
+        IEXPAN = ISHFT(IEXPAN,5)
+        JTHE =  ISHFT(JTHE,6)
+        ISH3N  = ISHFT(ISH3N,11)
+        ICSEN = ISHFT(ICSEN,16)
+        NPN   = ISHFT(NPN,17)
+        IREP  = ISHFT(IREP,26)
+        ITHK  = ISHFT(ITHK,30)
+        IF(IXFEM > 0)IXFEM  = ISHFT(IXFEM,9)
 C
         ITRI(4,I)=ITHK+IREP+NPN+ICSEN+ISH3N+JTHE+IRB+IFAIL+IXFEM
 C---     Clef3 
@@ -552,18 +554,19 @@ C
           NPT =  XNUM_DRAPE(INDEX(I))%NPLY
           DRAPE(IEL)%NPLY  = NPT                              
           DRAPEG%INDX(NUMELC + I)= IEL
-          ALLOCATE(DRAPE(IEL)%INDX_PLY(NPT))                                
+          call my_alloc(DRAPE(IEL)%INDX_PLY, NPT, "DRAPE(IEL)%INDX_PLY")
           DRAPE(IEL)%INDX_PLY(1:NPT) =  XNUM_DRAPE(INDEX(I))%INDX_PLY(1:NPT)                                 
           NPT = XNUM_DRAPE(INDEX(I))%NPLY_DRAPE       ! NPT_DRP                                     
           DRAPE(IEL)%NPLY_DRAPE= NPT 
           DRAPE(IEL)%THICK = XNUM_DRAPE(INDEX(I))%THICK
-          ALLOCATE(DRAPE(IEL)%DRAPE_PLY(NPT))                                                      
+          allocate(DRAPE(IEL)%DRAPE_PLY(NPT))
           DO JJ = 1, NPT                                                                  
             DRAPE_PLY => DRAPE(IEL)%DRAPE_PLY(JJ)                                          
             NSLICE = XNUM_DRAPE(INDEX(I))%DRAPE_PLY(JJ)%NSLICE                            
             DRAPE_PLY%NSLICE = NSLICE                                                     
             DRAPE_PLY%IPID =  XNUM_DRAPE(INDEX(I))%DRAPE_PLY(JJ)%IPID 
-            ALLOCATE(DRAPE_PLY%IDRAPE(NSLICE,2), DRAPE_PLY%RDRAPE(NSLICE,2))
+            call my_alloc(DRAPE_PLY%IDRAPE, NSLICE, 2, "DRAPE_PLY%IDRAPE")
+            call my_alloc(DRAPE_PLY%RDRAPE, NSLICE, 2, "DRAPE_PLY%RDRAPE")
             DRAPE_PLY%IDRAPE = 0
             DRAPE_PLY%RDRAPE = ZERO                     
             DO KK = 1,NSLICE                                                              
@@ -693,7 +696,7 @@ C for stack/ply pid
       ENDDO
 c
       IF (NPERTURB > 0) THEN
-        IF (ALLOCATED(XNUM_RNOISE)) DEALLOCATE(XNUM_RNOISE) 
+        IF (ALLOCATED(XNUM_RNOISE)) CALL MY_DEALLOC(XNUM_RNOISE)
       ENDIF
       IF(NDRAPE > 0 .AND. NUMELTG_DRAPE > 0) THEN
         DO I =1, NUMELTG       
@@ -701,18 +704,20 @@ c
            IF(IEL0 == 0) CYCLE                                
            NPT_DRP = XNUM_DRAPE(I)%NPLY_DRAPE  
            DO J = 1,NPT_DRP                                              
-              DEALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE)          
-              DEALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE)  
+              CALL MY_DEALLOC(XNUM_DRAPE(I)%DRAPE_PLY(J)%RDRAPE)
+              CALL MY_DEALLOC(XNUM_DRAPE(I)%DRAPE_PLY(J)%IDRAPE)
            ENDDO   
-           DEALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY,XNUM_DRAPE(I)%INDX_PLY)
+           CALL MY_DEALLOC(XNUM_DRAPE(I)%INDX_PLY)
+           DEALLOCATE(XNUM_DRAPE(I)%DRAPE_PLY)
        ENDDO
-        DEALLOCATE(XNUM_DRAPE,XNUM_DRAPEG%INDX)
+        CALL MY_DEALLOC(XNUM_DRAPEG%INDX)
+        DEALLOCATE(XNUM_DRAPE)
       ELSE
         DEALLOCATE( XNUM_DRAPE)      
       ENDIF
 C
-      DEALLOCATE(INDEX2)
-      DEALLOCATE( ISTOR )
-      IF(ALLOCATED(INUM_PTSH3N))DEALLOCATE(INUM_PTSH3N)
+      CALL MY_DEALLOC(INDEX2)
+      CALL MY_DEALLOC(ISTOR)
+      IF(ALLOCATED(INUM_PTSH3N))CALL MY_DEALLOC(INUM_PTSH3N)
       RETURN
       END

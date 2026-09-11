@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_h3d_sum_r_nodal_value   ../engine/source/output/h3d/spmd/spmd_h3d_sum_r_nodal_value.F
 !||--- called by ------------------------------------------------------
 !||    genh3d                       ../engine/source/output/h3d/h3d_results/genh3d.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    spmd_comm_world_mod          ../engine/source/mpi/spmd_comm_world.F90
 !||====================================================================
        SUBROUTINE SPMD_H3D_SUM_R_NODAL_VALUE(NODGLOB,V,LEN,VP0,LENP0)
@@ -33,6 +36,8 @@ C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
         USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -54,8 +59,8 @@ C-----------------------------------------------
 #ifdef MPI
       INTEGER IERROR,I
 
-        ALLOCATE(V_TMP(LENP0))
-        ALLOCATE(VP0_TMP(LENP0))
+        call my_alloc(V_TMP, LENP0, "V_TMP")
+        call my_alloc(VP0_TMP, LENP0, "VP0_TMP")
 
         DO I=1,LENP0
            VP0_TMP(I)=ZERO
@@ -77,7 +82,8 @@ C-----------------------------------------------
          END DO
        ENDIF
 
-       DEALLOCATE(V_TMP,VP0_TMP)
+       call my_dealloc(V_TMP)
+       call my_dealloc(VP0_TMP)
 #endif
        RETURN
        END

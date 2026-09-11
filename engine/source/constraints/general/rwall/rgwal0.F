@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rgwal0          ../engine/source/constraints/general/rwall/rgwal0.F
 !||--- called by ------------------------------------------------------
@@ -65,6 +66,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER K,N,N2,N3,N4,N5,N6, ITYP, ISL, IFQ, ILAGM, IMP, PMAIN,IPARSENS,ISECT,IPEN
+      INTEGER IBIDA(1)
 C-----------------------------------------------
           RBID = ZERO
 C Init global result to 0
@@ -103,26 +105,26 @@ C
      +            X       ,A         ,V           ,RWBUF(1,N),LPRW(K),
      +            NPRW(N) ,NPRW(N2)  ,NPRW(N3)    ,MS        ,WEIGHT ,
      +            NPRW(N5),RWSAV(ISL),FRWL6(1,1,N),IMP       ,IBID   ,
-     +            IBID    ,IBID      ,IBID        ,NODNX_SMS ,WEIGHT_MD, WFEXT, WFEXT_MD)
+     +            IBIDA   ,IBIDA     ,IBIDA       ,NODNX_SMS ,WEIGHT_MD, WFEXT, WFEXT_MD)
               ELSEIF(ITYP == 2)THEN
                 CALL RGWALC(
      +            X       ,A           ,V       ,RWBUF(1,N) ,LPRW(K),
      +            NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS         ,WEIGHT ,
-     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID       ,IBID   ,
-     +            IBID    ,IBID        ,NODNX_SMS , WEIGHT_MD,WFEXT, WFEXT_MD)
+     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID       ,IBIDA  ,
+     +            IBIDA   ,IBIDA       ,NODNX_SMS , WEIGHT_MD,WFEXT, WFEXT_MD)
 C  
               ELSEIF(ITYP == 3)THEN
                 CALL RGWALS(
      +            X       ,A           ,V       ,RWBUF(1,N),LPRW(K),
      +            NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS        ,WEIGHT ,
-     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID      ,IBID   ,
-     +            IBID    ,IBID        ,NODNX_SMS ,WEIGHT_MD,WFEXT, WFEXT_MD)
+     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID      ,IBIDA  ,
+     +            IBIDA   ,IBIDA       ,NODNX_SMS ,WEIGHT_MD,WFEXT, WFEXT_MD)
               ELSEIF(ITYP == 4)THEN
                 CALL RGWALP(
      +            X       ,A           ,V       ,RWBUF(1,N),LPRW(K),
      +            NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS        ,WEIGHT ,
-     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID      ,IBID   ,
-     +            IBID    ,IBID        ,NODNX_SMS ,WEIGHT_MD,WFEXT,WFEXT_MD)
+     +            NPRW(N5),FRWL6(1,1,N),IMP     ,IBID      ,IBIDA  ,
+     +            IBIDA   ,IBIDA       ,NODNX_SMS ,WEIGHT_MD,WFEXT,WFEXT_MD)
               ENDIF
             END IF !(IPEN == 0.OR.IMPL_S>0) THEN
             K=K+NPRW(N)
@@ -241,6 +243,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER K, N, N2, N3, N4, N5, N6, ITYP, ISL, IFQ, ILAGM,
      .        NDS,IMP, PMAIN, IBID,IPARSENS,ISECT
+      INTEGER IBIDA(1)
       my_real A(3,NUMNOD),DTI
 C-----------------------------------------------
           RBID = ZERO
@@ -295,25 +298,25 @@ c!$OMP END DO
      +          X       ,A         ,V           ,RWBUF(1,N),LPRW(K),
      +          NPRW(N) ,NPRW(N2)  ,NPRW(N3)    ,MS        ,WEIGHT ,
      +          NPRW(N5),RWSAV(ISL),FRWL6(1,1,N),IMP       ,NT_RW  ,
-     +          IDDL    ,IKC       ,NDOF        ,IBID      ,WEIGHT_MD, WFEXT, WFEXT_MD)
+     +          IDDL    ,IKC       ,NDOF        ,IBIDA     ,WEIGHT_MD, WFEXT, WFEXT_MD)
             ELSEIF(ITYP == 2)THEN
               CALL RGWALC(
      +          X       ,A           ,V       ,RWBUF(1,N),LPRW(K),
      +          NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS        ,WEIGHT ,
      +          NPRW(N5),FRWL6(1,1,N),IMP     ,NT_RW     ,IDDL   ,
-     +          IKC     ,NDOF        ,IBID    ,WEIGHT_MD ,WFEXT  ,WFEXT_MD)
+     +          IKC     ,NDOF        ,IBIDA   ,WEIGHT_MD ,WFEXT  ,WFEXT_MD)
             ELSEIF(ITYP == 3)THEN
               CALL RGWALS(
      +          X       ,A           ,V       ,RWBUF(1,N),LPRW(K),
      +          NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS        ,WEIGHT ,
      +          NPRW(N5),FRWL6(1,1,N),IMP     ,NT_RW     ,IDDL   ,
-     +          IKC     ,NDOF        ,IBID    ,WEIGHT_MD ,WFEXT, WFEXT_MD)
+     +          IKC     ,NDOF        ,IBIDA   ,WEIGHT_MD ,WFEXT, WFEXT_MD)
             ELSEIF(ITYP == 4)THEN
               CALL RGWALP(
      +          X       ,A           ,V       ,RWBUF(1,N),LPRW(K),
      +          NPRW(N) ,NPRW(N2)    ,NPRW(N3),MS        ,WEIGHT ,
      +          NPRW(N5),FRWL6(1,1,N),IMP     ,NT_RW     ,IDDL   ,
-     +          IKC     ,NDOF        ,IBID    ,WEIGHT_MD ,WFEXT, WFEXT_MD)
+     +          IKC     ,NDOF        ,IBIDA   ,WEIGHT_MD ,WFEXT, WFEXT_MD)
             ENDIF
 
             K=K+NPRW(N)

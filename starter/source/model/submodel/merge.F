@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    merge             ../starter/source/model/submodel/merge.F
 !||--- called by ------------------------------------------------------
@@ -34,9 +35,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       SUBROUTINE MERGE(X      ,ITAB   ,ITABM1 ,CMERGE ,IMERGE,
      .                 IMERGE2,IADMERGE2,NMERGE_TOT)
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -80,14 +83,14 @@ C-----------------------------------------------
       EXTERNAL USRTOS,USRTOSC
 C=======================================================================
 
-      ALLOCATE(NOBX(NUMNOD))
-      ALLOCATE(NOBY(NUMNOD))
-      ALLOCATE(NOBZ(NUMNOD))
-      ALLOCATE(NOBCX(NUMCNOD))
-      ALLOCATE(NOBCY(NUMCNOD))
-      ALLOCATE(NOBCZ(NUMCNOD))
-      ALLOCATE(LBUF(NUMNOD))
-      ALLOCATE(IADMERGE2TMP(NUMNOD+1))
+      call my_alloc(NOBX, NUMNOD, "NOBX")
+      call my_alloc(NOBY, NUMNOD, "NOBY")
+      call my_alloc(NOBZ, NUMNOD, "NOBZ")
+      call my_alloc(NOBCX, NUMCNOD, "NOBCX")
+      call my_alloc(NOBCY, NUMCNOD, "NOBCY")
+      call my_alloc(NOBCZ, NUMCNOD, "NOBCZ")
+      call my_alloc(LBUF, NUMNOD, "LBUF")
+      call my_alloc(IADMERGE2TMP, NUMNOD+1, "IADMERGE2TMP")
 C-------    dbuc------------------------------
       DO  N=1,2*NUMCNOD
         IMERGE(N) = 0
@@ -155,13 +158,18 @@ C
 C  
       NBAND = MAX(NBX, NBY,NBZ) + 1
 C      
-      ALLOCATE( NPX(0:NUMNOD1+NBAND  ) , NPY(0:3*(NUMNOD1+NBAND)), 
-     .         NPZ(0:9*(NUMNOD1+NBAND)) , IPX(NUMNOD1+NBAND)   ,
-     .         IPY(NUMNOD1+NBAND)     , IPZ(NUMNOD1+NBAND),
-     .         NPCX(0:NUMCNOD+NBAND) , NPCY(0:NUMCNOD+NBAND) ,
-     .         NPCZ(0:NUMCNOD+NBAND)       , IPCX(NUMCNOD+NBAND)   , 
-     .         IPCY(NUMCNOD+NBAND)   , IPCZ(NUMCNOD+NBAND),
-     .         IMERGE0(NUMCNOD))
+      call my_alloc(IPX, NUMNOD1+NBAND, "IPX")
+      call my_alloc(IPY, NUMNOD1+NBAND, "IPY")
+      call my_alloc(IPZ, NUMNOD1+NBAND, "IPZ")
+      call my_alloc(IPCX, NUMCNOD+NBAND, "IPCX")
+      call my_alloc(IPCY, NUMCNOD+NBAND, "IPCY")
+      call my_alloc(IPCZ, NUMCNOD+NBAND, "IPCZ")
+      call my_alloc(IMERGE0, NUMCNOD, "IMERGE0")
+      ALLOCATE(NPX(0:NUMNOD1+NBAND  ), NPY(0:3*(NUMNOD1+NBAND)), NPZ(0:9*(NUMNOD1+NBAND)), NPCX(0:NUMCNOD+NBAND),
+     &NPCY(0:NUMCNOD+NBAND), NPCZ(0:NUMCNOD+NBAND))
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
       IMERGE0(1:NUMCNOD) = 0
 C--------------------------------------------------
 C     BUCKETS X SORTING
@@ -442,22 +450,32 @@ C--------------------------------------------------
         ENDDO                                                       
       ENDDO    
 C-------- 
-       DEALLOCATE(NPX   ,NPY   ,NPZ   ,IPX   ,IPY   ,IPZ  ,
-     .            NPCX  ,NPCY  ,NPCZ  ,IPCX  ,IPCY  ,IPCZ )
+       call my_dealloc(NPX)
+       call my_dealloc(NPY)
+       call my_dealloc(NPZ)
+       call my_dealloc(IPX)
+       call my_dealloc(IPY)
+       call my_dealloc(IPZ)
+       call my_dealloc(NPCX)
+       call my_dealloc(NPCY)
+       call my_dealloc(NPCZ)
+       call my_dealloc(IPCX)
+       call my_dealloc(IPCY)
+       call my_dealloc(IPCZ)
 C--------
 C   Merging CNODE to CNODE
 C--------
       CALL MERGE_CNOD_CNOD(X      ,ITAB     ,ITABM1 ,CMERGE ,IMERGE,
      .                     IMERGE2,IADMERGE2,IMERGE0,NMERGE_TOT)
-      DEALLOCATE(IMERGE0)
-      DEALLOCATE(NOBX)
-      DEALLOCATE(NOBY)
-      DEALLOCATE(NOBZ)
-      DEALLOCATE(NOBCX)
-      DEALLOCATE(NOBCY)
-      DEALLOCATE(NOBCZ)
-      DEALLOCATE(LBUF)
-      DEALLOCATE(IADMERGE2TMP)
+      call my_dealloc(IMERGE0)
+      CALL MY_DEALLOC(NOBX)
+      CALL MY_DEALLOC(NOBY)
+      CALL MY_DEALLOC(NOBZ)
+      CALL MY_DEALLOC(NOBCX)
+      CALL MY_DEALLOC(NOBCY)
+      CALL MY_DEALLOC(NOBCZ)
+      CALL MY_DEALLOC(LBUF)
+      call my_dealloc(IADMERGE2TMP)
       RETURN
       END
 C------------------------------------------------------------

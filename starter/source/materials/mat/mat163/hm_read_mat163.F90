@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat163_mod   ../starter/source/materials/mat/mat163/hm_read_mat163.F90
 !||--- called by ------------------------------------------------------
@@ -43,6 +44,7 @@
 !||    hm_option_is_encrypted   ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
 !||    init_mat_keyword         ../starter/source/materials/mat/init_mat_keyword.F
 !||    mat_table_copy           ../starter/source/materials/tools/mat_table_copy.F90
+!||    table_slope              ../starter/source/materials/tools/table_slope.F
 !||--- uses       -----------------------------------------------------
 !||    elbuftag_mod             ../starter/share/modules1/elbuftag_mod.F
 !||    hm_option_read_mod       ../starter/share/modules1/hm_option_read_mod.F
@@ -66,6 +68,7 @@
           use hm_option_read_mod
           use table_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                 implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -92,8 +95,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           integer :: tab_id,ncycle,nrs
           real(kind=WP) :: rho0,shear,young,nu,bulk,tsc,damp,srclmt,lam,cii,cij,       &
-            x1scale,x2scale,x3scale,x4scale,x2vect(1),x3vect(1),x4vect(1),       &
-            fscale(1)
+            x1scale,x2scale,x3scale,x4scale,x2vect(1),x3vect(1),x4vect(1),             &
+            fscale(1),youngini,youngmin,youngmax,xmax
           logical :: is_encrypted,is_available
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                      body
@@ -121,6 +124,8 @@
           call hm_get_intv  ("NRSFlag"   ,nrs      ,is_available, lsubmodel)
 ! ----------------------------------------------------------------------------------------------------------------------
 !
+          !< Poisson's ratio
+          nu = min(max(nu,zero),0.499d0)
           !< Reference strain rate
           if (x2vect(1) == zero) then
             call hm_get_floatv_dim("EPSD_REF",x2vect(1),is_available,lsubmodel,unitab)
@@ -129,19 +134,14 @@
           if (fscale(1) == zero) then
             call hm_get_floatv_dim("FSCALE",fscale(1),is_available,lsubmodel,unitab)
           end if
-          !< Shear modulus
-          shear = young/(two*(one+nu))
-          bulk  = young/(three*(one - two*nu))
-          !< Stifness matrix components
-          lam = young*nu / (one+nu) / (one - two*nu)
-          cii = lam + shear*two
-          cij = lam
           !< Damping default value
           if (damp == zero) damp = em01
           !< Default number of cycles
           if (ncycle == zero) ncycle = 12
           !< Default strain rate change limit
           if (srclmt == zero) srclmt = infinity
+          !< Default strain rate flag
+          nrs = max(min(nrs,1),0)
 !
 ! ----------------------------------------------------------------------------------------------------------------------
           !< Filling buffer tables
@@ -157,24 +157,9 @@
           nvartmp = 2
 !
           !< Allocation of material parameters tables
-          allocate(matparam%iparam(matparam%niparam))
-          allocate(matparam%uparam(matparam%nuparam))
-          allocate(matparam%table (matparam%ntable ))
-!
-          !< Integer material parameter
-          matparam%iparam(1)  = ncycle
-          matparam%iparam(2)  = nrs
-!
-          !< Real material parameters
-          matparam%young      = young
-          matparam%nu         = nu
-          matparam%shear      = shear
-          matparam%bulk       = bulk
-          matparam%uparam(1)  = cii
-          matparam%uparam(2)  = cij
-          matparam%uparam(3)  = tsc
-          matparam%uparam(4)  = damp
-          matparam%uparam(5)  = srclmt
+          call my_alloc(matparam%iparam, matparam%niparam, "matparam%iparam")
+          call my_alloc(matparam%uparam, matparam%nuparam, "matparam%uparam")
+          allocate(matparam%table(matparam%ntable))
 !
           !< Transform global table into material table
           matparam%table(1)%notable = tab_id
@@ -187,6 +172,37 @@
           call mat_table_copy(matparam ,x2vect   ,x3vect   ,x4vect   ,         &
             x1scale  ,x2scale  ,x3scale  ,x4scale  ,fscale   ,         &
             ntable   ,table    ,ilaw     )
+!
+          !< Get the maximum tabulated slope
+          youngmax = zero
+          call table_slope(matparam%table(1),youngini,youngmin,youngmax,xmax)
+!
+          !< Update material parameters
+          ! -> Young's modulus
+          youngini = youngmax
+          youngmax = max(youngmax,young)
+          matparam%young = youngmax
+          ! -> Poisson's ratio
+          matparam%nu = nu
+          ! -> Bulk modulus
+          bulk = youngmax/(three*(one - two*nu))
+          matparam%bulk = bulk
+          ! -> Shear modulus
+          shear = half*youngmax/(one + nu)
+          matparam%shear = shear
+          !< Stiffness matrix components
+          lam = youngmax*nu / (one+nu) / (one - two*nu)
+!
+          !< Integer material parameter
+          matparam%iparam(1) = ncycle
+          matparam%iparam(2) = nrs
+!
+          !< Real material parameters
+          matparam%uparam(1) = lam + shear*two
+          matparam%uparam(2) = lam
+          matparam%uparam(3) = tsc
+          matparam%uparam(4) = damp
+          matparam%uparam(5) = srclmt
 !
           !< PARMAT table
           parmat(1)  = bulk
@@ -215,6 +231,7 @@
           call init_mat_keyword(matparam ,"LARGE_STRAIN")
           call init_mat_keyword(matparam ,"HOOK")
           call init_mat_keyword(matparam ,"ISOTROPIC")
+          call init_mat_keyword(matparam ,"TETRA4_AVERAGED")
 !
 ! ----------------------------------------------------------------------------------------------------------------------
           !< Printing out the material data
@@ -225,26 +242,28 @@
             write(iout,"(5X,A,//)") "CONFIDENTIAL DATA"
           else
             write(iout,1002) rho0
-            write(iout,1003) young,nu
+            write(iout,1003) young,youngini,youngmax,nu
             write(iout,1004) tsc,damp,ncycle,tab_id,x2vect(1),fscale(1),srclmt,nrs
           end if
 !
-1000      format(/                                                                 &
+1000      format(/                                                                  &
             5X,"-------------------------------------------------------",/          &
             5X,"           MATERIAL MODEL: CRUSHABLE FOAM              ",/,         &
             5X,"-------------------------------------------------------",/)
-1001      format(/                                                                 &
+1001      format(/                                                                  &
             5X,A,/,                                                                 &
             5X,"MATERIAL NUMBER. . . . . . . . . . . . . . . . . . . .=",I10/,      &
             5X,"MATERIAL LAW . . . . . . . . . . . . . . . . . . . . .=",I10/)
-1002      format(/                                                                 &
+1002      format(/                                                                  &
             5X,"INITIAL DENSITY. . . . . . . . . . . . . . . . . . . .=",1PG20.13/)
-1003      format(/                                                                 &
+1003      format(/                                                                  &
             5X,"ELASTIC PARAMETERS:                                    ",/,         &
             5X,"-------------------                                    ",/,         &
-            5X,"YOUNG MODULUS (E). . . . . . . . . . . . . . . . . . .=",1PG20.13/  &
+            5X,"INPUT YOUNG MODULUS (E). . . . . . . . . . . . . . . .=",1PG20.13/  &
+            5X,"MEASURED YOUNG MODULUS FROM TABLE. . . . . . . . . . .=",1PG20.13/  &
+            5X,"MAXIMUM YOUNG MODULUS RETAINED FOR SIMULATION. . . . .=",1PG20.13/  &
             5X,"POISSON RATIO (NU) . . . . . . . . . . . . . . . . . .=",1PG20.13/)
-1004      format(/                                                                 &
+1004      format(/                                                                  &
             5X,"PLASTIC PARAMETERS:                                    ",/,         &
             5X,"-------------------                                    ",/,         &
             5X,"TENSILE STRESS CUTOFF (TSC). . . . . . . . . . . . . .=",1PG20.13/  &

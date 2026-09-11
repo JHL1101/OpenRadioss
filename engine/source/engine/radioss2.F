@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    radioss2                     ../engine/source/engine/radioss2.F
 !||--- called by ------------------------------------------------------
@@ -28,10 +29,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ancmsg                       ../engine/source/output/message/message.F
 !||    arret                        ../engine/source/system/arret.F
 !||    bcs0                         ../engine/source/constraints/general/bcs/bcs0.F
-!||    build_msg                    ../common_source/tools/memory/my_alloc.F90
+!||    build_msg                    ../common_source/tools/memory/my_alloc_tools.F90
 !||    cdk6bc3                      ../engine/source/elements/sh3n/coquedk6/cdk6bc3.F
 !||    check_message_definition     ../common_source/modules/check_mod.F
-!||    checksum_option_outfile      ../common_source/modules/output/checksum_mod.F90
 !||    close_c                      ../common_source/tools/input_output/write_routines.c
 !||    condrmat                     ../engine/source/materials/mat/mat013/condrmat.F
 !||    coqini                       ../engine/source/elements/shell/coqini.F
@@ -46,6 +46,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inipar                       ../engine/source/mpi/init/inipar.F
 !||    iniresa                      ../engine/source/output/restart/rdresa.F
 !||    init_dyn_lib_struc           ../engine/share/modules/dynlib_mod.F
+!||    init_h3d_engine              ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    init_th0                     ../engine/source/output/th/init_th0.F
 !||    initime                      ../engine/source/system/timer_mod.F90
 !||    lecinp                       ../engine/source/input/lecinp.F
@@ -68,6 +69,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    restalloc                    ../engine/source/output/restart/arralloc.F
 !||    setignorecore                ../engine/source/system/traceback_handler.c
 !||    solver_stacksize             ../common_source/comm/stacksize.cpp
+!||    spmd_profiler_flush          ../engine/source/mpi/generic/spmd_profiler_mod.F90
+!||    spmd_profiler_init           ../engine/source/mpi/generic/spmd_profiler_mod.F90
 !||    spmd_reduce_db               ../engine/source/mpi/generic/spmd_reduce_db.F
 !||    spmd_rst_check               ../engine/source/mpi/init/spmd_rst_check.F
 !||    stack_ply_alloc              ../engine/share/modules/stack_mod.F
@@ -105,6 +108,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    group_mod                    ../engine/share/modules/group_mod.F
 !||    groupdef_mod                 ../common_source/modules/groupdef_mod.F
 !||    h3d_mod                      ../engine/share/modules/h3d_mod.F
+!||    init_h3d_engine_mod          ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    inoutfile_mod                ../common_source/modules/inoutfile_mod.F
 !||    interfaces_mod               ../common_source/modules/interfaces/interfaces_mod.F90
 !||    intstamp_glob_mod            ../engine/share/modules/intstamp_glob_mod.F
@@ -202,6 +206,7 @@ C-----------------------------------------------
       USE ANIM_MOD
       use rwall_mod
       use sfem_mod
+      use init_h3d_engine_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -238,6 +243,7 @@ C-----------------------------------------------
 #include      "scr_fac_c.inc"
 #include      "chara_c.inc"
 #include      "task_c.inc"
+#include      "spmd_c.inc"
 #include      "warn_c.inc"
 #include      "parit_c.inc"
 #include      "titr_c.inc"
@@ -270,7 +276,7 @@ C-----------------------------------------------
      .        RADIOSSV,RADFLEXV,RDFLEXCOMP,ABFV,ABFCOMP,IFILABF,
      .        NB_OF_FILES,N_FAIL,IP,IRUNN_BIS,IFILTITL
       INTEGER OMP_GET_THREAD_NUM,LONG,LONG_TMP,
-     .        LENV,FVERS,LFNAME,NB_INDEX_ABF
+     .        LENV,FVERS,LFNAME,NB_INDEX_ABF,NINTERSKID
       CHARACTER FILNAM*100, CHRUNM1*2, INPUTNAM*100,
      .          CHR_OLD*2,FNAME*2048,IOFF1*3,IOFF2*3,IOFF3*3
       CHARACTER*2048 INAME
@@ -293,7 +299,7 @@ C-----------------------------------------------
 C Madymo Stuff
       INTEGER IERROR,MADSTRLEN
       CHARACTER MAD_OPTION_STRING*256
-      INTEGER KMADPRT,KMADSH4,KMADSH3,KMADSOL,KMADNOD,KMADFAIL,K1,K2,K3,K4,K5,K6,K7,K8,K9,K10,K11
+      INTEGER KMADPRT,KMADSH4,KMADSH3,KMADSOL,KMADNOD,K1,K2,K3,K4,K5,K6,K7,K8,K9,K10,K11
       INTEGER BUFTEST(100),NB_MAN,FLAG_MAIN,J, ILAW51,ILAW37,ILAW20
 
       my_real, DIMENSION(:),ALLOCATABLE :: FORNEQS
@@ -358,7 +364,7 @@ C-------------------------------------------------------------------------------
       TYPE(rbe3_) :: rbe3
       TYPE(coupling_type) :: coupling
       TYPE(rwall_) :: rwall
-      TYPE(sfem_)  :: sfem
+      TYPE(global_sfem_)  :: sfem
 C------------------------------------------------------------------
 C to build a IBM PARALLEL version
 C In starter : define install parameter nspmd 
@@ -663,6 +669,12 @@ C     Standard input reading
 C------------------------------------------------
       CALL LECINP(IRUNN,IRFL,IRFE,H3D_DATA,FLAG_CST_AMS,DYNAIN_DATA,
      .            SENSORS,DT,OUTPUT,GLOB_THERM)
+C
+C     Initialize SPMD profiler if /PROFI keyword was found
+C
+      IF (SPMD_PROFILING_ENABLED) THEN
+        CALL SPMD_PROFILER_INIT(ISPMD)
+      ENDIF
 
        NFSKYI=5
 
@@ -1056,10 +1068,10 @@ C
      .            SENSORS        ,EBCS_TAB   ,DYNAIN_DATA   ,USER_WINDOWS     ,OUTPUT    ,
      .            INTERFACES     ,LOADS      ,MAT_ELEM      ,PYTHON           ,IFLOW     ,
      .            SKEWS          ,RFLOW      ,LIFLOW        ,LRFLOW           ,IMPL_S0   ,
-     .            FORNEQS       ,UNITAB,
+     .            FORNEQS        ,UNITAB     ,DT            ,DTFAC1           ,
      .            STACK          ,DRAPE_SH4N ,DRAPE_SH3N    ,DRAPEG           ,NDRAPE ,
      .            GLOB_THERM     ,PBLAST     ,ELEMENT       ,NODES            ,RBE3     ,
-     .            RWALL          ,SFEM      )
+     .            RWALL          ,SFEM       )
       ! Close restart file
        CALL CLOSE_C
  
@@ -1444,7 +1456,7 @@ C-----------------------------------------------------
 C-----------------------------------------------------
       MAX_DEPVAR = 0
 #ifdef DNC
-      IF(MDS_AVAIL==1) THEN
+      IF(MDS_AVAIL==1 .and. MDS_NMAT > 0) THEN
         NSPMD_USER = NSPMD
         NTASK_USER = NTHREAD
         ISPMD_USER = ISPMD
@@ -1483,11 +1495,11 @@ C------------------------------------------------
      C              MONVOL ,VOLMON, IPART_STATE,GEO,TABLE,
      D              IFRAME,XFRAME,MAT_ELEM%ELBUF,IGEO,INTERFACES%INTBUF_TAB,
      E              IPM   ,H3D_DATA, MULTI_FVM,
-     F              IGRPART,TAG_SKINS6,ICFIELD,LCFIELD,NODES%TAG_S_RBY,
-     G              MDS_LABEL,MDS_OUTPUT_TABLE,MDS_NMAT,MAX_DEPVAR,
-     H              MDS_NDEPSVAR,STACK,IBCL,ILOADP,LLOADP,SENSORS,
-     I              DYNAIN_DATA,DT ,LOADS ,OUTPUT,NAMES_AND_TITLES,
-     J              MAT_ELEM%MAT_PARAM,GLOB_THERM,PBLAST)
+     F              IGRPART,ICFIELD,LCFIELD,NODES%TAG_S_RBY,
+     G              MDS_NMAT,
+     H              SENSORS,MAT_ELEM,
+     I              DYNAIN_DATA,DT ,OUTPUT,NAMES_AND_TITLES,
+     J              GLOB_THERM)
 C------------------------------------------------
 C Close & Delete scratch file
       CLOSE (UNIT=IIN)
@@ -1500,11 +1512,24 @@ C     initializations MDS
 C------------------------------------------------
 
 #ifdef DNC
-      IF (MDS_AVAIL==1) THEN
+      IF (MDS_AVAIL==1 .and. MDS_NMAT > 0) THEN
         CALL MDS_ENGINE_USER_INITIALIZE(NSPMD_USER,NTASK_USER,ISPMD_USER,TSTOP,
      *       MDS_NMAT,MDS_MATID,MDS_FILES,MDS_LABEL,MDS_NDEPSVAR,MAX_DEPVAR,MDS_OUTPUT_TABLE)
       ENDIF
 #endif
+C------------------------------------------------
+C     H3D initialization
+C------------------------------------------------
+      CALL INIT_H3D_ENGINE(OUTPUT,GEO,IGEO,IPM,IPART,H3D_DATA,MULTI_FVM,IPARI,IPARG,TAG_SKINS6,
+     .                     MDS_LABEL,MDS_OUTPUT_TABLE,MDS_NMAT,MAX_DEPVAR,MDS_NDEPSVAR,
+     .                     MAT_ELEM%ELBUF,STACK,IBCL,ILOADP,LLOADP,LOADS,MAT_ELEM%MAT_PARAM,PBLAST,
+     .                     IGRPART,NPC,TF,SNPC,STF,SENSORS,SENSORS%SENSOR_TAB,PSKIDS,
+     .                     NINTSKIDOLD,NINTERSKID,NINTSTAMP,NUMNOD,NUMNODG,NINTER,NUMSPHG,
+     .                     NPROPG,NPROPGI,NPROPMI,LIPART1,NPARI,NPARG,
+     .                     NGROUP,NUMELS,SIBCL,NLOADP,SIZLOADP,SLLOADP,NGRPART,SENSORS%NSENSOR,
+     .                     ISPMD,IOUT,MCHECK,
+     .                     NUMELCG,NUMELTGG,NUMELSG,NUMELTRG,NUMELPG,NUMELRG,
+     .                     NUMELQG,NUMSKING,NUMGEO,NUMMAT,NUMPLY)
 
 C------------------------------------------------
       CALL TRACE_IN(19,0,ZERO)
@@ -1621,6 +1646,7 @@ C------------------------------------------------
           WA(1:SWA) = ZERO
           ! Store filename for eventuel checksum computation
           OUTPUT%TH%TH_FILENAME(1:LEN_TRIM(FILNAMTH))=FILNAMTH(1:LEN_TRIM(FILNAMTH))
+          OUTPUT%TH%AUX_TH_FILENAME = ''
 
 C   Multiple th files
             IF(NTHGRP01(1)/=0)THEN
@@ -1644,6 +1670,7 @@ C   Multiple th files
      4                    IPM      ,IPART(1+LIPART1*(NPART+NTHPART)) ,2  ,1    ,
      5                    1       ,AFORM(1)           ,ITHFLAG       ,ITHVAR,
      6                    IFILTITL,OUTPUT%TH%SITHBUFA ,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(1) = FILNAMTH
             END IF
 
             IF(NTHGRP01(2)/=0)THEN
@@ -1667,6 +1694,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+2*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(2)          ,ITHFLAG          ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFB,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(2) = FILNAMTH
             END IF
 
             IF(NTHGRP01(3)/=0)THEN
@@ -1690,6 +1718,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+4*(NPART+NTHPART)) ,2 ,1,
      5                   1       ,AFORM(3)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFC,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(3) = FILNAMTH
             END IF
 
             IF(NTHGRP01(4)/=0)THEN
@@ -1713,6 +1742,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+6*(NPART+NTHPART)) ,2 ,1,
      5                   1       ,AFORM(4)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL ,OUTPUT%TH%SITHBUFD,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(4) = FILNAMTH
             END IF
 
             IF(NTHGRP01(5)/=0)THEN
@@ -1736,6 +1766,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+8*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(5)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFE,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(5) = FILNAMTH
             END IF
 
             IF(NTHGRP01(6)/=0)THEN
@@ -1759,6 +1790,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+10*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(6)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFF,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(6) = FILNAMTH
             END IF
 
             IF(NTHGRP01(7)/=0)THEN
@@ -1782,6 +1814,7 @@ C   Multiple th files
      4                   IPM,IPART(1+LIPART1*(NPART+NTHPART)+12*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(7)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFG ,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(7) = FILNAMTH
             END IF
 
             IF(NTHGRP01(8)/=0)THEN
@@ -1805,6 +1838,7 @@ C   Multiple th files
      4                   IPM      ,IPART(1+LIPART1*(NPART+NTHPART)+14*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(8)           ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFH,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(8) = FILNAMTH
             END IF
 
             IF(NTHGRP01(9)/=0)THEN
@@ -1828,6 +1862,7 @@ C   Multiple th files
      4                   IPM     ,IPART(1+LIPART1*(NPART+NTHPART)+16*(NPART+NTHPART)),2,1,
      5                   1       ,AFORM(9)          ,ITHFLAG           ,ITHVAR,
      6                   IFILTITL,OUTPUT%TH%SITHBUFI,NAMES_AND_TITLES)
+        OUTPUT%TH%AUX_TH_FILENAME(9) = FILNAMTH
             END IF
         ELSE
           WRITE(CHR_OLD,'(I2.2)')IRUNN
@@ -2197,10 +2232,6 @@ C---------------------------------------------------------------------
          ITASK=0
          IRUNN_BIS = IRUNN
 
-         IF (ISPMD==0)THEN
-            CALL checksum_option_outfile(OUTPUT%checksum)
-         ENDIF
-
          CALL RESOL_HEAD(ELEMENT, NODES, ITASK        ,AF              ,IAF             ,IDATA      ,RDATA,
      .                   GRAPHE       ,IFLOW           ,RFLOW           ,
      .                   STACK        ,IRUNN_BIS       , TIMERS,
@@ -2225,7 +2256,8 @@ C New MADYMO coupling
       ENDIF
 #endif
 C----------------------------------------------------------------------X
-C End tasks
+C End tasks - flush profiler before MPI_Finalize
+      IF (SPMD_PROFILING_ENABLED) CALL SPMD_PROFILER_FLUSH()
       CALL INIPAR(coupling,ITID,2,NNODES,INPUTNAM,GOT_INPUT,NBTASK)
 C---------------------------------------------------------------------
       IF(MSTOP==1) THEN

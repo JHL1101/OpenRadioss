@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s16init3               ../starter/source/elements/thickshell/solide16/s16init3.F
 !||--- called by ------------------------------------------------------
@@ -115,10 +116,10 @@ C-----------------------------------------------
       INTEGER ,PARAMETER :: NPE=16
       CHARACTER(LEN=NCHARTITLE)::TITR1
       my_real
-     .   BID, FV,WI,AA,BB
+     .   FV,WI,AA,BB
       my_real
      .   MASS(MVSIZ),
-     .  VOLP(MVSIZ,5), STI(MVSIZ),DELTAX(MVSIZ),DELTAX2(MVSIZ),
+     .  STI(MVSIZ),DELTAX(MVSIZ),DELTAX2(MVSIZ),
      .  XX(MVSIZ,16), YY(MVSIZ,16), ZZ(MVSIZ,16),
      .  VX(MVSIZ,16), VY(MVSIZ,16), VZ(MVSIZ,16),
      .  PX(MVSIZ,16), PY(MVSIZ,16), PZ(MVSIZ,16),

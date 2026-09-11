@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25dst3_21   ../engine/source/interfaces/int25/i25dst3_21.F
 !||--- called by ------------------------------------------------------
@@ -111,6 +112,7 @@ C-----------------------------------------------
      .     LL ,NN, PN, LD(MVSIZ), LX, LAX, LBX, LCX,
      .     PREC
       DATA ITRIA/1,2,2,3,3,4,4,1/
+      LOGICAL :: SHELL_CONTACT
 C-----------------------------------------------------------------------
 C
 C initialisation (cf triangles)
@@ -561,6 +563,12 @@ C       Projection outside the triangle
         IF(LB(I,IT) < -EM03 .OR. LC(I,IT) < -EM03 .OR.
      .      LB(I,IT)+LC(I,IT) > ONE+EM03) FAR(I,IT)=1
 C
+        IF((ETYP(I)/= 0).OR.(GAPS(I)>ZERO)) THEN
+           SHELL_CONTACT = .TRUE.
+        ELSE
+           SHELL_CONTACT = .FALSE.
+        ENDIF
+C
         XH=XI(I)+BB(I,IT)*XN(I,IT)
         YH=YI(I)+BB(I,IT)*YN(I,IT)
         ZH=ZI(I)+BB(I,IT)*ZN(I,IT)
@@ -573,7 +581,7 @@ C
 C
             IF( (XH-XX(I,I1))* NNX(I,IT)+
      .          (YH-YY(I,I1))* NNY(I,IT)+
-     .          (ZH-ZZ(I,I1))* NNZ(I,IT) >= GAPS(I)) FAR(I,IT) =2
+     .          (ZH-ZZ(I,I1))* NNZ(I,IT) >= GAPS(I).AND.SHELL_CONTACT) FAR(I,IT) =2
 C
           ELSEIF((IB1 /= 0 .AND. IB2 == 0).OR.
      .           (IB2 /= 0 .AND. IB1 == 0))THEN
@@ -597,14 +605,14 @@ C
               P2 = (XH-XX(I,IX))* VTX_BISECTOR(1,2,IBX)+
      .             (YH-YY(I,IX))* VTX_BISECTOR(2,2,IBX)+
      .             (ZH-ZZ(I,IX))* VTX_BISECTOR(3,2,IBX)
-              IF(P1 >= GAPS(I) .AND. P2 >= GAPS(I)) FAR(I,IT) =2
+              IF(P1 >= GAPS(I) .AND. P2 >= GAPS(I).AND.SHELL_CONTACT) FAR(I,IT) =2
             ELSE
               VX = X0N(I,IX) ! fake bisector of angle at vertex IX
               VY = Y0N(I,IX)
               VZ = Z0N(I,IX)
               NN = ONE/MAX(EM20,SQRT(VX*VX+VY*VY+VZ*VZ))
               PN = ((XH-XX(I,IX))*VX+(YH-YY(I,IX))*VY+(ZH-ZZ(I,IX))*VZ)*NN
-              IF(PN >= GAPS(I)) FAR(I,IT) =2
+              IF(PN >= GAPS(I).AND.SHELL_CONTACT) FAR(I,IT) =2
             END IF
 C
           END IF
@@ -654,9 +662,9 @@ C
      .       (YH-YY(I,3))* NNY(I,4)+
      .       (ZH-ZZ(I,3))* NNZ(I,4)
 C
-          IF( (MVOISN(I,1) == 0 .AND. D1 >= GAPS(I)).OR.
+          IF( ((MVOISN(I,1) == 0 .AND. D1 >= GAPS(I)).OR.
      .        (MVOISN(I,2) == 0 .AND. D2 >= GAPS(I)).OR.
-     .        (MVOISN(I,4) == 0 .AND. D3 >= GAPS(I)) )THEN
+     .        (MVOISN(I,4) == 0 .AND. D3 >= GAPS(I)) ).AND.SHELL_CONTACT)THEN
 C
             FAR(I,IT)=2
 C
@@ -691,14 +699,14 @@ C
               P2 = (XH-XX(I,IX))* VTX_BISECTOR(1,2,IBX)+
      .             (YH-YY(I,IX))* VTX_BISECTOR(2,2,IBX)+
      .             (ZH-ZZ(I,IX))* VTX_BISECTOR(3,2,IBX)
-              IF(P1 >= GAPS(I) .AND. P2 >= GAPS(I)) FAR(I,IT) =2
+              IF(P1 >= GAPS(I) .AND. P2 >= GAPS(I).AND.SHELL_CONTACT) FAR(I,IT) =2
             ELSE
               VX = TWO*XX(I,IX)-(XX(I,IY)+XX(I,IZ)) ! fake bisector of angle 2,1,3
               VY = TWO*YY(I,IX)-(YY(I,IY)+YY(I,IZ))
               VZ = TWO*ZZ(I,IX)-(ZZ(I,IY)+ZZ(I,IZ))
               NN = ONE/MAX(EM20,SQRT(VX*VX+VY*VY+VZ*VZ))
               PN = ((XH-XX(I,IX))*VX+(YH-YY(I,IX))*VY+(ZH-ZZ(I,IX))*VZ)*NN
-              IF(PN >= GAPS(I)) FAR(I,IT) =2
+              IF(PN >= GAPS(I).AND.SHELL_CONTACT) FAR(I,IT) =2
             END IF
 C
           END IF

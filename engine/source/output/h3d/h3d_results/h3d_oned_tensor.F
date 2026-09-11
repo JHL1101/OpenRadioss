@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_oned_tensor        ../engine/source/output/h3d/h3d_results/h3d_oned_tensor.F
 !||--- called by ------------------------------------------------------
@@ -63,7 +64,6 @@ C     REAL
      .   ANIM(*),ONED_TENSOR(6,*),X(3,*),D(3,*)
       INTEGER IPARG(NPARG,*),
      .        IXT(NIXT,*),IXP(NIXP,*),IXR(NIXR,*),IFUNC,
-     .        NANIM1D_L,
      .        IS_WRITTEN_ONED(*),ID_ELEM(*),ITY_ELEM(*),
      .        IPARTT(*) ,IPARTP(*),IPARTR(*),H3D_PART(*)
       INTEGER INFO1, INFO2, IPT_INPUT
@@ -76,17 +76,13 @@ C-----------------------------------------------
 C     REAL
       my_real
      .   EVAR(6,MVSIZ),
-     .   OFF, P, VONM2, VONM, S1, S2, S12, S3, VALUE(3),
-     .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3, XM,     
-     .   FOR, AREA, FEQ, EPLAS, RHO0, A0, XX1, YY1, ZZ1, AL0
+     .   FOR, AREA
       INTEGER I, NG, NEL, NFT, ITY, NPT, 
-     .        IADD, N, J, LLT, MLW, NB1, NB2, NB3, NB4, NB5, 
-     .        NB6, NB7, NB8, NB9, NB10, NB11, NB12, NB13, NB14, NB15,
-     .        NB16, LLL,NUVAR,IGTYP,
-     .        ISTRAIN,NN, K1, K2,JTURB,MT,JALE, IMID, IALEL,IPID,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,NF,
-     .        OFFSET,K,INC,KK,IHBE,ISROT,ILAYER,IR,IS,JJ(6),IOK_PART(MVSIZ),
-     .        IS_WRITTEN_TENSOR(MVSIZ),N1, N2, IPT
+     .        N, MLW,
+     .        IGTYP,
+     .        NN1,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,
+     .        OFFSET,INC,ILAYER,JJ(6),IOK_PART(MVSIZ),
+     .        IS_WRITTEN_TENSOR(MVSIZ), IPT
  
 C
       TYPE(G_BUFEL_) ,POINTER :: GBUF

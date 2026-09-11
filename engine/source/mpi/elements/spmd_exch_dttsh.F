@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_exch_tag_tsh     ../engine/source/mpi/elements/spmd_exch_dttsh.F
+!||    spmd_exch_tag_tsh   ../engine/source/mpi/elements/spmd_exch_dttsh.F
 !||--- called by ------------------------------------------------------
-!||    tshcdcom_dim          ../engine/source/elements/thickshell/solidec/tshcdcom_dim.F
+!||    tshcdcom_dim        ../engine/source/elements/thickshell/solidec/tshcdcom_dim.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    message_mod         ../engine/share/message_module/message_mod.F
+!||    spmd_mod            ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_TAG_TSH(IAD_ELEM ,FR_ELEM ,ISEND,IRECV ,LEN)
 C-----------------------------------------------
@@ -37,7 +38,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -70,9 +71,8 @@ C-----------------------------------------------
         IF(SIZ>0)THEN
           MSGTYP = MSGOFF
           L = IAD_ELEM(1,I)
-          CALL MPI_IRECV(
-     +      IRECV(L),SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     +      SPMD_COMM_WORLD,REQ_R(I),IERROR)
+          CALL SPMD_IRECV(
+     +      IRECV(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_R(I))
         ENDIF
       END DO
 C
@@ -83,37 +83,36 @@ C
        IF(SIZ>0)THEN
           MSGTYP = MSGOFF
           L = IAD_ELEM(1,I)
-          CALL MPI_ISEND(
-     +      ISEND(L),SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     +      SPMD_COMM_WORLD,REQ_S(I),IERROR)
+          CALL SPMD_ISEND(
+     +      ISEND(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_S(I))
        ENDIF
       ENDDO
 C
       DO I = 1, NSPMD
        SIZ = IAD_ELEM(1,I+1)-IAD_ELEM(1,I)
         IF(SIZ>0)THEN
-          CALL MPI_WAIT(REQ_R(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_R(I),STATUS)
         ENDIF
       ENDDO
       DO I = 1, NSPMD
        SIZ = IAD_ELEM(1,I+1)-IAD_ELEM(1,I)
         IF(SIZ>0)THEN
-          CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S(I),STATUS)
         ENDIF
       ENDDO
 #endif
        
        END SUBROUTINE SPMD_EXCH_TAG_TSH
 !||====================================================================
-!||    spmd_exch_vmax        ../engine/source/mpi/elements/spmd_exch_dttsh.F
+!||    spmd_exch_vmax   ../engine/source/mpi/elements/spmd_exch_dttsh.F
 !||--- called by ------------------------------------------------------
-!||    resol                 ../engine/source/engine/resol.F
+!||    resol            ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg           ../engine/source/output/message/message.F
+!||    arret            ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_VMAX(IAD_STSH ,FR_STSH ,IAD_RTSH ,FR_RTSH ,V_MAX )
 C-----------------------------------------------
@@ -123,7 +122,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -177,9 +176,8 @@ C ----------
        DO P=1,NSPMD 
           SIZ = IAD_RTSH(P+1)-IAD_RTSH(P)
           IF(SIZ > 0) THEN 
-           CALL MPI_IRECV(
-     S      REC_BUF(L),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(P),IERROR)
+           CALL SPMD_IRECV(
+     S      REC_BUF(L:L+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_R(P))
             L=L+SIZ
           ENDIF
        ENDDO
@@ -198,9 +196,8 @@ C -----------------
               L=L+1
            ENDDO         
          
-           CALL MPI_ISEND(
-     S       SEND_BUF(IAD),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G       SPMD_COMM_WORLD,REQ_S(P),IERROR)
+           CALL SPMD_ISEND(
+     S       SEND_BUF(IAD:IAD+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_S(P))
      
          ENDIF
        ENDDO
@@ -212,7 +209,7 @@ C ------------
        DO P=1,NSPMD 
          SIZ = IAD_RTSH(P+1)-IAD_RTSH(P)
          IF(SIZ > 0)THEN
-           CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+           CALL SPMD_WAIT(REQ_R(P),STATUS)
             
            DO J=IAD_RTSH(P),IAD_RTSH(P+1)-1
              NOD = FR_RTSH(J)
@@ -227,7 +224,7 @@ C END SEND
 C ------------
       DO P = 1, NSPMD
         IF(IAD_STSH(P+1)-IAD_STSH(P)>0)THEN
-          CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S(P),STATUS)
         ENDIF
       ENDDO
       IF (ALLOCATED(SEND_BUF)) DEALLOCATE(SEND_BUF)
@@ -237,15 +234,15 @@ C ------------
        
        END SUBROUTINE SPMD_EXCH_VMAX
 !||====================================================================
-!||    spmd_exch_fa          ../engine/source/mpi/elements/spmd_exch_dttsh.F
+!||    spmd_exch_fa   ../engine/source/mpi/elements/spmd_exch_dttsh.F
 !||--- called by ------------------------------------------------------
-!||    resol                 ../engine/source/engine/resol.F
+!||    resol          ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg         ../engine/source/output/message/message.F
+!||    arret          ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    message_mod    ../engine/share/message_module/message_mod.F
+!||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_FA(IAD_STSH ,FR_STSH ,IAD_RTSH ,FR_RTSH ,A  )
 C-----------------------------------------------
@@ -255,7 +252,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -308,9 +305,8 @@ C ----------
        DO P=1,NSPMD 
           SIZ = 3*(IAD_RTSH(P+1)-IAD_RTSH(P))
           IF(SIZ > 0) THEN 
-           CALL MPI_IRECV(
-     S      REC_BUF(L),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(P),IERROR)
+           CALL SPMD_IRECV(
+     S      REC_BUF(L:L+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_R(P))
             L=L+SIZ
           ENDIF
        ENDDO
@@ -331,9 +327,8 @@ C -----------------
               L=L+3
            ENDDO         
          
-           CALL MPI_ISEND(
-     S       SEND_BUF(IAD),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G       SPMD_COMM_WORLD,REQ_S(P),IERROR)
+           CALL SPMD_ISEND(
+     S       SEND_BUF(IAD:IAD+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_S(P))
      
          ENDIF
        ENDDO
@@ -345,7 +340,7 @@ C ------------
        DO P=1,NSPMD 
          SIZ = 3*(IAD_RTSH(P+1)-IAD_RTSH(P))
          IF(SIZ > 0)THEN
-           CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+           CALL SPMD_WAIT(REQ_R(P),STATUS)
             
            DO J=IAD_RTSH(P),IAD_RTSH(P+1)-1
              NOD = FR_RTSH(J)
@@ -362,7 +357,7 @@ C END SEND
 C ------------
       DO P = 1, NSPMD
         IF(IAD_STSH(P+1)-IAD_STSH(P)>0)THEN
-          CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S(P),STATUS)
         ENDIF
       ENDDO
       IF (ALLOCATED(SEND_BUF)) DEALLOCATE(SEND_BUF)

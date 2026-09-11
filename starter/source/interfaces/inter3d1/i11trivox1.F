@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i11trivox1       ../starter/source/interfaces/inter3d1/i11trivox1.F
 !||--- called by ------------------------------------------------------
@@ -48,9 +49,11 @@ C-----------------------------------------------
       USE REALLOC_MOD
       USE TRI7BOX
       USE TRI11
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -111,7 +114,6 @@ C-----------------------------------------------
      .         NRTM,NRTS,MULTIMP,IADFIN,IGAP,
      .         NSN,NOINT,ITAB(*),NBX,NBY,NBZ,IAUTO,
      .         IRECTS(2,NRTS),IRECTM(2,NRTM),FLAGREMNODE
-      INTEGER ITASK
       INTEGER, INTENT(INOUT) ::
      .         CAND_S(*),CAND_M(*),ADDCM(*),CHAINE(2,*), 
      .         VOXEL(1:NBX+2,1:NBY+2,1:NBZ+2), I_MEM,II_STOK,
@@ -125,31 +127,39 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER 
-     .        I,J,SS1,SS2,IBUG,
-     .        N1,N2,MM1,MM2, iN1, iN2, iM1, iM2, K,L,
+     .        I,J,SS1,SS2,
+     .        N1,N2,MM1,MM2, K,L,
      .        PROV_S(2*MVSIZ),PROV_M(2*MVSIZ),    !Provisional table of candidates sent to i11stok
      .        IX1,IY1,IZ1,IX2,IY2,IZ2, 
      .        IX,IY,IZ, FIRST_ADD,
      .        I_STOK, I_STOK_BAK, IEDG,
      .        PREV_ADD, CHAIN_ADD, CURRENT_ADD,   !for scanning the chain arrays
-     .        NEDG, DEJA , MAX_ADD ,II_STOK0, M
+     .        NEDG, DEJA , MAX_ADD , M
       my_real
      .        XX1, XX2,
      .        XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX, 
      .        YY1,YY2,ZZ1,ZZ2,
-     .        AAA, DD,
+     .        AAA,
      .        XMINB,YMINB,ZMINB,XMAXB,YMAXB,ZMAXB
       my_real, dimension(:), ALLOCATABLE :: XMAX_EDGS, XMIN_EDGS, YMAX_EDGS, YMIN_EDGS, ZMAX_EDGS, ZMIN_EDGS
       my_real, dimension(:), ALLOCATABLE :: XMAX_EDGM, XMIN_EDGM, YMAX_EDGM, YMIN_EDGM, ZMAX_EDGM, ZMIN_EDGM
       INTEGER, DIMENSION(:), ALLOCATABLE ::  TAGREMLINE    
 C-----------------------------------------------C
-       ALLOCATE(XMAX_EDGS(NRTS), XMIN_EDGS(NRTS), YMAX_EDGS(NRTS))
-       ALLOCATE(YMIN_EDGS(NRTS), ZMAX_EDGS(NRTS), ZMIN_EDGS(NRTS))
-       ALLOCATE(XMAX_EDGM(NRTM), XMIN_EDGM(NRTM), YMAX_EDGM(NRTM))
-       ALLOCATE(YMIN_EDGM(NRTM), ZMAX_EDGM(NRTM), ZMIN_EDGM(NRTM))
+       call my_alloc(XMAX_EDGS, NRTS, "XMAX_EDGS")
+       call my_alloc(XMIN_EDGS, NRTS, "XMIN_EDGS")
+       call my_alloc(YMAX_EDGS, NRTS, "YMAX_EDGS")
+       call my_alloc(YMIN_EDGS, NRTS, "YMIN_EDGS")
+       call my_alloc(ZMAX_EDGS, NRTS, "ZMAX_EDGS")
+       call my_alloc(ZMIN_EDGS, NRTS, "ZMIN_EDGS")
+       call my_alloc(XMAX_EDGM, NRTM, "XMAX_EDGM")
+       call my_alloc(XMIN_EDGM, NRTM, "XMIN_EDGM")
+       call my_alloc(YMAX_EDGM, NRTM, "YMAX_EDGM")
+       call my_alloc(YMIN_EDGM, NRTM, "YMIN_EDGM")
+       call my_alloc(ZMAX_EDGM, NRTM, "ZMAX_EDGM")
+       call my_alloc(ZMIN_EDGM, NRTM, "ZMIN_EDGM")
 C--- IREMGAP - array for tag of deactivated lines
       IF(FLAGREMNODE==2)THEN
-        ALLOCATE(TAGREMLINE(NRTS))
+        call my_alloc(TAGREMLINE, NRTS, "TAGREMLINE")
         TAGREMLINE(1:NRTS) = 0
       ENDIF  
 C
@@ -166,9 +176,9 @@ C
       ! allocation of the chain arrays
       !---------------------------------------------------------!
       MAX_ADD = max(1,4*(NRTS))
-      ALLOCATE(LCHAIN_ELEM(1:MAX_ADD))
-      ALLOCATE(LCHAIN_NEXT(1:MAX_ADD))
-      ALLOCATE(LCHAIN_LAST(1:MAX_ADD))
+      call my_alloc(LCHAIN_ELEM, MAX_ADD, "LCHAIN_ELEM")
+      call my_alloc(LCHAIN_NEXT, MAX_ADD, "LCHAIN_NEXT")
+      call my_alloc(LCHAIN_LAST, MAX_ADD, "LCHAIN_LAST")
       
 
       IF(NRTM==0.OR.NRTS==0)THEN
@@ -503,15 +513,23 @@ C=======================================================================
      .                               (/MAX_IX, MAX_IY, MAX_IZ/),
      2      NBX, NBY, NBZ, VOXEL  )
    
-      DEALLOCATE(LCHAIN_NEXT)
-      DEALLOCATE(LCHAIN_ELEM)
-      DEALLOCATE(LCHAIN_LAST)
-      IF(FLAGREMNODE==2) DEALLOCATE(TAGREMLINE)       
+      CALL MY_DEALLOC(LCHAIN_NEXT)
+      CALL MY_DEALLOC(LCHAIN_ELEM)
+      CALL MY_DEALLOC(LCHAIN_LAST)
+      IF(FLAGREMNODE==2) CALL MY_DEALLOC(TAGREMLINE)
       
-      DEALLOCATE(XMAX_EDGS, XMIN_EDGS, YMAX_EDGS)
-      DEALLOCATE(YMIN_EDGS, ZMAX_EDGS, ZMIN_EDGS)
-      DEALLOCATE(XMAX_EDGM, XMIN_EDGM, YMAX_EDGM)
-      DEALLOCATE(YMIN_EDGM, ZMAX_EDGM, ZMIN_EDGM)
+      CALL MY_DEALLOC(XMAX_EDGS)
+      CALL MY_DEALLOC(XMIN_EDGS)
+      CALL MY_DEALLOC(YMAX_EDGS)
+      CALL MY_DEALLOC(YMIN_EDGS)
+      CALL MY_DEALLOC(ZMAX_EDGS)
+      CALL MY_DEALLOC(ZMIN_EDGS)
+      CALL MY_DEALLOC(XMAX_EDGM)
+      CALL MY_DEALLOC(XMIN_EDGM)
+      CALL MY_DEALLOC(YMAX_EDGM)
+      call my_dealloc(YMIN_EDGM)
+      call my_dealloc(ZMAX_EDGM)
+      call my_dealloc(ZMIN_EDGM)
 
       RETURN   
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_s_ortho        ../engine/source/output/sta/stat_s_ortho.F
 !||--- called by ------------------------------------------------------
@@ -36,6 +37,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod         ../engine/share/resol/initbuf.F
 !||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE STAT_S_ORTHO(ELBUF_TAB,IPARG ,IPM ,IGEO ,IXS ,
      2                        WA,WAP0 ,IPARTS, IPART_STATE,
@@ -50,6 +52,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -94,8 +97,9 @@ C----
 C-----------------------------------------------
 C     8 NODES BRICK
 C======================================================================|
-      CALL MY_ALLOC(PTWA,STAT_NUMELS)
+      call my_alloc(PTWA, STAT_NUMELS, "PTWA")
       ALLOCATE(PTWA_P0(0:MAX(1,STAT_NUMELS_G)))
+! TODO: non-default lower bound, convert manually
 C-----------------------------------------------
       JJ = 0
       IF(STAT_NUMELS==0) GOTO 200
@@ -374,8 +378,8 @@ c
         ENDDO        
       ENDIF
 c-----------
-      DEALLOCATE(PTWA)
-      DEALLOCATE(PTWA_P0)
+      call my_dealloc(PTWA)
+      call my_dealloc(PTWA_P0)
 c-----------
       RETURN
       END

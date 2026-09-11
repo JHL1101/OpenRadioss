@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lecsec42                 ../starter/source/tools/sect/hm_read_sect.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    fretitl                  ../starter/source/starter/freform.F
 !||    grsize_ele               ../starter/source/system/nintrr.F
 !||    grsize_ele_trans         ../starter/source/system/nintrr.F
+!||    grsizen                  ../starter/source/system/nintrr.F
 !||    hm_get_floatv            ../starter/source/devtools/hm_reader/hm_get_floatv.F
 !||    hm_get_int_array_index   ../starter/source/devtools/hm_reader/hm_get_int_array_index.F
 !||    hm_get_intv              ../starter/source/devtools/hm_reader/hm_get_intv.F
@@ -77,6 +79,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARLINE, NCHARFIELD
       USE RESTMOD, ONLY : NSTRF
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -144,12 +147,14 @@ C-----------------------------------------------
       my_real X3, Y3, Z3, N3, PNOR1, PNOR2, PNORM1, DET, DET1, DET2, DET3
       LOGICAL :: IS_AVAILABLE
       INTEGER :: SNSTRF1
-      integer :: max_extension
+      INTEGER :: MAX_EXTENSION
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER USR2SYS,NODGRNR5,ELEGROR,ELEGROR_SEATBELT,GRSIZE_ELE_TRANS,GRSIZE_ELE
-      EXTERNAL USR2SYS,NODGRNR5,ELEGROR,ELEGROR_SEATBELT,GRSIZE_ELE_TRANS,GRSIZE_ELE
+      INTEGER USR2SYS,NODGRNR5,ELEGROR,ELEGROR_SEATBELT,
+     .        GRSIZEN,GRSIZE_ELE,GRSIZE_ELE_TRANS
+      EXTERNAL USR2SYS,NODGRNR5,ELEGROR,ELEGROR_SEATBELT,
+     .         GRSIZEN,GRSIZE_ELE,GRSIZE_ELE_TRANS
 
 C
       DATA MESS/'SECTION DEFINITION                      '/
@@ -157,10 +162,10 @@ C
 C-----------------------------------------------
 C   S o u r c e   F i l e s
 C-----------------------------------------------
-      ALLOCATE(TAGNODES( NUMNOD*2+NPART))
-      ALLOCATE(TAGNDOUBL(NUMNOD))
-      ALLOCATE(TAGELEMS(1+NUMELC+NUMELS+NUMELT+NUMELQ+NUMELP+NUMELR+NUMELTG))
-      ALLOCATE(NODTAG(NUMNOD))
+      call my_alloc(TAGNODES, NUMNOD*2+NPART, "TAGNODES")
+      call my_alloc(TAGNDOUBL, NUMNOD, "TAGNDOUBL")
+      call my_alloc(TAGELEMS, 1+NUMELC+NUMELS+NUMELT+NUMELQ+NUMELP+NUMELR+NUMELTG, "TAGELEMS")
+      call my_alloc(NODTAG, NUMNOD, "NODTAG")
       SNSTRF1 = 0
       NOPRINT = 0
       NFRAM = 0
@@ -317,7 +322,7 @@ C
      .               C1=TITR)
        END IF
 
-      call extend_array(NSTRF,SIZE(NSTRF),K1-1+NBINTER)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K1-1+NBINTER)
        DO J=1,NBINTER
          CALL HM_GET_INT_ARRAY_INDEX('int_id' ,NSTRF(K1-1+J) ,J ,IS_AVAILABLE, LSUBMODEL)
        ENDDO
@@ -436,8 +441,9 @@ C
          KK=1+NGRNOD
          NNOD = 0
          CPT = 1
-         max_extension = 22 * GRSIZE_ELE(IGUS,IGRBRIC,NGRBRIC)     
-         call extend_array(NSTRF,size(nstrf),K0 + max_extension)
+         MAX_EXTENSION = 20 * GRSIZE_ELE(IGUS,IGRBRIC,NGRBRIC)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES_SOL(IGUS,ISTYP,IGRBRIC,X0,A,
      2                 B,C,D,E,F,IXS,IXS10,IXS16,IXS20,
      3                 NIXS,NNOD,NSTRF,NBINTER,K1,
@@ -445,53 +451,54 @@ C
      5                 X1,Y1,Z1,X2,Y2,Z2,R)
 
          KK=KK+NGRBRIC
-         max_extension = 6 * GRSIZE_ELE(IGUQ,IGRQUAD,NGRQUAD)
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 4 * GRSIZE_ELE(IGUQ,IGRQUAD,NGRQUAD)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUQ,ISTYP,NGRQUAD,IGRQUAD,X0,A,
      2                 B,C,D,E,F,IXQ,NIXQ,NNOD,NSTRF,
      3                 NBINTER,K1,4,CPT,NODTAG,TAGELEMS(1+NUMELS),
      4                 X1,Y1,Z1,X2,Y2,Z2,R)
 
          KK=KK+NGRQUAD
-         max_extension = 6 * GRSIZE_ELE(IGUC,IGRSH4N,NGRSHEL)
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 4 * GRSIZE_ELE(IGUC,IGRSH4N,NGRSHEL)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUC,ISTYP,NGRSHEL,IGRSH4N,X0,A,
      2                 B,C,D,E,F,IXC,NIXC,NNOD,NSTRF,
      3                 NBINTER,K1,4,CPT,NODTAG,TAGELEMS(1+NUMELS
      .               +NUMELQ),
      4               X1,Y1,Z1,X2,Y2,Z2,R)
          KK=KK+NGRSHEL
-
-         max_extension = 4 * GRSIZE_ELE(IGUT,IGRTRUSS,NGRTRUS)
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 2 * GRSIZE_ELE(IGUT,IGRTRUSS,NGRTRUS)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUT,ISTYP,NGRTRUS,IGRTRUSS,X0,A,
      2                 B,C,D,E,F,IXT,NIXT,NNOD,NSTRF,
      3                 NBINTER,K1,2,CPT,NODTAG,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC),
      4               X1,Y1,Z1,X2,Y2,Z2,R)
          KK=KK+NGRTRUS
-
-
-         max_extension = 4 * GRSIZE_ELE(IGUP,IGRBEAM,NGRBEAM)
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 2 * GRSIZE_ELE(IGUP,IGRBEAM,NGRBEAM)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUP,ISTYP,NGRBEAM,IGRBEAM,X0,A,
      2                 B,C,D,E,F,IXP,NIXP,NNOD,NSTRF,
      3                 NBINTER,K1,2,CPT,NODTAG,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC+NUMELT),
      4               X1,Y1,Z1,X2,Y2,Z2,R)
          KK=KK+NGRBEAM
-
-         max_extension = 4 * GRSIZE_ELE(IGUR,IGRSPRING,NGRSPRI)     
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 2 * GRSIZE_ELE(IGUR,IGRSPRING,NGRSPRI)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUR,ISTYP,NGRSPRI,IGRSPRING,X0,A,
      2                 B,C,D,E,F,IXR,NIXR,NNOD,NSTRF,
      3                 NBINTER,K1,2,CPT,NODTAG,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC+NUMELT+NUMELP),
      4               X1,Y1,Z1,X2,Y2,Z2,R)
          KK=KK+NGRSPRI
-
-         max_extension = 6 * GRSIZE_ELE(IGUTG,IGRSH3N,NGRSH3N)
-         call extend_array(NSTRF,size(nstrf),CPT + max_extension)
+         MAX_EXTENSION = 3 * GRSIZE_ELE(IGUTG,IGRSH3N,NGRSH3N)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K1+NBINTER+CPT-1+MAX_EXTENSION)
          CALL SEC_NODES(IGUTG,ISTYP,NGRSH3N,IGRSH3N,X0,A,
      2                B,C,D,E,F,IXTG,NIXTG,NNOD,NSTRF,
      3                 NBINTER,K1,3,CPT,NODTAG,TAGELEMS(1+NUMELS
@@ -500,8 +507,10 @@ C
        ENDIF
 
        K2=K1+NBINTER
-       call extend_array(NSTRF,size(NSTRF),K2+NUMNOD)
        IF (NFRAM == 0 .AND. ISTYP == 0) THEN
+          MAX_EXTENSION = GRSIZEN(IGU,IGRNOD,NGRNOD)
+          CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                      K2+MAX_EXTENSION)
           NNOD=NODGRNR5(IGU,IGS,NSTRF(K2),IGRNOD,ITABM1,MESS)
        ENDIF
 
@@ -516,43 +525,51 @@ C
 
 
        K3=K2+NNOD
-       call extend_array(NSTRF,SIZE(NSTRF),K3+2* GRSIZE_ELE(IGUS,IGRBRIC,NGRBRIC))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUS,IGRBRIC,NGRBRIC)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K3+MAX_EXTENSION)
        NSEGS=ELEGROR(IGUS,IGRBRIC,NGRBRIC,'BRIC',
      .               NSTRF(K3),2,MESS,NFRAM,TAGELEMS,ISTYP,
      .               ID,TITR)
        K4=K3+2*NSEGS
-        call extend_array(NSTRF,SIZE(NSTRF),K4+2* GRSIZE_ELE(IGUQ,IGRQUAD,NGRQUAD))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUQ,IGRQUAD,NGRQUAD)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K4+MAX_EXTENSION)
        NSEGQ=ELEGROR(IGUQ,IGRQUAD,NGRQUAD,'QUAD',
      .               NSTRF(K4),2,MESS,NFRAM,TAGELEMS(1+NUMELS),ISTYP,
      .               ID,TITR)
        K5=K4+2*NSEGQ
-       call extend_array(NSTRF,SIZE(NSTRF),K5+2* GRSIZE_ELE(IGUC,IGRSH4N,NGRSHEL))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUC,IGRSH4N,NGRSHEL)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K5+MAX_EXTENSION)
        NSEGC=ELEGROR(IGUC,IGRSH4N,NGRSHEL,'SHEL',
      .               NSTRF(K5),2,MESS,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ),ISTYP,
      .               ID,TITR)
        K6=K5+2*NSEGC
-       call extend_array(NSTRF,SIZE(NSTRF),K6+2* GRSIZE_ELE(IGUT,IGRTRUSS,NGRTRUS))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUT,IGRTRUSS,NGRTRUS)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K6+MAX_EXTENSION)
        NSEGT=ELEGROR(IGUT,IGRTRUSS,NGRTRUS,'TRUS',
      .               NSTRF(K6),2,MESS,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC),ISTYP,
      .               ID,TITR)
        K7=K6+2*NSEGT
-        call extend_array(NSTRF,SIZE(NSTRF),K7+2* GRSIZE_ELE(IGUP,IGRBEAM,NGRBEAM))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUP,IGRBEAM,NGRBEAM)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K7+MAX_EXTENSION)
        NSEGP=ELEGROR(IGUP,IGRBEAM,NGRBEAM,'BEAM',
      .               NSTRF(K7),2,MESS,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC+NUMELT),ISTYP,
      .               ID,TITR)
        K8=K7+2*NSEGP
-        call extend_array(NSTRF,SIZE(NSTRF),K8+2* GRSIZE_ELE(IGUR,IGRSPRING,NGRSPRI))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUR,IGRSPRING,NGRSPRI)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K8+MAX_EXTENSION)
        NSEGR=ELEGROR(IGUR,IGRSPRING,NGRSPRI,'SPRI',
      .               NSTRF(K8),2,MESS,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC+NUMELT+NUMELP),ISTYP,
      .               ID,TITR)
 
        IF (NB_SEATBELT_SHELLS /=0) THEN
-         SNSTRF1 = GRSIZE_ELE_TRANS(IGUC,IGRSH4N,NGRSHEL,SEATBELT_SHELL_TO_SPRING)
-         call extend_array(NSTRF,SIZE(NSTRF),K8+2*NSEGR+2*SNSTRF1)
+         SNSTRF1 = GRSIZE_ELE_TRANS(IGUC,IGRSH4N,NGRSHEL,
+     .                              SEATBELT_SHELL_TO_SPRING)
+         CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),
+     .                     K8+2*NSEGR+2*SNSTRF1)
          NSEGR=NSEGR+ELEGROR_SEATBELT(IGUC,IGRSH4N,NGRSHEL,
      .               NSTRF(K8),2,SNSTRF1,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ),ISTYP,
@@ -560,7 +577,8 @@ C
        ENDIF
 
        K9=K8+2*NSEGR
-       call extend_array(NSTRF,SIZE(NSTRF),K9+2* GRSIZE_ELE(IGUTG,IGRSH3N,NGRSH3N))
+       MAX_EXTENSION = 2 * GRSIZE_ELE(IGUTG,IGRSH3N,NGRSH3N)
+       CALL EXTEND_ARRAY(NSTRF,SIZE(NSTRF),K9+MAX_EXTENSION)
        NSEGTG=ELEGROR(IGUTG,IGRSH3N,NGRSH3N,'SH3N',
      .                NSTRF(K9),2,MESS,NFRAM,TAGELEMS(1+NUMELS
      .              +NUMELQ+NUMELC+NUMELT+NUMELP+NUMELR),ISTYP,
@@ -730,10 +748,10 @@ C-------------------------------------------------------------
 
 C File Rec Length
       NSTRF(6)=LREC*4
-      DEALLOCATE(TAGNODES)
-      DEALLOCATE(TAGNDOUBL)
-      DEALLOCATE(TAGELEMS)
-      DEALLOCATE(NODTAG)
+      CALL MY_DEALLOC(TAGNODES)
+      CALL MY_DEALLOC(TAGNDOUBL)
+      CALL MY_DEALLOC(TAGELEMS)
+      CALL MY_DEALLOC(NODTAG)
 
 
 C-------------------------------------------------------------
@@ -1041,6 +1059,7 @@ C
 !||    sec_nodes      ../starter/source/tools/sect/hm_read_sect.F
 !||--- called by ------------------------------------------------------
 !||    lecsec42       ../starter/source/tools/sect/hm_read_sect.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE SEC_NODES(IGU1,ISTYP,NGRELE,IGRELE,X0,A,
@@ -1051,6 +1070,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE GROUPDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -1080,8 +1100,8 @@ C-----------------------------------------------
 C
 C List nodes related to section.
 C
-        ALLOCATE(TAGNDOUBL(NUMNOD))
-        ALLOCATE(TAGNODES(NUMNOD*2+NPART))
+        call my_alloc(TAGNDOUBL, NUMNOD, "TAGNDOUBL")
+        call my_alloc(TAGNODES, NUMNOD*2+NPART, "TAGNODES")
         PROJX = ZERO
         PROJY = ZERO
         PROJZ = ZERO
@@ -1190,8 +1210,8 @@ c
               ENDIF
             ENDDO
           ENDIF
-      DEALLOCATE(TAGNDOUBL)
-      DEALLOCATE(TAGNODES)
+      CALL MY_DEALLOC(TAGNDOUBL)
+      CALL MY_DEALLOC(TAGNODES)
       RETURN
       END
 C
@@ -1200,6 +1220,7 @@ C
 !||--- called by ------------------------------------------------------
 !||    lecsec42        ../starter/source/tools/sect/hm_read_sect.F
 !||    lecsec4bolt     ../starter/source/tools/sect/lecsec4bolt.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE SEC_NODES_SOL(IGU1,ISTYP,IGRBRIC,X0,A,
@@ -1211,6 +1232,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE GROUPDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -1241,7 +1263,8 @@ C-----------------------------------------------
 C
 C List nodes related to section if frame is used
 C
-        ALLOCATE( TAGNDOUBL(NUMNOD),TAGNODES(NUMNOD*2+NPART) )
+        call my_alloc(TAGNDOUBL, NUMNOD, "TAGNDOUBL")
+        call my_alloc(TAGNODES, NUMNOD*2+NPART, "TAGNODES")
         TAGNDOUBL = 0
           TAGNODES  = 0
           IF (IGU1 /= 0) THEN
@@ -1468,6 +1491,7 @@ c
             ENDDO
           ENDIF
 
-        DEALLOCATE( TAGNDOUBL,TAGNODES )
+        CALL MY_DEALLOC(TAGNDOUBL)
+        CALL MY_DEALLOC(TAGNODES)
       RETURN
       END

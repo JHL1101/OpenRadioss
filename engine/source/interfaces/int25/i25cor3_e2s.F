@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25cor3_e2s      ../engine/source/interfaces/int25/i25cor3_e2s.F
 !||--- called by ------------------------------------------------------
@@ -171,16 +172,28 @@ C
           IF(CAND_S(I)<=NEDGE) THEN
 
             ES    =CAND_S(I)
-            IAS(I)=ABS(LEDGE(1,ES))
-            JAS(I)=LEDGE(2,ES)
-            IBS(I)=LEDGE(3,ES)
-            JBS(I)=LEDGE(4,ES)
             N1(EJ,I)=LEDGE(5,ES)
             N2(EJ,I)=LEDGE(6,ES)
+            TYPEDGS(I)=LEDGE(7,ES)
+            EDGE_ID(2,I) = LEDGE(8,ES)
+            
+            IF(TYPEDGS(I)/=3) THEN
+              IAS(I)=ABS(LEDGE(1,ES))
+              JAS(I)=LEDGE(2,ES)
+              IBS(I)=LEDGE(3,ES)
+              JBS(I)=LEDGE(4,ES)
+              IS(I) = LEDGE(10,ES)
+            ELSE
+              IAS(I)=0
+              JAS(I)=0
+              IBS(I)=0
+              JBS(I)=0
+              IS(I) = 0
+            ENDIF
 C           NOD1S(I) = LEDGE(11,ES)
 C           NOD2S(I) = LEDGE(12,ES)
-            IS(I) = LEDGE(10,ES)
-            EDGE_ID(2,I) = LEDGE(8,ES)
+
+
 
 C           IF(IRECT(JAS(I),IAS(I))==N1(EJ,I).AND.IRECT(MOD(JAS(I),4)+1,IAS(I))==N2(EJ,I))THEN
 C             IS(I)= 1
@@ -210,17 +223,29 @@ c            STIF(EJ,I)=MAX(KMIN,MIN(STIF(EJ,I),KMAX))
             MS1(EJ,I) = MS(N1(EJ,I))
             MS2(EJ,I) = MS(N2(EJ,I))
 C
-            TYPEDGS(I)=LEDGE(7,ES)
+
 C
           ELSE
             NN = CAND_S(I) - NEDGE           
-            IS(I) = LEDGE_FIE(NIN)%P(E_IM,NN) 
+
             N1(EJ,I)=2*(NN-1)+1
             N2(EJ,I)=2*NN
 
-
             EDGE_ID(2,I) = LEDGE_FIE(NIN)%P(E_GLOBAL_ID,NN)
-
+            TYPEDGS(I)=LEDGE_FIE(NIN)%P(E_TYPE,NN)
+            IF(TYPEDGS(I)/=3) THEN
+               IS(I) = LEDGE_FIE(NIN)%P(E_IM,NN) 
+               IAS(I)=ABS(LEDGE_FIE(NIN)%P(E_LEFT_SEG  ,NN))
+               JAS(I)=LEDGE_FIE(NIN)%P(E_LEFT_ID   ,NN)
+               IBS(I)=LEDGE_FIE(NIN)%P(E_RIGHT_SEG ,NN)
+               JBS(I)=LEDGE_FIE(NIN)%P(E_RIGHT_ID  ,NN)
+            ELSE
+              IAS(I)=0
+              JAS(I)=0
+              IBS(I)=0
+              JBS(I)=0
+              IS(I) =0
+            ENDIF
 c            STS=STFE(CAND_S(I))
 c            STIF(I)=STS*STM / MAX(EM20,STS+STM)
 c            STIF(I)=ABS(STIFIE(NIN)%P(NN))*STM
@@ -233,12 +258,9 @@ c
 
 c            STIF(EJ,I)=MAX(KMIN,MIN(STIF(EJ,I),KMAX))
 
-            TYPEDGS(I)=LEDGE_FIE(NIN)%P(E_TYPE,NN)
 
-            IAS(I)=ABS(LEDGE_FIE(NIN)%P(E_LEFT_SEG  ,NN))
-            JAS(I)=LEDGE_FIE(NIN)%P(E_LEFT_ID   ,NN)
-            IBS(I)=LEDGE_FIE(NIN)%P(E_RIGHT_SEG ,NN)
-            JBS(I)=LEDGE_FIE(NIN)%P(E_RIGHT_ID  ,NN)
+
+
 
 
             XXS1(EJ,I) = XFIE(NIN)%P(1,N1(EJ,I))
@@ -332,15 +354,21 @@ C How to know if Edg_Bisector was calculated
 
 C
       DO I=1,JLT
-        IF(CAND_S(I)<=NEDGE) THEN
-          FX(I) = EDG_BISECTOR(1,JAS(I),IAS(I))
-          FY(I) = EDG_BISECTOR(2,JAS(I),IAS(I))
-          FZ(I) = EDG_BISECTOR(3,JAS(I),IAS(I))
-         ELSE
-           FX(I) = EDG_BISECTOR_FIE(NIN)%P(1,1,CAND_S(I)-NEDGE)
-           FY(I) = EDG_BISECTOR_FIE(NIN)%P(2,1,CAND_S(I)-NEDGE)
-           FZ(I) = EDG_BISECTOR_FIE(NIN)%P(3,1,CAND_S(I)-NEDGE)
-        END IF
+        IF(TYPEDGS(I)/=3) THEN
+          IF(CAND_S(I)<=NEDGE) THEN
+            FX(I) = EDG_BISECTOR(1,JAS(I),IAS(I))
+            FY(I) = EDG_BISECTOR(2,JAS(I),IAS(I))
+            FZ(I) = EDG_BISECTOR(3,JAS(I),IAS(I))
+          ELSE
+            FX(I) = EDG_BISECTOR_FIE(NIN)%P(1,1,CAND_S(I)-NEDGE)
+            FY(I) = EDG_BISECTOR_FIE(NIN)%P(2,1,CAND_S(I)-NEDGE)
+            FZ(I) = EDG_BISECTOR_FIE(NIN)%P(3,1,CAND_S(I)-NEDGE)
+          END IF
+        ELSE
+          FX(I) = ZERO
+          FY(I) = ZERO
+          FZ(I) = ZERO
+        ENDIF
       END DO
 
 C

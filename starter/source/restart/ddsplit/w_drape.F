@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    w_drape     ../starter/source/restart/ddsplit/w_drape.F
+!||    w_drape        ../starter/source/restart/ddsplit/w_drape.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit     ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    drape_mod   ../starter/share/modules1/drape_mod.F
+!||    drape_mod      ../starter/share/modules1/drape_mod.F
 !||====================================================================
       SUBROUTINE W_DRAPE(DRAPE,INDX, CEP,P,NUMEL,NUMEL_L,NELDRP_L,LEN_IA,LEN_AM)          
          USE DRAPE_MOD
+         use my_alloc_mod
 C---------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -62,7 +64,10 @@ C-----------------------------------------------
 !     allocate 2d array
 ! --------------------------------------
 C
-      ALLOCATE(NPT_ELT(NUMEL_L),NPTDRP_ELT(NUMEL_L), INDEX(NUMEL_L),THK(NUMEL_L)) 
+      call my_alloc(NPT_ELT, NUMEL_L, "NPT_ELT")
+      call my_alloc(NPTDRP_ELT, NUMEL_L, "NPTDRP_ELT")
+      call my_alloc(INDEX, NUMEL_L, "INDEX")
+      call my_alloc(THK, NUMEL_L, "THK")
 C    
       INDEX = 0
       NPTDRP_ELT =0
@@ -98,7 +103,10 @@ C
       ENDDO
       IF(NELDRP_L > 0) THEN
 C      
-          ALLOCATE(ITMP(NDIM,2),RTMP(NDIM,2),ISLICE(NDIM_SLICE),INDX_PLY(NDIM_INDX_PLY))
+          call my_alloc(ITMP, NDIM, 2, "ITMP")
+          call my_alloc(RTMP, NDIM, 2, "RTMP")
+          call my_alloc(ISLICE, NDIM_SLICE, "ISLICE")
+          call my_alloc(INDX_PLY, NDIM_INDX_PLY, "INDX_PLY")
 C
           NDIM_SLICE = 0
           NDIM_INDX_PLY = 0
@@ -147,7 +155,14 @@ C
           LEN_AM = LEN_AM + 2*NDIM   +   NELDRP_L      
           LEN_IA = LEN_IA + 2*NDIM +  NUMEL_L   + 2*NELDRP_L    
      .                    + NDIM_SLICE + NDIM_INDX_PLY  + 3   
-           DEALLOCATE(ITMP,RTMP,ISLICE,INDX_PLY,NPT_ELT,NPTDRP_ELT, INDEX,THK) 
+           CALL MY_DEALLOC(ITMP)
+           CALL MY_DEALLOC(RTMP)
+           CALL MY_DEALLOC(ISLICE)
+           CALL MY_DEALLOC(INDX_PLY)
+           CALL MY_DEALLOC(NPT_ELT)
+           CALL MY_DEALLOC(NPTDRP_ELT)
+           CALL MY_DEALLOC(INDEX)
+           CALL MY_DEALLOC(THK)
        ENDIF
 ! --------------------------------------
       RETURN

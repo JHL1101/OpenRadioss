@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    shrink_array_mod   ../common_source/tools/memory/shrink_array.F90
 !||--- called by ------------------------------------------------------
@@ -31,7 +32,7 @@
         private :: shrink_array_integer_1d
         private :: shrink_array_real_1d
         private :: shrink_array_double_1d
-        private :: check_error_and_write
+        private :: shrink_check
         public :: shrink_array
 
         !\shrink the array, copy the values
@@ -45,73 +46,15 @@
 
 
 !||====================================================================
-!||    check_error_and_write         ../common_source/tools/memory/my_alloc.F90
+!||    shrink_check              ../common_source/tools/memory/shrink_array.F90
 !||--- called by ------------------------------------------------------
-!||    extend_array_double_1d        ../common_source/tools/memory/extend_array.F90
-!||    extend_array_double_2d        ../common_source/tools/memory/extend_array.F90
-!||    extend_array_double_3d        ../common_source/tools/memory/extend_array.F90
-!||    extend_array_integer_1d       ../common_source/tools/memory/extend_array.F90
-!||    extend_array_integer_2d       ../common_source/tools/memory/extend_array.F90
-!||    extend_array_integer_3d       ../common_source/tools/memory/extend_array.F90
-!||    extend_array_real_1d          ../common_source/tools/memory/extend_array.F90
-!||    extend_array_real_2d          ../common_source/tools/memory/extend_array.F90
-!||    extend_array_real_3d          ../common_source/tools/memory/extend_array.F90
-!||    my_alloc_8_double_1d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_double_2d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_double_3d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_integer_1d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_integer_2d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_integer_3d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_logical_1d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_logical_2d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_logical_3d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pdouble_1d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pdouble_2d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pdouble_3d         ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pinteger_1d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pinteger_2d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_pinteger_3d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_plogical_1d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_plogical_2d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_plogical_3d        ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_preal_1d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_preal_2d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_preal_3d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_real_1d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_real_2d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_8_real_3d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_double_1d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_double_2d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_double_3d            ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_integer_1d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_integer_2d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_integer_3d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_logical_1d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_logical_2d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_logical_3d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pdouble_1d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pdouble_2d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pdouble_3d           ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pinteger_1d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pinteger_2d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_pinteger_3d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_plogical_1d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_plogical_2d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_plogical_3d          ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_preal_1d             ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_preal_2d             ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_preal_3d             ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_real_1d              ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_real_2d              ../common_source/tools/memory/my_alloc.F90
-!||    my_alloc_real_3d              ../common_source/tools/memory/my_alloc.F90
-!||    reallocate_array_integer_1d   ../common_source/tools/memory/extend_array.F90
-!||    shrink_array_double_1d        ../common_source/tools/memory/shrink_array.F90
-!||    shrink_array_integer_1d       ../common_source/tools/memory/shrink_array.F90
-!||    shrink_array_real_1d          ../common_source/tools/memory/shrink_array.F90
+!||    shrink_array_double_1d    ../common_source/tools/memory/shrink_array.F90
+!||    shrink_array_integer_1d   ../common_source/tools/memory/shrink_array.F90
+!||    shrink_array_real_1d      ../common_source/tools/memory/shrink_array.F90
 !||--- calls      -----------------------------------------------------
-!||    arret                         ../engine/source/system/arret.F
+!||    arret                     ../engine/source/system/arret.F
 !||====================================================================
-        subroutine check_error_and_write(stat,msg)
+        subroutine shrink_check(stat,msg)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                     Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -128,14 +71,14 @@
             end if
             call arret(2)
           end if
-        end subroutine check_error_and_write
+        end subroutine shrink_check
 
 
 !! \brief resize a 1D array of integer, copy the values
 !||====================================================================
 !||    shrink_array_integer_1d   ../common_source/tools/memory/shrink_array.F90
 !||--- calls      -----------------------------------------------------
-!||    check_error_and_write     ../common_source/tools/memory/my_alloc.F90
+!||    shrink_check              ../common_source/tools/memory/shrink_array.F90
 !||====================================================================
         subroutine shrink_array_integer_1d(a,  newsize, msg, stat)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -165,9 +108,9 @@
             allocate(temp(newsize), stat=ierr)
             if(.not. present(stat)) then
               if(present(msg)) then
-                call check_error_and_write(ierr, msg=msg)
+                call shrink_check(ierr, msg=msg)
               else
-                call check_error_and_write(ierr)
+                call shrink_check(ierr)
               end if
             end if
             if(present(stat)) stat = ierr
@@ -181,9 +124,9 @@
         end subroutine shrink_array_integer_1d
 
 !||====================================================================
-!||    shrink_array_real_1d    ../common_source/tools/memory/shrink_array.F90
+!||    shrink_array_real_1d   ../common_source/tools/memory/shrink_array.F90
 !||--- calls      -----------------------------------------------------
-!||    check_error_and_write   ../common_source/tools/memory/my_alloc.F90
+!||    shrink_check           ../common_source/tools/memory/shrink_array.F90
 !||====================================================================
         subroutine shrink_array_real_1d(a,  newsize, msg, stat)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -213,9 +156,9 @@
             allocate(temp(newsize), stat=ierr)
             if(.not. present(stat)) then
               if(present(msg)) then
-                call check_error_and_write(ierr, msg=msg)
+                call shrink_check(ierr, msg=msg)
               else
-                call check_error_and_write(ierr)
+                call shrink_check(ierr)
               end if
             end if
             if(present(stat)) stat = ierr
@@ -230,7 +173,7 @@
 !||====================================================================
 !||    shrink_array_double_1d   ../common_source/tools/memory/shrink_array.F90
 !||--- calls      -----------------------------------------------------
-!||    check_error_and_write    ../common_source/tools/memory/my_alloc.F90
+!||    shrink_check             ../common_source/tools/memory/shrink_array.F90
 !||====================================================================
         subroutine shrink_array_double_1d(a, newsize, msg, stat)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -259,9 +202,9 @@
             allocate(temp(newsize), stat=ierr)
             if(.not. present(stat)) then
               if(present(msg)) then
-                call check_error_and_write(ierr, msg=msg)
+                call shrink_check(ierr, msg=msg)
               else
-                call check_error_and_write(ierr)
+                call shrink_check(ierr)
               end if
             end if
             if(present(stat)) stat = ierr

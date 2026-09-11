@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sensor_base             ../engine/source/tools/sensor/sensor_base.F
 !||--- called by ------------------------------------------------------
@@ -46,6 +47,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    groupdef_mod            ../common_source/modules/groupdef_mod.F
 !||    message_mod             ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod            ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod          ../common_source/tools/memory/my_dealloc.F90
 !||    python_funct_mod        ../common_source/modules/python_mod.F90
 !||    sensor_mod              ../common_source/modules/sensor_mod.F90
 !||    sensor_python_mod       ../engine/source/tools/sensor/sensor_python.F90
@@ -65,6 +68,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -292,10 +297,10 @@ c     END of parallel loop
 !$OMP END PARALLEL DO
 c--------------------------------------------------
       IF(PYTHON%NB_FUNCTS > 0 .AND. NSENSOR > 0) THEN
-        ALLOCATE(UIDS(NSENSOR))
-        ALLOCATE(RESULTS(SENSOR_RESULT_SIZE,NSENSOR))
-        ALLOCATE(STATUSES(NSENSOR))
-        ALLOCATE(TYPES(NSENSOR))
+        call my_alloc(UIDS, NSENSOR, "UIDS")
+        call my_alloc(RESULTS, SENSOR_RESULT_SIZE, NSENSOR, "RESULTS")
+        call my_alloc(STATUSES, NSENSOR, "STATUSES")
+        call my_alloc(TYPES, NSENSOR, "TYPES")
         DO ISENS = 1,NSENSOR
           TYP = SENSORS%SENSOR_TAB(ISENS)%TYPE
           TYPES(ISENS) = TYP
@@ -304,10 +309,10 @@ c--------------------------------------------------
           RESULTS(1:SENSOR_RESULT_SIZE,ISENS) = SENSORS%SENSOR_TAB(ISENS)%RESULTS(1:SENSOR_RESULT_SIZE)
         END DO  ! ISENS
         CALL PYTHON_UPDATE_SENSORS(TYPES,UIDS,STATUSES,RESULTS,NSENSOR)
-        DEALLOCATE(TYPES)
-        DEALLOCATE(UIDS)
-        DEALLOCATE(RESULTS)
-        DEALLOCATE(STATUSES)
+        call my_dealloc(TYPES)
+        call my_dealloc(UIDS)
+        call my_dealloc(RESULTS)
+        call my_dealloc(STATUSES)
       ENDIF
       IF (ANY_PYTHON_SENSOR) THEN
         DO ISENS = 1,NSENSOR

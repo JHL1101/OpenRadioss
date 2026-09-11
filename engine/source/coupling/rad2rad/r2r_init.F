@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_init             ../engine/source/coupling/rad2rad/r2r_init.F
 !||--- called by ------------------------------------------------------
@@ -58,6 +59,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
 !||    groupdef_mod         ../common_source/modules/groupdef_mod.F
 !||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod       ../common_source/modules/nlocal_reg_mod.F
 !||    rad2r_mod            ../engine/share/modules/rad2r.F
 !||====================================================================
@@ -78,6 +81,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -118,7 +123,7 @@ C-----------------------------------------------
         INTEGER NUM_SOCK,SIZE_TAG_RBY,LENR,SIZE
         INTEGER NN,N,PPID,IDEL_LOC,NSN_GLOB,COMPT
         INTEGER, DIMENSION(:), ALLOCATABLE :: NDOF_NL
-        CHARACTER*35 ADDR
+        CHARACTER(len=512) :: ADDR
 C
         INTEGER, DIMENSION(:), POINTER :: GRNOD
         INTEGER, POINTER, DIMENSION(:) :: IDXI,POSI
@@ -153,11 +158,13 @@ C------Elimination of TYPE2 interfaces without second. nodes---------------->
             END DO
           ENDIF
 C------Cas SMP initialization---------------c
-          ALLOCATE(TYPLNK(NR2RLNK),RBYLNK(NR2RLNK),KINLNK(NR2RLNK))
-          ALLOCATE(ADD_RBY(NR2RLNK))
-          ALLOCATE(SOCKET(NTHREAD))
-          ALLOCATE(NLLNK(NR2RLNK))
-          ALLOCATE(NBDOF_NL(NR2RLNK))
+          call my_alloc(TYPLNK, NR2RLNK, "TYPLNK")
+          call my_alloc(RBYLNK, NR2RLNK, "RBYLNK")
+          call my_alloc(KINLNK, NR2RLNK, "KINLNK")
+          call my_alloc(ADD_RBY, NR2RLNK, "ADD_RBY")
+          call my_alloc(SOCKET, NTHREAD, "SOCKET")
+          call my_alloc(NLLNK, NR2RLNK, "NLLNK")
+          call my_alloc(NBDOF_NL, NR2RLNK, "NBDOF_NL")
           NBDOF_NL(1:NR2RLNK) = 0
 C
           DO I = 1, ROOTLEN
@@ -242,7 +249,7 @@ C--------------Reset of weight2 for duplicated nodes--------
             ENDIF
 C--------------Initialisation of arrays for rlinks/cyljoints------
             IF ((TYPLNK(IEX)==5).AND.(KINLNK(IEX)==1)) THEN
-              ALLOCATE(R2R_KINE(3,NNG))
+              call my_alloc(R2R_KINE, 3, NNG, "R2R_KINE")
               R2R_KINE(:,:)=0
             ENDIF
 C----------------------------------------------------------------------
@@ -252,14 +259,14 @@ C-------- Coupling of non local dof
               IDXI => NLOC_DMG%IDXI(1:NUMNOD)
               POSI => NLOC_DMG%POSI(1:NLOC_DMG%NNOD+1)
               COMPT = 0
-              ALLOCATE(NDOF_NL(NNG))
+              call my_alloc(NDOF_NL, NNG, "NDOF_NL")
               DO I=1,NNG
                 NN = IDXI(GRNOD(I))
                 NDOF_NL(I) = POSI(NN+1)-POSI(NN)
                 COMPT = COMPT + NDOF_NL(I)
               ENDDO
               NBDOF_NL(IEX) = COMPT
-              ALLOCATE(IADD_NL(COMPT))
+              call my_alloc(IADD_NL, COMPT, "IADD_NL")
               COMPT = 0
               DO I=1,NNG
                 NN = IDXI(GRNOD(I))
@@ -269,7 +276,7 @@ C-------- Coupling of non local dof
                 ENDDO
               ENDDO
               CALL INIT_LINK_NL_C(IDP,NNG,ITAB,GRNOD,X,NCPRI,DX,NDOF_NL,NBDOF_NL(IEX),NBK)
-              DEALLOCATE(NDOF_NL)
+              call my_dealloc(NDOF_NL)
 C
               IF ((NSPMD > 1).AND.(SDD_R2R_ELEM>0)) THEN
                 DD_R2R_NL(1:2) = 0
@@ -301,7 +308,7 @@ C----- Update mass and inertia
 C
           R2RFX1 = ZERO
           R2RFX2 = ZERO
-          ALLOCATE (TAG_RBY(SIZE_TAG_RBY))
+          call my_alloc(TAG_RBY, SIZE_TAG_RBY, "TAG_RBY")
           DO IEX = 1, NR2RLNK
             IDG  = IEXLNK(1,IEX)
             IDP  = IEXLNK(2,IEX)
@@ -374,14 +381,23 @@ C
         ELSE
 
 C------Allocation of common arrays
-          ALLOCATE(TYPLNK(NR2RLNK),ROTLNK(NR2RLNK))
-          ALLOCATE(DBN(NR2RLNK,NSPMD),NBEL(NR2RLNK,NSPMD))
-          ALLOCATE(TBCNEL(NR2RLNK,NSPMD),TBCNELDB(NR2RLNK,NSPMD))
-          ALLOCATE(NBELN(NR2RLNK,NSPMD))
-          ALLOCATE(DBNO(NR2RLNK),TCNELT(NR2RLNK),NBELT_R2R(NR2RLNK))
-          ALLOCATE(TCNELTDB(NR2RLNK),OFFSET(NSPMD),NBELTN_R2R(NR2RLNK))
-          ALLOCATE(RBYLNK(NR2RLNK),ADD_RBY(NR2RLNK),KINLNK(NR2RLNK))
-          ALLOCATE(NLLNK(NR2RLNK))
+          call my_alloc(TYPLNK, NR2RLNK, "TYPLNK")
+          call my_alloc(ROTLNK, NR2RLNK, "ROTLNK")
+          call my_alloc(DBN, NR2RLNK, NSPMD, "DBN")
+          call my_alloc(NBEL, NR2RLNK, NSPMD, "NBEL")
+          call my_alloc(TBCNEL, NR2RLNK, NSPMD, "TBCNEL")
+          call my_alloc(TBCNELDB, NR2RLNK, NSPMD, "TBCNELDB")
+          call my_alloc(NBELN, NR2RLNK, NSPMD, "NBELN")
+          call my_alloc(DBNO, NR2RLNK, "DBNO")
+          call my_alloc(TCNELT, NR2RLNK, "TCNELT")
+          call my_alloc(NBELT_R2R, NR2RLNK, "NBELT_R2R")
+          call my_alloc(TCNELTDB, NR2RLNK, "TCNELTDB")
+          call my_alloc(OFFSET, NSPMD, "OFFSET")
+          call my_alloc(NBELTN_R2R, NR2RLNK, "NBELTN_R2R")
+          call my_alloc(RBYLNK, NR2RLNK, "RBYLNK")
+          call my_alloc(ADD_RBY, NR2RLNK, "ADD_RBY")
+          call my_alloc(KINLNK, NR2RLNK, "KINLNK")
+          call my_alloc(NLLNK, NR2RLNK, "NLLNK")
 C---------------------------------------
 
           DO I = 1, ROOTLEN
@@ -390,7 +406,7 @@ C---------------------------------------
 
           IF(ISPMD==0) THEN
 C----- Initialize Sockets
-            ALLOCATE(SOCKET(NTHREAD))
+            call my_alloc(SOCKET, NTHREAD, "SOCKET")
             SOCKET(1)=SOCK0
             CALL SEND_SOCK_INIT_C(IROOT,ROOTLEN,ISPMD,SOCKET(1),
      1         NTHREAD,NSPMD)
@@ -419,7 +435,7 @@ C----- send link interface data
             CALL SPMD_IBCAST(PPID,PPID,1,1,0,2)
           ELSE
 C----- Connect Sockets
-            ALLOCATE(SOCKET(NTHREAD))
+            call my_alloc(SOCKET, NTHREAD, "SOCKET")
             DO ITSK=1,NTHREAD
               NUM_SOCK = NTHREAD*ISPMD+ITSK
               CALL CONNECTION_SOCK_C(NUM_SOCK-1,SOCKET(ITSK),ADDR)
@@ -496,7 +512,7 @@ C       IF (TT==ZERO) THEN
      1           IDP,NNG,GRNOD,MS,IN,
      2           DD_R2R(1,IEX),DD_R2R(NSPMD+1,IEX),WEIGHT,ROTLNK(IEX))
             ELSE
-              ALLOCATE (TAG_RBY(SIZE_TAG_RBY))
+              call my_alloc(TAG_RBY, SIZE_TAG_RBY, "TAG_RBY")
               CALL SEND_MASS_RBY_SPMD(
      1           IDP,NNG,GRNOD,MS,IN,
      2           DD_R2R(1,IEX),DD_R2R(NSPMD+1,IEX),WEIGHT,ROTLNK(IEX),
@@ -543,6 +559,8 @@ C-----------------------------------------------------------------
 !||    spmd_r2r_rget3     ../engine/source/mpi/r2r/spmd_r2r.F
 !||--- uses       -----------------------------------------------------
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    rad2r_mod          ../engine/share/modules/rad2r.F
 !||====================================================================
       SUBROUTINE INIT_LINK_SPMD(
@@ -557,6 +575,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -621,7 +641,7 @@ C      END DO
 
 C--------------------Search of noeuds/elements connectivities ( coupling type 1,2)-----C
         IF (TYP<4) THEN
-          ALLOCATE(CNELEMDB(9*NNGDB))
+          call my_alloc(CNELEMDB, 9*NNGDB, "CNELEMDB")
           CALL INIT_BUF_SPMD_C(IDP,NNG,ITAB,GRNOD,X,ADDCNEL,CNEL,IXC,
      .            OFC,TLEL,LEL,LELNBNOD,TLELN,LELNOD,NBELEM,TCNEL,CNELEM,
      .            WEIGHT,TCNELDB,CNELEMDB,INFO,TYP,NGLOB)
@@ -645,23 +665,28 @@ C--------------------Computation of initial coordinates in case of rerun--------
 
 C--------------------Allocation of buffers------------------------------------------------C
         IF (ISPMD>0) THEN
-          ALLOCATE(DBIBUF(NNGDB))
+          call my_alloc(DBIBUF, NNGDB, "DBIBUF")
         ELSE
-          ALLOCATE(DBIBUF(DBNO(IEX)))
+          call my_alloc(DBIBUF, DBNO(IEX), "DBIBUF")
         ENDIF
 
 C--------------------Allocation of element buffers ( coupling type 1,2)-------------------C
 
         IF (TYP<4) THEN
           IF (ISPMD>0) THEN
-            ALLOCATE(IBUFEL(TLEL),IBUFELNBNOD(TLEL),IBUFELNOD(TLELN))
-            ALLOCATE(IBUFCNEL(TCNEL),DBIBUFNONBEL(NNGDB))
-            ALLOCATE(IBUFCNELDB(TCNELDB))
+            call my_alloc(IBUFEL, TLEL, "IBUFEL")
+            call my_alloc(IBUFELNBNOD, TLEL, "IBUFELNBNOD")
+            call my_alloc(IBUFELNOD, TLELN, "IBUFELNOD")
+            call my_alloc(IBUFCNEL, TCNEL, "IBUFCNEL")
+            call my_alloc(DBIBUFNONBEL, NNGDB, "DBIBUFNONBEL")
+            call my_alloc(IBUFCNELDB, TCNELDB, "IBUFCNELDB")
           ELSE
-            ALLOCATE(IBUFEL(NBELT_R2R(IEX)),IBUFELNBNOD(NBELT_R2R(IEX)))
-            ALLOCATE(IBUFELNOD(NBELTN_R2R(IEX)),IBUFCNEL(TCNELT(IEX)))
-            ALLOCATE(DBIBUFNONBEL(DBNO(IEX)))
-            ALLOCATE(IBUFCNELDB(TCNELTDB(IEX)))
+            call my_alloc(IBUFEL, NBELT_R2R(IEX), "IBUFEL")
+            call my_alloc(IBUFELNBNOD, NBELT_R2R(IEX), "IBUFELNBNOD")
+            call my_alloc(IBUFELNOD, NBELTN_R2R(IEX), "IBUFELNOD")
+            call my_alloc(IBUFCNEL, TCNELT(IEX), "IBUFCNEL")
+            call my_alloc(DBIBUFNONBEL, DBNO(IEX), "DBIBUFNONBEL")
+            call my_alloc(IBUFCNELDB, TCNELTDB(IEX), "IBUFCNELDB")
           ENDIF
         ENDIF
 
@@ -691,11 +716,16 @@ C--------------------Send  Rad2rad----------------------------------------------
      .          IBUFBCS,NCPRI,IRODDL,NBK,NR2RLNK,IEX)
 
 C------------------------------------------------------------------------C
-        DEALLOCATE(DBIBUF)
+        call my_dealloc(DBIBUF)
 
         IF (TYP<4) THEN
-          DEALLOCATE(IBUFEL,IBUFELNBNOD,IBUFELNOD,IBUFCNEL,CNELEMDB)
-          DEALLOCATE(DBIBUFNONBEL,IBUFCNELDB)
+          call my_dealloc(IBUFEL)
+          call my_dealloc(IBUFELNBNOD)
+          call my_dealloc(IBUFELNOD)
+          call my_dealloc(IBUFCNEL)
+          call my_dealloc(CNELEMDB)
+          call my_dealloc(DBIBUFNONBEL)
+          call my_dealloc(IBUFCNELDB)
         ENDIF
 
         RETURN

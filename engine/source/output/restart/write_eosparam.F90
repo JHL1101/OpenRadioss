@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 ! ======================================================================================================================
 !                                                   procedures
 ! ======================================================================================================================
@@ -36,6 +37,8 @@
 !||    write_mat_table        ../engine/source/materials/tools/write_mat_table.F
 !||--- uses       -----------------------------------------------------
 !||    eos_param_mod          ../common_source/modules/mat_elem/eos_param_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||    precision_mod          ../common_source/modules/precision_mod.F90
 !||====================================================================
@@ -49,6 +52,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+        use my_alloc_mod
+        use my_dealloc_mod, only : my_dealloc
         implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Imnclude files
@@ -69,7 +74,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
         !INTEGER parameters
         NFIX = 7
-        ALLOCATE (IBUF(NFIX + 1))
+        call my_alloc(IBUF, NFIX + 1, "IBUF")
         IAD = 1
         IBUF(IAD) = NFIX
         IAD = IAD+1
@@ -86,13 +91,13 @@
         IBUF(IAD) = EOS%EOSTYPE
         IAD = IAD+1
         CALL WRITE_I_C(IBUF,NFIX+1)
-        DEALLOCATE(IBUF)
+        call my_dealloc(IBUF)
 
         !REAL parameter
         NFIX = 6
-        ALLOCATE(IBUF(1))
+        call my_alloc(IBUF, 1, "IBUF")
         IBUF(1) = NFIX !size
-        ALLOCATE (RBUF(NFIX))
+        call my_alloc(RBUF, NFIX, "RBUF")
         IAD = 1
         RBUF(IAD) = EOS%CV
         IAD = IAD+1
@@ -108,8 +113,8 @@
         IAD = IAD+1
         CALL WRITE_I_C(IBUF,1)
         CALL WRITE_DB(RBUF,NFIX)
-        DEALLOCATE(RBUF)
-        DEALLOCATE(IBUF)
+        call my_dealloc(RBUF)
+        call my_dealloc(IBUF)
 
         ! write eos model title
         DO I=1,NCHARTITLE

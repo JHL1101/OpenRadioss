@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    layini1        ../starter/source/elements/shell/coqueba/layini1.F
 !||--- called by ------------------------------------------------------
@@ -75,7 +76,7 @@ C-----------------------------------------------
       PARAMETER (MAX_NPTT = 100)
       my_real
      .   THK_IT(MAX_NPTT*NLAY,MVSIZ),ZSHIFT,THK_NPTT,
-     .   POS_0,THICKT,THINNING,THK_LY(MVSIZ),
+     .   POS_0,THICKT,THINNING,THK_LY(MVSIZ),THICK_DRAPE,
      .   THKLY,RATIO_THKLY(MVSIZ,NPT),RATIO_SLICE,POS_LY
 C
       TYPE (DRAPE_PLY_)             , POINTER   :: DRAPE_PLY
@@ -199,6 +200,7 @@ c----
                    ENDIF ! IF (N == 1) 
                 ELSE 
                     IP= DRAPE(IE)%INDX_PLY(N)
+                    THICK_DRAPE = DRAPE(IE)%THICK
                     IF(IP > 0) THEN
                        DRAPE_PLY => DRAPE(IE)%DRAPE_PLY(IP)
                        NSLICE = DRAPE_PLY%NSLICE  !  one slice by layer
@@ -206,7 +208,7 @@ c----
                        THICKT   = STACK%GEO(1,ISUBSTACK)
                        THKLY = STACK%GEO(IPTHK + N,ISUBSTACK)*THICKT ! initial THKLY
                        THKLY = THKLY*THINNING ! new THKLY (/DRAPE thinning)
-                       THKLY = THKLY/THK(I)  ! layer thickness ratio
+                       THKLY = THKLY/THICK_DRAPE  ! layer thickness ratio
                        RATIO_THKLY(I,N) = THKLY
                        IF (N == 1) THEN
                          POSLY(I,N) = ZSHIFT + HALF*RATIO_THKLY(I,N)
@@ -217,7 +219,7 @@ c----
                    ELSE
                        THICKT   = STACK%GEO(1,ISUBSTACK)
                        THKLY = STACK%GEO(IPTHK + N,ISUBSTACK)*THICKT ! initial THKLY
-                       THKLY = THKLY/THK(I)  ! layer thickness ratio
+                       THKLY = THKLY/THICK_DRAPE  ! layer thickness ratio
                        RATIO_THKLY(I,N) = THKLY
                        IF (N == 1) THEN
                          POSLY(I,N) = ZSHIFT + HALF*RATIO_THKLY(I,N)
@@ -367,6 +369,7 @@ c         stack addresses
                        ENDDO 
                     ELSE ! IE > 0
                         IP = DRAPE(IE)%INDX_PLY(ILAY)
+                        THICK_DRAPE = DRAPE(IE)%THICK
                         IF(IP > 0 ) THEN
                            DRAPE_PLY => DRAPE(IE)%DRAPE_PLY(IP)
                            NSLICE = DRAPE_PLY%NSLICE ! NPPT
@@ -377,8 +380,8 @@ c         stack addresses
                               IPT = IPT_ALL + IT
                               J = (IPT-1)*JLT + I
                               THINNING = DRAPE_PLY%RDRAPE(IT,1)
-                              THK_IT(IPT,I) = THK_LY(I)*THINNING/NPTT
-                              THK_IT(IPT,I) = THK_IT(IPT,I)/THK(I)  ! slice thickness ratio
+                              THK_IT(IPT,I) = THK_LY(I)*THINNING
+                              THK_IT(IPT,I) = THK_IT(IPT,I)/THICK_DRAPE ! slice thickness ratio
                               !!RATIO_THKLY(I,ILAY) = THK_LY(I)
                               IF (IPT  == 1 ) THEN
                                 POSLY(I,IPT) = ZSHIFT + HALF*THK_IT(IPT,I) ! integr. point "IT" position ratio
@@ -396,7 +399,7 @@ c         stack addresses
                               IPT = IPT_ALL + IT
                               J = (IPT-1)*JLT + I
                               THK_IT(IPT,I) = THK_LY(I)/NPTT
-                              THK_IT(IPT,I) = THK_IT(IPT,I)/THK(I)  ! slice thickness ratio
+                              THK_IT(IPT,I) = THK_IT(IPT,I)/THICK_DRAPE  ! slice thickness ratio
                               !!RATIO_THKLY(I,ILAY) = THK_LY(I)
                               IF (IPT  == 1 ) THEN
                                 POSLY(I,IPT) = ZSHIFT + HALF*THK_IT(IPT,I) ! integr. point "IT" position ratio
@@ -432,6 +435,7 @@ c         stack addresses
                     ELSE ! IE > 0
                 !automatic calculation of nptt positions in the layers
                         IP = DRAPE(IE)%INDX_PLY(ILAY)
+                        THICK_DRAPE = DRAPE(IE)%THICK
                         IF(IP > 0) THEN
                            DRAPE_PLY => DRAPE(IE)%DRAPE_PLY(IP)
                            NSLICE = DRAPE_PLY%NSLICE ! = NPTT
@@ -442,8 +446,8 @@ c         stack addresses
                               IPT = IPT_ALL + IT
                               J = (IPT-1)*JLT + I
                               THINNING = DRAPE_PLY%RDRAPE(IT,1)
-                              THK_IT(IPT,I) = HALF*THK_LY(I)*W_GAUSS(IT,NPTT)*THINNING
-                              THK_IT(IPT,I) = THK_IT(IPT,I)/THK(I)  ! slice thickness ratio
+                              THK_IT(IPT,I) = HALF*THK_LY(I)*W_GAUSS(IT,NPTT)*THINNING   
+                              THK_IT(IPT,I) = THK_IT(IPT,I)/THICK_DRAPE  ! slice thickness ratio
                               IF (IPT  == 1 ) THEN
                                 POSLY(I,IPT) = ZSHIFT + HALF*THK_IT(IPT,I) ! integr. point "IT" position ratio
                               ELSE
@@ -460,7 +464,7 @@ c         stack addresses
                                IPT = IPT_ALL + IT
                                J = (IPT-1)*JLT + I
                                THK_IT(IPT,I) = HALF*THK_LY(I)*W_GAUSS(IT,NPTT)
-                               THK_IT(IPT,I) = THK_IT(IPT,I)/THK(I)  ! slice thickness ratio
+                               THK_IT(IPT,I) = THK_IT(IPT,I)/THICK_DRAPE  ! slice thickness ratio
                                IF (IPT  == 1 ) THEN
                                  POSLY(I,IPT) = ZSHIFT + HALF*THK_IT(IPT,I) ! integr. point "IT" position ratio
                                ELSE

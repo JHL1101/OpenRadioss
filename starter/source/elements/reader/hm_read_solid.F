@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_solid      ../starter/source/elements/reader/hm_read_solid.F
 !||--- called by ------------------------------------------------------
@@ -67,6 +68,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE SUBMODEL_MOD
       use element_mod , only : nixs
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -126,7 +128,7 @@ C=======================================================================
 C--------------------------------------------------
 C      ALLOCS & INITS
 C--------------------------------------------------
-      ALLOCATE (SUB_SOL(NUMELS),STAT=stat)
+      call my_alloc(SUB_SOL, NUMELS, "SUB_SOL", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SUB_SOL') 
@@ -507,7 +509,7 @@ C-----------
      .             ANMODE=ANINFO_BLIND_1,    
      .             PRMOD=MSG_PRINT) 
 C-------------------------------------
-      IF (ALLOCATED(SUB_SOL)) DEALLOCATE(SUB_SOL)
+      IF (ALLOCATED(SUB_SOL)) CALL MY_DEALLOC(SUB_SOL)
 C-------------------------------------
 C Search for double IDs
 C-------------------------------------
@@ -755,7 +757,7 @@ C
         I1=1
         I2=50
 C
-        DOWHILE(I1<=NUMELS20)
+        DO WHILE(I1<=NUMELS20)
          WRITE (IOUT,'(//A/A//A/A,A/A/A)')
      .        '            TWENTY NODE BRICK ELEMENTS',
      .        '            --------------------------',
@@ -780,7 +782,7 @@ C
         I1=1
         I2=50
 C
-        DOWHILE(I1<=NUMELS16)
+        DO WHILE(I1<=NUMELS16)
          WRITE (IOUT,'(//A/A//A/A,A/A,A)')
      .        '            SIXTEEN NODE SHELL ELEMENTS',
      .        '            ---------------------------',
@@ -880,6 +882,7 @@ C-----------------------------------------------
       USE READER_OLD_MOD , ONLY : LINE
       USE USER_ID_MOD , ONLY : ID_LIMIT
       use element_mod , only : nixs
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -916,7 +919,7 @@ C
 C--------------------------------------------------
 C      ALLOCS & INITS
 C--------------------------------------------------
-      ALLOCATE (SUB_SOL(NUMELS),STAT=stat)
+      call my_alloc(SUB_SOL, NUMELS, "SUB_SOL", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SUB_SOL')
@@ -925,7 +928,7 @@ C--------------------------------------------------
 C--------------------------------------------------
 C      READING BRICKS INPUTS IN HM STRUCTURE
 C--------------------------------------------------  
-      ALLOCATE(IPARTS(NUMELS))
+      call my_alloc(IPARTS, NUMELS, "IPARTS")
       CALL CPP_BRICK_READ(IXS,NIXS,IPARTS,SUB_SOL) 
 C--------------------------------------------------
 C      NSPHSOL NSPHDIR CALCULATION + CHECKS
@@ -1028,8 +1031,8 @@ C--------------------------------------------------
             NSPHSOL=NSPHSOL+NT
           END DO
         ENDDO
-      IF (ALLOCATED(IPARTS)) DEALLOCATE(IPARTS)
-      IF (ALLOCATED(SUB_SOL)) DEALLOCATE(SUB_SOL)
+      IF (ALLOCATED(IPARTS)) CALL MY_DEALLOC(IPARTS)
+      IF (ALLOCATED(SUB_SOL)) CALL MY_DEALLOC(SUB_SOL)
 C--------------------------
       RETURN
       END

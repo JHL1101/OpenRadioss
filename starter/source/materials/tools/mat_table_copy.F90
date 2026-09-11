@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,31 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 ! ----------------------------------------------------------------------------------------------------------------------
 !
 !||====================================================================
-!||    mat_table_copy_mod   ../starter/source/materials/tools/mat_table_copy.F90
+!||    mat_table_copy_mod       ../starter/source/materials/tools/mat_table_copy.F90
 !||--- called by ------------------------------------------------------
-!||    hm_read_mat106       ../starter/source/materials/mat/mat106/hm_read_mat106.F90
-!||    hm_read_mat123       ../starter/source/materials/mat/mat123/hm_read_mat123.F90
-!||    hm_read_mat125       ../starter/source/materials/mat/mat125/hm_read_mat125.F90
-!||    hm_read_mat128       ../starter/source/materials/mat/mat128/hm_read_mat128.F90
-!||    hm_read_mat130       ../starter/source/materials/mat/mat130/hm_read_mat130.F90
-!||    hm_read_mat132       ../starter/source/materials/mat/mat132/hm_read_mat132.F90
-!||    hm_read_mat133       ../starter/source/materials/mat/mat133/hm_read_mat133.F90
-!||    hm_read_mat163       ../starter/source/materials/mat/mat163/hm_read_mat163.F90
-!||    hm_read_mat87        ../starter/source/materials/mat/mat087/hm_read_mat87.F90
+!||    hm_read_elasto_plastic   ../starter/source/materials/mat/mat131/hm_read_elasto_plastic.F90
+!||    hm_read_mat106           ../starter/source/materials/mat/mat106/hm_read_mat106.F90
+!||    hm_read_mat117           ../starter/source/materials/mat/mat117/hm_read_mat117.F90
+!||    hm_read_mat123           ../starter/source/materials/mat/mat123/hm_read_mat123.F90
+!||    hm_read_mat125           ../starter/source/materials/mat/mat125/hm_read_mat125.F90
+!||    hm_read_mat128           ../starter/source/materials/mat/mat128/hm_read_mat128.F90
+!||    hm_read_mat130           ../starter/source/materials/mat/mat130/hm_read_mat130.F90
+!||    hm_read_mat132           ../starter/source/materials/mat/mat132/hm_read_mat132.F90
+!||    hm_read_mat133           ../starter/source/materials/mat/mat133/hm_read_mat133.F90
+!||    hm_read_mat135           ../starter/source/materials/mat/mat135/hm_read_mat135.F90
+!||    hm_read_mat136           ../starter/source/materials/mat/mat136/hm_read_mat136.F90
+!||    hm_read_mat137           ../starter/source/materials/mat/mat137/hm_read_mat137.F90
+!||    hm_read_mat163           ../starter/source/materials/mat/mat163/hm_read_mat163.F90
+!||    hm_read_mat87            ../starter/source/materials/mat/mat087/hm_read_mat87.F90
 !||====================================================================
       module mat_table_copy_mod
         implicit none
@@ -45,19 +51,22 @@
 !! \detail input functions/tables will be copied to local mat_param table storage
 
 !||====================================================================
-!||    mat_table_copy     ../starter/source/materials/tools/mat_table_copy.F90
+!||    mat_table_copy           ../starter/source/materials/tools/mat_table_copy.F90
 !||--- called by ------------------------------------------------------
-!||    hm_read_mat106     ../starter/source/materials/mat/mat106/hm_read_mat106.F90
-!||    hm_read_mat128     ../starter/source/materials/mat/mat128/hm_read_mat128.F90
-!||    hm_read_mat130     ../starter/source/materials/mat/mat130/hm_read_mat130.F90
-!||    hm_read_mat133     ../starter/source/materials/mat/mat133/hm_read_mat133.F90
-!||    hm_read_mat163     ../starter/source/materials/mat/mat163/hm_read_mat163.F90
-!||    hm_read_mat87      ../starter/source/materials/mat/mat087/hm_read_mat87.F90
+!||    hm_read_elasto_plastic   ../starter/source/materials/mat/mat131/hm_read_elasto_plastic.F90
+!||    hm_read_mat106           ../starter/source/materials/mat/mat106/hm_read_mat106.F90
+!||    hm_read_mat117           ../starter/source/materials/mat/mat117/hm_read_mat117.F90
+!||    hm_read_mat128           ../starter/source/materials/mat/mat128/hm_read_mat128.F90
+!||    hm_read_mat130           ../starter/source/materials/mat/mat130/hm_read_mat130.F90
+!||    hm_read_mat133           ../starter/source/materials/mat/mat133/hm_read_mat133.F90
+!||    hm_read_mat137           ../starter/source/materials/mat/mat137/hm_read_mat137.F90
+!||    hm_read_mat163           ../starter/source/materials/mat/mat163/hm_read_mat163.F90
+!||    hm_read_mat87            ../starter/source/materials/mat/mat087/hm_read_mat87.F90
 !||--- calls      -----------------------------------------------------
-!||    ancmsg             ../starter/source/output/message/message.F
-!||    mattab_usr2sys     ../starter/source/materials/tools/mattab_usr2sys.F
+!||    ancmsg                   ../starter/source/output/message/message.F
+!||    mattab_usr2sys           ../starter/source/materials/tools/mattab_usr2sys.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod        ../starter/share/message_module/message_mod.F
+!||    message_mod              ../starter/share/message_module/message_mod.F
 !||====================================================================
         subroutine mat_table_copy(mat_param ,x2vect   ,x3vect   ,x4vect   , &
           x1scale   ,x2scale  ,x3scale  ,x4scale  , &
@@ -68,6 +77,8 @@
           use matparam_def_mod
           use message_mod
           use precision_mod, only: WP
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -100,7 +111,7 @@
 !--------------------------------------------------------------------------
           idebug = 0
           nfunc = mat_param%ntable
-          allocate (ifunc(nfunc))
+          call my_alloc(ifunc,nfunc,"ifunc")
           do itab = 1,nfunc
             ifunc(itab) = mat_param%table(itab)%notable
             if (ifunc(itab) > 0) then
@@ -125,21 +136,24 @@
             ndim = table(func_n)%ndim                   ! table dimension
             mat_param%table(itab)%notable = func_id
             mat_param%table(itab)%ndim = ndim
-            allocate (mat_param%table(itab)%x(ndim))
+            allocate(mat_param%table(itab)%x(ndim))
 !
             if (ndim == 1) then
               lx1 = size(table(func_n)%x(1)%values)      ! number of abscissa points
-              allocate (mat_param%table(itab)%x(1)%values(lx1))
-              allocate (mat_param%table(itab)%y1d(lx1))
+              call my_alloc(mat_param%table(itab)%x(1)%values,lx1,                         &
+              &                      "mat_param%table(itab)%x(1)%values")
+              call my_alloc(mat_param%table(itab)%y1d,lx1,"mat_param%table(itab)%y1d")
               mat_param%table(itab)%x(1)%values(1:lx1) = x1scale*table(func_n)%x(1)%values(1:lx1)
               mat_param%table(itab)%y1d(1:lx1) = fscale(itab)*table(func_n)%y%values(1:lx1)
 
             else if (ndim == 2) then
               lx1 = size(table(func_n)%x(1)%values)
               lx2 = size(table(func_n)%x(2)%values)
-              allocate (mat_param%table(itab)%x(1)%values(lx1))
-              allocate (mat_param%table(itab)%x(2)%values(lx2))
-              allocate (mat_param%table(itab)%y2d(lx1,lx2))
+              call my_alloc(mat_param%table(itab)%x(1)%values,lx1,                         &
+              &                      "mat_param%table(itab)%x(1)%values")
+              call my_alloc(mat_param%table(itab)%x(2)%values,lx2,                         &
+              &                      "mat_param%table(itab)%x(2)%values")
+              call my_alloc(mat_param%table(itab)%y2d,lx1,lx2,"mat_param%table(itab)%y2d")
               mat_param%table(itab)%x(1)%values(1:lx1) = x1scale*table(func_n)%x(1)%values(1:lx1)
               mat_param%table(itab)%x(2)%values(1:lx2) = x2scale*x2vect(itab)*table(func_n)%x(2)%values(1:lx2)
               do i=1,lx1
@@ -152,10 +166,13 @@
               lx1  = size(table(func_n)%x(1)%values)
               lx2 = size(table(func_n)%x(2)%values)
               lx3 = size(table(func_n)%x(3)%values)
-              allocate (mat_param%table(itab)%x(1)%values(lx1))
-              allocate (mat_param%table(itab)%x(2)%values(lx2))
-              allocate (mat_param%table(itab)%x(3)%values(lx3))
-              allocate (mat_param%table(itab)%y3d(lx1,lx2,lx3))
+              call my_alloc(mat_param%table(itab)%x(1)%values,lx1,                         &
+              &                      "mat_param%table(itab)%x(1)%values")
+              call my_alloc(mat_param%table(itab)%x(2)%values,lx2,                         &
+              &                      "mat_param%table(itab)%x(2)%values")
+              call my_alloc(mat_param%table(itab)%x(3)%values,lx3,                         &
+              &                      "mat_param%table(itab)%x(3)%values")
+              call my_alloc(mat_param%table(itab)%y3d,lx1,lx2,lx3,"mat_param%table(itab)%y3d")
               mat_param%table(itab)%x(1)%values(1:lx1) = x1scale*table(func_n)%x(1)%values(1:lx1)
               mat_param%table(itab)%x(2)%values(1:lx2) = x2scale*x2vect(itab)*table(func_n)%x(2)%values(1:lx2)
               mat_param%table(itab)%x(3)%values(1:lx3) = x3scale*x3vect(itab)*table(func_n)%x(3)%values(1:lx3)
@@ -173,11 +190,15 @@
               lx2 = size(table(func_n)%x(2)%values)
               lx3 = size(table(func_n)%x(3)%values)
               lx4 = size(table(func_n)%x(4)%values)
-              allocate (mat_param%table(itab)%x(1)%values(lx1))
-              allocate (mat_param%table(itab)%x(2)%values(lx2))
-              allocate (mat_param%table(itab)%x(3)%values(lx3))
-              allocate (mat_param%table(itab)%x(4)%values(lx4))
-              allocate (mat_param%table(itab)%y4d(lx1,lx2,lx3,lx4))
+              call my_alloc(mat_param%table(itab)%x(1)%values,lx1,                         &
+              &                      "mat_param%table(itab)%x(1)%values")
+              call my_alloc(mat_param%table(itab)%x(2)%values,lx2,                         &
+              &                      "mat_param%table(itab)%x(2)%values")
+              call my_alloc(mat_param%table(itab)%x(3)%values,lx3,                         &
+              &                      "mat_param%table(itab)%x(3)%values")
+              call my_alloc(mat_param%table(itab)%x(4)%values,lx4,                         &
+              &                      "mat_param%table(itab)%x(4)%values")
+              allocate(mat_param%table(itab)%y4d(lx1,lx2,lx3,lx4))
               mat_param%table(itab)%x(1)%values(1:lx1) = x1scale*table(func_n)%x(1)%values(1:lx1)
               mat_param%table(itab)%x(2)%values(1:lx2) = x2scale*x2vect(itab)*table(func_n)%x(2)%values(1:lx2)
               mat_param%table(itab)%x(3)%values(1:lx3) = x3scale*x3vect(itab)*table(func_n)%x(3)%values(1:lx3)
@@ -196,7 +217,7 @@
             end if   ! ndim
           end do     ! nfunc
 !
-          deallocate (ifunc)
+          call my_dealloc(ifunc)
 !------------------------------
           return
         end subroutine mat_table_copy

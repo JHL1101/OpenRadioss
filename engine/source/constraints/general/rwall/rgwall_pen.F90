@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rwall_pen_mod   ../engine/source/constraints/general/rwall/rgwall_pen.F90
 !||--- called by ------------------------------------------------------
@@ -70,7 +71,7 @@
           integer, intent(in)                                      :: numnod          !< number of nodes
           integer, intent(in)                                      :: ncycle          !< number of cycle
           integer, intent(in)                                      :: nspmd           !< number of spmd
-          integer, intent(in)                                      :: nfsav           !< 1er dimension of fsav NTHVKI
+          integer, intent(in)                                      :: nfsav           !< first dimension of fsav NTHVKI
           integer, intent(in)                                      :: dimfb           !< last dimension of fbsav6
           integer, intent(in)                                      :: stabsens        !< dimension of tablesensor
           integer, intent(in)                                      :: nsect_offset    !< pointer offset for sensor table
@@ -105,7 +106,7 @@
 ! initialization at T=0
 !$OMP SINGLE
           if (ncycle == 0) then ! initialization of stifm
-            call my_alloc(rwall%pen%pen_old,rwall%pen%lnspen)
+            call my_alloc(rwall%pen%pen_old, rwall%pen%lnspen, "rwall%pen%pen_old")
             if (rwall%pen%lnspen>0) rwall%pen%pen_old = zero
             nm = 0
             do n = 1, nrwall
@@ -114,7 +115,7 @@
               if (ipen > 0 .and. msr > 0) nm = nm + 1
             end do
             rwall%pen%lrwmove = nm
-            call my_alloc(rwall%pen%stifm,rwall%pen%lrwmove)
+            call my_alloc(rwall%pen%stifm, rwall%pen%lrwmove, "rwall%pen%stifm")
             if (nm>0) rwall%pen%stifm = zero
           end if
 !$OMP END SINGLE
@@ -213,6 +214,7 @@
 !||--- uses       -----------------------------------------------------
 !||    constant_mod          ../common_source/modules/constant_mod.F
 !||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod         ../common_source/modules/precision_mod.F90
 !||    velrot_explicit_mod   ../engine/source/constraints/general/rbody/velrot_explicit.F90
 !||====================================================================
@@ -230,6 +232,7 @@
           use my_alloc_mod
           use velrot_explicit_mod,   only : cross_product
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                    Included files
@@ -240,7 +243,7 @@
           integer, intent(in)                                      :: numnod          !< number of nodes
           integer, intent(in)                                      :: msr             !< main node id (>=0)
           integer, intent(in)                                      :: nsn             !< number of secondary nodes
-          integer, intent(in)                                      :: nrwl            !< 1er dimension of rwl
+          integer, intent(in)                                      :: nrwl            !< first dimension of rwl
           integer, intent(in)                                      :: itype           !< rwall type
           integer, intent(in)                                      :: itied           !< flag tied
           integer, intent(inout)                                   :: ncont           !< num. impacted
@@ -309,7 +312,7 @@
               dsm(1:3)=x(1:3,n)-x_rw(1:3)
               dp=dsm(1)*nor(1)+dsm(2)*nor(2)+dsm(3)*nor(3)
               if(dp >= zero) cycle
-!---   no need for test for penetrated nodes w/ velocity
+!---   no need for test for penetrated nodes with velocity
               nindex = nindex+1
               index(nindex) = i
               pene(i) = -dp
@@ -444,17 +447,17 @@
           end select
 ! if any impact, compute forces
           if (nindex > 0) then
-            call my_alloc(f1, nindex)
-            call my_alloc(f2, nindex)
-            call my_alloc(f3, nindex)
-            call my_alloc(f4, nindex)
-            call my_alloc(f5, nindex)
-            call my_alloc(f6, nindex)
-            call my_alloc(f7, nindex)
-            call my_alloc(fn, nindex)
-            call my_alloc(vn, nindex)
-            call my_alloc(stif, nindex)
-            call my_alloc(stif_kt, nindex)
+            call my_alloc(f1, nindex, "f1")
+            call my_alloc(f2, nindex, "f2")
+            call my_alloc(f3, nindex, "f3")
+            call my_alloc(f4, nindex, "f4")
+            call my_alloc(f5, nindex, "f5")
+            call my_alloc(f6, nindex, "f6")
+            call my_alloc(f7, nindex, "f7")
+            call my_alloc(fn, nindex, "fn")
+            call my_alloc(vn, nindex, "vn")
+            call my_alloc(stif, nindex, "stif")
+            call my_alloc(stif_kt, nindex, "stif_kt")
 ! nonlinear stiffness update
             penref = one_fifth*leng_m
             p_min = em02*penref
@@ -466,7 +469,7 @@
               n=nsw(i)
               stif(j) = pen_stif(i)
               stif_kt(j) = stif(j)
-              if (pene(i) <= p_min .or. pen_old(i)==zero) cycle
+              if (leng_m<=zero.or. pene(i) <= p_min .or. pen_old(i)==zero) cycle
               pendr = (pene(i)/penref)**2
               fac  = min(fmax,(one+fnon*pendr))
               fact = one+three*fnon*pendr
@@ -537,7 +540,7 @@
                 f6(j) = fst(2)*dvt
                 f7(j) = fst(3)*dvt
               enddo
-            elseif(itied >1)then  ! w/ friction
+            elseif(itied >1)then  ! with friction
               if (ifq > 0) then
 !---     friction filtering
                 fric = rwl(13)
@@ -618,17 +621,17 @@
               frwl6(1:7,k) = frwl6(1:7,k)+frwl6_l(1:7,k)
             end do
 !$OMP END CRITICAL
-            deallocate(f1)
-            deallocate(f2)
-            deallocate(f3)
-            deallocate(f4)
-            deallocate(f5)
-            deallocate(f6)
-            deallocate(f7)
-            deallocate(stif)
-            deallocate(fn)
-            deallocate(vn)
-            deallocate(stif_kt)
+            call my_dealloc(f1)
+            call my_dealloc(f2)
+            call my_dealloc(f3)
+            call my_dealloc(f4)
+            call my_dealloc(f5)
+            call my_dealloc(f6)
+            call my_dealloc(f7)
+            call my_dealloc(stif)
+            call my_dealloc(fn)
+            call my_dealloc(vn)
+            call my_dealloc(stif_kt)
           end if !(nindex > 0)
 !
         end subroutine rwall_fpen

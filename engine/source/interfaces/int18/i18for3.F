@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i18for3_mod   ../engine/source/interfaces/int18/i18for3.F
 !||--- called by ------------------------------------------------------
@@ -121,7 +122,7 @@ C-----------------------------------------------
      .        MFROT, IFQ, NOINT,NEWFRONT,ISECIN, NSTRF(*),
      .        IRECT(4,*),IFPEN(*) ,ICONTACT(*), CAND_N(*),
      .        KINI(*),IGROUPS(NUMELS),
-     .        ISET, NISKYFI,INTTH,IFORM,JTASK,NFT,IPARG(NPARG)
+     .        NISKYFI,JTASK,NFT,IPARG(NPARG)
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ),
      .        CN_LOC(MVSIZ),CE_LOC(MVSIZ),INDEX(MVSIZ),NSVG(MVSIZ),
      .        NISUB, LISUB(*), ADDSUBS(*), ADDSUBM(*), LISUBS(*),
@@ -130,7 +131,7 @@ C-----------------------------------------------
      .   STFVAL,CAND_P(*),FROT_P(*), X(3,*),MS0(*),
      .   A(3,*), MS(*), V(3,*), FSAV(*),FCONT(3,*),
      .   CAND_FX(*),CAND_FY(*),CAND_FZ(*),
-     .   GAP, FRIC,VISC,VISCF,VIS,DT2T,STFN(*),STIFN(*),
+     .   GAP, FRIC,VISC,VISCF,DT2T,STFN(*),STIFN(*),
      .   FSKYI(LSKYI,NFSKYI),FSAVSUB(NTHVKI,*),FNCONT(3,*),
      .   FSAVPARIT(NISUB+1,11,*)
       my_real
@@ -141,50 +142,32 @@ C-----------------------------------------------
      .     LC1(MVSIZ), LC2(MVSIZ), LC3(MVSIZ), LC4(MVSIZ),
      .     P1(MVSIZ), P2(MVSIZ), P3(MVSIZ), P4(MVSIZ), STIF(MVSIZ),
      .     GAPV(MVSIZ),
-     .     SECFCUM(7,NUMNOD,NSECT), TMP(MVSIZ),
-     .     STIFSAV(MVSIZ), VISCN(*),
-     .     VXI(MVSIZ),VYI(MVSIZ),VZI(MVSIZ),MSI(2*MVSIZ),
-     .     RSTIF
+     .     SECFCUM(7,NUMNOD,NSECT),
+     .     VISCN(*),
+     .     VXI(MVSIZ),VYI(MVSIZ),VZI(MVSIZ),MSI(2*MVSIZ)
       TYPE(MULTI_FVM_STRUCT), INTENT(INOUT) :: MULTI_FVM
       TYPE(H3D_DATABASE) :: H3D_DATA
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, JG, K0, NBINTER, K1S, K, IE, NN, NI, 
-     .        NA1,NA2
+      INTEGER I, J, JG, K0, NBINTER, K1S, K, IE, NN, NI
       my_real
      .   FXI(MVSIZ), FYI(MVSIZ), FZI(MVSIZ), FNI(MVSIZ),
-     .   FXT(MVSIZ),FYT(MVSIZ),FZT(MVSIZ),
      .   FX1(MVSIZ), FX2(MVSIZ), FX3(MVSIZ), FX4(MVSIZ),
      .   FY1(MVSIZ), FY2(MVSIZ), FY3(MVSIZ), FY4(MVSIZ),
      .   FZ1(MVSIZ), FZ2(MVSIZ), FZ3(MVSIZ), FZ4(MVSIZ),
      .   N1(MVSIZ), N2(MVSIZ), N3(MVSIZ), PENE(MVSIZ),
-     .   VIS2(MVSIZ), DTMI(MVSIZ), XMU(MVSIZ),
+     .   DTMI(MVSIZ),
      .   H1(MVSIZ), H2(MVSIZ), H3(MVSIZ), H4(MVSIZ),
-     .   VX(MVSIZ), VY(MVSIZ), VZ(MVSIZ), VN(MVSIZ),DIST(MVSIZ), 
-     .   VNX, VNY, VNZ, AA, CRIT,S2,RDIST,
-     .   V2, FM2, DT1INV, VISCA, FAC,FF,ALPHI,ALPHA,BETA,
-     .   FX, FY, FZ, F2, MAS2, M2SK, DTMI0,FT,FN,FMAX,FTN,
-     .   FACM1, ECONTT, ECONVT, H0, LA1, LA2, LA3, LA4,
+     .   VX(MVSIZ), VY(MVSIZ), VZ(MVSIZ), VN(MVSIZ),DIST(MVSIZ),
+     .   S2,
+     .   DT1INV, FAC,FF,
+     .   MAS2, DTMI0,
+     .   ECONTT, H0, LA1, LA2, LA3, LA4,
      .   D1,D2,D3,D4,A1,A2,A3,A4,ECONTDT,
-     .   FSAV1, FSAV2, FSAV3, FSAV4, FSAV5, FSAV6, FSAV7, FSAV8, 
-     .   FSAV9, FSAV10, FSAV11, FSAV12, FSAV13, FSAV14, FSAV15, FFO,
-     .   E10, H0D, S2D, SUM,
-     .   LA1D,LA2D,LA3D,LA4D,T1,T1D,T2,T2D,FFD,VISD,FACD,D1D,
-     .   P1S(MVSIZ),P2S(MVSIZ),P3S(MVSIZ),P4S(MVSIZ),
-     .   D2D,D3D,D4D,VNXD,VNYD,VNZD,V2D,FM2D,F2D,AAD,FXD,FYD,FZD,
-     .   A1D,A2D,A3D,A4D,VV,AX1,AX2,AY1,AY2,AZ1,AZ2,AX,AY,AZ,
-     .   AREA,P,VV1,VV2,V21,DMU, H00 ,A0X,A0Y,A0Z,RX,RY,RZ,
-     .   ANX,ANY,ANZ,AAN,AAX,AAY,AAZ ,RR,RS,AAA ,TM,TS
-      my_real
-     .   SURFX,SURFY,SURFZ,SURF
-      my_real
-     .   ST1(MVSIZ),ST2(MVSIZ),ST3(MVSIZ),ST4(MVSIZ),STV(MVSIZ),
-     .   KT(MVSIZ),C(MVSIZ),CF(MVSIZ),
-     .   KS(MVSIZ),K1(MVSIZ),K2(MVSIZ),K3(MVSIZ),K4(MVSIZ),
-     .   CS(MVSIZ),C1(MVSIZ),C2(MVSIZ),C3(MVSIZ),C4(MVSIZ),
-     .   CX,CY,CFI,AUX,PHI1(MVSIZ), PHI2(MVSIZ), PHI3(MVSIZ),
-     .   PHI4(MVSIZ),DX, DTI
+     .   FSAV1, FSAV2, FSAV3, FSAV8,
+     .   FSAV9, FSAV10, FSAV11,
+     .   H00
       INTEGER JSUB, KSUB, JJ, KK, IN, NSUB, IBID, ITASK
       my_real FSAVSUB1(15,NISUB),IMPX,IMPY,IMPZ,PP1,PP2,PP3,PP4,BID
 C-----------------------------------------------

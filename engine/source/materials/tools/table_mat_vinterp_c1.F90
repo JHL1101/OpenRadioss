@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    table_mat_vinterp_c1_mod   ../engine/source/materials/tools/table_mat_vinterp_c1.F90
 !||====================================================================
@@ -83,6 +84,7 @@
           real(kind=WP), dimension(nel,4) :: fac
           real(kind=WP), dimension(2,2,2) :: h1,h2,dydx_smooth
           real(kind=WP), dimension(nel)   :: dxx,xs1,xs2
+          real(kind=WP) :: ksi
           logical :: do_extrapolation
 ! ----------------------------------------------------------------------------------------------------------------------
 !   source lines
@@ -94,7 +96,7 @@
 
           ndim = table%ndim
           if (size(xx,2) < ndim ) then
-            call ancmsg(msgid=36,anmode=aninfo,c1="table interpolation")
+            call ancmsg(msgid=36,anmode=aninfo,c1="table interpolation",msgtype=msgerror)
             call arret(2)
           end if
 
@@ -159,6 +161,8 @@
           end do
 
           if(.not. do_extrapolation)then
+            ! The function is not extrapolated outside its definition interval
+            !   fac \in [0,1]
             do k=1,ndim
 #include "vectorize.inc"
               do i=1,nel
@@ -489,12 +493,15 @@
               xs2(i)  = (table%x(1)%values(i3) + table%x(1)%values(i2)) * half
               dxx(i)  = xs2(i) - xx(i,1)
 
+              ksi = one
               if (ipos(i,1) == 1) then                  ! first point
                 if (dxx(i) <= zero) then
                   dx = table%x(1)%values(i4) - table%x(1)%values(i3)
                   xs1(i)  = (table%x(1)%values(i4) + table%x(1)%values(i3)) * half
                   h1(1,1,1) = (table%y1d(i4) - table%y1d(i3)) / dx
                   alpha   = dxx(i) / (xs2(i) - xs1(i))
+                elseif(.not. do_extrapolation)then
+                  ksi = zero ! When the function is not extrapolated and is held constant below its domain of definition, its derivative is zero in that region.
                 end if
               else if (ipos(i,1) == ldim(1) - 1) then    ! last point
                 if (dxx(i) > zero) then
@@ -502,6 +509,8 @@
                   xs1(i)  = (table%x(1)%values(i2) + table%x(1)%values(i1)) * half
                   h1(1,1,1) = (table%y1d(i2) - table%y1d(i1)) / dx
                   alpha   = dxx(i) / (xs2(i) - xs1(i))
+                elseif(.not. do_extrapolation)then
+                  ksi = zero ! When the function is not extrapolated and is held constant over its domain of definition, its derivative is zero in that region.
                 end if
               else
                 if (dxx(i) > zero) then
@@ -516,7 +525,7 @@
                 alpha   = dxx(i) / (xs2(i) - xs1(i))
               end if
               dydx_smooth(1,1,1) = alpha * h1(1,1,1) + (one-alpha) * h2(1,1,1)
-              dydx(i) = dydx_smooth(1,1,1)
+              dydx(i) = ksi*dydx_smooth(1,1,1)
             end do
 
           end select

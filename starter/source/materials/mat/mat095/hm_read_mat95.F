@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat95            ../starter/source/materials/mat/mat095/hm_read_mat95.F
 !||--- called by ------------------------------------------------------
@@ -91,9 +92,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: NBMAT, MAT_ID  ! Number of declared materials
-      INTEGER :: I,J,NRATE,NPS,OPTE,IFUNCE,ILAW,NFUNC,IFORM
-      my_real :: RHO0, RHOR,E,NU,G,MU,RBULK,   C1,  
+      INTEGER :: ILAW,IFORM
+      my_real :: RHO0, RHOR,E,NU,G,RBULK,
      .           C10,C01,C20,C11,C02 ,TAUREF_UNIT,
      .           C30, C21,C12,C03,SB,D1,D2,D3,A,EXPC,EXPM,KSI,TAUREF
       LOGICAL :: IS_AVAILABLE,IS_ENCRYPTED

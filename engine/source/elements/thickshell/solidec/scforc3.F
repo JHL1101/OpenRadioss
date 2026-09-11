@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    scforc3                ../engine/source/elements/thickshell/solidec/scforc3.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    s8for_distor           ../engine/source/elements/solid/solide/s8for_distor.F
 !||    s8get_x3               ../engine/source/elements/solid/solide/s8get_x3.F
 !||    s8sav3                 ../engine/source/elements/solid/solide/s8sav3.F
+!||    sc8dlenmax_sm          ../engine/source/elements/thickshell/solidec/sc8dlenmax_sm.F90
 !||    scdefc3                ../engine/source/elements/thickshell/solidec/scdefc3.F
 !||    scdefo3                ../engine/source/elements/thickshell/solidec/scdefo3.F
 !||    scderi3                ../engine/source/elements/thickshell/solidec/scderi3.F
@@ -67,8 +69,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    glob_therm_mod         ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    mat_elem_mod           ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    mmain_mod              ../engine/source/materials/mat_share/mmain.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod         ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod             ../common_source/modules/output/output_mod.F90
+!||    sc8dlenmax_sm_mod      ../engine/source/elements/thickshell/solidec/sc8dlenmax_sm.F90
 !||    sdistor_ini_mod        ../engine/source/elements/solid/solide/sdistror_ini.F90
 !||    sensor_mod             ../common_source/modules/sensor_mod.F90
 !||    shour_ctl_mod          ../engine/source/elements/solid/solidez/shour_ctl.F90
@@ -112,9 +117,12 @@ C-----------------------------------------------
       use glob_therm_mod
       use sensor_mod
       use element_mod , only : nixs
+      use sc8dlenmax_sm_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -305,7 +313,7 @@ C-----
       my_real, DIMENSION(:,:), ALLOCATABLE :: VAR_REG
       my_real, DIMENSION(:), POINTER :: DNL
       my_real :: STI_C(MVSIZ),LL(MVSIZ),FLD(MVSIZ),
-     .           CNS2,FQMAX,DN
+     .           CNS2,FQMAX,DN,VOLGS(MVSIZ)
       integer :: fake_size = 0
       my_real, dimension(1) :: fake_array           
 C-----
@@ -441,7 +449,7 @@ C=======================================================================
       TEMPEL(:) = ZERO
       FHEAT(:)  = ZERO
       INLOC = IPARG(78,NG)
-      ALLOCATE(VAR_REG(NEL,NLAY))
+      call my_alloc(VAR_REG, NEL, NLAY, "VAR_REG")
 !
       DO J=1,6
         JJ(J) = NEL*(J-1)
@@ -953,11 +961,20 @@ C-----------------------------
         ENDDO
       ENDIF
       IF ( NN_DEL> 0) THEN
+        IF (ISMSTR == 1 .OR. ISMSTR == 11) THEN 
+          CALL SC8DLENMAX_SM(                          
+     1           NEL      ,X        ,NUMNOD     ,VOLGS   ,       
+     2           NC1      ,NC2      ,NC3        ,NC4     ,       
+     3           NC5      ,NC6      ,NC7        ,NC8     ,       
+     4           LLSH     ,AREA     ,0  )
+        ELSE
          CALL SDLENSH2(VOLG,LLSH,AREA ,
      .          X1, X2, X3, X4, X5, X6, X7, X8,
      .          Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8,
      .          Z1, Z2, Z3, Z4, Z5, Z6, Z7, Z8,NEL)
-        CALL TSHGEODEL3(NGL,GBUF%OFF,VOLG,AREA,GBUF%VOL,
+         VOLGS(1:NEL) =VOLG(1:NEL)
+        END IF !(ISMSTR == 1 .OR. ISMSTR == 11) THEN 
+        CALL TSHGEODEL3(NGL,GBUF%OFF,VOLGS,AREA,GBUF%VOL,
      .                  LLSH,GEO(1,PID),NN_DEL,DT,NEL )
       ENDIF
 C-----------------------------
@@ -1176,6 +1193,6 @@ C----------------------------
      2   NC3,     NC4,     NC5,     NC6,
      3   NC7,     NC8,     NEL)
 C-----------
-      IF (ALLOCATED(VAR_REG)) DEALLOCATE(VAR_REG)
+      IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,28 +15,31 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    w_anim_ply    ../starter/source/restart/ddsplit/w_anim_ply.F
+!||    w_anim_ply       ../starter/source/restart/ddsplit/w_anim_ply.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit       ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit          ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
-!||    get_ply_nod   ../starter/source/spmd/spmd_anim_ply_init.F
+!||    get_ply_nod      ../starter/source/spmd/spmd_anim_ply_init.F
 !||--- uses       -----------------------------------------------------
-!||    plyxfem_mod   ../starter/share/modules1/plyxfem_mod.F
+!||    plyxfem_mod      ../starter/share/modules1/plyxfem_mod.F
 !||====================================================================
       SUBROUTINE W_ANIM_PLY(IXC,NUMELC_L,NODLOCAL,
      *                      NUMNOD_L,CEL,CEP,PROC)
       USE PLYXFEM_MOD
       use element_mod , only : nixc
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -58,8 +61,9 @@ C-----------------------------------------------
       EXTERNAL GET_PLY_NOD
 C-----------------------------------------------
 !     1d array
-      ALLOCATE( NODTAG(NUMNOD_L),ELEMTAG(NUMELC_L) )
-      ALLOCATE( PLYSIZNG(NPLYMAX) )
+      call my_alloc(NODTAG, NUMNOD_L, "NODTAG")
+      call my_alloc(ELEMTAG, NUMELC_L, "ELEMTAG")
+      call my_alloc(PLYSIZNG, NPLYMAX, "PLYSIZNG")
 ! ----------------------------------
 
       CALL WRITE_I_C(NPLYPART,1)
@@ -99,7 +103,9 @@ C L engine
 
 C we prepare the tables to send
         ELPL = 0
-        ALLOCATE ( ELNUM(ELSZ_L),ELEMIPT(ELSZ_L),ELEMXFEMID(ELSZ_L) )
+        call my_alloc(ELNUM, ELSZ_L, "ELNUM")
+        call my_alloc(ELEMIPT, ELSZ_L, "ELEMIPT")
+        call my_alloc(ELEMXFEMID, ELSZ_L, "ELEMXFEMID")
 
 C Local tables elements
         DO I=1,NUMELC_L
@@ -114,7 +120,8 @@ C
         ENDDO
 C XFEM local node paintings
         NCOUNT = 0
-        ALLOCATE ( NODNUM(NDSZ_L), NODEXTN(NDSZ_L) )
+        call my_alloc(NODNUM, NDSZ_L, "NODNUM")
+        call my_alloc(NODEXTN, NDSZ_L, "NODEXTN")
         DO I=1,NUMNOD_L
           IF (NODTAG(I) > 0) THEN
             NCOUNT = NCOUNT + 1
@@ -137,7 +144,11 @@ C ply nodes
         CALL WRITE_I_C(NODEXTN   , NDSZ_L)
 
 C
-        DEALLOCATE ( NODEXTN,NODNUM,ELNUM,ELEMIPT,ELEMXFEMID)
+        CALL MY_DEALLOC(NODEXTN)
+        CALL MY_DEALLOC(NODNUM)
+        CALL MY_DEALLOC(ELNUM)
+        CALL MY_DEALLOC(ELEMIPT)
+        CALL MY_DEALLOC(ELEMXFEMID)
       ENDDO
 
         CALL WRITE_I_C(PLYSIZNG,NPLYMAX)
@@ -145,8 +156,9 @@ C id ply pid
         CALL WRITE_I_C(IDPID_PLY,NPLYPART)    
 ! ----------------------------------    
 !     1d array
-      DEALLOCATE( NODTAG,ELEMTAG )
-      DEALLOCATE( PLYSIZNG )
+      CALL MY_DEALLOC(NODTAG)
+      CALL MY_DEALLOC(ELEMTAG)
+      call my_dealloc(PLYSIZNG)
 ! ----------------------------------   
       RETURN
       END

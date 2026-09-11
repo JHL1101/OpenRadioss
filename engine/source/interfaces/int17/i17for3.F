@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i17for3             ../engine/source/interfaces/int17/i17for3.F
 !||--- called by ------------------------------------------------------
@@ -36,6 +37,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod             ../engine/share/modules/h3d_mod.F
 !||    icontact_mod        ../engine/share/modules/icontact_mod.F
 !||    message_mod         ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod          ../common_source/modules/output/output_mod.F90
 !||    tri7box             ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -59,6 +62,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -84,14 +89,14 @@ C-----------------------------------------------
 C     REAL
       my_real
      .  X(3,*),V(3,*),EMINXM(6,*),EMINXS(6,*),A(3,*),STIFN(*),
-     .  FSKYI   ,FROTM(7,*),FROTS(7,*),KM(*),KS(*),FRIC(*), FSAV(*),
+     .  FSKYI(LSKYI,NFSKYI)   ,FROTM(7,*),FROTS(7,*),KM(*),KS(*),FRIC(*), FSAV(*),
      .  FCONT(3,*), MS(*)
       TYPE(H3D_DATABASE) :: H3D_DATA
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,IK,IE,IS,IC,NK,III(MVSIZ,17),LLT,NFT,LE,FIRST,LAST,
-     .        I16,LES,IES,IIIS(MVSIZ,16),LEL(MVSIZ),LESL(MVSIZ),
+      INTEGER I,K,IE,IC,III(MVSIZ,17),LLT,NFT,LE,FIRST,LAST,
+     .        LES,IES,IIIS(MVSIZ,16),LEL(MVSIZ),LESL(MVSIZ),
      .        IE_MIN,IES_MIN, IERR1, IERR2
       my_real
      .   XX(MVSIZ,17),YY(MVSIZ,17),ZZ(MVSIZ,17),
@@ -108,14 +113,14 @@ C-----------------------------------------------------------------------
       IF(IPARIT/=0.AND.ITASK==0)THEN
         IERR1=0
         IERR2=0
-        ALLOCATE(ISKYI17(LSKYI17),STAT=IERR2)
+        call my_alloc(ISKYI17, LSKYI17, "ISKYI17", stat=IERR2)
         IERR1 = IERR1+IERR2
-        ALLOCATE(FSKYI17(LSKYI17,4),STAT=IERR2)
+        call my_alloc(FSKYI17, LSKYI17, 4, "FSKYI17", stat=IERR2)
         IERR1 = IERR1+IERR2
         IF(NSPMD>1)THEN
-          ALLOCATE(IRSKYI17(LSKYI17),STAT=IERR2)
+          call my_alloc(IRSKYI17, LSKYI17, "IRSKYI17", stat=IERR2)
           IERR1 = IERR1+IERR2
-          ALLOCATE(FRSKYI17(4,LSKYI17),STAT=IERR2)
+          call my_alloc(FRSKYI17, 4, LSKYI17, "FRSKYI17", stat=IERR2)
           IERR1 = IERR1+IERR2
         END IF
         IF(IERR1/=0)THEN
@@ -252,16 +257,16 @@ C-----------------------------------------------------------------------
             CALL SPMD_I17FROTS_PON(
      1        NSKYI17 ,ISKYI17,FSKYI17,NRSKYI17,IRSKYI17,
      2        FRSKYI17,NINT   ,LSKYI17,NOINT)
-            DEALLOCATE(IRSKYI17)
-            DEALLOCATE(FRSKYI17)
+            call my_dealloc(IRSKYI17)
+            call my_dealloc(FRSKYI17)
           END IF
 C 
           IF(NSKYI17>0)THEN
             CALL I17LLL_ASS(NSKYI17 ,ISKYI17 ,FSKYI17, FROTS, NSE,
      2                    LSKYI17 )
           END IF
-          DEALLOCATE(ISKYI17)
-          DEALLOCATE(FSKYI17)
+          call my_dealloc(ISKYI17)
+          call my_dealloc(FSKYI17)
         END IF
       END IF
 C
@@ -302,6 +307,7 @@ C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
 C-----------------------------------------------
 #include      "mvsiz_p.inc"
+#include      "parit_c.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
@@ -315,15 +321,13 @@ C     REAL
       my_real
      .   XX(MVSIZ,17),YY(MVSIZ,17),ZZ(MVSIZ,17),X(3,*),
      .   XXS(MVSIZ,16) ,YYS(MVSIZ,16) ,ZZS(MVSIZ,16) ,VIT_MIN,
-     .   STIFN(*) ,FSKYI ,FROTM(7,*),FROTS(7,*),FSAV(*) ,FCONT(3,*)
+     .   STIFN(*) ,FSKYI(LSKYI,NFSKYI) ,FROTM(7,*),FROTS(7,*),FSAV(*) ,FCONT(3,*)
       TYPE(H3D_DATABASE) :: H3D_DATA
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4,IAD,ICON,
+      INTEGER I,J,
      +        ICONT(MVSIZ,4)
-      my_real
-     .   VX,VY,VZ,VN,AA,VV,PENE
       my_real
      .   R_CM(MVSIZ),T_CM(MVSIZ),S_CM(MVSIZ),SI_S(MVSIZ,8),
      .   RI_S(MVSIZ,8),TI_S(MVSIZ,8),
@@ -333,7 +337,7 @@ C-----------------------------------------------
      .   R_1M(MVSIZ) ,R_2M(MVSIZ) ,T_1M(MVSIZ) ,T_2M(MVSIZ),
      .   R_3M(MVSIZ) ,R_4M(MVSIZ) ,T_3M(MVSIZ) ,T_4M(MVSIZ),
      .   R_CS(MVSIZ) ,S_CS(MVSIZ) ,T_CS(MVSIZ) ,VIT(MVSIZ),
-     .   R_S(MVSIZ) ,T_S(MVSIZ)   ,AREA(MVSIZ) ,AREA_TOT(MVSIZ),
+     .   AREA(MVSIZ) ,AREA_TOT(MVSIZ),
      .   AREA_EL(MVSIZ)        
 C-----------------------------------------------
 C      calculation de r,s,t
@@ -542,8 +546,8 @@ C-----------------------------------------------
      +        C1(MVSIZ),C2(MVSIZ),C3(MVSIZ),AZERO(MVSIZ),
      +        F1,F2,F3,F4,F5,F6,F7,F8,
      +        BB1,BB2,BB3,
-     +        CC1,CC2,CC3,DD1,DD2,DD3,DD,D,
-     +        A0,AB,BA,A4R,B4T,A5T,B5R,EPS,
+     +        CC1,CC2,CC3,DD1,DD2,DD3,D,
+     +        A0,AB,BA,A4R,B4T,A5T,B5R,
      +        XA,YA,ZA,XB,YB,ZB,XC,YC,ZC,AAA,UNPEPS,
      +        P,RM,TM,SM,PP,RR,TT,AA,RT(9),AS(9)
       DATA RT/-1.,-0.75,-0.5,-0.25,0.0,0.25,0.5,0.75,1./
@@ -991,7 +995,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real
-     +        A1,A2,A3,A4,A5,A6,A7,A8,R2,T2,FF5,FF6,FF7,FF8
+     +        A1,A2,A3,A4,A5,A6,A7,A8,FF5,FF6,FF7,FF8
 C
         FF5 = F(I,5) + F(I,5)
         FF6 = F(I,6) + F(I,6)
@@ -1184,12 +1188,9 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,K
       my_real
-     .  U_M_R,U_P_R,U_M_S,U_P_S,U_M_T,U_P_T,
-     .  UMS_UMT,UMS_UPT,UPS_UMT,UPS_UPT,
-     .  UMR_UMS,UMR_UPS,UPR_UMS,UPR_UPS,
-     .  UMT_UMR,UMT_UPR,UPT_UMR,UPT_UPR,
-     .  A,B,R05,S05,T05,R,T,NI(8),
-     .  X1,X2,X3,Y1,Y2,Y3,Z1,Z2,Z3,PIS4
+     .  U_M_R,U_P_R,U_M_T,U_P_T,
+     .  A,B,R05,T05,R,T,NI(8),
+     .  X1,X2,X3,Y1,Y2,Y3,Z1,Z2,Z3
 C-----------------------------------------------------------------------
 C     calculation of the surface
 C-----------------------------------------------------------------------
@@ -1436,9 +1437,9 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4,IES,IIS
+      INTEGER I,IK,IES,IIS
       my_real
-     .   VX,VY,VZ,VN,AA
+     .   VX,VY,VZ,VN
 C-----------------------------------------------------------------------
 C     calculation of Ni on face 1 2 3 4 or 5 6 7 8 of the main (s=+-1)
 C-----------------------------------------------------------------------
@@ -1560,10 +1561,10 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4,IAD,NN,LEM,J1,J2,NISKYL,IES,IIS,
+      INTEGER I,IK,LEM,J1,J2,NISKYL,IES,IIS,
      .        NISKYFIL
       my_real
-     .   VX,VY,VZ,VN,AA,SURF,EP2,XE,YE,ZE,XA,YA,ZA,XB,YB,ZB,XC,YC,ZC,
+     .   VX,VY,VZ,VN,AA,XE,YE,ZE,
      .   F,STIF,PENE,SIGTMX,SIGTMY,SIGTMZ,SIGTSX,SIGTSY,SIGTSZ,BB,
      .   FX,FY,FZ,FFX,FFY,FFZ,FF,FF2,MUF2,HTSQRTPI,MAS4,EP,VIS,
      .   RHOM,RHOS,STIFV,DT1INV,FFVX,FFVY,FFVZ,FFTX,FFTY,FFTZ,MUF,

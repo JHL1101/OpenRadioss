@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rdresb                       ../engine/source/output/restart/rdresb.F
 !||--- called by ------------------------------------------------------
@@ -114,6 +115,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    connectivity_mod             ../common_source/modules/connectivity.F90
 !||    damp_mod                     ../engine/share/modules/damp_mod.F
 !||    drape_mod                    ../engine/share/modules/drape_mod.F
+!||    dt_mod                       ../engine/source/modules/dt_mod.F
 !||    ebcs_mod                     ../common_source/modules/boundary_conditions/ebcs_mod.F90
 !||    ecnd_mod                     ../engine/share/modules/ecdn_mod.F
 !||    element_mod                  ../common_source/modules/elements/element_mod.F90
@@ -126,6 +128,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    message_mod                  ../engine/share/message_module/message_mod.F
 !||    monvol_struct_mod            ../engine/share/modules/monvol_struct_mod.F
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod               ../common_source/modules/nlocal_reg_mod.F
 !||    nodal_arrays_mod             ../common_source/modules/nodal_arrays.F90
 !||    outmax_mod                   ../common_source/modules/outmax_mod.F
@@ -134,6 +138,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    pinchtype_mod                ../common_source/modules/pinchtype_mod.F
 !||    pload_cyl_mod                ../common_source/modules/loads/pload_cyl_mod.F
 !||    python_funct_mod             ../common_source/modules/python_mod.F90
+!||    q1np_restart_mod             ../common_source/modules/q1np_restart_mod.F90
 !||    rbe3_mod                     ../common_source/modules/constraints/rbe3_mod.F90
 !||    read_ale_grid_mod            ../engine/source/output/restart/read_ale_grid.F90
 !||    read_bcs_nrf_mod             ../engine/source/output/restart/read_bcs_nrf.F90
@@ -155,12 +160,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    unitab_mod                   ../common_source/modules/unitab_mod.F
 !||    user_windows_mod             ../common_source/modules/user_windows_mod.F
 !||====================================================================
-      SUBROUTINE RDRESB( AF               ,IAF        ,LVARREA      ,IRUNN      ,
+      SUBROUTINE RDRESB( AF               ,IAF        ,LVARREA      ,IRUNN            ,
      .                   MULTI_FVM        ,H3D_DATA   ,PINCH_DATA   ,ALE_CONNECTIVITY ,T_MONVOL   ,
      .                   SENSORS          ,EBCS_TAB   ,DYNAIN_DATA  ,USER_WINDOWS     ,OUTPUT     ,
      .                   INTERFACES       ,LOADS      ,MAT_ELEM     ,PYTHON           ,IFLOW      ,
      .                   SKEWS            ,RFLOW      ,LIFLOW       ,LRFLOW           ,IMPL_S0    ,
-     .                   FORNEQS      ,UNITAB           ,
+     .                   FORNEQS          ,UNITAB     ,DT           ,DTFAC1           ,
      .                   STACK            ,DRAPE_SH4N ,DRAPE_SH3N   ,DRAPEG           ,NDRAPE     ,
      .                   GLOB_THERM       ,PBLAST     ,ELEMENT      ,NODES            ,RBE3       ,
      .                   RWALL            ,SFEM       )
@@ -217,6 +222,10 @@ C-----------------------------------------------
       use rwall_mod
       use restart_rwallpen_mod, only : get_nrwallpen_l,read_rrwallpen
       use sfem_mod
+      use dt_mod , only : dt_
+      USE Q1NP_RESTART_MOD
+      USE MY_ALLOC_MOD
+      USE MY_DEALLOC_MOD, ONLY : MY_DEALLOC
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -282,7 +291,8 @@ C-----------------------------------------------
       TYPE(nodal_arrays_)   ,INTENT(INOUT)                 :: NODES
       TYPE(RBE3_)           ,INTENT(INOUT)                 :: RBE3
       TYPE(RWALL_)          ,INTENT(INOUT)                 :: RWALL
-      TYPE(SFEM_)           ,INTENT(INOUT)                 :: SFEM
+      TYPE(global_sfem_)    ,INTENT(INOUT)                 :: SFEM
+      TYPE(DT_)             ,INTENT(INOUT)                 :: DT
       INTEGER, INTENT(IN) :: LIFLOW
       INTEGER, INTENT(IN) :: LRFLOW
       my_real, INTENT(INOUT) :: FORNEQS(3,NUMNOD)
@@ -290,6 +300,7 @@ C-----------------------------------------------
       my_real, INTENT(INOUT) :: RFLOW(LRFLOW)
       INTEGER, INTENT(IN) :: IMPL_S0
       INTEGER, INTENT(IN) :: NDRAPE
+      my_real, INTENT(INOUT) :: DTFAC1(102)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -646,8 +657,6 @@ c        CALL READ_I_C(INBUF,SINBUF)
         CALL READ_I_C(MADNOD,SMADNOD)
 
         CALL READ_I_C(MADCLNOD,MADCLNODS)
-
-        CALL READ_I_C(MADFAIL,SMADFAIL)
 
         CALL READ_I_C(MADIDX,SMADIDX)
 
@@ -1011,6 +1020,47 @@ C----------------------------------
       CALL READ_I_C(KXIG3D,SKXIG3D)
       CALL READ_I_C(IXIG3D,SIXIG3D)
 C----------------------------------
+C Q1Np element integer arrays
+C----------------------------------
+      IF (NUMELQ1NP_G > 0) THEN
+C Bounds validation
+        IF (SKQ1NP_G > 0) THEN
+          CALL READ_I_C(KQ1NP_TAB,SKQ1NP_G)
+        ENDIF
+        IF (SIQ1NP_G > 0) THEN
+          CALL READ_I_C(IQ1NP_TAB,SIQ1NP_G)
+        ENDIF
+        IF (SQ1NPBULK_G > 0) THEN
+          CALL READ_I_C(IQ1NP_BULK_TAB,SQ1NPBULK_G)
+        ENDIF
+
+C       Q1NP knot-set metadata (heterogeneous NX/NY support)
+        CALL READ_I_C(ITMP,1)
+        Q1NP_NKNOT_SETS_G = MAX(0, ITMP)
+        IF (Q1NP_NKNOT_SETS_G > 0) THEN
+          IF (ALLOCATED(Q1NP_NX_SET_G)) CALL MY_DEALLOC(Q1NP_NX_SET_G)
+          IF (ALLOCATED(Q1NP_NY_SET_G)) CALL MY_DEALLOC(Q1NP_NY_SET_G)
+          IF (ALLOCATED(Q1NP_KTAB_OFF_G)) CALL MY_DEALLOC(Q1NP_KTAB_OFF_G)
+          IF (ALLOCATED(Q1NP_KTAB_LEN_G)) CALL MY_DEALLOC(Q1NP_KTAB_LEN_G)
+
+          CALL MY_ALLOC(Q1NP_NX_SET_G, Q1NP_NKNOT_SETS_G, 'Q1NP_NX_SET_G')
+          CALL MY_ALLOC(Q1NP_NY_SET_G, Q1NP_NKNOT_SETS_G, 'Q1NP_NY_SET_G')
+          CALL MY_ALLOC(Q1NP_KTAB_OFF_G, Q1NP_NKNOT_SETS_G, 'Q1NP_KTAB_OFF_G')
+          CALL MY_ALLOC(Q1NP_KTAB_LEN_G, Q1NP_NKNOT_SETS_G, 'Q1NP_KTAB_LEN_G')
+
+          CALL READ_I_C(Q1NP_NX_SET_G,Q1NP_NKNOT_SETS_G)
+          CALL READ_I_C(Q1NP_NY_SET_G,Q1NP_NKNOT_SETS_G)
+          CALL READ_I_C(Q1NP_KTAB_OFF_G,Q1NP_NKNOT_SETS_G)
+          CALL READ_I_C(Q1NP_KTAB_LEN_G,Q1NP_NKNOT_SETS_G)
+
+         ! Keep legacy single-grid view compatible with existing code paths.
+          Q1NP_NX_G = Q1NP_NX_SET_G(1)
+          Q1NP_NY_G = Q1NP_NY_SET_G(1)
+        ENDIF
+C       Q1NP inverse connectivity (local solid element -> Q1NP element)
+        CALL READ_I_C(KQ1NP_TAB_INV,NUMELS)
+      ENDIF
+C----------------------------------
       CALL READ_I_C(TAG_SKINS6,NUMELS)
 C----------------------------------
 C /BCS/CYCLIC
@@ -1033,8 +1083,13 @@ C----------------------------------
       CALL READ_I_C(ITMP,1)
       BCS%NUM_NRF = ITMP
       IF(BCS%NUM_NRF > 0)THEN
-        CALL READ_BCS_NRF()
-      ENDIF      
+        CALL READ_BCS_NRF(NUMNOD)
+      ENDIF
+      IF(BCS%NUM_NRF > 0)THEN
+        DT%NODADT = 1
+        IF(DTFAC1(11) >= EP20)  DTFAC1(11) = ZEP9
+        CALL ANCMSG(MSGID=127,ANMODE=ANINFO) ! Warn user : NODAL TIME STEP CONTROL ACTIVATED TO ENSURE STABILITY WITH /BCS/NRF
+      ENDIF
 C----------------------------------
 C     reading real variables
 C--------------------------------------
@@ -1574,6 +1629,7 @@ C
 C
       IF (N_ANCHOR_REMOTE_SEND > 0) THEN
         CALL READ_I_C(ANCHOR_REMOTE_SEND%ADD_PROC, NSPMD+1)
+        CALL READ_I_C(ANCHOR_REMOTE_SEND%BUF_INDEX, N_ANCHOR_REMOTE_SEND)
         CALL READ_I_C(ANCHOR_REMOTE_SEND%NODE, N_ANCHOR_REMOTE_SEND)
       ENDIF
 C
@@ -1702,6 +1758,29 @@ C--------------------------------------
       ENDIF
 
       IF (NUMPLY > 0) CALL PLY_INFO_REST(PLY_INFO)
+
+C--------------------------------------
+C Q1Np element real arrays
+C--------------------------------------
+      IF (NUMELQ1NP_G > 0) THEN
+C Read real arrays
+        IF (SQ1NPWEIGHT_L_G > 0) THEN
+          CALL READ_DB(Q1NP_WTAB,SQ1NPWEIGHT_L_G)
+        ENDIF
+        IF (SQ1NPKNOT_L_G > 0) THEN
+          CALL READ_DB(Q1NP_KTAB,SQ1NPKNOT_L_G)
+        ENDIF
+        IF (SQ1NPCTRL_SHARED_G > 0) THEN
+          CALL READ_DB(Q1NP_CPTAB,3*SQ1NPCTRL_SHARED_G)
+        ENDIF
+C       Bind Q1NP_KTAB_G pointer to Q1NP_KTAB so engine-side helpers
+C       that still test ASSOCIATED(Q1NP_KTAB_G) see a valid target.
+        IF (ALLOCATED(Q1NP_KTAB) .AND. SIZE(Q1NP_KTAB) > 0) THEN
+          Q1NP_KTAB_G => Q1NP_KTAB
+        ELSE
+          Q1NP_KTAB_G => NULL()
+        ENDIF
+      ENDIF
 
       !       read the starter elapsed time
       CALL READ_DPDB(GLOBAL_COMP_TIME%STARTER_TIME,1)

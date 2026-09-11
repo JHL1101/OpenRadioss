@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    asspar5   ../engine/source/assembly/asspar5.F
 !||--- called by ------------------------------------------------------
@@ -46,14 +47,9 @@ C
       integer*8 
      .  I8A(3,3,*),I8AR(3,3,*),I8STIFN(3,*),I8STIFR(3,*),
      .  I8VISCN(3,*)
-      my_real 
-     .  A(3,*),AR(3,*),PARTSAV(*),STIFN(*),STIFR(*),VISCN(*),GRESAV(*)
-c___________________________________________________          
+      my_real  A(3,*),AR(3,*),PARTSAV(*),STIFN(*),STIFR(*),VISCN(*),GRESAV(*)
       double precision r8_deuxm43
-      integer*8  i8_deuxp43
-      data i8_deuxp43 /'80000000000'x/
-      r8_deuxm43 = 1.d00 / i8_deuxp43
-c___________________________________________________          
+       parameter (r8_deuxm43 = 2.d0**(-43))
 C
       NUM7 = NPSAV*NPART
       NUM8 = NGPE*NPART

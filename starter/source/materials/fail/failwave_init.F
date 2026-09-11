@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    failwave_init   ../starter/source/materials/fail/failwave_init.F
 !||--- called by ------------------------------------------------------
@@ -60,18 +61,20 @@ C-----------------------------------------------
       INTEGER ,DIMENSION(:), ALLOCATABLE :: TAGNOD,INDX,IDXI
 C=======================================================================
 
-      ALLOCATE( TAGNOD(NUMNOD),INDX(NUMNOD),IDXI(NUMNOD) )
+      call my_alloc(TAGNOD, NUMNOD, "TAGNOD")
+      call my_alloc(INDX, NUMNOD, "FAILWAVE_INIT/INDX")
+      call my_alloc(IDXI, NUMNOD, "IDXI")
 c
       IFAILWAVE = FAILWAVE%WAVE_MOD
       IF (IFAILWAVE == 0) THEN
         FAILWAVE%NNOD   = 0
         FAILWAVE%NDDL   = 0
         FAILWAVE%SIZE   = 0
-        ALLOCATE (FAILWAVE%FWAVE_NOD(0,0,0))
-        ALLOCATE (FAILWAVE%FWAVE_NOD_STACK(0,0,0))
-        ALLOCATE (FAILWAVE%MAXLEV(0))
-        ALLOCATE (FAILWAVE%INDX(0))
-        ALLOCATE (FAILWAVE%IDXI(0))
+        call my_alloc(FAILWAVE%FWAVE_NOD, 0, 0, 0, "FAILWAVE%FWAVE_NOD")
+        call my_alloc(FAILWAVE%FWAVE_NOD_STACK, 0, 0, 0, "FAILWAVE%FWAVE_NOD_STACK")
+        call my_alloc(FAILWAVE%MAXLEV, 0, "FAILWAVE%MAXLEV")
+        call my_alloc(FAILWAVE%INDX, 0, "FAILWAVE%INDX")
+        call my_alloc(FAILWAVE%IDXI, 0, "FAILWAVE%IDXI")
 c
       ELSE
 c
@@ -123,12 +126,12 @@ c
         FAILWAVE%NNOD = NNOD
         FAILWAVE%SIZE = SIZE
         FAILWAVE%NDDL = NDDL
-        CALL MY_ALLOC (FAILWAVE%INDX,NNOD)
-        CALL MY_ALLOC (FAILWAVE%IDXI,NUMNOD)
-        CALL MY_ALLOC (FAILWAVE%MAXLEV,0)
-        CALL MY_ALLOC (FAILWAVE%MAXLEV_STACK,0)
-        ALLOCATE (FAILWAVE%FWAVE_NOD(NDDL,NUMNOD,SIZE))
-        ALLOCATE (FAILWAVE%FWAVE_NOD_STACK(NDDL,NUMNOD,SIZE))
+        CALL MY_ALLOC(FAILWAVE%INDX,NNOD,"FAILWAVE%INDX")
+        CALL MY_ALLOC(FAILWAVE%IDXI,NUMNOD,"FAILWAVE%IDXI")
+        CALL MY_ALLOC(FAILWAVE%MAXLEV,0,"FAILWAVE%MAXLEV")
+        CALL MY_ALLOC(FAILWAVE%MAXLEV_STACK,0,"FAILWAVE%MAXLEV_STACK")
+        call my_alloc(FAILWAVE%FWAVE_NOD, NDDL, NUMNOD, SIZE, "FAILWAVE%FWAVE_NOD")
+        call my_alloc(FAILWAVE%FWAVE_NOD_STACK, NDDL, NUMNOD, SIZE, "FAILWAVE%FWAVE_NOD_STACK")
 c
         FAILWAVE%INDX(1:NNOD)  = INDX(1:NNOD)
         FAILWAVE%IDXI(1:NUMNOD)= IDXI(1:NUMNOD)
@@ -136,7 +139,9 @@ c
         FAILWAVE%FWAVE_NOD_STACK = 0
       ENDIF
 
-      DEALLOCATE( TAGNOD,INDX,IDXI )    
+      CALL MY_DEALLOC(TAGNOD)
+      CALL MY_DEALLOC(INDX)
+      CALL MY_DEALLOC(IDXI)
 c
 c--------------------------------
       RETURN

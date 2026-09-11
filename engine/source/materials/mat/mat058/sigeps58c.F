@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps58c             ../engine/source/materials/mat/mat058/sigeps58c.F
 !||--- called by ------------------------------------------------------
@@ -144,7 +145,7 @@ C   I N P U T   O U T P U T   A r g u m e n t s
 C-----------------------------------------------
       my_real UVAR(NEL0,NUVAR), OFF(NEL0),THK(NEL0),YLD(NEL0)
       TYPE(TTABLE) TABLE(*)
-      my_real, DIMENSION(1) :: XX
+C      my_real, DIMENSION(1) :: XX  ! unused
       TYPE (SENSOR_STR_) ,DIMENSION(NSENSOR) ,INTENT(IN) :: SENSOR_TAB
 C-----------------------------------------------
 C   VARIABLES FOR FUNCTION INTERPOLATION 
@@ -167,24 +168,24 @@ C-----------------------------------------------
      .        INDXOFF(MVSIZ),TAGOLDC,TAGOLDT,TAGC(0:1),TAGT(0:1)
       my_real
      .        KC,KT,KFC,KFT,G0,GT,GB,TAN_LOCK,VISCE,VISCG,LC0,LT0,
-     .        KBC,KBT,DC0,DT0,HC0,HT0,EC0,ET0,DC,DT,TRACE,GFROT,GSH,
-     .        AC,AT,BC,BT,BC2,BT2,DCC,DTT,FUNC,FUNT,DERIC,DERIT,DTINV,
+     .        KBC,KBT,DC0,DT0,HC0,HT0,DC,DT,TRACE,GFROT,GSH,
+     .        AC,AT,DCC,DTT,FUNC,FUNT,DERIC,DERIT,DTINV,
      .        TFROT,SIGG,Y,EC2,ET2,SIGC,SIGT,SIG0,UDC,UDT,FC,FT,
-     .        FPC,FPT,CCL,TTL,DEC,DET,HC,HT,KF,KG,KMAX,HDC,HDT,
+     .        FPC,FPT,CCL,TTL,HC,HT,KF,KG,KMAX,HDC,HDT,
      .        SINN,TAN2,DAMP,RFAC,RFAT,V1,V2,AREAMIN,DAREAMIN,
-     .        AA,VV,ZEROSTRESS,DSIG,LMIN,TSTART,YFAC(6),YY,PHI,GXY,
+     .        AA,ZEROSTRESS,DSIG,LMIN,TSTART,YFAC(6),PHI,GXY,
      .        FLEX1,FLEX2,FACC,FACT,KFC0,KFT0,ETC,ETT,PHIN,PHII,SXYI,
      .        DDEC,DDET,COEFUL,COEFRL,DCC1,dtt1,DCC0,dtt0,PHII2,SXYI2,
-     .        EPSI1,SIGI1,EPSI2,SIGI2,KKC,KKT,EMINC,EMAXC,SMINC,SMAXC,
-     .        EMINT,EMAXT,SMINT,SMAXT,FACE_C,FACE_T,FACS_C,FACS_T,
-     .        FACE,FACF,FATE,FATF,FCL,FTL,FCLP,FTLP,TEST,DPHI,PHIO,KC0,KT0,
+     .        EPSI1,SIGI1,EPSI2,SIGI2,KKC,KKT,EMINC,SMINC,
+     .        EMINT,SMINT,
+     .        FACE,FACF,FATE,FATF,DPHI,PHIO,KC0,KT0,
      .        DYC,DYT,MASS
       my_real
-     .        EC(MVSIZ),ET(MVSIZ),LC(MVSIZ),LT(MVSIZ),FN(MVSIZ),SIGG0(MVSIZ),
+     .        EC(MVSIZ),ET(MVSIZ),LC(MVSIZ),LT(MVSIZ),FN(MVSIZ),
      .        DTANG(MVSIZ),TFOLD(MVSIZ),YC(MVSIZ),YT(MVSIZ),
      .        EMINRLC(MVSIZ),EMAXRLC(MVSIZ),EPSMAXC(MVSIZ),
      .        EMINRLT(MVSIZ),EMAXRLT(MVSIZ),EPSMAXT(MVSIZ),
-     .        EPSNC(MVSIZ),EPSNT(MVSIZ),EPSNS(MVSIZ),
+     .        EPSNC(MVSIZ),EPSNT(MVSIZ),
      .        EPSNRLC(MVSIZ),EPSNRLT(MVSIZ),SMAXRLC(MVSIZ),SMAXRLT(MVSIZ),
      .        SMINRLC(MVSIZ),SIGMAXC(MVSIZ),SMINRLT(MVSIZ),SIGMAXT(MVSIZ),
      .        PHIMIN(MVSIZ),PHIMAX(MVSIZ),PHIRLMAX(MVSIZ),SXYMAX(MVSIZ),
@@ -660,7 +661,7 @@ c---    uncoupled model  (compression of fiber)
         DDEC  = DC - UVAR(I,15)                        
         DDET  = DT - UVAR(I,16)                        
         IF (DCC >ZERO ) THEN   
-         IF ((DDEC >=ZERO .AND. DCC> = UVAR(I,17)) .OR.
+         IF ((DDEC >=ZERO .AND. DCC >= UVAR(I,17)) .OR.
      .       (DDEC >=ZERO .AND. UVAR(I,17)==UVAR(I,18)) ) THEN     
            !----------------------LOAD
            DO ITER = 1, NITER           
@@ -1582,8 +1583,8 @@ c-----
              SXYMIN(I)    = SIGNXY(I)         
             ENDIF!DPHI LOAD - RELOAD - UNLOAD
           ELSE ! PHI <ZERO 
-            IF((DPHI <=ZERO .AND. UVAR(I,32) ==ZERO).OR.(DPHI <=ZERO .AND. PHI <UVAR(I,33))
-     .     .OR.(DPHI <=ZERO .AND. UVAR(I,33)==UVAR(I,32)) ) THEN
+            IF((DPHI <=ZERO .AND. UVAR(I,32) ==ZERO).OR.(DPHI <= ZERO .AND. PHI < UVAR(I,33))
+     .     .OR.(DPHI <=ZERO .AND. UVAR(I,33) == UVAR(I,32)) ) THEN
              !----------------------LOAD
               SIGNXY(I)   = YFAC(3)*FINTER(KFUNC(3),PHI,NPF,TF,GXY)
               KG          = GXY*YFAC(3)*TAN2

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_inter_type07   ../starter/source/interfaces/int07/hm_read_inter_type07.F
 !||--- called by ------------------------------------------------------
@@ -99,7 +100,7 @@ C-----------------------------------------------
      .    FLAGREMNOD,IDSENS,IDELKEEP,INTKG,IREM7I2,IPRINT,
      .    INTFRIC,IASSIGN,IGAP_TYPE19,IRSTH,IDEL7N,
      .    ICURV,IFRICTH,NA1,NA2,IFORM,IADM,NRADM,FIELD6,ITIED,
-     .    IB1,IB2,IB3,ISU1,ISU2,ISU3,NTYP0
+     .    IB1,IB2,IB3,ISU1,ISU2,ISU3,NTYP0,N1D,ISU2_USER, ISTS
       my_real
      .   FRIC,GAP,STARTT,BUMULT,STOPT,C1,C2,C3,C4,C5,C6,ALPHA,
      .   GAPSCALE,GAPMAX,STMIN,STMAX,PADM, ANGLADM, CADM,
@@ -235,6 +236,7 @@ C--------------------------------------------------
       CALL HM_GET_INTV('Iadm',IADM,IS_AVAILABLE,LSUBMODEL)
 C
       CALL HM_GET_INTV('Itied',ITIED,IS_AVAILABLE,LSUBMODEL)
+      CALL HM_GET_INTV('Ists',ISTS,IS_AVAILABLE,LSUBMODEL)
 C
       CALL HM_GET_INTV('IKREM',FLAGREMNOD,IS_AVAILABLE,LSUBMODEL)
       CALL HM_GET_INTV('ICOG',IREM7I2,IS_AVAILABLE,LSUBMODEL)
@@ -388,13 +390,21 @@ C
 C
 C....* Card1 :flags  *.............
 C
+        ISU2_USER =ISU2
         IS2=1
         INGR2USR => IGRSURF(1:NSURF)%ID
         ISU2=NGR2USR(ISU2,INGR2USR,NSURF)
         IF(ISU1/=0)THEN
-          INGR2USR => IGRNOD(1:NGRNOD)%ID
-          ISU1=NGR2USR(ISU1,INGR2USR,NGRNOD)
-          IS1 =2
+          IF (ISTS ==0) THEN
+            INGR2USR => IGRNOD(1:NGRNOD)%ID
+            ISU1=NGR2USR(ISU1,INGR2USR,NGRNOD)
+            IS1 =2
+          ELSE
+C--         surface_to_surface contact - surf is red instead of grnod          
+            INGR2USR => IGRSURF(1:NSURF)%ID
+            IS1=1
+            ISU1=NGR2USR(ISU1,INGR2USR,NSURF)
+          ENDIF  
         ENDIF
 
         IF (INTTH > 0 ) INTHEAT = 1
@@ -459,6 +469,20 @@ C
         IPARI(46)=ISU2
         IPARI(13)=IS1*10+IS2
 
+        N1D = 0
+        DO I=1,IGRSURF(ISU2)%NSEG
+             IF(IGRSURF(ISU2)%ELTYP(I)/=1.AND.IGRSURF(ISU2)%ELTYP(I)/=3
+     .          .AND.IGRSURF(ISU2)%ELTYP(I)/=7.AND.IGRSURF(ISU2)%ELTYP(I)/=0) N1D = N1D + 1
+        ENDDO
+        IF(N1D == IGRSURF(ISU2)%NSEG) THEN
+            CALL ANCMSG(MSGID=3160,
+     .                  MSGTYPE=MSGERROR,
+     .                  ANMODE=ANSTOP,
+     .                  I1=NOINT,
+     .                  C1=TITR,
+     .                  I2=ISU2_USER)
+        ENDIF
+
 
         IF(IGAP>=2)THEN
           IF(GAPSCALE==ZERO)GAPSCALE=ONE
@@ -472,6 +496,7 @@ C
 
         IPARI(85)=ITIED
         FRIGAP(27) = FPENMAX
+        IPARI(105) = ISTS
 C
 C....* Card3  *.............
 C
@@ -649,7 +674,6 @@ C
         IPARI(30) = MFROT
 
         IPARI(72) =  INTFRIC
-
 C
 C.....* OPTIONAL Card8 : C1...C6 friction data *.........
 C

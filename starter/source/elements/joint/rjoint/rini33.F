@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rini33        ../starter/source/elements/joint/rjoint/rini33.F
 !||--- called by ------------------------------------------------------
@@ -119,6 +120,8 @@ C----
       K4 = KRX
       K5 = KRY
       K6 = KRZ
+
+
       IF (IFKNX/=0) THEN
         XF = GET_U_FUNC(IFKNX,ZERO,DERI)
         K1  = MAX(KXX*DERI, EM20)
@@ -301,9 +304,9 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IERR1,ISK1,ISK2,IP1,IP2, GET_U_SKEW,N1,N2,N3
+      INTEGER I,IERR1,ISK1,ISK2, GET_U_SKEW,N1,N2,N3
       my_real 
-     .        NX,NY,NZ,CO,SI,KSI,    
+     .        NX,CO,SI,
      .        T(3),Q(LSKEW),Q1(LSKEW),Q2(LSKEW),X1(LSKEW),X2(LSKEW)
 C-----------------------------
       EXTERNAL GET_U_SKEW
@@ -418,9 +421,8 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real E11,E22,E33,E12,E21,E13,E31,E23,E32,
-     .        U1,U2,U3, S,C,CI,SI2
+     .        U1,U2,U3, S,C,CI
 C=======================================================================
       CI = ONE - C
       U1 = T(1)
@@ -471,11 +473,10 @@ C-----------------------------------------------
 C----------------------------------------------------------
 C   D u m m y   A r g u m e n t s   a n d   F u n c t i o n
 C----------------------------------------------------------
-      my_real ROT(3), T(3), SKEW(LSKEW), KSI, S, C
+      my_real T(3), SKEW(LSKEW), KSI, S, C
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real E,E11,E22,E33,E12,E21,E13,E31,E23,E32,SI2,NR,
      .        UMI 
       DATA  UMI/-1.0/
@@ -527,7 +528,6 @@ C====================================================
       SUBROUTINE PROD_ABT(A,B,X)
 #include      "implicit_f.inc"
 #include      "param_c.inc"
-      INTEGER I,J
       my_real A(LSKEW),B(LSKEW),X(LSKEW)
 C
       X(1)=A(1)*B(1)+A(4)*B(4)+A(7)*B(7) 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stackgroup             ../starter/source/stack/stackgroup.F
 !||--- called by ------------------------------------------------------
@@ -75,16 +76,16 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,II,NSTACK,NPLY,IGTYP,ID,JD,IDPLY,NEL,
-     .        IAD,ITY,IDSHEL,PID,IS,IDS,NSH,MODE,NS,JJ,NGEO_STACK,
-     .        IGRTYP,N1,IPMAT,IPANG,IPTHK,IIGEO,NSS,IPPOS,NPT,IIS,NP,
+     .        ITY,IDSHEL,PID,IS,IDS,NSH,MODE,NS,JJ,NGEO_STACK,
+     .        N1,IPMAT,IPANG,IPTHK,IPPOS,NPT,IIS,NP,
      .        JJPID,JSTACK,JPID,ITG,IPMAT_IPLY,ISH3N,J4N,J3N,IPOS,
-     .        MAT_LY,NLAY,NPTT,IPIDL,IT,ILAY,IPTHK_NPTT,IPPOS_NPTT,
-     .        IINT,IPID_LY,IPDIR ,NS_STACK0 ,NPT_STACK0,IS0,JS,PIDS,IP,
-     .        II1,II2,JJ1,JJ2,II3,II4,II5,JJ3,JJ4,JJ5, NKEY,IREST,IBIT,IKEY,
+     .        NPTT,ILAY,
+     .        IPDIR ,NS_STACK0 ,NPT_STACK0,JS,PIDS,
+     .        NKEY,IREST,IBIT,IKEY,
      .        NBIT 
       INTEGER :: IJK
       INTEGER  WORK(70000),
-     .         IPTPLY(1000),NBFI,IPPID,ITAG(1000),
+     .         IPTPLY(1000),IPPID,
      .         NGL,IPID_1,NUMS,IPWEIGHT,IPTHKLY,NSHQ4,NSHT3
       INTEGER, DIMENSION(:), ALLOCATABLE :: IPIDPLY
       INTEGER, DIMENSION(:), ALLOCATABLE :: IDGR4N,IDGR3N
@@ -95,7 +96,7 @@ C-----------------------------------------------
       my_real, DIMENSION(:,:), ALLOCATABLE :: GEO0
 
       my_real
-     .         THICKT,ZSHIFT,TMIN,TMAX,DT,THK_LY,POS_LY,THK_IT(100),
+     .         THICKT,ZSHIFT,TMIN,TMAX,DT,
      .         POS_IT(100),POS_NPTT,THK_NPTT,POS_0,THINNING,POS
      
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: ITRI
@@ -179,18 +180,18 @@ C    For Shell
 C-----------------------------------------------  
        NS_STACK = 0
        NPT_STACK = 0
-       CALL MY_ALLOC(GEO0,1000,NUMGEO)
-       ALLOCATE(IWORK_T(NUMELC+NUMELTG))
-       ALLOCATE(IPIDPLY(NUMGEO+NUMPLY))
-       ALLOCATE(IDGR4N(NUMGEO+NUMPLY))
-       ALLOCATE(IDGR3N(NUMGEO+NUMPLY))
-       ALLOCATE(ISUBSTACK(NUMGEO+NUMSTACK))
-       ALLOCATE(INDEX_SH4(NUMELC))
-       ALLOCATE(INDEX_T3(NUMELTG))
-       ALLOCATE(NFIRST(NUMELC+NUMELTG))
-       ALLOCATE(NLAST(NUMELC+NUMELTG))
-       ALLOCATE(INDX_SH(NUMELC+NUMELTG))
-       ALLOCATE(PID_SH(NUMELC+NUMELTG))
+       CALL MY_ALLOC(GEO0,1000,NUMGEO,"GEO0")
+       allocate(IWORK_T(NUMELC+NUMELTG))
+       call my_alloc(IPIDPLY, NUMGEO+NUMPLY, "IPIDPLY")
+       call my_alloc(IDGR4N, NUMGEO+NUMPLY, "IDGR4N")
+       call my_alloc(IDGR3N, NUMGEO+NUMPLY, "IDGR3N")
+       call my_alloc(ISUBSTACK, NUMGEO+NUMSTACK, "ISUBSTACK")
+       call my_alloc(INDEX_SH4, NUMELC, "INDEX_SH4")
+       call my_alloc(INDEX_T3, NUMELTG, "INDEX_T3")
+       call my_alloc(NFIRST, NUMELC+NUMELTG, "NFIRST")
+       call my_alloc(NLAST, NUMELC+NUMELTG, "NLAST")
+       call my_alloc(INDX_SH, NUMELC+NUMELTG, "INDX_SH")
+       call my_alloc(PID_SH, NUMELC+NUMELTG, "PID_SH")
 C
        IF(IPART_STACK > 0) THEN
          NPLY = 0
@@ -240,7 +241,7 @@ C
           NKEY = NPLY / NBIT
           IF(IREST > 0) NKEY = NKEY + 1
           ! 
-          ALLOCATE( ACTIV_PLY(NUMELC+NUMELTG,NKEY))
+          call my_alloc(ACTIV_PLY, NUMELC+NUMELTG, NKEY, "ACTIV_PLY")
           IF(NUMELC + NUMELTG > 0)ACTIV_PLY = 0
 C tag o  f ply element 
          NSHQ4 = 0
@@ -349,7 +350,7 @@ C #####################################################"
              NPT   = IWORKSH(1,I)
              IF(IGTYP == 17 .OR. IGTYP == 51  .AND. NPT > 0) THEN
                 NULLIFY(IWORK_T(I)%IPT)
-                ALLOCATE(IWORK_T(I)%IPT(NPT))
+                call my_alloc(IWORK_T(I)%IPT, NPT, "IWORK_T(I)%IPT")
                 IWORK_T(I)%IPT = 0
                 IWORKSH(1,I)   = 0
               ENDIF   
@@ -361,7 +362,7 @@ C #####################################################"
              NPT   = IWORKSH(1,II)
              IF((IGTYP == 17 .OR. IGTYP == 51) .AND. NPT > 0) THEN
                NULLIFY(IWORK_T(II)%IPT)
-               ALLOCATE(IWORK_T(II)%IPT(NPT))
+               call my_alloc(IWORK_T(II)%IPT, NPT, "IWORK_T(II)%IPT")
                IWORK_T(II)%IPT = 0
                IWORKSH(1,II)   = 0
               ENDIF 
@@ -498,7 +499,8 @@ C
 C        
 C
 C   
-         ALLOCATE(INDX(2*NSH),ITRI(2+NKEY,NSH))
+         call my_alloc(INDX, 2*NSH, "STACKGROUP/INDX_1")
+         call my_alloc(ITRI, 2+NKEY, NSH, "ITRI")
          INDX = 0  
          ITRI = 0
           !! 
@@ -547,8 +549,8 @@ C
             NPT_STACK = MAX(NPT_STACK,NPT)
           ENDDO   
 C allocation  
-          ALLOCATE(IWORKS%IGEO(3*NPT_STACK+2,NS_STACK))
-          ALLOCATE(IWORKS%GEO(6*NPT_STACK+1,NS_STACK))
+          call my_alloc(IWORKS%IGEO, 3*NPT_STACK+2, NS_STACK, "IWORKS%IGEO")
+          call my_alloc(IWORKS%GEO, 6*NPT_STACK+1, NS_STACK, "IWORKS%GEO")
 C         
           IWORKS%IGEO = 0
           IWORKS%GEO = ZERO
@@ -712,7 +714,9 @@ cc          ENDIF  !  IF (IGTYP == 51) THEN
 C============================================================================
         ENDDO ! DO IS = 1,NS 
 C           
-        DEALLOCATE(INDX,ITRI,ACTIV_PLY)
+        CALL MY_DEALLOC(INDX)
+        CALL MY_DEALLOC(ITRI)
+        CALL MY_DEALLOC(ACTIV_PLY)
        ENDIF
 C 
 C   pccommp part
@@ -769,11 +773,11 @@ C !GR  T3
           NKEY = NPLY / NBIT
           IF(IREST > 0) NKEY = NKEY + 1
           ! 
-          ALLOCATE( ACTIV_PLY(NUMELC+NUMELTG,NKEY))
+          call my_alloc(ACTIV_PLY, NUMELC+NUMELTG, NKEY, "ACTIV_PLY")
           IF(NUMELC + NUMELTG > 0)ACTIV_PLY = 0
 C 
 C tag of ply element        
-          ALLOCATE(ICSH_STACK(NUMELC + NUMELTG) )
+          call my_alloc(ICSH_STACK, NUMELC + NUMELTG, "ICSH_STACK")
           IF(NUMELC + NUMELTG > 0)ICSH_STACK = 0
 C   counter by element               
             DO I= 1,NPLY
@@ -856,7 +860,7 @@ C
              NPT   = IWORKSH(1,I)
              IF(IGTYP == 52 .AND. NPT > 0) THEN
                NULLIFY(IWORK_T(I)%IPT)
-               ALLOCATE(IWORK_T(I)%IPT(NPT))
+               call my_alloc(IWORK_T(I)%IPT, NPT, "IWORK_T(I)%IPT")
                IWORK_T(I)%IPT = 0
                IWORKSH(1,I)   = 0
               ENDIF   
@@ -868,7 +872,7 @@ C
              NPT   = IWORKSH(1,II)
              IF(IGTYP == 52 .AND. NPT > 0) THEN
                NULLIFY(IWORK_T(II)%IPT)
-               ALLOCATE(IWORK_T(II)%IPT(NPT))
+               call my_alloc(IWORK_T(II)%IPT, NPT, "IWORK_T(II)%IPT")
                IWORK_T(II)%IPT = 0
                IWORKSH(1,II)   = 0
               ENDIF   
@@ -996,7 +1000,8 @@ C
 C       
 C
 C
-          ALLOCATE(INDX(2*NSH),ITRI(2+NKEY,NSH))
+          call my_alloc(INDX, 2*NSH, "STACKGROUP/INDX_2")
+          call my_alloc(ITRI, 2+NKEY, NSH, "ITRI")
           INDX = 0  
           ITRI = 0
           DO I = 1,NSH
@@ -1034,7 +1039,7 @@ C
 C
 C  sous stack 
 C    
-           ALLOCATE(IDSTACK(NS))
+           call my_alloc(IDSTACK, NS, "IDSTACK")
            IDSTACK = 0
            NS_STACK = NS_STACK + NS 
            DO IS = 1,NS
@@ -1050,9 +1055,9 @@ C
 C        
 C allocation
 C  
-           ALLOCATE(STACK%IGEO(4*NPT_STACK+2,NS_STACK))
-           ALLOCATE(STACK%GEO(6*NPT_STACK+1,NS_STACK))
-           ALLOCATE(STACK%PM(20,NS_STACK))
+           call my_alloc(STACK%IGEO, 4*NPT_STACK+2, NS_STACK, "STACK%IGEO")
+           call my_alloc(STACK%GEO, 6*NPT_STACK+1, NS_STACK, "STACK%GEO")
+           call my_alloc(STACK%PM, 20, NS_STACK, "STACK%PM")
 C           
            STACK%IGEO = 0
            STACK%GEO = ZERO
@@ -1243,20 +1248,23 @@ C---
             ENDDO   
         ENDDO ! DO IS = 1,NS
 C---
-         DEALLOCATE(INDX,ITRI,IDSTACK, ICSH_STACK)
-         DEALLOCATE(ACTIV_PLY)
+         CALL MY_DEALLOC(INDX)
+         CALL MY_DEALLOC(ITRI)
+         CALL MY_DEALLOC(IDSTACK)
+         CALL MY_DEALLOC(ICSH_STACK)
+         CALL MY_DEALLOC(ACTIV_PLY)
        ENDIF
        DO I=1,NUMELC + NUMELTG
             NPT = IWORKSH(1,I)
-            IF(NPT > 0) DEALLOCATE(IWORK_T(I)%IPT)
+            IF(NPT > 0) CALL MY_DEALLOC(IWORK_T(I)%IPT)
        ENDDO
        DEALLOCATE(IWORK_T)
 C
        IF(IPART_STACK > 0) THEN  
          IF(IPART_PCOMPP == 0) THEN
-            ALLOCATE(STACK%IGEO(4*NPT_STACK0+2,NS_STACK0))
-            ALLOCATE(STACK%GEO(6*NPT_STACK0+1,NS_STACK0))
-            ALLOCATE(STACK%PM(20,NS_STACK0))
+            call my_alloc(STACK%IGEO, 4*NPT_STACK0+2, NS_STACK0, "STACK%IGEO")
+            call my_alloc(STACK%GEO, 6*NPT_STACK0+1, NS_STACK0, "STACK%GEO")
+            call my_alloc(STACK%PM, 20, NS_STACK0, "STACK%PM")
             STACK%IGEO = 0
             STACK%GEO = ZERO
             STACK%PM = ZERO 
@@ -1269,7 +1277,8 @@ C
                 STACK%GEO(J, IS ) = IWORKS%GEO(J,IS)
               ENDDO
          ENDDO
-         DEALLOCATE(IWORKS%IGEO, IWORKS%GEO) 
+         CALL MY_DEALLOC(IWORKS%IGEO)
+         CALL MY_DEALLOC(IWORKS%GEO)
        ENDIF
 C ---     update of sub-stack
        IF(NS_STACK > 0) THEN
@@ -1309,17 +1318,17 @@ C
 C for restart       
        IF(IPART_PCOMPP > 0 .AND. IPART_STACK == 0) IPART_STACK = 1
 C--------
-       DEALLOCATE(IPIDPLY)
-       DEALLOCATE(IDGR4N)
-       DEALLOCATE(IDGR3N)
-       DEALLOCATE(ISUBSTACK)
-       DEALLOCATE(INDEX_SH4)
-       DEALLOCATE(INDEX_T3)
-       DEALLOCATE(NFIRST)
-       DEALLOCATE(NLAST)
-       DEALLOCATE(INDX_SH)
-       DEALLOCATE(PID_SH)
-       DEALLOCATE(GEO0)
+       CALL MY_DEALLOC(IPIDPLY)
+       CALL MY_DEALLOC(IDGR4N)
+       CALL MY_DEALLOC(IDGR3N)
+       CALL MY_DEALLOC(ISUBSTACK)
+       CALL MY_DEALLOC(INDEX_SH4)
+       CALL MY_DEALLOC(INDEX_T3)
+       CALL MY_DEALLOC(NFIRST)
+       CALL MY_DEALLOC(NLAST)
+       CALL MY_DEALLOC(INDX_SH)
+       CALL MY_DEALLOC(PID_SH)
+       CALL MY_DEALLOC(GEO0)
      
       RETURN
  1000    FORMAT(//,

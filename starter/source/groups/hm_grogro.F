@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_grogro              ../starter/source/groups/hm_grogro.F
 !||--- called by ------------------------------------------------------
@@ -42,6 +43,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MY_ALLOC_MOD
+      use my_dealloc_mod, only : my_dealloc
       USE MESSAGE_MOD
       USE GROUPDEF_MOD
       USE SUBMODEL_MOD
@@ -64,12 +66,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,ID,NEL,IGS,IGRS,JREC,ISU,NONTRI,JJ,KK,
-     .        FLAG_FMT,GROUP_ID,IFIX_TMP,SKIPFLAG,UID,NN
+      INTEGER I,J,K,L,ID,NEL,IGS,IGRS,NONTRI,JJ,KK,
+     .        GROUP_ID,SKIPFLAG,NN
       CHARACTER(LEN=NCHARTITLE) :: TITR
       CHARACTER(LEN=NCHARKEY)::KEY,KEY2
       CHARACTER :: ELKEY*4
-      LOGICAL IS_ENCRYPTED, IS_AVAILABLE
       INTEGER,DIMENSION(:),ALLOCATABLE :: LIST_ELEM
       INTEGER,DIMENSION(:),ALLOCATABLE :: BUFTMP
       INTEGER :: NENTITY
@@ -83,7 +84,7 @@ C-----------------------------------------------
        END SUBROUTINE  
       END INTERFACE     
 C=======================================================================
-      CALL MY_ALLOC(BUFTMP,NUMEN*2)
+      CALL MY_ALLOC(BUFTMP,NUMEN*2,"BUFTMP")
       IF (FLAG == 0) ICOUNT=0
       IGS = 0
 C     loop over the groups
@@ -151,7 +152,7 @@ C-----------
                      ENDIF
                    ENDIF                                                                        
                ENDDO! NEXT KK      
-               IF(ALLOCATED(LIST_ELEM))DEALLOCATE (LIST_ELEM)                                                             
+               IF(ALLOCATED(LIST_ELEM)) call my_dealloc(LIST_ELEM)
               ENDIF      
               
 C-----
@@ -164,7 +165,7 @@ C                  sorted group
                 ENDIF                               
 C
                 IGRELEM(IGS)%NENTITY = NEL
-                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                 IGRELEM(IGS)%ENTITY = 0
               ENDIF                                 
 C-----------                                             
@@ -208,7 +209,7 @@ C                           add nodes to group if JJ > 0 and node not removed
                     ENDIF 
                   ENDIF
               ENDDO! NEXT KK
-              IF(ALLOCATED(LIST_ELEM))DEALLOCATE (LIST_ELEM)
+              IF(ALLOCATED(LIST_ELEM)) call my_dealloc(LIST_ELEM)
                   
                                                                           
 
@@ -229,7 +230,7 @@ C-----------  end_ flag = 1
                                                                   
       ENDDO                                                                        
 
-      DEALLOCATE(BUFTMP)
+      CALL MY_DEALLOC(BUFTMP)
                                   
 C-----------
       RETURN

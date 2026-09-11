@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,16 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lech3d                    ../engine/source/output/h3d/h3d_build_fortran/lech3d.F
 !||--- called by ------------------------------------------------------
-!||    lectur                    ../engine/source/input/lectur.F
+!||    init_h3d_engine           ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                    ../engine/source/output/message/message.F
 !||    arret                     ../engine/source/system/arret.F
@@ -84,6 +85,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    matparam_def_mod          ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    message_mod               ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod             ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod              ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod            ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod      ../common_source/modules/names_and_titles_mod.F
 !||    output_mod                ../common_source/modules/output/output_mod.F90
 !||    pblast_mod                ../common_source/modules/loads/pblast_mod.F90
@@ -114,6 +117,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -178,6 +183,7 @@ C-----------------------------------------------
         INTEGER MLW, NEL, NG, JTURB, NLAY, NUVAR, IMAT, ISUBSTACK, ID_PLY_TMP
         INTEGER CPT_MOD,NMOD,CPT_LAWID,SIZE_INPUT
         INTEGER IERROR  ! Error value from Allocate
+        INTEGER INDEX_MDS_TMP  ! Temporary variable for INDEX_MAT_MDS(MDSVAR_INPUT(K))
  
         INTEGER LENR    ! Size of Remote interface receive values
 
@@ -326,11 +332,11 @@ c
         NLAY_MAX = 0
         CPT_IRUP = 0
 
-        ALLOCATE(H3D_DATA%N_SKID_INTER(NINTER))
+        call my_alloc(H3D_DATA%N_SKID_INTER, NINTER, "H3D_DATA%N_SKID_INTER")
         H3D_DATA%N_SKID_INTER(1:NINTER) = 0
         NINTERSKID = 0
 
-        ALLOCATE(H3D_DATA%N_CSE_FRIC_INTER(NINTER))
+        call my_alloc(H3D_DATA%N_CSE_FRIC_INTER, NINTER, "H3D_DATA%N_CSE_FRIC_INTER")
         H3D_DATA%N_CSE_FRIC_INTER(1:NINTER) = 0
         OUTPUT%DATA%NINEFRIC = 0
         MDS_LABEL_TMP=' '
@@ -447,9 +453,9 @@ C--------------------------------------------------
         H3D_KEYWORD_QUAD_TENSOR(1:NBMAX)%KEY6=''
         H3D_KEYWORD_QUAD_TENSOR(1:NBMAX)%COMMENT=''
 c
-        ALLOCATE(ID_MAT_MDS(MAX(1,MDS_NMAT)))
+        call my_alloc(ID_MAT_MDS, MAX(1,MDS_NMAT), "ID_MAT_MDS")
         ID_MAT_MDS(1:MAX(1,MDS_NMAT)) = 0
-        ALLOCATE(INDEX_MAT_MDS(MAX(1,MDS_NMAT)))
+        call my_alloc(INDEX_MAT_MDS, MAX(1,MDS_NMAT), "INDEX_MAT_MDS")
         INDEX_MAT_MDS(1:MAX(1,MDS_NMAT)) = 0
 C--------------------------------------------------
 C BUILD KEYWORD LISTS
@@ -651,6 +657,11 @@ C--------------------------------------------------
      .                                'LAYER'    ,5           ,IS_LAYER  ,LAYER    ,
      .                                IS_LAYER_ALL,IS_LAYER_LOWER,IS_LAYER_UPPER   ,IS_DEF    ,
      .                                IBID1      ,IS_MEMB     ,IBID2     )
+          IF(IS_LAYER == 1 .AND. IS_LAYER_ALL == 0 .AND. IS_LAYER_LOWER == 0 .AND.
+     .      IS_LAYER_UPPER == 0 .AND. IS_MEMB == 0.AND. IS_DEF == 0 .AND. 
+     .      LAYER == 0) THEN
+            LAYER = 1
+          ENDIF
 C--------------------------------------------------
 C Read NPT= I/ALL/LOWER/UPPER/MEMB
 C--------------------------------------------------
@@ -664,6 +675,11 @@ C--------------------------------------------------
      .                                'NPT'      ,3           ,IS_IPT    ,IPT      ,
      .                                IS_IPT_ALL ,IS_IPT_LOWER,IS_IPT_UPPER,IS_DEF ,
      .                                IBID1      ,IS_MEMB     ,IS_IPT_MEMB)
+          IF(IS_IPT == 1 .AND. IS_IPT_ALL == 0 .AND. IS_IPT_LOWER == 0 .AND.
+     .      IS_IPT_UPPER == 0 .AND. IS_MEMB == 0 .AND. IS_DEF == 0 .AND. 
+     .      IPT == 0) THEN
+            IPT = 1
+          ENDIF
 C--------------------------------------------------
 C Read UVAR= I/ALL/DEF
 C--------------------------------------------------
@@ -731,6 +747,11 @@ C--------------------------------------------------
      .                                'IR'       ,2           ,IS_IR     ,IR       ,
      .                                IS_IR_ALL  ,IS_IR_LOWER ,IS_IR_UPPER,IS_DEF  ,
      .                                IBID1      ,IS_MEMB     ,IBID2     )
+          IF(IS_IR == 1 .AND. IS_IR_ALL == 0 .AND. IS_IR_LOWER == 0 .AND.
+     .       IS_IR_UPPER == 0 .AND. IS_MEMB == 0 .AND. IS_DEF == 0 .AND. 
+     .       IR == 0) THEN
+            IR = 1
+          ENDIF
 C--------------------------------------------------
 C Read IS= I/ALL/LOWER/UPPER
 C--------------------------------------------------
@@ -744,6 +765,11 @@ C--------------------------------------------------
      .                                'IS'       ,2           ,IS_IS       ,IS       ,
      .                                IS_IS_ALL  ,IS_IS_LOWER ,IS_IS_UPPER ,IS_DEF   ,
      .                                IBID1      ,IS_MEMB     ,IBID2       )
+          IF(IS_IS == 1 .AND. IS_IS_ALL == 0 .AND. IS_IS_LOWER == 0 .AND.
+     .       IS_IS_UPPER == 0 .AND. IS_MEMB == 0 .AND. IS_DEF == 0 .AND. 
+     .       IS == 0) THEN
+            IS = 1
+          ENDIF
 C--------------------------------------------------
 C Read IT= I/ALL/LOWER/UPPER
 C--------------------------------------------------
@@ -757,6 +783,11 @@ C--------------------------------------------------
      .                                'IT'       ,2           ,IS_IT       ,IT       ,
      .                                IS_IT_ALL  ,IS_IT_LOWER ,IS_IT_UPPER ,IS_DEF   ,
      .                                IBID1      ,IS_MEMB     ,IBID2       )
+          IF(IS_IT == 1 .AND. IS_IT_ALL == 0 .AND. IS_IT_LOWER == 0 .AND.
+     .       IS_IT_UPPER == 0 .AND. IS_MEMB == 0 .AND. IS_DEF == 0 .AND. 
+     .       IT == 0) THEN
+            IT = 1
+          ENDIF
 C--------------------------------------------------
 C Read INTER= I/ALL
 C--------------------------------------------------
@@ -903,8 +934,8 @@ C--------------------------------------------------
 c Input for each interface
               NINTER_MAX = 0
               IF (IS_INTER_ALL == 1) NINTER_MAX = NINTER
-              ALLOCATE (INTER_INPUT(MAX(1,NINTER_MAX)))
-              ALLOCATE (IS_AVAILABLE_KEY(MAX(1,NINTER_MAX)))
+              call my_alloc(INTER_INPUT, MAX(1,NINTER_MAX), "INTER_INPUT")
+              call my_alloc(IS_AVAILABLE_KEY, MAX(1,NINTER_MAX), "IS_AVAILABLE_KEY")
 C--------------------------------------------------
               JMAX=MAX(H3D_NUM_KEY%NODAL_SCALAR, H3D_NUM_KEY%NODAL_VECTOR, H3D_NUM_KEY%NODAL_TENSOR)
               DO J=1,JMAX
@@ -1025,8 +1056,8 @@ c
 C-----------------------------
               ENDDO
 
-              DEALLOCATE (INTER_INPUT)
-              DEALLOCATE (IS_AVAILABLE_KEY)
+              call my_dealloc(INTER_INPUT)
+              call my_dealloc(IS_AVAILABLE_KEY)
             ENDIF
 C--------------------------------------------------
 c          IF(KEY2 == 'VECT') THEN
@@ -1275,9 +1306,9 @@ c
                   IF (IS_ID_ALL > 0) THEN
 c  
                     ! First count of the failure models with IDs and number of modes
-                    IF (ALLOCATED(MODNAME))     DEALLOCATE(MODNAME)
-                    IF (ALLOCATED(FAIL_NAME))   DEALLOCATE(FAIL_NAME)
-                    IF (ALLOCATED(IRUP_ID_ALL)) DEALLOCATE(IRUP_ID_ALL)
+                    IF (ALLOCATED(MODNAME)) DEALLOCATE(MODNAME)
+                    IF (ALLOCATED(FAIL_NAME)) DEALLOCATE(FAIL_NAME)
+                    IF (ALLOCATED(IRUP_ID_ALL)) call my_dealloc(IRUP_ID_ALL)
                     CPT_IRUP = 0
                     DO IMAT = 1,NUMMAT
                       NFAIL = MAT_PARAM(IMAT)%NFAIL
@@ -1294,8 +1325,8 @@ c
 c
                     ! Second count to save IDs and failure model names
                     ALLOCATE(FAIL_NAME(CPT_IRUP))
-                    ALLOCATE(IRUP_ID_ALL(CPT_IRUP))
-                    ALLOCATE(MODNAME(CPT_IRUP,CPT_MOD))
+                    call my_alloc(IRUP_ID_ALL, CPT_IRUP, "IRUP_ID_ALL")
+                    ALLOCATE(MODNAME(CPT_IRUP, CPT_MOD))
                     IRUP_ID_ALL(1:CPT_IRUP) = 0
                     CPT_IRUP = 0
                     CPT_MOD  = 0
@@ -1355,7 +1386,7 @@ c
                   ! Only a specific failure ID is asked by the user
                   ELSEIF (IS_ID > 0) THEN
                     ! Recover the number of modes and their names
-                    IF (ALLOCATED(MODNAME))   DEALLOCATE(MODNAME)
+                    IF (ALLOCATED(MODNAME)) DEALLOCATE(MODNAME)
                     IF (ALLOCATED(FAIL_NAME)) DEALLOCATE(FAIL_NAME)
                     DO IMAT = 1,NUMMAT
                       NFAIL = MAT_PARAM(IMAT)%NFAIL
@@ -1364,7 +1395,7 @@ c
                           IF (MAT_PARAM(IMAT)%FAIL(J)%FAIL_ID == ID) THEN 
                             NMOD = MAT_PARAM(IMAT)%FAIL(J)%NMOD
                             IF (NMOD > 0) THEN 
-                              ALLOCATE(MODNAME(1,NMOD))
+                              ALLOCATE(MODNAME(1, NMOD))
                               MODNAME(1,1:NMOD) = MAT_PARAM(IMAT)%FAIL(J)%MODE(1:NMOD)
                               IF (IS_MODE_ALL > 0) THEN
                                 MODE_MAX = NMOD
@@ -1417,8 +1448,8 @@ c
                   IF (IS_ID_ALL > 0) THEN
 c  
                     ! First count of the failure models with IDs
-                    IF (ALLOCATED(FAIL_NAME))   DEALLOCATE(FAIL_NAME)
-                    IF (ALLOCATED(IRUP_ID_ALL)) DEALLOCATE(IRUP_ID_ALL)
+                    IF (ALLOCATED(FAIL_NAME)) DEALLOCATE(FAIL_NAME)
+                    IF (ALLOCATED(IRUP_ID_ALL)) call my_dealloc(IRUP_ID_ALL)
                     CPT_IRUP = 0
                     DO IMAT = 1,NUMMAT
                       NFAIL = MAT_PARAM(IMAT)%NFAIL
@@ -1433,7 +1464,7 @@ c
 c
                     ! Second count to save IDs and failure model names
                     ALLOCATE(FAIL_NAME(CPT_IRUP))
-                    ALLOCATE(IRUP_ID_ALL(CPT_IRUP))
+                    call my_alloc(IRUP_ID_ALL, CPT_IRUP, "IRUP_ID_ALL")
                     IRUP_ID_ALL(1:CPT_IRUP) = 0
                     CPT_IRUP = 0
                     DO IMAT = 1,NUMMAT
@@ -1519,7 +1550,7 @@ c
                     IF (MAT_PARAM(IMAT)%MAT_ID == ID) THEN 
                       CPT_LAWID = 1
                       NMOD = MAT_PARAM(IMAT)%NMOD
-                      ALLOCATE(MODNAME(1,NMOD))
+                      ALLOCATE(MODNAME(1, NMOD))
                       MODNAME(1,1:NMOD) = MAT_PARAM(IMAT)%MODE(1:NMOD)
                       MLW = MAT_PARAM(IMAT)%ILAW
                       IF (IS_MODE_ALL > 0) THEN
@@ -1601,26 +1632,26 @@ c
               SIZE_INPUT = MAX(1,NLAY_MAX)*MAX(1,NIP_MAX)*MAX(1,NPLY_MAX)*MAX(1,NUVAR_MAX)*
      .                     MAX(1,IR_MAX)*MAX(1,IS_MAX)*MAX(1,IT_MAX)*MAX(1,NMDSVAR_MAX)*MAX(1,ID_MAX)*
      .                     MAX(1,MODE_MAX)+1
-              ALLOCATE (LAYER_INPUT(SIZE_INPUT))
-              ALLOCATE (IPT_INPUT(SIZE_INPUT))
-              ALLOCATE (PLY_INPUT(SIZE_INPUT))
-              ALLOCATE (UVAR_INPUT(SIZE_INPUT))
-              ALLOCATE (GAUSS_INPUT(SIZE_INPUT))
-              ALLOCATE (IR_INPUT(SIZE_INPUT))
-              ALLOCATE (IS_INPUT(SIZE_INPUT))
-              ALLOCATE (IT_INPUT(SIZE_INPUT))
-              ALLOCATE (IS_AVAILABLE_KEY(SIZE_INPUT))
-              ALLOCATE (MDSVAR_INPUT(SIZE_INPUT))
-              ALLOCATE (MDSVAR_INPUT1(SIZE_INPUT))
-              ALLOCATE (MDSVAR_INPUT2(SIZE_INPUT))
-              ALLOCATE (IDS_INPUT(SIZE_INPUT))
-              ALLOCATE (IRUP_H3D(SIZE_INPUT))
-              ALLOCATE (MODES_INPUT(SIZE_INPUT))
+              call my_alloc(LAYER_INPUT, SIZE_INPUT, "LAYER_INPUT")
+              call my_alloc(IPT_INPUT, SIZE_INPUT, "IPT_INPUT")
+              call my_alloc(PLY_INPUT, SIZE_INPUT, "PLY_INPUT")
+              call my_alloc(UVAR_INPUT, SIZE_INPUT, "UVAR_INPUT")
+              call my_alloc(GAUSS_INPUT, SIZE_INPUT, "GAUSS_INPUT")
+              call my_alloc(IR_INPUT, SIZE_INPUT, "IR_INPUT")
+              call my_alloc(IS_INPUT, SIZE_INPUT, "IS_INPUT")
+              call my_alloc(IT_INPUT, SIZE_INPUT, "IT_INPUT")
+              call my_alloc(IS_AVAILABLE_KEY, SIZE_INPUT, "IS_AVAILABLE_KEY")
+              call my_alloc(MDSVAR_INPUT, SIZE_INPUT, "MDSVAR_INPUT")
+              call my_alloc(MDSVAR_INPUT1, SIZE_INPUT, "MDSVAR_INPUT1")
+              call my_alloc(MDSVAR_INPUT2, SIZE_INPUT, "MDSVAR_INPUT2")
+              call my_alloc(IDS_INPUT, SIZE_INPUT, "IDS_INPUT")
+              call my_alloc(IRUP_H3D, SIZE_INPUT, "IRUP_H3D")
+              call my_alloc(MODES_INPUT, SIZE_INPUT, "MODES_INPUT")
 C--------------------------------------------------
               CPT = 0
-              ALLOCATE (MDSVAR_INPUT_TMP(MAX(1,NMDSVAR_MAX)))
-              ALLOCATE (MDSVAR_INPUT1_TMP(MAX(1,NMDSVAR_MAX)))
-              ALLOCATE (MDSVAR_INPUT2_TMP(MAX(1,NMDSVAR_MAX)))
+              call my_alloc(MDSVAR_INPUT_TMP, MAX(1,NMDSVAR_MAX), "MDSVAR_INPUT_TMP")
+              call my_alloc(MDSVAR_INPUT1_TMP, MAX(1,NMDSVAR_MAX), "MDSVAR_INPUT1_TMP")
+              call my_alloc(MDSVAR_INPUT2_TMP, MAX(1,NMDSVAR_MAX), "MDSVAR_INPUT2_TMP")
 
               LAYER_INPUT(:) = 0
               IPT_INPUT(:) = 0
@@ -2052,12 +2083,19 @@ c
                         H3D_KEYWORD_SHELL_SCALAR(J)%TEXT1 = "Damage:Damage index"
                       ENDIF 
 c
+                      ! Handle MDSVAR_INPUT(K) = 0 to avoid out-of-bounds access
+                      IF (MDSVAR_INPUT(K) > 0) THEN
+                        INDEX_MDS_TMP = INDEX_MAT_MDS(MDSVAR_INPUT(K))
+                      ELSE
+                        INDEX_MDS_TMP = 0
+                      ENDIF
+c
                       CALL CREATE_H3D_SHELL_SCALAR(H3D_DATA,H3D_KEYWORD_SHELL_SCALAR(J)%ID,N1,N2,ID_INPUT,
      .                           TRIM(H3D_KEYWORD_SHELL_SCALAR(J)%TEXT1),LEN_TRIM(H3D_KEYWORD_SHELL_SCALAR(J)%TEXT1),
-     .                                                      H3D_KEYWORD_SHELL_SCALAR(J)%COMMENT,80,IPART,KEY3_GLOB,
-     .                           LAYER_INPUT(K),IPT_INPUT(K),PLY_INPUT(K),GAUSS_INPUT(K),UVAR_INPUT(K),
-     .                                                      MDSVAR_INPUT(K),MDSVAR_INPUT1(K),MDSVAR_INPUT2(K),
-     .                                                      MDS_LABEL_TMP,30,IDS_INPUT(K),MODES_INPUT(K),IGRPART)
+     .                                 H3D_KEYWORD_SHELL_SCALAR(J)%COMMENT,80,IPART,KEY3_GLOB,
+     .                                 LAYER_INPUT(K),IPT_INPUT(K),PLY_INPUT(K),GAUSS_INPUT(K),UVAR_INPUT(K),
+     .                                 INDEX_MDS_TMP,MDSVAR_INPUT1(K),MDSVAR_INPUT2(K),
+     .                                 MDS_LABEL_TMP,30,IDS_INPUT(K),MODES_INPUT(K),IGRPART)
                     END IF
                     IOK_H3DKEY_COMBINATION = 1
                   ELSEIF (IS_AVAILABLE_KEY(K) == 1 .AND. IS_VECTOR == 1) THEN
@@ -2334,11 +2372,18 @@ c
                         H3D_KEYWORD_SOLID_SCALAR(J)%TEXT1 = "Damage:Damage index"
                       ENDIF     
 c
+                      ! Handle MDSVAR_INPUT(K) = 0 to avoid out-of-bounds access
+                      IF (MDSVAR_INPUT(K) > 0) THEN
+                        INDEX_MDS_TMP = INDEX_MAT_MDS(MDSVAR_INPUT(K))
+                      ELSE
+                        INDEX_MDS_TMP = 0
+                      ENDIF
+c
                       CALL CREATE_H3D_SOLID_SCALAR(H3D_DATA,H3D_KEYWORD_SOLID_SCALAR(J)%ID,ID_INPUT,
      .                            TRIM(H3D_KEYWORD_SOLID_SCALAR(J)%TEXT1),LEN_TRIM(H3D_KEYWORD_SOLID_SCALAR(J)%TEXT1),
      .                                                 H3D_KEYWORD_SOLID_SCALAR(J)%COMMENT,80,IPART,KEY3_GLOB,
      .                            LAYER_INPUT(K),IR_INPUT(K),IS_INPUT(K),IT_INPUT(K),
-     .                            UVAR_INPUT(K),MDSVAR_INPUT(K),MDSVAR_INPUT1(K),
+     .                            UVAR_INPUT(K),INDEX_MDS_TMP,MDSVAR_INPUT1(K),
      .                            MDSVAR_INPUT2(K),MDS_LABEL_TMP,30,IDS_INPUT(K),MODES_INPUT(K),IGRPART)
                     END IF
                     IOK_H3DKEY_COMBINATION = 1
@@ -2777,26 +2822,26 @@ C--------------------------------------------------
      .         KEY2 == 'BRICK' .OR. KEY2 =='QUAD'.OR. KEY2 =='BEAM ' .OR.
      .         KEY2 == 'SPRING'.OR. KEY2 =='TRUSS'.OR.KEY2 =='SPH') THEN
 C--------------------------------------------------
-              DEALLOCATE (LAYER_INPUT)
-              DEALLOCATE (IPT_INPUT)
-              DEALLOCATE (PLY_INPUT)
-              DEALLOCATE (UVAR_INPUT)
-              DEALLOCATE (GAUSS_INPUT)
-              DEALLOCATE (IR_INPUT)
-              DEALLOCATE (IS_INPUT)
-              DEALLOCATE (IT_INPUT)
-              DEALLOCATE (IDS_INPUT)
-              DEALLOCATE (IRUP_H3D)
-              DEALLOCATE (IS_AVAILABLE_KEY)
-              DEALLOCATE (MDSVAR_INPUT)
-              DEALLOCATE (MDSVAR_INPUT1)
-              DEALLOCATE (MDSVAR_INPUT2)
-              DEALLOCATE (MDSVAR_INPUT_TMP)
-              DEALLOCATE (MDSVAR_INPUT1_TMP)
-              DEALLOCATE (MDSVAR_INPUT2_TMP)
-              DEALLOCATE (MODES_INPUT)
+              call my_dealloc(LAYER_INPUT)
+              call my_dealloc(IPT_INPUT)
+              call my_dealloc(PLY_INPUT)
+              call my_dealloc(UVAR_INPUT)
+              call my_dealloc(GAUSS_INPUT)
+              call my_dealloc(IR_INPUT)
+              call my_dealloc(IS_INPUT)
+              call my_dealloc(IT_INPUT)
+              call my_dealloc(IDS_INPUT)
+              call my_dealloc(IRUP_H3D)
+              call my_dealloc(IS_AVAILABLE_KEY)
+              call my_dealloc(MDSVAR_INPUT)
+              call my_dealloc(MDSVAR_INPUT1)
+              call my_dealloc(MDSVAR_INPUT2)
+              call my_dealloc(MDSVAR_INPUT_TMP)
+              call my_dealloc(MDSVAR_INPUT1_TMP)
+              call my_dealloc(MDSVAR_INPUT2_TMP)
+              call my_dealloc(MODES_INPUT)
             ENDIF
-            IF (ALLOCATED(IS_LAYER_MAT)) DEALLOCATE (IS_LAYER_MAT)
+            IF (ALLOCATED(IS_LAYER_MAT)) call my_dealloc(IS_LAYER_MAT)
 C--------------------------------------------------
             IF (IOK_H3DKEY == 0 .AND. ISHELL_NPT_CHECK == 0) THEN
               IF (ISPMD == 0) CALL ANCMSG(MSGID=275,c1='/H3D/'//KEY2//'/'//KEY3//'/'//KEY4//'/'//KEY5//'/'//KEY6,
@@ -2904,8 +2949,8 @@ C
         DEALLOCATE(H3D_KEYWORD_QUAD_SCALAR)
         DEALLOCATE(H3D_KEYWORD_QUAD_VECTOR)
         DEALLOCATE(H3D_KEYWORD_QUAD_TENSOR)
-        DEALLOCATE(ID_MAT_MDS)
-        IF (ALLOCATED(IRUP_ID_ALL)) DEALLOCATE (IRUP_ID_ALL)
+        call my_dealloc(ID_MAT_MDS)
+        IF (ALLOCATED(IRUP_ID_ALL)) call my_dealloc(IRUP_ID_ALL)
 C
         RETURN
       END

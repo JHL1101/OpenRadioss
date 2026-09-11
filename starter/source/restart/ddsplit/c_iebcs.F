@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    c_iebcs       ../starter/source/restart/ddsplit/c_iebcs.F
+!||    c_iebcs        ../starter/source/restart/ddsplit/c_iebcs.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit       ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
-!||    iface         ../starter/source/ale/ale3d/iface.F
+!||    iface          ../starter/source/ale/ale3d/iface.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================
        SUBROUTINE C_IEBCS(IXS, IXQ, IXTG, 
@@ -35,6 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .     MULTI_FVM_IS_USED,FLAG,EBCS_TAB)
        USE EBCS_MOD
        use element_mod , only : nixs,nixq,nixtg
+       use my_alloc_mod
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -69,7 +71,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------   
-      ALLOCATE(LOCALID(NUMEL))
+      call my_alloc(LOCALID, NUMEL, "LOCALID")
       IF (N2D == 0) THEN
          IX => IXS(1:NIXS, 1:NUMELS)
       ELSEIF(NUMELQ /= 0) THEN
@@ -124,6 +126,6 @@ C-----------------------------------------------
       ENDDO ! I = 1, NEBCS
       ! ----------------------------
 
-      DEALLOCATE(LOCALID)
+      CALL MY_DEALLOC(LOCALID)
       RETURN
       END SUBROUTINE C_IEBCS

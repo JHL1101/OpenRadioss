@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    seatbelt_mod                  ../common_source/modules/seatbelt_mod.F
 !||--- called by ------------------------------------------------------
@@ -102,6 +103,7 @@ C
         TYPE SLIPRING_STRUCT
           INTEGER  ID
           INTEGER  IDG
+          INTEGER  PROC
           INTEGER  NFRAM
           INTEGER  IFUNC(4)
           INTEGER  SENSID
@@ -125,6 +127,7 @@ c
         TYPE RETRACTOR_STRUCT
           INTEGER  ID
           INTEGER  IDG
+          INTEGER  PROC
           INTEGER  UPDATE
           INTEGER  ANCHOR_NODE
           INTEGER  NODE(2)
@@ -186,7 +189,8 @@ C define structure for remote anchor node
 c=======================================================================
         TYPE SEATBELT_REMOTE_NODES_STRUCT
           INTEGER, DIMENSION(:)   , ALLOCATABLE :: ADD_PROC
-          INTEGER, DIMENSION(:)   , ALLOCATABLE :: NODE
+          INTEGER, DIMENSION(:)   , ALLOCATABLE :: NODE       ! local anchor node id
+          INTEGER, DIMENSION(:)   , ALLOCATABLE :: BUF_INDEX  ! index of the corresponding entry in BUF_EXCH (ANCHOR_REMOTE_SEND only)
         END TYPE SEATBELT_REMOTE_NODES_STRUCT
 
         TYPE(SEATBELT_REMOTE_NODES_STRUCT) ANCHOR_REMOTE,ANCHOR_REMOTE_SEND

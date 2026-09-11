@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_thgrki_rbody     ../starter/source/output/th/hm_read_thgrki_rbody.F
 !||--- called by ------------------------------------------------------
@@ -77,12 +78,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-        INTEGER J,JJ, I,ISU,ID,NNE,NOSYS,J10(10),NTOT,KK,IER,
-     .          OK,IGRS,NSU,K,L,JREC,CONT,IAD0,IADV,NTRI,
-     .          IFITMP,IADFIN,NVAR,M,N,IAD1,IAD2,ISK,IPROC,
-     .          IDSMAX,IDS,IDS_OBJ1,
-     .        TAG(NUM),IRB
-        CHARACTER, DIMENSION(10) :: VAR
+        INTEGER J, I, ID, NNE,
+     .          K, IAD0,
+     .          IFITMP, NVAR, N, IAD1, IAD2,
+     .          IDSMAX, IDS, IDS_OBJ1,
+     .        TAG(NUM), IRB
         LOGICAL :: IS_AVAILABLE
         CHARACTER(LEN=NCHARTITLE)::TITR
 C-----------------------------------------------

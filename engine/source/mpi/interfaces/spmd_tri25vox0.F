@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_tri25vox0   ../engine/source/mpi/interfaces/spmd_tri25vox0.F
 !||--- called by ------------------------------------------------------
@@ -285,12 +286,12 @@ c         IF(STF(M1) == ZERO) CYCLE
 c       ENDIF
 
 C       BGAPEMX already counted in BMINMAL
-        AAA=ZERO + DGAPLOAD
-C       IF(IGAP0==0)THEN
-C         AAA = MARGE+BGAPEMX+GAPE(IE)
-C       ELSE
-C         AAA = MARGE+TWO*BGAPEMX+GAPE(IE)
-C       END IF
+c        AAA=ZERO + DGAPLOAD
+       IF(IGAP0==0.OR.IABS(LEDGE(7,IE)) == 3)THEN
+         AAA = MARGE+BGAPEMX+GAPE(IE)+ DGAPLOAD
+       ELSE
+         AAA = MARGE+TWO*BGAPEMX+GAPE(IE)+ DGAPLOAD
+       END IF
 
         N1 = LEDGE(5,IE)
         N2 = LEDGE(6,IE)
@@ -301,12 +302,21 @@ C       END IF
         YY2=X(2,N2)
         ZZ1=X(3,N1)
         ZZ2=X(3,N2)
-        XMAXE=MAX(XX1,XX2)+GAPE(IE) ! +TZINF
-        XMINE=MIN(XX1,XX2)-GAPE(IE) ! -TZINF
-        YMAXE=MAX(YY1,YY2)+GAPE(IE) ! +TZINF
-        YMINE=MIN(YY1,YY2)-GAPE(IE) ! -TZINF
-        ZMAXE=MAX(ZZ1,ZZ2)+GAPE(IE) ! +TZINF
-        ZMINE=MIN(ZZ1,ZZ2)-GAPE(IE) ! -TZINF
+        IF(IABS(LEDGE(7,IE)) == 3) THEN
+          XMAXE=MAX(XX1,XX2)
+          XMINE=MIN(XX1,XX2)
+          YMAXE=MAX(YY1,YY2)
+          YMINE=MIN(YY1,YY2)
+          ZMAXE=MAX(ZZ1,ZZ2)
+          ZMINE=MIN(ZZ1,ZZ2)
+        ELSE
+          XMAXE=MAX(XX1,XX2)+GAPE(IE) ! +TZINF
+          XMINE=MIN(XX1,XX2)-GAPE(IE) ! -TZINF
+          YMAXE=MAX(YY1,YY2)+GAPE(IE) ! +TZINF
+          YMINE=MIN(YY1,YY2)-GAPE(IE) ! -TZINF
+          ZMAXE=MAX(ZZ1,ZZ2)+GAPE(IE) ! +TZINF
+          ZMINE=MIN(ZZ1,ZZ2)-GAPE(IE) ! -TZINF
+        ENDIF
        !-------------------------------------------!
        !  VOXEL OCCUPIED BY THE EDGE               !
        !-------------------------------------------!

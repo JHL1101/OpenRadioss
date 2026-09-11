@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_thgrsens         ../starter/source/output/th/hm_read_thgrsens.F
 !||--- called by ------------------------------------------------------
@@ -53,6 +54,7 @@ C-----------------------------------------------
       USE SENSOR_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE FORMAT_MOD , ONLY : FMW_I_A
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -129,7 +131,7 @@ c
           IAD2      = IAD + 3*NNE
           ITHGRP(8) = IAD2
           CALL ZEROIN(IAD,IAD + 43*NNE-1,ITHBUF)      
-          ALLOCATE (FOUND(SENSORS%NSENSOR))
+          call my_alloc(FOUND, SENSORS%NSENSOR, "FOUND")
           FOUND(1:SENSORS%NSENSOR) = .FALSE.
           NNE = 0
 C
@@ -181,7 +183,7 @@ c-----------------------------------------------------------------------
           IFI       = IFI+3*NNE+40*NNE
           IAD       = ITHGRP(5)     
 c
-          DEALLOCATE(FOUND)
+          CALL MY_DEALLOC(FOUND)
 c
           CALL HORD(ITHBUF(IAD),NNE)
 C
@@ -244,7 +246,7 @@ c
           IAD2      = IAD + 3*NNE
           ITHGRP(8) = IAD2
           CALL ZEROIN(IAD,IAD + 43*NNE-1,ITHBUF)      
-          ALLOCATE (FOUND(SENSORS%NSENSOR))
+          call my_alloc(FOUND, SENSORS%NSENSOR, "FOUND")
           FOUND(1:SENSORS%NSENSOR) = .FALSE.
           NNE = 0
 C
@@ -296,7 +298,7 @@ c-----------------------------------------------------------------------
           IFI       = IFI+3*NNE+40*NNE
           IAD       = ITHGRP(5)     
 c
-          DEALLOCATE(FOUND)
+          CALL MY_DEALLOC(FOUND)
 c
           CALL HORD(ITHBUF(IAD),NNE)
 C

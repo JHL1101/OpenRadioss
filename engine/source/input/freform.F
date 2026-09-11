@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    freform                  ../engine/source/input/freform.F
 !||--- called by ------------------------------------------------------
@@ -76,9 +77,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod                  ../engine/share/modules/h3d_mod.F
 !||    message_mod              ../engine/share/message_module/message_mod.F
 !||    metric_mod               ../common_source/modules/interfaces/metric_mod.F
+!||    my_alloc_mod             ../common_source/tools/memory/my_alloc.F90
 !||    names_and_titles_mod     ../common_source/modules/names_and_titles_mod.F
 !||    output_mod               ../common_source/modules/output/output_mod.F90
 !||    sensor_mod               ../common_source/modules/sensor_mod.F90
+!||    spmd_mod                 ../engine/source/mpi/spmd_mod.F90
 !||    state_mod                ../common_source/modules/state_mod.F
 !||    th_mod                   ../engine/share/modules/th_mod.F
 !||    viper_mod                ../engine/source/coupling/viper/viper_interface_mod.F90
@@ -108,9 +111,11 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD, ONLY: NCHARLINE100,NCHARKEY
       use glob_therm_mod
       USE VIPER_MOD
+      USE SPMD_MOD, ONLY: SPMD_PROFILING_ENABLED
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -156,7 +161,7 @@ C-----------------------------------------------
 C   L o c a l   P a r a m e t e r s
 C-----------------------------------------------
       INTEGER NKEY, NUM_ALE_KEY2
-      PARAMETER (NKEY = 93)
+      PARAMETER (NKEY = 94)
       PARAMETER (NUM_ALE_KEY2 = 25)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -173,7 +178,7 @@ C-----------------------------------------------
      .   NFVMESH,KSTATF,KSHVER,KABF,KDTSDE,
      .   KAABF,KBABF,KCABF,KDABF,KEABF,KFABF,KGABF,KHABF,KIABF,NFVMODI,
      .   KUPWIND,KTHERMAL,KH3D,KREPORT,KNEGVOL,KADYREL,KDT1TET10,KPERF,
-     .   KDYNAIN,KDTTSH,KMASS,KSENSOR,KVIPER
+     .   KDYNAIN,KDTTSH,KMASS,KSENSOR,KVIPER,KPROFI
       INTEGER
      .   IKEY,I,II,I1,J,J1,J2,K,KK,M,N, NCT, IKOLD, NBC, K3, K4,
      .   NUBCS1,NUBCS2, IR,IDT,NELTGOF,IREC,
@@ -229,7 +234,7 @@ C-----------------------------------------------
      .     'EABF '   ,'FABF'    ,'GABF'    ,'HABF'    ,'IABF'    ,
      .     'UPWIN'   ,'THERM'   ,'H3D'     ,'REPOR'   ,'NEGVO'  ,
      .     'ADYRE'   ,'DT1TE'   ,'PERF'    ,'DYNAI'   ,'DTTSH'   ,
-     .     'MASS '   ,'SENS '   ,'VIPER' /
+     .     'MASS '   ,'SENS '   ,'VIPER'   ,'PROFI' /
 
       DATA KRUN/1/    ,KTITLE/2/    ,KDT/3/       ,KTFILE/4/   ,KPRINT/5/  ,
      .     KRFILE/6/  ,KVERS/7/     ,                           KALE/10/   ,
@@ -249,7 +254,7 @@ C-----------------------------------------------
      .     KEABF/76/  ,KFABF/77/    ,KGABF/78/    ,KHABF/79/   ,KIABF/80/  ,
      .     KUPWIND/81/,KTHERMAL/82/ ,KH3D/83/     ,KREPORT/84/ ,KNEGVOL/85/,
      .     KADYREL/86/,KDT1TET10/87/,KPERF/88/    ,KDYNAIN/89/ ,KDTTSH/90/ ,
-     .     KMASS/91/  ,KSENSOR/92/  ,KVIPER/93/
+     .     KMASS/91/  ,KSENSOR/92/  ,KVIPER/93/  ,KPROFI/94/
 
       DATA KEYALE/
      .     'BCS  '   ,'CLOSE'   ,'GRID '   ,'LINK '   ,'MAT  '   ,
@@ -530,10 +535,10 @@ c
         SENSORS%NOUTP = 0
         SENSORS%NSTAT = 0
         SENSORS%NANIM = 0      
-        ALLOCATE (SENSORS%STOP_TMP(MX_SENS))
-        ALLOCATE (SENSORS%OUTP_TMP(MX_SENS))
-        ALLOCATE (SENSORS%STAT_TMP(MX_SENS))
-        ALLOCATE (SENSORS%ANIM_TMP(MX_SENS))
+        call my_alloc(SENSORS%STOP_TMP, MX_SENS, "SENSORS%STOP_TMP")
+        call my_alloc(SENSORS%OUTP_TMP, MX_SENS, "SENSORS%OUTP_TMP")
+        call my_alloc(SENSORS%STAT_TMP, MX_SENS, "SENSORS%STAT_TMP")
+        call my_alloc(SENSORS%ANIM_TMP, MX_SENS, "SENSORS%ANIM_TMP")
         SENSORS%STOP_TMP(:) = 0  
         SENSORS%OUTP_TMP(:) = 0 
         SENSORS%STAT_TMP(:) = 0 
@@ -2268,6 +2273,14 @@ C-------------------------------------------------
         IF(IKAD(IKEY)+K/=IKAD(IKEY+1)) GO TO 700
       ENDIF
       
+C--------------------------------------------------
+C     /PROFI (SPMD PROFILING)
+C-------------------------------------------------
+      IKEY=KPROFI
+      IF (IKAD(IKEY)/=IKAD(IKEY+1)) THEN
+        SPMD_PROFILING_ENABLED = .TRUE.
+      ENDIF
+
 C--------------------
 C     /SPMD
 C--------------------
@@ -2418,7 +2431,7 @@ C--------------------
             SENSORS%NRESET = SENSORS%NSENSOR
           ELSE          
             SENSORS%NRESET = NBSENS
-            ALLOCATE(SENSORS%RESET(NBSENS))
+            call my_alloc(SENSORS%RESET, NBSENS, "SENSORS%RESET")
             NBSENS = 0
             DO I=1,NBC
               READ(IUSC1,REC=IREC+I-1,FMT='(A)',ERR=9990)CARTE

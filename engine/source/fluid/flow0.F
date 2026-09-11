@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    flow0              ../engine/source/fluid/flow0.F
 !||--- called by ------------------------------------------------------
@@ -35,8 +36,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||====================================================================
       SUBROUTINE FLOW0(OUTPUT,IFLOW  , RFLOW  , WIFLOW , WRFLOW, X      ,
      .                 V      , A      , NPC    , TF    , SENSOR_TAB,
-     .                 NBGAUGE, LGAUGE , GAUGE  , NSENSOR, 
-     .                 IGRV   , AGRV   , NFUNCT , PYTHON, WFEXT)
+     .                 NBGAUGE, LGAUGE , GAUGE  , NSENSOR, IGRV   ,
+     .                 AGRV   , NFUNCT , NUMNOD , PYTHON, WFEXT,
+     .                 S_NODA_FEXT, NODA_FEXT, NODA_SURF, NODA_PEXT)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------  
@@ -59,10 +61,11 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT
-      INTEGER ,INTENT(IN) :: NSENSOR,NBGAUGE,NFUNCT
+      INTEGER ,INTENT(IN) :: NSENSOR,NBGAUGE,NFUNCT,NUMNOD,S_NODA_FEXT
       INTEGER IFLOW(*), WIFLOW(*), NPC(*),LGAUGE(3,*)
       INTEGER IGRV(NIGRV,*)
       my_real RFLOW(*), WRFLOW(*), X(3,*), V(3,*), A(3,*), TF(*), GAUGE(LLGAUGE,*), AGRV(LFACGRV,*)
+      my_real,INTENT(INOUT) :: NODA_FEXT(3,S_NODA_FEXT), NODA_SURF(NUMNOD), NODA_PEXT(NUMNOD)
       TYPE (SENSOR_STR_) ,DIMENSION(NSENSOR) :: SENSOR_TAB
       TYPE (PYTHON_), INTENT(INOUT) :: PYTHON
       DOUBLE PRECISION,INTENT(INOUT) :: WFEXT
@@ -189,7 +192,8 @@ C-------------------------------------------------------------------------------
      .      NPC,         TF        ,  NSENSOR    , SENSOR_TAB ,
      .      IFLOW(II10), IFLOW(II6),  IFLOW(II13), IFLOW(II14), WIFLOW(IADIP), 
      .      WRFLOW(IADH),WRFLOW(IADG),IFLOW(II11), IFLOW(II12), IPINT,
-     .      PYTHON      ,WFEXT)
+     .      PYTHON      ,WFEXT,
+     .      S_NODA_FEXT,NODA_FEXT, NODA_SURF, NODA_PEXT, OUTPUT)
 
          ELSEIF(ITYP == 3) THEN
             JFORM    = IFLOW(IADI+4)
@@ -218,12 +222,13 @@ C-------------------------------------------------------------------------------
 
             IF(NSPMD == 1) THEN
               II7=II6
-              CALL DAASOLV(NDIM, NNO, NEL,
+              CALL DAASOLV(NDIM, NNO, NEL, NUMNOD,
      .                     IFLOW(II1), IFLOW(II2), IFLOW(II3), IFLOW(II5), 
      .                     RFLOW(IR1), RFLOW(IR2), RFLOW(IR3), RFLOW(IR4), RFLOW(IR5), RFLOW(IR6), 
      .                     RFLOW(IR7), RFLOW(IR8), RFLOW(IR9), RFLOW(IR10),X, V, A, NPC, TF,  
      .                     NBGAUGE, LGAUGE, GAUGE, NSENSOR, SENSOR_TAB, IGRV, AGRV,
-     .                     RFLOW(IR11),IFLOW(II7), NFUNCT, PYTHON, WFEXT)
+     .                     RFLOW(IR11),IFLOW(II7), NFUNCT, PYTHON, WFEXT,
+     .                     S_NODA_FEXT, NODA_FEXT, NODA_SURF, NODA_PEXT, OUTPUT)
             ELSE
               II7=II6+NNO
               II8=II7+NEL
@@ -231,13 +236,14 @@ C-------------------------------------------------------------------------------
               NEL_LOC =IFLOW(IADI+20)
               IADIP =IFLOW(IADI+10)
               IADH  =IFLOW(IADI+11)
-              CALL DAASOLVP(NDIM, NNO, NEL, NEL_LOC,
+              CALL DAASOLVP(NDIM, NNO, NEL, NEL_LOC, NUMNOD,
      .                      IFLOW(II1), IFLOW(II2), IFLOW(II3), IFLOW(II4), IFLOW(II5), IFLOW(II6), 
      .                      RFLOW(IR1), RFLOW(IR2), RFLOW(IR3), RFLOW(IR4), RFLOW(IR5), RFLOW(IR6), 
      .                      RFLOW(IR7), RFLOW(IR8), RFLOW(IR9), RFLOW(IR10),X, V, A, NPC, TF,  
      .                      NBGAUGE, LGAUGE, GAUGE, NSENSOR, SENSOR_TAB, IGRV, AGRV,
      .                      RFLOW(IR11),WIFLOW(IADIP), WRFLOW(IADH), IFLOW(II8), IFLOW(II9),
-     .                      NFUNCT, PYTHON, WFEXT)
+     .                      NFUNCT, PYTHON, WFEXT,
+     .                      S_NODA_FEXT, NODA_FEXT, NODA_SURF, NODA_PEXT, OUTPUT)
             ENDIF
          ENDIF
          IADR=IADR+IFLOW(IADI+15)

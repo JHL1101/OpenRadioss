@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25surfi         ../starter/source/interfaces/inter3d1/i25surfi.F
 !||--- called by ------------------------------------------------------
@@ -43,7 +44,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      6                    NOD2ELTG,KNOD2ELS,NOD2ELS  ,IXS    ,
      7                    IXS10   ,IXS16   ,IXS20    ,IRTSE  ,
      8                    IS2SE   ,IS2PT   ,IS2ID    ,PARAMETERS,
-     A                    NIN25   ,FLAG_ELEM_INTER25      )
+     A                    NIN25   ,FLAG_ELEM_INTER25 ,IGRSLIN     ,
+     B                    LEDGE   ,EBINFLG ,NEDGE    ,NMN_1D    ,
+     C                    MSR_1D  )
 C============================================================================
 C-----------------------------------------------
 C   M o d u l e s
@@ -53,9 +56,11 @@ C-----------------------------------------------
       USE PARAMETERS_MOD
       USE FORMAT_MOD , ONLY : FMW_10I, FMW_4I
       use element_mod , only :nixs,nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -82,8 +87,13 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:,:),ALLOCATABLE :: IRECTMP_SAV
       INTEGER, INTENT(IN) ::  NIN25
       INTEGER, INTENT(INOUT) :: FLAG_ELEM_INTER25(NINTER25,NUMELS)
+      TYPE (SURF_)   , DIMENSION(NSLIN) ,TARGET  ,INTENT(IN)     :: IGRSLIN
       my_real
      .   X(3,*),FRIGAP(*)
+      INTEGER, INTENT(IN) ::  NEDGE
+      INTEGER, INTENT(INOUT) ::  NMN_1D
+      INTEGER, INTENT(INOUT) ::  LEDGE(NLEDGE,NEDGE),EBINFLG(NEDGE)
+      INTEGER, INTENT(INOUT) ::  MSR_1D(NMN_1D)
 C-----------------------------------------------
       TYPE (GROUP_)  , DIMENSION(NGRNOD)  :: IGRNOD
       TYPE (SURF_)   , DIMENSION(NSURF)   :: IGRSURF
@@ -92,13 +102,14 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,K,L,ISU1,ISU2,NOD1,NRTM,NRTS,NSN,NMN,
-     .        ILEV,NLN
-      INTEGER, DIMENSION(:), ALLOCATABLE  ::  TAG,TAGS
-      INTEGER STAT,IJ,IMIN
+     .        ILEV,NLN,ISU3,ISU4,IEDG,NEDGE_L
+      INTEGER, DIMENSION(:), ALLOCATABLE  ::  TAG,TAGS,TAGNOD
+      INTEGER STAT,N,IJ,IMIN
       INTEGER NSU1,NLS1,NLS2,NRTM_SH,NRTM0,
-     .        IMBIN,IDEB,ISN
+     .        IMBIN,IDEB,ISN,LINE_TYP,NEDGEP
       LOGICAL :: NEED_SOLID_EROSION
       INTEGER :: IDEL,SOLID_SEGMENT,ELEM
+      LOGICAL LINE_SEG , LINE_SEG_S, LINE_SEG_M
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
@@ -117,6 +128,9 @@ C-----------------------------------------------
       ILEV  = IPARI(20)
       ISU1  = IPARI(45)
       ISU2  = IPARI(46)
+      ISU3  = IPARI(102)
+      ISU4  = IPARI(103)
+      IEDG  = IPARI(58)
       NSU1 = 0
       NLS1 = 0
       NLS2 = 0
@@ -134,29 +148,79 @@ c-----------------------------------------------------------------
 c-----------------------------------------------------------------
 c     surface S2
 c-----------------------------------------------------------------
+      NEDGE_L = 0
+      IF(IEDG >0) THEN
+         LINE_SEG = .TRUE.
+         LINE_SEG_S = .TRUE.
+         LINE_SEG_M = .TRUE.
+      ELSE
+         LINE_SEG = .FALSE.
+         LINE_SEG_S = .FALSE.
+         LINE_SEG_M = .FALSE.
+      ENDIF
       SELECT CASE (ILEV)
 C-----attention: ISU2=ISU1 /=0            
         CASE(1)
           NRTM = IGRSURF(ISU1)%NSEG
+          IF(IEDG >0.AND.ISU3>0) NEDGE_L =IGRSLIN(ISU3)%NSEG
+          IF(IEDG > 0) THEN
+            DO J=1,IGRSURF(ISU1)%NSEG
+              IF(IGRSURF(ISU1)%ELTYP(J)==1.OR.IGRSURF(ISU1)%ELTYP(J)==3
+     .          .OR.IGRSURF(ISU1)%ELTYP(J)==7.OR.IGRSURF(ISU1)%ELTYP(J)==0) LINE_SEG = .FALSE.
+            ENDDO
+            IF(.NOT.LINE_SEG) THEN
+               LINE_SEG_M = .FALSE.
+               LINE_SEG_S = .FALSE.
+            ENDIF
+          ENDIF
+          IF(ISU3==0) LINE_SEG = .FALSE.
+          IF(LINE_SEG) NRTM = 0
         CASE(2)
           NRTM = IGRSURF(ISU1)%NSEG
           NRTS = IGRSURF(ISU2)%NSEG
+          IF(IEDG >0.AND.ISU3>0) NEDGE_L =IGRSLIN(ISU3)%NSEG
+          IF(IEDG >0.AND.ISU4>0) NEDGE_L =NEDGE_L + IGRSLIN(ISU4)%NSEG
+          IF(IEDG > 0) THEN
+            DO J=1,IGRSURF(ISU1)%NSEG
+             IF(IGRSURF(ISU1)%ELTYP(J)==1.OR.IGRSURF(ISU1)%ELTYP(J)==3
+     .          .OR.IGRSURF(ISU1)%ELTYP(J)==7.OR.IGRSURF(ISU1)%ELTYP(J)==0) LINE_SEG_M = .FALSE.
+            ENDDO
+            DO J=1,IGRSURF(ISU2)%NSEG
+             IF(IGRSURF(ISU2)%ELTYP(J)==1.OR.IGRSURF(ISU2)%ELTYP(J)==3
+     .          .OR.IGRSURF(ISU2)%ELTYP(J)==7.OR.IGRSURF(ISU2)%ELTYP(J)==0) LINE_SEG_S = .FALSE.
+            ENDDO
+            IF(.NOT.LINE_SEG_S.OR..NOT.LINE_SEG_M) LINE_SEG = .FALSE.
+          ENDIF
+          IF(ISU3==0.AND.ISU4==0) LINE_SEG = .FALSE.
+          IF(LINE_SEG_M) NRTM = 0
+          IF(LINE_SEG_S) NRTS = 0
           NRTM = NRTM + NRTS
         CASE(3)
           NRTM = IGRSURF(ISU2)%NSEG
+          LINE_SEG = .FALSE.
+          LINE_SEG_M = .FALSE.
+          LINE_SEG_S = .FALSE.
       END SELECT
+
+      IF(LINE_SEG) THEN
+         NRTM = 0
+         NRTS = 0
+      ENDIF
+
 c-----------------------------------------------------------------
-      ALLOCATE(INDEX(2*NRTM),IRECTMP(6,NRTM),STAT=stat)
+      call my_alloc(INDEX, 2*NRTM, "INDEX", stat=stat)
+      call my_alloc(IRECTMP, 6, NRTM, "IRECTMP", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                           C1='IRECTSAV')
       IRECTMP(1:6,1:NRTM)=0
+        IF( NEDGE_L >0) call my_alloc(TAGNOD, NUMNOD, "TAGNOD", stat=stat)
 C
 c---------------------------------------
 c     Copy of surfaces (Iallo == 2)
 c---------------------------------------
       L = 0
-      IF(ISU1 /= 0)THEN
+      IF(ISU1 /= 0.AND..NOT.LINE_SEG_M)THEN
         DO J=1,IGRSURF(ISU1)%NSEG
           L = L+1
           DO K=1,4
@@ -174,7 +238,7 @@ c---------------------------------------
         ENDDO
       ENDIF
       NSU1 = L
-      IF(ISU2 /= 0 .AND.ILEV /=1)THEN
+      IF(ISU2 /= 0 .AND.ILEV /=1.AND..NOT.LINE_SEG_S)THEN
         DO J=1,IGRSURF(ISU2)%NSEG
           L = L+1
           DO K=1,4
@@ -182,7 +246,7 @@ c---------------------------------------
 
 !!            IAD = IAD+1
           ENDDO
-          IRECTMP(5,L) = IGRSURF(ISU2)%ELTYP(J) ! MSEGTYP
+          IRECTMP(5,L) = IGRSURF(ISU2)%ELTYP(J) ! MSEGTYP 
           CALL IN24COQ_SOL3(IRECTMP(1,L) ,IXC ,IXTG ,IRECTMP(5,L) ,X  ,
      .                 KNOD2ELC ,KNOD2ELTG ,NOD2ELC ,NOD2ELTG,
      .                 KNOD2ELS,NOD2ELS,IXS ,IXS10 ,IXS16 ,IXS20 )
@@ -195,7 +259,7 @@ C=======================================================================
 c     Filtre
       NRTMP=NRTM
 C
-      ALLOCATE(IRECTMP_SAV(6,NRTM),STAT=stat)
+      call my_alloc(IRECTMP_SAV, 6, NRTM, "IRECTMP_SAV", stat=stat)
 
         
       IRECTMP_SAV(1:6,1:NRTM) =  IRECTMP(1:6,1:NRTM)
@@ -226,6 +290,7 @@ C
 
         NRTM_SH=0
 
+        IF (.NOT.LINE_SEG) THEN
         IDEB=1
         I1=INDEX(IDEB)
         DO WHILE(IRECTMP(1,I1)==0)
@@ -251,8 +316,57 @@ C
 
           END IF
         END DO
+
+        ENDIF
+
+        NEDGEP = 0
+        NMN_1D = 0
+        IF( NEDGE_L >0)  THEN
+c          ALLOCATE(TAGNOD(NUMNOD),STAT=stat) 
+          TAGNOD(1:NUMNOD) = 0    
+          IF(ISU3 /= 0)THEN
+            DO J=1,IGRSLIN(ISU3)%NSEG
+               LINE_TYP = IGRSLIN(ISU3)%ELTYP(J)
+               IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+                 NEDGEP = NEDGEP + 1  
+                 N= IGRSLIN(ISU3)%NODES(J,1)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                 ENDIF
+                 N = IGRSLIN(ISU3)%NODES(J,2)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                 ENDIF 
+               ENDIF
+            ENDDO
+          ENDIF
+          IF(ISU4 /= 0 .AND.ILEV /=1.AND.ILEV/=3)THEN
+            DO J=1,IGRSLIN(ISU4)%NSEG
+               LINE_TYP = IGRSLIN(ISU4)%ELTYP(J)
+               IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+                 NEDGEP = NEDGEP + 1  
+                 N= IGRSLIN(ISU4)%NODES(J,1)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                 ENDIF
+                 N = IGRSLIN(ISU4)%NODES(J,2)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                 ENDIF 
+               ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
+        NEDGE_L = NEDGEP
+
+
       ELSE ! IF(IALLO==1)THEN
 
+        IF (.NOT.LINE_SEG) THEN
         IDEB=1
         I1=INDEX(IDEB)
         DO WHILE(IRECTMP(1,I1)==0)
@@ -289,29 +403,97 @@ C
             IF(IMBIN/=0) MBINFLG(NRTM)=1+2
           END IF
         END DO
+       ENDIF
+
+          NEDGEP = 0
+          NMN_1D = 0
+        IF( NEDGE_L >0 ) THEN
+          TAGNOD(1:NUMNOD) = 0    
+          IF(ISU3 /= 0)THEN
+            DO J=1,IGRSLIN(ISU3)%NSEG
+               LINE_TYP = IGRSLIN(ISU3)%ELTYP(J)
+               IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+                 NEDGEP = NEDGEP + 1  
+                 LEDGE(5,NEDGEP) = IGRSLIN(ISU3)%NODES(J,1)
+                 LEDGE(6,NEDGEP) = IGRSLIN(ISU3)%NODES(J,2)
+                 IF(IMBIN /= 0) EBINFLG(NEDGEP) = BITSET(EBINFLG(NEDGEP),0) ! EBINFLG
+                 N= IGRSLIN(ISU3)%NODES(J,1)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                    MSR_1D(NMN_1D) =N
+                 ENDIF
+                 N = IGRSLIN(ISU3)%NODES(J,2)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                    MSR_1D(NMN_1D) =N
+                 ENDIF 
+               ENDIF
+            ENDDO
+          ENDIF
+          IF(ISU4 /= 0 .AND.ILEV /=1.AND.ILEV/=3)THEN
+            DO J=1,IGRSLIN(ISU4)%NSEG
+               LINE_TYP = IGRSLIN(ISU4)%ELTYP(J)
+               IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+                 NEDGEP = NEDGEP + 1  
+                 LEDGE(5,NEDGEP) = IGRSLIN(ISU4)%NODES(J,1)
+                 LEDGE(6,NEDGEP) = IGRSLIN(ISU4)%NODES(J,2)
+                 IF(IMBIN /= 0) EBINFLG(NEDGEP) = BITSET(EBINFLG(NEDGEP),1) ! EBINFLG
+                 N= IGRSLIN(ISU4)%NODES(J,1)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                    MSR_1D(NMN_1D) =N
+                 ENDIF
+                 N = IGRSLIN(ISU4)%NODES(J,2)
+                 IF(TAGNOD(N)==0) THEN
+                    NMN_1D = NMN_1D +1
+                    TAGNOD(N)=1
+                    MSR_1D(NMN_1D) =N
+                 ENDIF 
+               ENDIF
+            ENDDO
+          ENDIF
+        ENDIF
+        NEDGE_L = NEDGEP
       END IF
 
 
-      DEALLOCATE(INDEX,IRECTMP)
-      IF(ALLOCATED(IRECTMP_SAV)) DEALLOCATE(IRECTMP_SAV)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(IRECTMP)
+      IF(ALLOCATED(IRECTMP_SAV)) CALL MY_DEALLOC(IRECTMP_SAV)
 C=======================================================================
 c     NODES C=======================================================================
 c-----------------------------------------------------------------
 c     tag nodes surfaces S1 S2; 1,2 on S1,S2, 3 on both (ILEV=1)
 c-----------------------------------------------------------------
-      ALLOCATE(TAG(NUMNOD),TAGS(NUMNOD))
+      call my_alloc(TAG, NUMNOD, "TAG")
+      call my_alloc(TAGS, NUMNOD, "TAGS")
       DO I=1,NUMNOD
         TAG(I)=0 ! initialisation
         TAGS(I)=0 ! initialisation
       ENDDO
-      IF(ISU2 /= 0)THEN
+      IF(ISU2 /= 0.AND..NOT.LINE_SEG_S)THEN
         DO J=1,IGRSURF(ISU2)%NSEG
           DO K=1,4
             TAG(IGRSURF(ISU2)%NODES(J,K)) = 2
           ENDDO
         ENDDO
       ENDIF
-      IF(ISU1 /= 0)THEN
+
+      IF (ISU4 /= 0.AND..NOT.LINE_SEG) THEN
+        DO J=1,IGRSLIN(ISU4)%NSEG
+          LINE_TYP = IGRSLIN(ISU4)%ELTYP(J)
+          IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+            DO K=1,2
+              TAG(IGRSLIN(ISU4)%NODES(J,K)) = 2
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDIF
+
+      IF(ISU1 /= 0.AND..NOT.LINE_SEG_M)THEN
         DO J=1,IGRSURF(ISU1)%NSEG
           DO K=1,4
             I=IGRSURF(ISU1)%NODES(J,K)
@@ -323,9 +505,25 @@ c-----------------------------------------------------------------
           ENDDO
         ENDDO
       ENDIF
+
+      IF (ISU3 /= 0.AND..NOT.LINE_SEG) THEN
+        DO J=1,IGRSLIN(ISU3)%NSEG
+          LINE_TYP = IGRSLIN(ISU3)%ELTYP(J)
+          IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+            DO K=1,2 
+              I=IGRSLIN(ISU3)%NODES(J,K)
+              IF(TAG(I) == 0)THEN
+                  TAG(I) = 1
+              ELSEIF(TAG(I) == 2)THEN
+                  TAG(I) = 3
+              ENDIF
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDIF
 C for inteply activation needed for Plyxfem + Type24      
       IF(IALLO == 1) THEN
-        IF(ISU2 /= 0)THEN
+        IF(ISU2 /= 0.AND..NOT.LINE_SEG_S)THEN
            DO J=1,IGRSURF(ISU2)%NSEG
               DO K=1,4
 
@@ -335,7 +533,7 @@ C for inteply activation needed for Plyxfem + Type24
               ENDDO
             ENDDO
          ENDIF
-         IF(ISU1 /= 0)THEN
+         IF(ISU1 /= 0.AND..NOT.LINE_SEG_M)THEN
            DO J=1,IGRSURF(ISU1)%NSEG
               DO K=1,4
                 I=IGRSURF(ISU1)%NODES(J,K)
@@ -349,7 +547,7 @@ C for inteply activation needed for Plyxfem + Type24
 c-----------------------------------------------------------------
 c     Surface nodes S2: Build Tags, Set NSV, Msr If Iallo = 2
 c-----------------------------------------------------------------
-      IF(ISU2 /= 0)THEN
+      IF(ISU2 /= 0.AND..NOT.LINE_SEG_S)THEN
         DO J=1,IGRSURF(ISU2)%NSEG
           DO K=1,4
             I=IGRSURF(ISU2)%NODES(J,K)
@@ -360,14 +558,35 @@ c-----------------------------------------------------------------
 c     taged nodes on S2 -> negative value
             IF(TAG(I) == 2 .OR. TAG(I) == 3)THEN
               TAG(I) = - TAG(I)
-                IF ( ILEV == 2.AND.TAGS(I) == 0 ) THEN
+              IF ( ILEV == 2.AND.TAGS(I) == 0 ) THEN
                 NSN = NSN + 1
                 TAGS(I) = NSN
                 IF(IALLO == 2) THEN
                  NSV(NSN) = I
                  IF(ILEV == 2)NBINFLG(NSN) = BITSET(NBINFLG(NSN),1)
                 END IF
+              END IF !( ILEV == 2 ) THEN
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+      IF(ISU4 /= 0.AND..NOT.LINE_SEG)THEN
+        DO J=1,IGRSLIN(ISU4)%NSEG
+          DO K=1,2
+            I=IGRSLIN(ISU4)%NODES(J,K)
+            LINE_TYP = IGRSLIN(ISU4)%ELTYP(J)
+            IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+              IF(TAG(I) == 2 .OR. TAG(I) == 3)THEN
+                TAG(I) = - TAG(I)
+                IF ( ILEV == 2.AND.TAGS(I) == 0 ) THEN
+                  NSN = NSN + 1
+                  TAGS(I) = NSN
+                  IF(IALLO == 2) THEN
+                    NSV(NSN) = I
+                    IF(ILEV == 2)NBINFLG(NSN) = BITSET(NBINFLG(NSN),1)
+                  END IF
                 END IF !( ILEV == 2 ) THEN
+              ENDIF
             ENDIF
           ENDDO
         ENDDO
@@ -375,7 +594,7 @@ c     taged nodes on S2 -> negative value
 c-----------------------------------------------------------------
 c     Surface nodes S1: Build Tags, Set NSV, Msr If Iallo = 2
 c-----------------------------------------------------------------
-      IF(ISU1 /= 0)THEN
+      IF(ISU1 /= 0.AND..NOT.LINE_SEG_M)THEN
         DO J=1,IGRSURF(ISU1)%NSEG
           DO K=1,4
             I=IGRSURF(ISU1)%NODES(J,K)
@@ -399,6 +618,30 @@ c     taged nodes on S1 -> negative value, ->+3 for nodes on both
               IF(IALLO == 2)MSR(NMN) = I
             ENDIF
           ENDDO
+        ENDDO
+      ENDIF
+
+      IF(ISU3 /= 0.AND..NOT.LINE_SEG)THEN
+        DO J=1,IGRSLIN(ISU3)%NSEG
+          LINE_TYP = IGRSLIN(ISU3)%ELTYP(J)
+          IF(LINE_TYP /= 1.AND.LINE_TYP /= 3.AND.LINE_TYP /= 7.AND.LINE_TYP /= 0) THEN
+            DO K=1,2
+              I=IGRSLIN(ISU3)%NODES(J,K)
+              IF(TAGS(I) == 0 .AND. ILEV /= 3 ) THEN
+                NSN = NSN + 1
+                TAGS(I) = NSN
+                IF(IALLO == 2) THEN
+                  NSV(NSN) = I
+                  IF(ILEV == 2)NBINFLG(NSN) = BITSET(NBINFLG(NSN),0)
+                END IF
+              ELSEIF(ILEV==2)THEN
+                IF(IALLO == 2) THEN
+                  ISN=TAGS(I)
+                  NBINFLG(ISN) = BITSET(NBINFLG(ISN),0)
+                ENDIF
+              ENDIF
+            ENDDO
+          ENDIF
         ENDDO
       ENDIF
 c-----------------------------------------------------------------
@@ -451,6 +694,8 @@ C----------due the fact that NRTM is modified w/ shell seg
         IPARI(6)  = NMN
         IPARI(35) = NLN
         IPARI(42) = NRTM_SH
+        IPARI(101) = NEDGE_L
+        IPARI(104) = NMN_1D
 
         IDEL = IPARI(17) ! get the idel option (/=0 --> erosion is ON)
         SOLID_SEGMENT = NRTM - NRTM_SH ! get the number of segment linked to a solid element
@@ -473,20 +718,26 @@ C----------due the fact that NRTM is modified w/ shell seg
         ENDIF
         ! -------------------
       END IF
+      IF(ALLOCATED(TAGNOD)) call my_dealloc(TAGNOD)
 
-      DEALLOCATE(TAG,TAGS)
+      CALL MY_DEALLOC(TAG)
+      CALL MY_DEALLOC(TAGS)
 C
       RETURN
       END
 !||====================================================================
-!||    sh2surf25   ../starter/source/interfaces/inter3d1/i25surfi.F
+!||    sh2surf25        ../starter/source/interfaces/inter3d1/i25surfi.F
 !||--- called by ------------------------------------------------------
-!||    i25surfi    ../starter/source/interfaces/inter3d1/i25surfi.F
+!||    i25surfi         ../starter/source/interfaces/inter3d1/i25surfi.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE SH2SURF25(NRTM0,IRECT,IMBIN,MBINFLG,MSEGTYP,NRTM )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -499,7 +750,7 @@ C-----------------------------------------------
       INTEGER I, NR, IT
       INTEGER, DIMENSION(:), ALLOCATABLE :: ETYP
 C=======================================================================
-       ALLOCATE(ETYP(NRTM0))
+       call my_alloc(ETYP, NRTM0, "ETYP")
 C------add asymmetric shell segs at end, change MSEGTYP
        DO I=1,NRTM0
         ETYP(I) = MSEGTYP(I)
@@ -549,7 +800,7 @@ C--------coating shell <=> MSEGTYP(I) > NRTM
         END IF
        END DO
 C------------------------------------------------------------
-      DEALLOCATE(ETYP)
+      call my_dealloc(ETYP)
       RETURN
       END
 

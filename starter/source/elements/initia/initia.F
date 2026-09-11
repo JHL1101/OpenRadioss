@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    initia                          ../starter/source/elements/initia/initia.F
 !||--- called by ------------------------------------------------------
@@ -59,7 +60,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inirbys                         ../starter/source/constraints/general/rbody/inirby.F
 !||    inirig_mat                      ../starter/source/elements/initia/inirig_mat.F
 !||    inisrf                          ../starter/source/constraints/general/rbody/inisrf.F
-!||    init_bcs_nrf                    ../starter/source/boundary_conditions/init_bcs_nrf.F90
 !||    init_bcs_wall                   ../starter/source/boundary_conditions/init_bcs_wall.F90
 !||    init_inivol                     ../starter/source/initial_conditions/inivol/init_inivol.F90
 !||    init_rwall_penalty              ../starter/source/constraints/general/rwall/init_rwall_penalty.F90
@@ -79,10 +79,13 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    outpart                         ../starter/source/elements/initia/initia.F
 !||    outpart5                        ../starter/source/elements/initia/initia.F
 !||    pinit3                          ../starter/source/elements/beam/pinit3.F
+!||    q1np_init                       ../starter/source/elements/solid/solid_q1np/q1np_init.F90
 !||    q4init2                         ../starter/source/elements/solid_2d/quad4/q4init2.F
 !||    qinit2                          ../starter/source/elements/solid_2d/quad/qinit2.F
+!||    rbody_spring_check              ../starter/source/elements/spring/rbody_spring_check.F90
 !||    rcheckmass                      ../starter/source/elements/spring/rcheckmass.F
 !||    retrirby                        ../starter/source/constraints/general/merge/hm_read_merge.F
+!||    rini135_rb                      ../starter/source/elements/joint/rjoint/rini135_rb.F90
 !||    rini33_rb                       ../starter/source/elements/joint/rjoint/rini33_rb.F
 !||    rini45_rb                       ../starter/source/elements/joint/rjoint/rini45_rb.F
 !||    rinit3                          ../starter/source/elements/spring/rinit3.F
@@ -126,13 +129,15 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ini_guided_cable_mod            ../starter/source/tools/seatbelts/ini_guided_cable.F90
 !||    inimap1d_mod                    ../starter/share/modules1/inimap1d_mod.F
 !||    inimap2d_mod                    ../starter/share/modules1/inimap2d_mod.F
-!||    init_bcs_nrf_mod                ../starter/source/boundary_conditions/init_bcs_nrf.F90
 !||    init_bcs_wall_mod               ../starter/source/boundary_conditions/init_bcs_wall.F90
 !||    init_inivol_mod                 ../starter/source/initial_conditions/inivol/init_inivol.F90
 !||    init_rwall_penalty_mod          ../starter/source/constraints/general/rwall/init_rwall_penalty.F90
 !||    init_seatbelt_rbodies_mod       ../starter/source/tools/seatbelts/init_seatbelt_rbodies.F90
 !||    inivol_def_mod                  ../starter/share/modules1/inivol_mod.F
 !||    message_mod                     ../starter/share/message_module/message_mod.F
+!||    q1np_init_mod                   ../starter/source/elements/solid/solid_q1np/q1np_init.F90
+!||    rbody_spring_check_mod          ../starter/source/elements/spring/rbody_spring_check.F90
+!||    rini135_rb_mod                  ../starter/source/elements/joint/rjoint/rini135_rb.F90
 !||    s6zinit3_mod                    ../starter/source/elements/solid/solide6z/s6zinit3.F90
 !||    stack_mod                       ../starter/share/modules1/stack_mod.F
 !||    submodel_mod                    ../starter/share/modules1/submodel_mod.F
@@ -171,7 +176,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      U                  MS_LAYER   ,ZI_LAYER      ,ITAG             ,ITAGEL         ,MCPC      ,
      W                  MCPTG      ,XREFC         ,XREFTG           ,XREFS          ,MSSA      ,
      X                  MSRT       ,IRBE2         ,LRBE2            ,INIVOL         ,KVOL      , NBSUBMAT,
-     Y                  IXS10      ,IXS16         ,IXS20            ,TOTADDMAS      ,
+     Y                  IXS10      ,IXS16         ,IXS20            ,TOTADDMAS      ,TOTADDINER,
      Z                  IPMAS      ,STIFN         ,MSZ2             ,ITAGN          ,SITAGE    ,
      1                  ITAGE      ,IXR_KJ        ,ELBUF_TAB,
      2                  NOM_OPT    ,PTR_NOPT_RBE2 ,PTR_NOPT_ADM     ,PTR_NOPT_FUN   ,
@@ -198,7 +203,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      N                  PRELOAD_A  ,FAIL_FRACTAL  ,FAIL_BROKMANN    ,DEFAULTS       ,NDAMP_FREQ_RANGE,
      O                  DAMPR      ,IBEAM_VECTOR  ,RBEAM_VECTOR     ,IKINE          ,LSIGI     ,
      P                  LSIGSP     ,SRNOISE       ,NPRW             ,LPRW           , RWSTIF_PEN,
-     M                  SLN_PEN    ,ROOTLEN       ,ROOTNAM          ,NGUIDED_CABLE  ,TOTMAS1  )
+     M                  SLN_PEN    ,ROOTLEN       ,ROOTNAM          ,NGUIDED_CABLE  ,TOTMAS1   ,
+     N                  S_NOD2EL1D ,SPRING_CON_RBODY)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------                     
@@ -238,12 +244,16 @@ C-----------------------------------------------
       USE DETONATION_TIMES_PRINTOUT_MOD , ONLY : DETONATION_TIMES_PRINTOUT
       USE S6ZINIT3_MOD
       USE INIT_BCS_WALL_MOD , ONLY : INIT_BCS_WALL
-      USE INIT_BCS_NRF_MOD , ONLY : INIT_BCS_NRF
       use init_inivol_mod , only : INIT_INIVOL
       use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg
       use init_rwall_penalty_mod , only : init_rwall_penalty
       use ush_init_mod , only : ush_init
       use ini_guided_cable_mod, ONLY : ini_guided_cable 
+      USE Q1NP_RESTART_MOD
+      USE Q1NP_INIT_MOD
+      use rini135_rb_mod
+      use my_alloc_mod
+      use rbody_spring_check_mod, ONLY : rbody_spring_check
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -338,6 +348,7 @@ C-----------------------------------------------
      .   FXBGLM(*),FXBCPM(*),FXBCPS(*),FXBLM(*),FXBFLS(*),FXBDLS(*),FXB_MATRIX(*),
      .   RBY_INIAXIS(7,*),ALEA(*),DR(SDR)
       my_real,INTENT(INOUT) :: TOTMAS1
+      my_real,INTENT(IN) :: TOTADDINER
 
       my_real, DIMENSION(NUMNOD*2), TARGET :: STIFN
       my_real , DIMENSION(:), POINTER :: STIFR
@@ -353,6 +364,8 @@ C
       INTEGER,INTENT(IN) :: LSIGI
       INTEGER,INTENT(IN) :: LSIGSP
       INTEGER,INTENT(IN) :: SRNOISE
+      INTEGER,INTENT(IN) :: S_NOD2EL1D
+      INTEGER,INTENT(INOUT) :: SPRING_CON_RBODY
 !
       INTEGER,INTENT(IN) :: SLN_PEN
       INTEGER, DIMENSION(NNPRW*NRWALL),INTENT(IN) :: NPRW
@@ -387,7 +400,7 @@ C-----------------------------------------------
       TYPE (DRAPE_)  , DIMENSION(NUMELC_DRAPE + NUMELTG_DRAPE):: DRAPE 
       TYPE (DRAPEG_)                            :: DRAPEG 
       TYPE (t_ale_connectivity), INTENT(INOUT) :: ALE_CONNECTIVITY
-      TYPE (INTBUF_STRUCT_) , INTENT(IN   ) ::  INTBUF_TAB(NINTER)
+      TYPE (INTBUF_STRUCT_) , INTENT(INOUT) ::  INTBUF_TAB(NINTER) ! modified in initmass
       TYPE (INTERFACES_) , INTENT(INOUT   ) ::  INTERFACES
       TYPE (PREL1D_) , INTENT(IN)   ,DIMENSION(NPRELOAD_A) ::  PRELOAD_A
       TYPE (SENSORS_)       ,INTENT(IN)    :: SENSORS
@@ -401,8 +414,8 @@ C-----------------------------------------------
 C remove automatic allocation to reduce stack consumption
 C      INTEGER *8 I8MI(6,NUMNOD)
       INTEGER (KIND=8), DIMENSION(:,:), ALLOCATABLE :: I8MI
-      INTEGER NG, NEL, NVC, K, N, M, NSL, NN1, NN2, NN3, I, K0,NV46,
-     .   ISPH, J, IG, OFFSET,ISOLNOD,IPROP,IGTYP,
+      INTEGER NG, NEL, NVC, K, N, M, NSL, NN1, NN2, NN3, I, NV46,
+     .   ISPH, J, OFFSET,ISOLNOD,IPROP,IGTYP,
      .   I15A,I15B,I15C,I15D,I15E,I15F,I15G,I15H,I15I,I15J,I15K,I15ATH,
      .   I15L,NC1_OLD, NC2_OLD, NC3_OLD, NC4_OLD,
      .   NC5_OLD, NC6_OLD, NC7_OLD, NC8_OLD,
@@ -412,16 +425,16 @@ C      INTEGER *8 I8MI(6,NUMNOD)
      .   IADUIN,IADUSM,IADUSR,IADUMV,IADURV, NUVAR,ICNOD, RBYID,
      .   ADRRPM,ALM,ASIG,NELS,NELC,NELTG,AMOD,NBNO,NME,NML,ARPM,LVSIG,
      .   IFILE,IRCS,NELT,NELP,FXBID, ANOD, IRCM, NSNI, NSN, NMANI, IMIN, IMAX,
-     .   NELEMR,CPT_ELTENS,IXFEM,ITG,ISUBSTACK,NCTRL, ITETRA10, KK,PX,PY,PZ,IPID
+     .   NELEMR,CPT_ELTENS,IXFEM,ITG,ISUBSTACK,NCTRL,PX,PY,PZ
 
       INTEGER SOLMAT(0:MAXLAW), COQMAT(0:MAXLAW), TRUMAT(0:MAXLAW),
      .   POUMAT(0:MAXLAW),SPHMAT(0:MAXLAW),
      .   RESMAT(0:MAXLAW),RESPID(0:50), SPHPID(0:50),
      .   SOLPID(0:50), COQPID(0:52), TRUPID(0:50), POUPID(0:50)
-      INTEGER II,NINDX,FLAG_KJ
+      INTEGER NINDX,FLAG_KJ
 
       INTEGER IBOLTP !Bolt preloading
-      my_real DT2S, B1, B2, B3, B6, B5, B9, XG, YG, ZG, XX, YY, ZZ, XY, XZ, YZ,DTNODA,FILL_RATIO
+      my_real DT2S, B1, B2, B3, B6, B5, B9, XG, YG, ZG, XX, YY, ZZ, XY, XZ, YZ
       my_real, DIMENSION(:), ALLOCATABLE ::
      .    MBUFEL_TMP, MDEPL_TMP,PARTSAV,MCPS,MCPSX,
      .    MS_LAYERC,ZI_LAYERC, MSZ2C,ZPLY,PARTSAV1_PON,MCPP
@@ -429,7 +442,7 @@ C      INTEGER *8 I8MI(6,NUMNOD)
       INTEGER, DIMENSION(:), ALLOCATABLE :: IRIG_NODE, CONNEC
       my_real, DIMENSION(:), ALLOCATABLE :: PART_AREA,ELE_AREA
 
-      my_real ADDEDMS(NPART),MAS,MAS_1
+      my_real ADDEDMS(NPART),MAS
       INTEGER ID,ISTOT, NF1,NNOD,NSROT,IDRAPE,ICPRE
       CHARACTER(LEN=NCHARTITLE)::TITR
       LOGICAL :: ERROR_THROWN
@@ -443,14 +456,13 @@ C-----------------------------------------------
 C   D e r i v e d   T y p e   D e f i n i t i o n s
 C-----------------------------------------------
       TYPE(G_BUFEL_) ,POINTER :: GBUF   
-      TYPE(BUF_MAT_) ,POINTER :: MBUF  
 C-----------------------------------------------
       EXTERNAL UEL2SYS
       INTEGER  UEL2SYS
 c___________________________________________________
       my_real r8_deuxm43
       integer*8  i8_deuxp43
-      data i8_deuxp43 /'80000000000'x/
+      data i8_deuxp43 /Z'80000000000'/
       r8_deuxm43 = 1.d00 / i8_deuxp43
 c___________________________________________________
 C                   1 2 3 4 5 6 7 8 9 10
@@ -492,18 +504,18 @@ C=======================================================================
       STAT = 0
 
       IF(IPARI0==3)THEN
-        ALLOCATE (I8MI(6,NUMNOD)                   ,STAT=stat)
+        allocate(I8MI(6, NUMNOD), stat=stat)
       ELSE
-        ALLOCATE (I8MI(6,1)                        ,STAT=stat)
+        allocate(I8MI(6, 1), stat=stat)
       ENDIF
 
-      ALLOCATE (PARTSAV(20*NPART)                  ,STAT=stat)
+      call my_alloc(PARTSAV, 20*NPART, "PARTSAV", stat=stat)
 
       STIFR => STIFN(NUMNOD+1:NUMNOD*2)
-      ALLOCATE (PARTSAV1_PON(NPART)                ,STAT=stat)
+      call my_alloc(PARTSAV1_PON, NPART, "PARTSAV1_PON", stat=stat)
 C
       IF(NPRELOAD > 0) THEN
-        ALLOCATE (VPRELOAD(7*NUMELS)               ,STAT=stat)
+        call my_alloc(VPRELOAD, 7*NUMELS, "VPRELOAD", stat=stat)
       ENDIF       
 C
       IF (NPART   > 0) PARTSAV= ZERO
@@ -538,30 +550,31 @@ C xfem
 C ---
       IF(IRIGID_MAT > 0 ) THEN
         NELEMR = NUMELC + NUMELS10 + NUMELS8 + NUMELTG
-        ALLOCATE(IRIG_NODE(NUMNOD))
-        ALLOCATE(CONNEC(NELEMR*10))
+        call my_alloc(IRIG_NODE, NUMNOD, "IRIG_NODE")
+        call my_alloc(CONNEC, NELEMR*10, "CONNEC")
           IRIG_NODE = 0
           CONNEC = 0
       ELSE
-          ALLOCATE(CONNEC(0),IRIG_NODE(0))
+          call my_alloc(CONNEC, 0, "CONNEC")
+          call my_alloc(IRIG_NODE, 0, "IRIG_NODE")
       ENDIF
 C
 C  ply xfem
 C
       IF(IPLYXFEM> 0 ) THEN
-        ALLOCATE(MS_LAYERC(NPLYMAX*NUMELC))
-        ALLOCATE(ZI_LAYERC(NPLYMAX*NUMELC))
-        ALLOCATE(MSZ2C(NUMELC))
-        ALLOCATE(ZPLY(NPLYMAX))
+        call my_alloc(MS_LAYERC, NPLYMAX*NUMELC, "MS_LAYERC")
+        call my_alloc(ZI_LAYERC, NPLYMAX*NUMELC, "ZI_LAYERC")
+        call my_alloc(MSZ2C, NUMELC, "MSZ2C")
+        call my_alloc(ZPLY, NPLYMAX, "ZPLY")
         MS_LAYERC = ZERO
         ZI_LAYERC = ZERO
         MSZ2C = ZERO
         ZPLY = ZERO
        ELSE
-        ALLOCATE(MS_LAYERC(0))
-        ALLOCATE(ZI_LAYERC(0))
-        ALLOCATE(MSZ2C(0))
-        ALLOCATE(ZPLY(0))
+        call my_alloc(MS_LAYERC, 0, "MS_LAYERC")
+        call my_alloc(ZI_LAYERC, 0, "ZI_LAYERC")
+        call my_alloc(MSZ2C, 0, "MSZ2C")
+        call my_alloc(ZPLY, 0, "ZPLY")
       ENDIF
 C-------------------------------------
 C     MASS + INERTIA IPARITH = 4
@@ -823,14 +836,6 @@ C--------------------------------------------
      .                     IXS,NIXS,NUMELS, IXQ,NIXQ,NUMELQ, IXTG,NIXTG,NUMELTG, N2D,
      .                     NGROUP,NPARG,IPARG,IPRI)
       ENDIF
-C------------------------------------------------------
-C  Initialisation of Non Reflecting BOundary Conditions
-C------------------------------------------------------
-      IF(BCS%NUM_NRF > 0)THEN
-        CALL INIT_BCS_NRF(IGRNOD,NGRNOD,NUMNOD,MULTI_FVM,
-     .                    IXS,NIXS,NUMELS, IXQ,NIXQ,NUMELQ, IXTG,NIXTG,NUMELTG, N2D,
-     .                    NGROUP,NPARG,IPARG,IPRI,ITAB,NUMMAT, MAT_PARAM)
-      ENDIF
 C---------------------------------------------------------
 C     Sorting of the bolt preloading vector
 C---------------------------------------------------------
@@ -864,25 +869,28 @@ C
 C  for heat transfer
 C
       IF (GLOB_THERM%ITHERM_FE > 0 ) THEN
-        ALLOCATE(MCPS(8*NUMELS))
+        call my_alloc(MCPS, 8*NUMELS, "MCPS")
         MCPS = ZERO
         IF(NUMELS10 > 0.OR.NUMELS16 > 0 .OR.NUMELS20 > 0)THEN
-         ALLOCATE(MCPSX(12*NUMELS))
+         call my_alloc(MCPSX, 12*NUMELS, "MCPSX")
          MCPSX = ZERO
         ENDIF
-         ALLOCATE(MCPP(NUMELP))
+         call my_alloc(MCPP, NUMELP, "MCPP")
         MCPP = ZERO
       ELSE
-        ALLOCATE(MCPSX(0), MCPS(0), MCPP(0))  
+        call my_alloc(MCPSX, 0, "MCPSX")
+        call my_alloc(MCPS, 0, "MCPS")
+        call my_alloc(MCPP, 0, "MCPP")
       ENDIF
 C---
       IF ((IMASADD > 0).OR.(NLOC_DMG%IMOD > 0)) THEN
-        ALLOCATE(PART_AREA(NPART)      ,STAT=stat)
+        call my_alloc(PART_AREA, NPART, "PART_AREA", stat=stat)
         PART_AREA(1:NPART)  = ZERO
-        ALLOCATE(ELE_AREA(NUMELC+NUMELTG)      ,STAT=stat)
+        call my_alloc(ELE_AREA, NUMELC+NUMELTG, "ELE_AREA", stat=stat)
         ELE_AREA(1:NUMELC+NUMELTG)  = ZERO
       ELSE
-        ALLOCATE(PART_AREA(1),ELE_AREA(1))
+        call my_alloc(PART_AREA, 1, "PART_AREA")
+        call my_alloc(ELE_AREA, 1, "ELE_AREA")
       END IF
 C---
       WRITE(IOUT,'(//)')
@@ -984,7 +992,7 @@ C
      G        IXR       , IMERGE2    ,IADMERGE2  ,NEL       ,DEFAULTS  ,
      H        GLOB_THERM,IBEAM_VECTOR,RBEAM_VECTOR)
 C
-       ELSEIF( MTN == 13) THEN
+       ELSEIF( IRIGID_MAT>0) THEN
 C Rigid material
            LFT=1
            LLT=NEL
@@ -1779,14 +1787,16 @@ C---------------------------------------------------------------
 ! RWALL penalty stiffness initialization
 !--------------------------------------------
         IF (SLN_PEN>0) THEN
-           CALL INIT_RWALL_PENALTY(ELBUF_TAB,                                              
-     1             numnod,  nparg,  ngroup,  iparg,   nummat,                    
-     2             nrwall,  nnprw,    nprw,   lprw,    slprw,                    
-     3             numelc,numeltg,  numels,numels8, numels10,                    
-     4           numels16,numels20,    ixc,   ixtg,      ixs,                    
-     5              ixs10,   ixs16,  ixs20,    ixt,      ixp,                    
+           CALL INIT_RWALL_PENALTY(ELBUF_TAB,                          
+     1             numnod,  nparg,  ngroup,  iparg,   nummat,          
+     2             nrwall,  nnprw,    nprw,   lprw,    slprw,          
+     3             numelc,numeltg,  numels,numels8, numels10,          
+     4           numels16,numels20,    ixc,   ixtg,      ixs,          
+     5              ixs10,   ixs16,  ixs20,    ixt,      ixp,          
      6                ixr,  numelt, numelp, numelr,    stifn,
-     7                mat_param,SLN_PEN,RWSTIF_PEN)
+     7         mat_param,SLN_PEN,RWSTIF_PEN,nrbykin,  nnpby ,         
+     8            npby  , slpby ,   lpby  ,  nrbe2,    irbe2,         
+     9            nrbe2l, slrbe2,lrbe2 )
         END IF
 C--------------------------------------------
 C Laser impact
@@ -1842,10 +1852,10 @@ C---------------------------------
         IF(N2D==0)NV46 = 6
         CALL INIGRAV_LOAD(
      1                    ELBUF_TAB       , IPART      , IGRPART   ,   IPARG  ,   IPART(I15H),
-     2                    IPART(I15A)     , IPART(I15B), X         ,   IXS    ,   IXQ        ,
-     3                    IXTG            , PM         , IPM       ,   BUFMAT ,   MULTI_FVM  ,
-     4                    ALE_CONNECTIVITY, NV46       , IGRSURF   ,   ITAB   ,   EBCS_TAB   ,
-     5                    NPC             , PLD        , MAT_PARAM)
+     2                    IPART(I15A)     , IPART(I15B), X         ,   SKEW   ,   IXS        ,
+     3                    IXQ             , IXTG       , PM        ,   IPM    ,   BUFMAT     ,
+     4                    MULTI_FVM       , ALE_CONNECTIVITY       ,   NV46   ,   IGRSURF    ,
+     5                    ITAB            , EBCS_TAB   , NPC       ,   PLD    ,   MAT_PARAM)
       ENDIF
 C---------------------------------
 C Initialization on 1D curves
@@ -1996,7 +2006,8 @@ C
      .                   ITAB, X ,MS, IN, FXB_MATRIX,
      .                   FXB_MATRIX_ADD,FXB_LAST_ADRESS,ICODE,NOM_OPT(1,PTR_NOPT_FXB+1))
 C
-         ALLOCATE(MBUFEL_TMP(LBUFEL), MDEPL_TMP(3*NUMNOD))
+         call my_alloc(MBUFEL_TMP, LBUFEL, "MBUFEL_TMP")
+         call my_alloc(MDEPL_TMP, 3*NUMNOD, "MDEPL_TMP")
 C
          NMANI=0
          DO I=1,LENVAR
@@ -2085,7 +2096,8 @@ C
             ENDIF
          ENDDO
 C
-         DEALLOCATE(MBUFEL_TMP, MDEPL_TMP)
+         CALL MY_DEALLOC(MBUFEL_TMP)
+         CALL MY_DEALLOC(MDEPL_TMP)
       ENDIF ! end flexible bodies
 C-----------------------------------------------------
 C Initialization and check of rigid bodies type /RBE2 :
@@ -2100,6 +2112,7 @@ C Initialization of joint type spring (PID33 and PID45)
 C------------------------------------------------------
       FLAG_KJ = 0
       DO NG=1,NGROUP
+        MTN = IPARG(1,NG)
         NEL = IPARG(2,NG)
         ITY = IPARG(5,NG)
         NFT = IPARG(3,NG)
@@ -2122,11 +2135,31 @@ C------------------------------------------------------
             CALL RINI45_RB(NEL,NUVAR,IPROP,IXR,NPBY,
      .                     LPBY,RBY,STIFR,GBUF%VAR,ITAB,
      .                     IGEO(1,IPROP),IXR_KJ,GBUF%MASS,MS,IN)
+          ELSEIF (IGTYP==23 .AND. MTN ==135) THEN
+            NUVAR = GBUF%G_NUVAR
+            FLAG_KJ = 1
+            CALL RINI135_RB(
+     .   NEL         ,NUVAR       ,IXR         ,NPBY        ,
+     .   LPBY        ,RBY         ,GBUF%VAR    ,ITAB        ,
+     .   IGEO(1,IPROP),MS         ,IN          ,NFT         ,
+     .   NUMELR      ,NNPBY       ,NRBODY                   ,
+     .   SLPBY       ,NUMNOD      ,NPROPGI     ,NRBY        ,
+     .   LTITR) 
           ENDIF
         ENDIF
       ENDDO
+C--------------------------------------------
+C     RBODY - SPRING MASS COMPUTATION :
+C--------------------------------------------
+      SPRING_CON_RBODY = 0
+      IF (NUMELR > 0) THEN
+        call rbody_spring_check(nrbykin, nnpby, npby, slpby, lpby, numnod,
+     .                          knod2el1d, s_nod2el1d, nod2el1d, numel, numelt, numelp, 
+     .                          numelr, numels, numelc, ixr, nixr,nparg, 
+     .                          iparg, ngroup, elbuf_tab,dtelem,spring_con_rbody)
+      ENDIF  
 C------------------------------------------------------
-C Initialization of joint type spring (PID33 and PID45)
+C Initialization of damping frequency range
 C------------------------------------------------------
       IF (NDAMP_FREQ_RANGE > 0) THEN
         call damping_range_init(ndamp,nrdamp,dampr,ngroup,nparg,iparg,elbuf_tab)    
@@ -2142,6 +2175,14 @@ C----------------------------------------------------------------
          WRITE(IOUT,1700)
          WRITE(IOUT,'(5(I10,1X,1PG20.13))') (ITAB(I),MCP(I),I=1,NUMNOD)
         ENDIF
+      ENDIF
+C---------------------------------------------
+C     Q1Np enriched element mass calculation
+C---------------------------------------------
+      IF (NUMELQ1NP_G > 0) THEN
+        CALL Q1NP_INIT(IPARG, ELBUF_TAB, X, V, MS, MSSA, PARTSAV, PM,
+     .                 NUMNOD, NUMELS, NPART, NPROPM, NUMMAT, NGROUP, NPARG,
+     .                 SFILL, IREST_MSELT)
       ENDIF
 C-------------------------------------
 C Mass and Inertia by parts
@@ -2291,6 +2332,8 @@ C
       WRITE(IOUT,'(//)')
       WRITE(IOUT,1300)
       WRITE(IOUT,1400) TOTADDMAS
+      WRITE(IOUT,1800)
+      WRITE(IOUT,1900) TOTADDINER
 C
 C-----------------------------------------------------------------------------------
 C     Initialization of non-local variable regularization structure for damage models
@@ -2303,22 +2346,26 @@ c
 c-----------------------------------------------------------------------------------
 
       IF (GLOB_THERM%ITHERM_FE > 0 ) THEN
-        DEALLOCATE(MCPS,MCPP)
-        IF(NUMELS10 > 0.OR.NUMELS16 > 0 .OR.NUMELS20 > 0)
-     .    DEALLOCATE(MCPSX)
+        CALL MY_DEALLOC(MCPS)
+        CALL MY_DEALLOC(MCPP)
+        IF(NUMELS10 > 0.OR.NUMELS16 > 0 .OR.NUMELS20 > 0)     CALL MY_DEALLOC(MCPSX)
       ENDIF
       IF (N2D/=1) TOTMAS1=TOTMAS ! for mass0_start
 C
-      DEALLOCATE (PARTSAV)
+      CALL MY_DEALLOC(PARTSAV)
 
-      DEALLOCATE(MS_LAYERC,ZI_LAYERC,MSZ2C,ZPLY)
-      DEALLOCATE (PARTSAV1_PON)
+      CALL MY_DEALLOC(MS_LAYERC)
+      CALL MY_DEALLOC(ZI_LAYERC)
+      CALL MY_DEALLOC(MSZ2C)
+      CALL MY_DEALLOC(ZPLY)
+      CALL MY_DEALLOC(PARTSAV1_PON)
 C
-      DEALLOCATE(CONNEC,IRIG_NODE)
-      IF(ALLOCATED(PART_AREA))DEALLOCATE(PART_AREA)
+      CALL MY_DEALLOC(CONNEC)
+      CALL MY_DEALLOC(IRIG_NODE)
+      IF(ALLOCATED(PART_AREA))CALL MY_DEALLOC(PART_AREA)
       DEALLOCATE(I8MI)
-      IF(ALLOCATED(VPRELOAD)) DEALLOCATE (VPRELOAD)
-      IF(ALLOCATED(ELE_AREA))DEALLOCATE(ELE_AREA)
+      IF(ALLOCATED(VPRELOAD)) CALL MY_DEALLOC(VPRELOAD)
+      IF(ALLOCATED(ELE_AREA))CALL MY_DEALLOC(ELE_AREA)
 c-----------      
       RETURN
 c-----------      
@@ -2350,6 +2397,10 @@ c-----------
      . 5X,'INITIAL NODAL MCP         ',/
      . 5X,'--------------------------',/
      . 6X,5('NODE MCP        ',15X),'NODE MCP        '/)
+ 1800 FORMAT(//
+     . 5X,'TOTAL ADDED NON-STRUCTURAL INERTIA',/
+     . 5X,'------------------'/)
+ 1900 FORMAT(5X,' TOTAL ADDED INERTIA = ',1PG20.13//)
       RETURN
       END
 C
@@ -2923,11 +2974,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J
+      INTEGER I
       my_real MAS,SM,XX,YY,ZZ,XY,YZ,ZX,XG,YG,ZG,IXX,IXY,IYY,IYZ,IZZ,IZX,EK,VX,VY,VZ
       CHARACTER(LEN=NCHARTITLE) :: TEXT
-C======================================================================|
-C
       WRITE(IOUT,'(//,A)')'PART MASS & INERTIA'
       WRITE(IOUT,'(A,/)') '-------------------'
 C
@@ -3120,7 +3169,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,NPE1,N,JJ,IIS,IIS0,NN,NC(NEL,4)
+      INTEGER I,N,JJ,IIS,IIS0,NN,NC(NEL,4)
 C     REAL
 C-----------------------------------------------
        IIS0= NUSOLID+4+NVSOLID1 + NVSOLID2 + NVSOLID3 + NVSOLID4 + NVSOLID5
@@ -3191,14 +3240,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG,IPID,IMID,MID,PID,ITY,IGTYP,ETY,N_NOD,ISOLNOD,
+      INTEGER I,NG,IPID,IMID,MID,ITY,IGTYP,ETY,N_NOD,ISOLNOD,
      .        IHBE,ISMSTR,ICPRE,JCVT,IINT,IHKT,ITET4,ITET10,IMATVIS,NPT,NLY,
-     .        ICSTR,IDRIL,ITHK,IPLAS,I2GEO(NUMGEO),NG2,NG1,NG0,JG,ETYE,
+     .        ICSTR,IDRIL,ITHK,IPLAS,I2GEO(NUMGEO),NG2,NG1,NG0,ETYE,
      .        IH4,IH3,IGMAT,I2GEO1(NUMGEO),I2GEO2(NUMGEO),IHBE0,
      .        IP,NFT,IP2NG1(NPART),IP2NG2(NPART),LST,ICONTROL,IPOS
       my_real
-     .   MAS,SM,XX,YY,ZZ,XY,YZ,ZX,XG,YG,ZG,
-     .   IXX,IXY,IYY,IYZ,IZZ,IZX,EK,VX,VY,VZ,HM,HR,HF,DN,QA,QB,QH,
+     .   DN,QA,QB,QH,
      .   NS_A,NS_B,DM,QF,QM,QR,DF
       CHARACTER(LEN=NCHARTITLE) TEXT
       CHARACTER(LEN=23), DIMENSION(27) :: EL_TYP
@@ -3383,7 +3431,7 @@ C-----
          ITY = IPARG(5,NG)
          ISOLNOD = IPARG(28,NG)
          IHBE=IPARG(23,NG)
-         NPT =MAX(NPT,IPARG(6,NG))
+         NPT = IPARG(6,NG)
         ELSE
          ITY =0
         END IF

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_funct_python_mod   ../starter/source/tools/curve/hm_read_funct_python.F90
 !||--- called by ------------------------------------------------------
@@ -73,6 +74,7 @@
           USE SUBMODEL_MOD
           USE HM_OPTION_READ_MOD
           USE PYTHON_FUNCT_MOD
+          USE MY_ALLOC_MOD
           USE PRECISION_MOD, only : WP
           USE NAMES_AND_TITLES_MOD, only : ncharline, nchartitle
           use, intrinsic :: iso_c_binding , only : c_char, c_null_char
@@ -174,8 +176,8 @@
                 table(l)%ndim = -1
                 allocate(table(l)%X(1))
                 allocate(table(l)%Y)
-                allocate(table(l)%X(1)%values(funct_python_nsamples))
-                allocate(table(l)%Y%values(funct_python_nsamples))
+                call my_alloc(table(l)%X(1)%values, funct_python_nsamples, "table(l)%X(1)%values")
+                call my_alloc(table(l)%Y%values, funct_python_nsamples, "table(l)%Y%values")
                 !write(6,*) "Python test: funct_id",func_id,"name is",array_to_string(python%functs(i)%name)
                 if(array_to_string(python%functs(i)%name) =="sync"//C_NULL_CHAR) then
                   !write(6,*) "Python test: funct_id",func_id,"is sync"

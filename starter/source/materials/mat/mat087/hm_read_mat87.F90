@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat87_mod   ../starter/source/materials/mat/mat087/hm_read_mat87.F90
 !||--- called by ------------------------------------------------------
 !||    hm_read_mat         ../starter/source/materials/mat/hm_read_mat.F90
 !||====================================================================
       module hm_read_mat87_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 ! \brief Reading material parameters of /MAT/LAW87
@@ -75,6 +76,7 @@
           use func_table_copy_mod
           use mat_table_copy_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                 implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -471,16 +473,12 @@
           end if
 !
           !< Allocation of material parameters tables
-          allocate (matparam%iparam(matparam%niparam))
-          allocate (matparam%uparam(matparam%nuparam))
-          allocate (matparam%table (matparam%ntable ))
+          call my_alloc(matparam%iparam,matparam%niparam,"matparam%iparam")
+          call my_alloc(matparam%uparam,matparam%nuparam,"matparam%uparam")
+          allocate(matparam%table(matparam%ntable))
 !
           !< Number of user variables
-          if (iflag == 2) then
-            nuvar = 1 !< Martensite volume fraction for Hansel
-          else
-            nuvar = 0
-          end if
+          nuvar = 1
 !
           !< Material integer parameters
           matparam%iparam(1)  = iflag
@@ -720,8 +718,8 @@
 1009      format(/                                                                 &
             5X,"SWIFT-VOCE YIELD STRESS PARAMETERS:                    ",/,         &
             5X,"-----------------------------------                    ",/,         &
-            5X,"COWPER SEYMONDS EXPONENT P . . . . . . . . . . . . . .=",1PG20.13/  &
-            5X,"COWPER SEYMONDS COEFFICIENT C. . . . . . . . . . . . .=",1PG20.13/  &
+            5X,"COWPER SYMONDS EXPONENT P. . . . . . . . . . . . . . .=",1PG20.13/  &
+            5X,"COWPER SYMONDS COEFFICIENT C . . . . . . . . . . . . .=",1PG20.13/  &
             5X,"YIELD VOCE PARAMETER Q . . . . . . . . . . . . . . . .=",1PG20.13/  &
             5X,"YIELD VOCE PARAMETER B . . . . . . . . . . . . . . . .=",1PG20.13/  &
             5X,"YIELD VOCE PARAMETER K0. . . . . . . . . . . . . . . .=",1PG20.13/  &

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,29 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    soltosph_on2   ../engine/source/elements/sph/soltosph_on2.F
+!||    soltosph_on2     ../engine/source/elements/sph/soltosph_on2.F
 !||--- called by ------------------------------------------------------
-!||    sphprep        ../engine/source/elements/sph/sphprep.F
+!||    sphprep          ../engine/source/elements/sph/sphprep.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg         ../engine/source/output/message/message.F
-!||    arret          ../engine/source/system/arret.F
-!||    my_barrier     ../engine/source/system/machine.F
-!||    startimeg      ../engine/source/system/timer.F
-!||    stoptimeg      ../engine/source/system/timer.F
+!||    ancmsg           ../engine/source/output/message/message.F
+!||    arret            ../engine/source/system/arret.F
+!||    my_barrier       ../engine/source/system/machine.F
+!||    startimeg        ../engine/source/system/timer.F
+!||    stoptimeg        ../engine/source/system/timer.F
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    message_mod    ../engine/share/message_module/message_mod.F
-!||    soltosph_mod   ../engine/share/modules/soltosph_mod.F
-!||    sphbox         ../engine/share/modules/sphbox.F
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    soltosph_mod     ../engine/share/modules/soltosph_mod.F
+!||    sphbox           ../engine/share/modules/sphbox.F
 !||====================================================================
       SUBROUTINE SOLTOSPH_ON2(
      .   X      ,SPBUF    ,KXSP   ,IPARTSP ,ELBUF_TAB,
@@ -50,6 +53,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -81,7 +86,7 @@ C-----
  
 C-----------------------------------------------
       IF(ITASK==0)THEN
-        ALLOCATE(WSPCLOUD(NUMSPH),STAT=IERROR)
+        call my_alloc(WSPCLOUD, NUMSPH, "WSPCLOUD", stat=IERROR)
         IF(IERROR/=0) THEN
           CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .                C1='(SOLIDS to SPH)')
@@ -149,7 +154,7 @@ C-----------------------------------------------
             WASPACT(NSPHACT)=NP
           END IF
         END DO
-        DEALLOCATE(WSPCLOUD)
+        call my_dealloc(WSPCLOUD)
       END IF
 C-----------------------------------------------
       RETURN

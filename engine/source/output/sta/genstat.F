@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    genstat                   ../engine/source/output/sta/genstat.F
 !||--- called by ------------------------------------------------------
@@ -85,6 +86,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    message_mod               ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod             ../common_source/modules/ale/multi_fvm_mod.F90
 !||    my_alloc_mod              ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod            ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                ../common_source/modules/output/output_mod.F90
 !||    stack_mod                 ../engine/share/modules/stack_mod.F
 !||    stat_sphcel_full_mod      ../engine/source/output/sta/stat_sphcel_full.F90
@@ -105,7 +107,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      B                  LENGT    ,ISKEW   ,V        ,VR      ,LENGQ   ,
      C                  MULTI_FVM,BUFMAT  ,NPBY     ,LPBY    ,STACK   ,
      D                  DRAPE_SH4N ,DRAPE_SH3N,DR,DRAPEG,MAT_PARAM    ,
-     E                  IPARTSPH , OUTPUT ,LENGSPH  ,NUMSPHG ,ITHERM_FE)
+     E                  IPARTSPH , OUTPUT ,LENGSPH  ,NUMSPHG ,ITHERM_FE,
+     F                  IRESP)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -126,6 +129,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -175,10 +179,11 @@ C-----------------------------------------------
       TYPE(OUTPUT_),INTENT(INOUT) :: OUTPUT
       INTEGER, INTENT(IN)  :: LENGSPH
       INTEGER, INTENT(IN)  :: NUMSPHG
+      INTEGER, INTENT(IN)  :: IRESP
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      CHARACTER CHSTAT*4, FILNAM*100, T10*10, MES*40
+      CHARACTER CHSTAT*4, FILNAM*100
       INTEGER FILEN, I, IERR, J, N
       INTEGER SIZLOC, SIZP0
  
@@ -205,16 +210,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-      CALL MY_ALLOC(ITABG,LENG)
-      CALL MY_ALLOC(NODTAG,NUMNOD)
-      CALL MY_ALLOC(STAT_INDXC,2*LENGC)
-      CALL MY_ALLOC(STAT_INDXTG,2*LENGTG)
-      CALL MY_ALLOC(STAT_INDXQ,2*LENGQ)
-      CALL MY_ALLOC(STAT_INDXS,2*LENGS)
-      CALL MY_ALLOC(STAT_INDXR,2*LENGR)
-      CALL MY_ALLOC(STAT_INDXP,2*LENGP)
-      CALL MY_ALLOC(STAT_INDXT,2*LENGT)
-      CALL MY_ALLOC(STAT_INDXSPH,2*LENGSPH)
+      call my_alloc(ITABG, LENG, "ITABG")
+      call my_alloc(NODTAG, NUMNOD, "NODTAG")
+      call my_alloc(STAT_INDXC, 2*LENGC, "STAT_INDXC")
+      call my_alloc(STAT_INDXTG, 2*LENGTG, "STAT_INDXTG")
+      call my_alloc(STAT_INDXQ, 2*LENGQ, "STAT_INDXQ")
+      call my_alloc(STAT_INDXS, 2*LENGS, "STAT_INDXS")
+      call my_alloc(STAT_INDXR, 2*LENGR, "STAT_INDXR")
+      call my_alloc(STAT_INDXP, 2*LENGP, "STAT_INDXP")
+      call my_alloc(STAT_INDXT, 2*LENGT, "STAT_INDXT")
+      call my_alloc(STAT_INDXSPH, 2*LENGSPH, "STAT_INDXSPH")
 C-----------------------------------------------
       IS_FILE_TO_BE_WRITTEN = ((ISPMD == 0) .AND. (.NOT.IS_STAT_INIMAP_SINGLE))  !/STATE/INIMAP* is using an independent state file
 C===============================================|
@@ -428,7 +433,7 @@ C-----------------------------------------------
         ENDDO
       ENDIF
 C-----------------------------------------------
-      CALL STAT_NODE(X,NUMNOD,ITAB,ITABG,LENG,NODGLOB,WEIGHT,NODTAG)
+      CALL STAT_NODE(X,NUMNOD,ITAB,ITABG,LENG,NODGLOB,WEIGHT,NODTAG,IRESP)
       
       IF(IZIPSTRS /= 0 .AND. IS_FILE_TO_BE_WRITTEN)THEN
         WRITE(IUGEO,'(A)')'/STATE/STR_FILE'
@@ -462,9 +467,9 @@ C   ALLOCATION OF TABLES
 C-----------------------------------------------
       IERR = 0
       IF(SIZLOC >= 1) THEN
-        ALLOCATE(WA(SIZLOC),STAT=IERR)
+        call my_alloc(WA, SIZLOC, "WA", stat=IERR)
       ELSE
-        ALLOCATE(WA(1))
+        call my_alloc(WA, 1, "WA")
       ENDIF
       IF(IERR/=0)THEN
          CALL ANCMSG(MSGID=252,ANMODE=ANINFO,
@@ -474,7 +479,7 @@ C-----------------------------------------------
 
       IERR = 0
       SIZP0 = MAX(1,SIZP0)
-      ALLOCATE(WAP0(SIZP0),STAT=IERR)
+      call my_alloc(WAP0, SIZP0, "WAP0", stat=IERR)
       IF(IERR/=0)THEN
          CALL ANCMSG(MSGID=252,ANMODE=ANINFO,
      .        I1=IERR)
@@ -625,8 +630,8 @@ C-----------------------------------------------
      5                        ELBUF_TAB  ,WA       ,WAP0        ,SPBUF         ,ITAB          , 
      6                        IPM        ,OUTPUT%STATE%STAT_SPH(2),IPART )
 C-----------------------------------------------
-      IF(SIZLOC >= 1) DEALLOCATE(WA)
-      IF(SIZP0 >= 1) DEALLOCATE(WAP0)
+      IF(SIZLOC >= 1) call my_dealloc(WA)
+      IF(SIZP0 >= 1) call my_dealloc(WAP0)
 C-----------------------------------------------
 C   END
 C-----------------------------------------------
@@ -641,16 +646,16 @@ C-----------------------------------------------
         WRITE (ISTDO,1000) FILNAM(1:FILEN)
       ENDIF
 C-----------------------------------------------
-      DEALLOCATE(ITABG)
-      DEALLOCATE(NODTAG)
-      DEALLOCATE(STAT_INDXC)
-      DEALLOCATE(STAT_INDXTG)
-      DEALLOCATE(STAT_INDXQ)
-      DEALLOCATE(STAT_INDXS)
-      DEALLOCATE(STAT_INDXR)
-      DEALLOCATE(STAT_INDXP)
-      DEALLOCATE(STAT_INDXT)
-      DEALLOCATE(STAT_INDXSPH)
+      call my_dealloc(ITABG)
+      call my_dealloc(NODTAG)
+      call my_dealloc(STAT_INDXC)
+      call my_dealloc(STAT_INDXTG)
+      call my_dealloc(STAT_INDXQ)
+      call my_dealloc(STAT_INDXS)
+      call my_dealloc(STAT_INDXR)
+      call my_dealloc(STAT_INDXP)
+      call my_dealloc(STAT_INDXT)
+      call my_dealloc(STAT_INDXSPH)
       
  1000 FORMAT (4X,' STATE FILE:',1X,A,' WRITTEN')
 C

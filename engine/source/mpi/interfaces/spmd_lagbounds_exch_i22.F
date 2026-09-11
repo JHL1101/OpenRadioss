@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    spmd_lagbounds_exch_i22   ../engine/source/mpi/interfaces/spmd_lagbounds_exch_i22.F
@@ -28,7 +29,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    message_mod               ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod       ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod                  ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_LAGBOUNDS_EXCH_I22(
      1   BMINMAL_SPMD, BMINMAL   ,ISENDTO, IRCVFROM , NIN    )  
@@ -39,7 +40,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -105,9 +106,8 @@ C=======================================================================
       DO P = 1, NSPMD
         IF(P/=LOC_PROC) THEN
           MSGTYP = MSGOFF
-          CALL MPI_ISEND(
-     .      BMINMA(1,LOC_PROC),6  ,REAL  ,IT_SPMD(P),MSGTYP,
-     .      SPMD_COMM_WORLD    ,REQ_SB(P),IERROR)
+          CALL SPMD_ISEND(
+     .      BMINMA(1:6,LOC_PROC),6,IT_SPMD(P),MSGTYP,REQ_SB(P))
         ENDIF
       ENDDO
       !-------------------------------------------!
@@ -119,9 +119,8 @@ C=======================================================================
           NBIRECV=NBIRECV+1
           IRINDEXI(NBIRECV)=P
           MSGTYP = MSGOFF
-          CALL MPI_RECV(
-     .      BMINMA(1,P)   ,6      ,REAL  ,IT_SPMD(P),MSGTYP,
-     .      SPMD_COMM_WORLD,STATUS,IERROR)
+          CALL SPMD_RECV(
+     .      BMINMA(1:6,P),6,IT_SPMD(P),MSGTYP,STATUS)
         ENDIF
       ENDDO
       !-------------------------------------------!
@@ -129,7 +128,7 @@ C=======================================================================
       !-------------------------------------------!
       DO P = 1, NSPMD
         IF(P/=LOC_PROC) THEN
-          CALL MPI_WAIT(REQ_SB(P),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_SB(P),STATUS)
         ENDIF
       ENDDO
       !-------------------------------------------!

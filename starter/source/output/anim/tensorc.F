@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    tensorc        ../starter/source/output/anim/tensorc.F
 !||--- called by ------------------------------------------------------
@@ -53,7 +54,6 @@ C-----------------------------------------------
      .   EL2FA(*),IXC(NIXC,*), IGEO(NPROPGI,*),                         
      .   NELCUT,NBF,IADP(*),NBF_L,NBPART,                               
      .   IXTG(NIXTG,*)                                                  
-      REAL WA(3*NBF_L)                                                  
       my_real                                                           
      .   TENS(3,*), X(3,*)                                     
       TYPE (ELBUF_STRUCT_), DIMENSION(NGROUP), TARGET :: ELBUF_TAB
@@ -62,13 +62,12 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------                        
 C     REAL                                                    
       my_real                                                           
-     .   OFF, FAC, A1, A2, A3, THK                   
+     .   FAC, A1, A2, A3, THK                   
       REAL R4(18)                                                       
-      INTEGER I,J,I1,I2,N, NG, NEL, NFT, ITY, LFT, NPT, IL,IPT,NLAY,                 
+      INTEGER I,J,I1,N, NG, NEL, NFT, ITY, LFT, NPT, IPT,NLAY,                 
      .  LLT, MLW, ISTRAIN, ISTRE,
      .  N0,NNI,NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,II(8)
       TYPE(G_BUFEL_) ,POINTER :: GBUF
-      TYPE(L_BUFEL_) ,POINTER :: LBUF
       TYPE(BUF_LAY_) ,POINTER :: BUFLY
 C=======================================================================                       
       DO J=1,18                                                      

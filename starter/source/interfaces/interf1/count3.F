@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,28 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    count3      ../starter/source/interfaces/interf1/count3.F
+!||    count3         ../starter/source/interfaces/interf1/count3.F
 !||--- called by ------------------------------------------------------
-!||    inslin      ../starter/source/interfaces/interf1/inslin.F
-!||    insurf      ../starter/source/interfaces/interf1/insurf.F
-!||    insurf23    ../starter/source/interfaces/interf1/insurf23.F
+!||    inslin         ../starter/source/interfaces/interf1/inslin.F
+!||    insurf         ../starter/source/interfaces/interf1/insurf.F
+!||    insurf23       ../starter/source/interfaces/interf1/insurf23.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE COUNT3(IRECT,MNN,N,NRT,NTAG)
 C-----------------------------------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -53,7 +56,7 @@ C-----------------------------------------------
         INTEGER, DIMENSION(:), ALLOCATABLE ::  INDEX0
 C-----------------------------------------------
 C
-      ALLOCATE(INDEX0(2*NUMNOD))
+      call my_alloc(INDEX0, 2*NUMNOD, "INDEX0")
       NTAG(0) = 1      ! special case IRECT=0
       N = 0
       NINDEX0 = 0
@@ -99,7 +102,7 @@ C Need to sort MNM but avoid treatment over NUMNOD if too big
         NTAG(INDEX0(K)) = 0
       ENDDO        
 
-      DEALLOCATE(INDEX0)
+      CALL MY_DEALLOC(INDEX0)
 C
       RETURN
       END

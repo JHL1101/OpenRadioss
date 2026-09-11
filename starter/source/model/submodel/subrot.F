@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    subrotvect                      ../starter/source/model/submodel/subrot.F
 !||--- called by ------------------------------------------------------
@@ -45,6 +46,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    lecsec42                        ../starter/source/tools/sect/hm_read_sect.F
 !||    lecsec4bolt                     ../starter/source/tools/sect/lecsec4bolt.F
 !||    lectrans                        ../starter/source/model/transformation/lectrans.F
+!||    rpart_inivel_check              ../starter/source/constraints/general/rbody/rbody_part_modif.F90
 !||--- calls      -----------------------------------------------------
 !||    euler_vrot                      ../starter/source/model/submodel/euler_vrot.F
 !||--- uses       -----------------------------------------------------
@@ -342,7 +344,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER  I,L,K,CPTZERO,IDSUBMODEL,SUB_LEVEL,CUR_SUBMOD
       my_real
-     .   ROT(9),P(3),X0(3),L11,L22,L33,L12,L23,L13,S11,S12,
+     .   ROT(9),X0(3),L11,L22,L33,L12,L23,L13,S11,S12,
      .   S13,S21,S22,S23,S31,S32,S33,R11,R12,
      .   R13,R21,R22,R23,R31,R32,R33   
 C======================================================================   

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    execargcheck           ../starter/source/starter/execargcheck.F
 !||--- called by ------------------------------------------------------
@@ -103,7 +104,7 @@ C-----------------------------------------------
      .    '-INSPIRE_ALM' , '-FLUSH_RST', '-CHECK',
      .    '-HSTP_READ' , '-HSTP_WRITE', '-RXALEA', '-RSEED',
      .    '-PREVIEW',
-     .    '-GRP_SIZE' , '-PYTHON' , '-THNMS1','-CHECKSUM_READ'/
+     .    '-GRP_SIZE' , '-PYTHON' , '-THNMS1','-CHECKSUM_REPORT'/
        INTEGER :: RUNQA
        CHARACTER (LEN=255) :: STR
 C-----------------------------------------------
@@ -189,7 +190,7 @@ c
 !       ------------------------
         
         OUTPUT%TH%DUMP_THNMS1_FILE = 0
-        OUTPUT%CHECKSUM%ST_CHECKSUM_READ = 0
+        OUTPUT%CHECKSUM%ST_CHECKSUM_REPORT = 0
 
        ARGS2(1:2096) = ''
 
@@ -315,8 +316,8 @@ C------------------------------------------------
 C------------------------------------------------
             CASE ( '-THNMS1')
                 OUTPUT%TH%DUMP_THNMS1_FILE = 1
-            CASE ( '-CHECKSUM_READ')
-                OUTPUT%CHECKSUM%ST_CHECKSUM_READ = 1
+            CASE ( '-CHECKSUM_REPORT')
+                OUTPUT%CHECKSUM%ST_CHECKSUM_REPORT = 1
                 IF (PCHECKSUMI==0) PCHECKSUMI = I
             CASE ( '-METIS_SEED') 
                ! nothing here, called again in grid2mat
@@ -339,7 +340,7 @@ C------------------------------------------------
      *                 ARGP == '-TIMER' .OR. ARGP =='-DYLIB'.OR.
      *                 ARGP == '-DYNAMIC_LIB' .OR. ARGP == '-DD_TUNING'.OR.
      *                 ARGP == '-RSEED' .OR. ARGP == '-RXALEA'.OR. ARGP== "-METIS_SEED" .OR.
-     *                 ARGP == '-GRP_SIZE' .OR. ARGP == '-MDS_LIBPATH' .OR. ARGP == '-MDSDIR' .OR. ARGP == '-CHECKSUM_READ' )THEN 
+     *                 ARGP == '-GRP_SIZE' .OR. ARGP == '-MDS_LIBPATH' .OR. ARGP == '-MDSDIR' .OR. ARGP == '-CHECKSUM_REPORT' )THEN 
                        ERR = 0
                    ELSE
                        ERR = 1
@@ -1302,7 +1303,7 @@ C-----------------------------------------------
      *                  'Optional value, set the seed value for nodal random noise'
        WRITE(6,'(A,A)') '  -python                              : ',
      *                  'Python function in model is safe and can be used'
-       WRITE(6,'(A,A)') '  -checksum_read [rootname]            : ',
+       WRITE(6,'(A,A)') '  -checksum_report [rootname]            : ',
      *                  'Parse output files for /CHECKSUM fingerprints and [rootname].report file'
 
        WRITE(6,'(A)') ' '

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    law77_upd              ../starter/source/materials/mat/mat077/law77_upd.F
 !||--- called by ------------------------------------------------------
@@ -48,7 +49,6 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER  MAT_ID,NFUNC,NUPARAM
-      INTEGER STF,SNPC
       INTEGER ,DIMENSION(NFUNC)   :: IFUNC
       INTEGER :: NPC(*)
       my_real PLD(*)
@@ -58,14 +58,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: I,J,K,II,JJ,NDIM,NLOAD,NULOAD,NPT,NEPSP,FUNC_ID,
-     .           FUNC_T,FUNC_C,FUNC_S,ICAS,ICONV,
-     .           NPT_TRAC,NPT_COMP,NPT_SHEAR,NPTMAX,IFUN_NUP,IFX,IFY,STAT,
-     .           LEN,IX0,IY0,IFLAG,IFLAG0,NF,ITENS,ICHK,IC1,IC2,IBID
-      my_real :: XINT,YINT,EMAX,E0,EPSMAX,EPS0,EPST1,FAC,DERI,
+      INTEGER :: I,K,II,JJ,NLOAD,NULOAD,FUNC_ID,
+     .           IFLAG,IFLAG0,ITENS,ICHK,IC1,IC2,IBID
+      my_real :: EMAX,E0,EPSMAX,EPS0,EPST1,FAC,DERI,
      .           X0,Y0,X1,Y1,DX,DY,STIFFMIN,STIFFMAX,STIFFINI,STIFFAVG
-      INTEGER ,DIMENSION(:)  ,ALLOCATABLE :: SIZE
-      my_real ,DIMENSION(:)  ,ALLOCATABLE :: X_COMP,Y_COMP
       my_real ,DIMENSION(NFUNC) :: RATE,YFAC
 C=======================================================================
       NLOAD  = INT(UPARAM(7))

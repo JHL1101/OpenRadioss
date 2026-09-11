@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    facepoly   ../starter/source/airbag/facepoly.F
+!||    facepoly       ../starter/source/airbag/facepoly.F
 !||--- called by ------------------------------------------------------
-!||    fvmesh1    ../starter/source/airbag/fvmesh.F
+!||    fvmesh1        ../starter/source/airbag/fvmesh.F
 !||--- calls      -----------------------------------------------------
-!||    arret      ../starter/source/system/arret.F
+!||    arret          ../starter/source/system/arret.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE FACEPOLY(QUAD  , TRI  , NTRI  , IPOLY, RPOLY  ,
      .                    N     , NORMF, NORMT , NSMAX, NNP    ,
@@ -36,6 +38,7 @@ C
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -792,7 +795,7 @@ C ALGORITME V14
 C-------------------------
 C Node-segment table
 C-------------------------
-        ALLOCATE (NODSEG(NNO,5))
+        call my_alloc(NODSEG, NNO, 5, "NODSEG")
         DO I=1,NNO
            DO J=1,5
               NODSEG(I,J)=0
@@ -1372,7 +1375,7 @@ C
            ENDIF
         ENDDO
 C
-        DEALLOCATE (NODSEG)
+        CALL MY_DEALLOC(NODSEG)
 C
         INFO=0
         NPOLY=0

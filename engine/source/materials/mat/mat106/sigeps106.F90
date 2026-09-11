@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps106_mod   ../engine/source/materials/mat/mat106/sigeps106.F90
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@
 !||--- called by ------------------------------------------------------
 !||    mulaw                   ../engine/source/materials/mat_share/mulaw.F90
 !||--- calls      -----------------------------------------------------
+!||    mstrain_rate            ../engine/source/materials/mat_share/mstrain_rate.F
 !||    table_mat_vinterp       ../engine/source/materials/tools/table_mat_vinterp.F
 !||--- uses       -----------------------------------------------------
 !||    constant_mod            ../common_source/modules/constant_mod.F
@@ -43,12 +45,13 @@
         subroutine sigeps106(                                                    &
           nel      ,matparam ,nuvar    ,time     ,rho      ,volume   ,           &
           depsxx   ,depsyy   ,depszz   ,depsxy   ,depsyz   ,depszx   ,           &
+          epspxx   ,epspyy   ,epspzz   ,epspxy   ,epspyz   ,epspzx   ,           &
           sigoxx   ,sigoyy   ,sigozz   ,sigoxy   ,sigoyz   ,sigozx   ,           &
           signxx   ,signyy   ,signzz   ,signxy   ,signyz   ,signzx   ,           &
           soundsp  ,uvar     ,off      ,pla      ,dpla     ,seq      ,           &
           temp     ,jthe     ,jlag     ,fheat    ,et       ,sigy     ,           &
           nvartmp  ,vartmp   ,timestep ,epsd     ,inloc    ,dplanl   ,           &
-          ngl      )
+          ngl      ,israte   ,asrate   )
 !----------------------------------------------------------------
 !   M o d u l e s
 !----------------------------------------------------------------
@@ -76,6 +79,12 @@
           real(kind=WP), dimension(nel), intent(in)    :: depsxy   !< Strain increment xy
           real(kind=WP), dimension(nel), intent(in)    :: depsyz   !< Strain increment yz
           real(kind=WP), dimension(nel), intent(in)    :: depszx   !< Strain increment zx
+          real(kind=WP), dimension(nel), intent(in)    :: epspxx   !< Total strain rate component xx
+          real(kind=WP), dimension(nel), intent(in)    :: epspyy   !< Total strain rate component yy
+          real(kind=WP), dimension(nel), intent(in)    :: epspzz   !< Total strain rate component zz
+          real(kind=WP), dimension(nel), intent(in)    :: epspxy   !< Total strain rate component xy
+          real(kind=WP), dimension(nel), intent(in)    :: epspyz   !< Total strain rate component yz
+          real(kind=WP), dimension(nel), intent(in)    :: epspzx   !< Total strain rate component zx
           real(kind=WP), dimension(nel), intent(in)    :: sigoxx   !< Previous stress xx
           real(kind=WP), dimension(nel), intent(in)    :: sigoyy   !< Previous stress yy
           real(kind=WP), dimension(nel), intent(in)    :: sigozz   !< Previous stress zz
@@ -107,10 +116,12 @@
           integer,                       intent(in)    :: inloc    !< Non-local regularization flag
           real(kind=WP), dimension(nel), intent(inout) :: dplanl   !< Non-local plastic strain increment
           integer,       dimension(nel), intent(in)    :: ngl      !< Global element numbers
+          integer,                       intent(in)    :: israte   !< Strain rate filtering flag
+          real(kind=WP),                 intent(in)    :: asrate   !< Strain rate filtering coefficient
 !----------------------------------------------------------------
 !  L o c a l  V a r i a b l e s
 !----------------------------------------------------------------
-          integer :: i,ii,nmax,vp,iter,nindx,indx(nel)
+          integer :: i,ii,nmax,vp,iter,nindx,indx(nel),idev
           real(kind = WP) :: young(nel),nu(nel),shear(nel),bulk(nel),a,b,cm,cn,    &
             tmelt,tref,epsm,sigm,cs,cjc,deps0,eta,tol,t0
           real(kind = WP) :: ddep,dfdsig2,tempr,dphi_dlam
@@ -151,6 +162,14 @@
           tref  = matparam%therm%tref
           t0    = matparam%therm%tini
           tmelt = matparam%therm%tmelt
+!
+          !< Computation of strain rate
+          if (vp > 1 .and. vp <= 3) then
+            idev = vp - 2
+            call mstrain_rate(                                                   &
+              nel      ,israte   ,asrate   ,epsd     ,idev     ,                 &
+              epspxx   ,epspyy   ,epspzz   ,epspxy   ,epspyz   ,epspzx   )
+          endif
 !
           !< Recovering internal variables and initializations of local variables
           do i = 1,nel

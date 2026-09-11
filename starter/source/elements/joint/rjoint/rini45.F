@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rini45                 ../starter/source/elements/joint/rjoint/rini45.F
 !||--- called by ------------------------------------------------------
@@ -95,7 +96,7 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,IDSK1,IDSK2,JTYP,SKFLG,IFKNX,IFKNY,IFKNZ,
+      INTEGER I,IDSK1,IDSK2,JTYP,IFKNX,IFKNY,IFKNZ,
      .        IFKRX,IFKRY,IFKRZ,IFCNX,IFCNY,IFCNZ,IFCRX,IFCRY,IFCRZ,
      .        GET_U_PNU,GET_SKEW45,KFUNC,IL,IFM
       my_real KXX,KYY,KZZ,KRX,KRY,KRZ,KNN,KR,X1,Y1,Z1,LEN2,
@@ -118,10 +119,12 @@ C
       KRZ  = GET_U_GEO(9,IPROP)
       KNN  = GET_U_GEO(10,IPROP)
       SCF  = GET_U_GEO(11,IPROP)
+
       DO I=1,3
         STOP_ANGL_MIN(I) = GET_U_GEO(35+2*(I-1),IPROP)
         STOP_ANGL_MAX(I) = GET_U_GEO(36+2*(I-1),IPROP)
       ENDDO
+
       IFKNX = GET_U_PNU(1,IPROP,KFUNC) 
       IFKNY = GET_U_PNU(2,IPROP,KFUNC) 
       IFKNZ = GET_U_PNU(3,IPROP,KFUNC) 
@@ -135,6 +138,8 @@ C----
       K4 = KRX
       K5 = KRY
       K6 = KRZ
+  
+
       IF (IFKNX/=0) THEN
         XF = GET_U_FUNC(IFKNX,ZERO,DERI)
         K1  = MAX(KXX*DERI, EM20)
@@ -203,6 +208,7 @@ C
         XF = GET_U_FUNC(IFCRZ,ZERO,DERI)
         C6  = MAX(CRZ*DERI, EM20)
       ENDIF
+
       DO I=1,6
         IFM = GET_U_PNU(12+I,IPROP,KFUNC)
         KFM  = GET_U_GEO(40+I,IPROP)
@@ -365,11 +371,11 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,NNOD,N1,N2,N3,N4,IERR1,IELUSR,NN(6),HH
+      INTEGER I,J,NNOD,N1,N2,N3,N4,IERR1,IELUSR,NN(6),HH
       INTEGER NUMEL_KJ,ID_KJ,NNOD2,NNOD_REQ(9),NB_ROT
       my_real PP1,PP2,PP3,PP4,LEN,SCAL,EXMAX
       my_real VECT1_UPT(LSKEW),VECT2_UPT(LSKEW),Q(LSKEW),NR,T(3),
-     .        COSK,SINK,SI2,E,KSI,UMI,ERR,SCAL_SIGN
+     .        COSK,SINK,SI2,E,KSI,UMI,SCAL_SIGN
       DATA  UMI/-1.0/
 C=======================================================================
 C
@@ -843,11 +849,8 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,GET_U_SKEW,N1,N2,N3,ISK
-      my_real 
-     .        Q(LSKEW),GET_U_GEO,NR,T(3),COSK,SINK,
-     .        SI2,E,KSI,UMI,ERR,STOP_ANGL
-      DATA  UMI/-1.0/
+      INTEGER GET_U_SKEW,N1,N2,N3,ISK
+      my_real GET_U_GEO
 C-----------------------------------------------
       EXTERNAL  GET_U_GEO,GET_U_SKEW 
 C-----------------------------------------------

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_move_funct     ../starter/source/tools/curve/hm_read_move_funct.F
 !||--- called by ------------------------------------------------------
@@ -43,6 +44,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -102,7 +104,7 @@ C-----------------------------------------------
                         IF (FUNCRYPT(N) == 0) WRITE(IOUT,'(8X,1PG20.13,2X,1G20.13)')PLD(J),PLD(J+1)   
                      ENDDO
                   ELSEIF(SCX < ZERO) THEN
-                     ALLOCATE(PLD_TMP(NPC(N+1)))
+                     call my_alloc(PLD_TMP, NPC(N+1), "PLD_TMP")
                      CPT = 1
                      DO J = NPC(N),NPC(N+1)-1,2
                         PLD_TMP(J)   = PLD(NPC(N+1)-1-CPT)  *SCX
@@ -116,7 +118,7 @@ C-----------------------------------------------
                         PLD(J+1) = PLD_TMP(J+1)
                         IF (FUNCRYPT(N) == 0) WRITE(IOUT,'(8X,1PG20.13,2X,1G20.13)')PLD(J),PLD(J+1)   
                      ENDDO
-                     IF(ALLOCATED(PLD_TMP)) DEALLOCATE(PLD_TMP)
+                     IF(ALLOCATED(PLD_TMP)) CALL MY_DEALLOC(PLD_TMP)
                   ENDIF
                   EXIT
                ENDIF
@@ -131,7 +133,7 @@ C-----------------------------------------------
                        TABLE(N)%Y%VALUES(J)   = TABLE(N)%Y%VALUES(J)     +SHY
                     ENDDO
                   ELSE 
-                     ALLOCATE(PLD_TMP(SIZE(TABLE(N)%X(1)%VALUES)*2))
+                     call my_alloc(PLD_TMP, SIZE(TABLE(N)%X(1)%VALUES)*2, "PLD_TMP")
                      CPT = 1
                      DO J = 1,2*SIZE(TABLE(N)%X(1)%VALUES),2
                         PLD_TMP(J)     = TABLE(N)%X(1)%VALUES(CPT)  *SCX +SHX
@@ -146,7 +148,7 @@ C-----------------------------------------------
                         CPT = CPT + 2
                      ENDDO      
                      
-                     IF(ALLOCATED(PLD_TMP)) DEALLOCATE(PLD_TMP)                    
+                     IF(ALLOCATED(PLD_TMP)) CALL MY_DEALLOC(PLD_TMP)
                   ENDIF
                   EXIT
                ENDIF

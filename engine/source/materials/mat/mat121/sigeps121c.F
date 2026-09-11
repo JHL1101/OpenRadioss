@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps121c       ../engine/source/materials/mat/mat121/sigeps121c.F
 !||--- called by ------------------------------------------------------
@@ -82,7 +83,8 @@ C-----------------------------------------------
       INTEGER I,J,IRES,Ifail,NINDX,NINDX2,INDX(NEL),INDX2(NEL),
      .        IPOS(NEL),IAD(NEL),ILEN(NEL),IR,IS,IT
       my_real DTMIN,Xscale_FAIL,Yscale_FAIL,S1,S2,Q,S11(NEL),
-     .        S22(NEL),R_INTER,DFDEPSD(NEL),FAIL(NEL),SEQ(NEL)
+     .        S22(NEL),R_INTER,DFDEPSD(NEL),FAIL(NEL),SEQ(NEL),
+     .        EPSD_TMP(NEL)
 C=======================================================================
 c  
       IRES        = NINT(UPARAM(11)) ! Plastic projection method
@@ -139,7 +141,8 @@ c
         IPOS(1:NEL) = 1
         IAD (1:NEL) = NPF(IFUNC(4)) / 2 + 1
         ILEN(1:NEL) = NPF(IFUNC(4)+1) / 2 - IAD(1:NEL) - IPOS(1:NEL)
-        CALL VINTER2(TF,IAD,IPOS,ILEN,NEL,EPSD/Xscale_FAIL,DFDEPSD,FAIL)
+        EPSD_TMP(1:NEL) = EPSD(1:NEL) / Xscale_FAIL
+        CALL VINTER2(TF,IAD,IPOS,ILEN,NEL,EPSD_TMP,DFDEPSD,FAIL)
         FAIL(1:NEL) = Yscale_FAIL*FAIL(1:NEL)
       ENDIF
 c

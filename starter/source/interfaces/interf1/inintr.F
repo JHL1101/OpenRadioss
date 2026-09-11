@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inintr                       ../starter/source/interfaces/interf1/inintr.F
 !||--- called by ------------------------------------------------------
@@ -61,7 +62,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      F                  SEGQUADFR,TAGPRT_FRIC,INTBUF_FRIC_TAB   ,IPARTT          ,
      G                  IPARTP    ,IPARTX    ,IPARTR            ,NSN_MULTI_CONNEC,T2_NB_CONNEC,
      H                  SICODE    ,ICODE     ,ISKEW             ,MULTI_FVM       ,S_NOD2ELS   ,
-     I                  SITAB     ,SITABM1   ,FLAG_ELEM_INTER25 ,LIST_NIN25      ,IRESP       )
+     I                  SITAB     ,SITABM1   ,FLAG_ELEM_INTER25 ,LIST_NIN25      ,IRESP       ,
+     J                  NIXX      ,S_NOD2EL1D)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -112,14 +114,14 @@ C-----------------------------------------------
      .   IWORKSH(*),NSNT, NMNT,KXIG3D(NIXIG3D,*),IXIG3D(*),
      .   KNOD2ELQ(*),NOD2ELQ(*),SEGQUADFR(2,*),TAGPRT_FRIC(*),IPARTT(*),
      .   IPARTP(*),IPARTX(*),IPARTR(*),NSN_MULTI_CONNEC,T2_NB_CONNEC(*),
-     .   ICODE(*), ISKEW(SISKWN)
+     .   ICODE(*), ISKEW(SISKWN),NIXX
       my_real X(3,*),V(3,*), PM(*), GEO(*), MS(*), RWA(6,*),
      .        THK(*),THK_PART(*),FRIGAP(NPARIR,NINTER),
      .        LELX(*), FILLSOL(*)
       INTEGER NOM_OPT(LNOPT1,*),KXX(*),IXX(*)
       INTEGER, INTENT(IN) :: LIST_NIN25(NINTER)
       INTEGER, INTENT(IN) :: FLAG_ELEM_INTER25(NINTER25,NUMELS)   
-      INTEGER , INTENT(IN) :: IRESP
+      INTEGER , INTENT(IN) :: IRESP,S_NOD2EL1D
       TYPE(INTERSURFP) :: INTERCEP(3,NINTER)
       TYPE(INTBUF_STRUCT_) INTBUF_TAB(*)
       TYPE(SCRATCH_STRUCT_) INSCR(*)
@@ -174,12 +176,12 @@ C-----------------------------------------------
       INTEGER :: SKIP_TYPE25_EDGE_2_EDGE !< flag to activate only the computation of interface type 25 with edge to edge
       INTEGER, DIMENSION(:), ALLOCATABLE :: ELEM_LINKED_TO_SEGMENT
 C-----------------------------------------------
-      CALL MY_ALLOC(ITABM1,SITABM1)
+      CALL MY_ALLOC(ITABM1,SITABM1,"ITABM1")
 C
       I_MEM = 0
       RESORT = 0
       NREMNODE = 0
-      ALLOCATE(IKINE1(3*NUMNOD))
+      call my_alloc(IKINE1, 3*NUMNOD, "IKINE1")
       DO I=1,3*NUMNOD
         IKINE1(I) = 0
       ENDDO
@@ -203,7 +205,7 @@ C-----------------------------------------------
 
 C----------------------Treatment for TYPE2 spt27/28 compatibility  check - computation of size and allocation of array
        IF (NSN_MULTI_CONNEC > 0) THEN
-         ALLOCATE (T2_ADD_CONNEC(NUMNOD))
+         call my_alloc(T2_ADD_CONNEC, NUMNOD, "T2_ADD_CONNEC")
          T2_ADD_CONNEC(1:NUMNOD) = 0
          ST2_CONNEC = 0
          T2_ADD_CONNEC(1) = 1
@@ -215,15 +217,16 @@ C--
            ST2_CONNEC = ST2_CONNEC + 1 + 5*T2_NB_CONNEC(I)
            T2_ADD_CONNEC(I) = T2_ADD_CONNEC(I-1) + 1 + 5*T2_NB_CONNEC(I-1)
          ENDDO
-         ALLOCATE (T2_CONNEC(ST2_CONNEC))
+         call my_alloc(T2_CONNEC, ST2_CONNEC, "T2_CONNEC")
          T2_CONNEC(1:ST2_CONNEC) = 0
        ELSE
          ST2_CONNEC = 0
-         ALLOCATE (T2_ADD_CONNEC(0),T2_CONNEC(0))
+         call my_alloc(T2_ADD_CONNEC, 0, "T2_ADD_CONNEC")
+         call my_alloc(T2_CONNEC, 0, "T2_CONNEC")
        ENDIF
 
 C-----------------------------------------------     
-        ALLOCATE( ELEM_LINKED_TO_SEGMENT(NUMELS) )
+        call my_alloc(ELEM_LINKED_TO_SEGMENT, NUMELS, "ELEM_LINKED_TO_SEGMENT")
         ! ----------------
         ! loop over the interfaces
         ! interface type 24 & 25 must be treated at the end
@@ -364,7 +367,8 @@ C---     Initial dimension of REMNODE arrays
      G               T2_CONNEC               , NOM_OPT               , ICODE                 , ISKEW          , IREMNODE_EDG     ,
      H               MULTI_FVM%S_APPEND_ARRAY, MULTI_FVM%X_APPEND    , MULTI_FVM%MASS_APPEND , N2D            , FLAG_REMOVED_NODE,
      I               NSPMD                   ,INTER_TYPE2_NUMBER     , ELEM_LINKED_TO_SEGMENT, INSCR(N)%SINSCR, SICODE           ,
-     J               SITAB                   ,NIN25                  , FLAG_ELEM_INTER25     , MULTI_FVM      , IRESP            )
+     J               SITAB                   ,NIN25                  , FLAG_ELEM_INTER25     , MULTI_FVM      , IRESP            ,
+     K               NIXX                    ,S_NOD2EL1D             , IINTTHICK             )
               IF( MULTI_FVM%IS_INT18_LAW151 ) THEN
                 CALL INT18_LAW151_NSV_SHIFT('-',0,1,MULTI_FVM,IPARI,INTBUF_TAB,npari,ninter,numnod,OPT_INT_ID=N)
               ENDIF
@@ -404,7 +408,7 @@ C---     Initial dimension of REMNODE arrays
 
         ENDDO
         ! ----------------
-        DEALLOCATE(ELEM_LINKED_TO_SEGMENT)
+        CALL MY_DEALLOC(ELEM_LINKED_TO_SEGMENT)
 C      
 C--- IREM_I2 treatment has been removed at end of ININTR2 to take into account 
 C---- the compaction of type2 w/ Itetra10=2  
@@ -446,7 +450,7 @@ C significantly different velocities between second and main
 
         CONDITION(1:NINTER) = .FALSE.
         avg_stiff(1:NINTER) = HUGE(1.0D0)
-        ALLOCATE(TAG(NUMNOD))
+        call my_alloc(TAG, NUMNOD, "TAG")
         TAG(1:NUMNOD) = 0
         DO N=1,NINTER
           NTY=IPARI(7,N)
@@ -583,13 +587,15 @@ c               WRITE(6,*) "Stiff=",min_stiff,avg_stiff(N),main_stiff
 
         ENDIF ! main interface
 
-        DEALLOCATE(TAG)
+        CALL MY_DEALLOC(TAG)
       ENDIF
       ENDIF ! N2D
 
 C
-      DEALLOCATE(T2_ADD_CONNEC,T2_CONNEC,IKINE1)
-      DEALLOCATE(ITABM1)
+      CALL MY_DEALLOC(T2_ADD_CONNEC)
+      CALL MY_DEALLOC(T2_CONNEC)
+      CALL MY_DEALLOC(IKINE1)
+      CALL MY_DEALLOC(ITABM1)
 C
       RETURN
       END

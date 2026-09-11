@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_init_node_color_mod   ../engine/source/interfaces/generic/inter_init_node_color.F90
 !||--- called by ------------------------------------------------------
 !||    inter_init_component        ../engine/source/interfaces/generic/inter_init_component.F90
 !||====================================================================
       module inter_init_node_color_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -42,6 +43,8 @@
 !||--- uses       -----------------------------------------------------
 !||    array_mod               ../common_source/modules/array_mod.F
 !||    constant_mod            ../common_source/modules/constant_mod.F
+!||    my_alloc_mod            ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod          ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod           ../common_source/modules/precision_mod.F90
 !||====================================================================
         subroutine inter_init_node_color( nsn,nrtm,nb_cell_x,nb_cell_y,nb_cell_z, &
@@ -57,6 +60,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -101,14 +106,14 @@
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
           my_size = nb_cell_x*nb_cell_y*nb_cell_z
-          allocate(s_color(my_size))
-          allocate(m_color(my_size))
-          allocate(tmp_list(my_size))
-          allocate(tmp_list2(my_size))
-          allocate(s_index(my_size,4))
-          allocate(m_index(my_size,4))
-          allocate(s_connect(my_size))
-          allocate(m_connect(my_size))
+          call my_alloc(s_color, my_size, "s_color")
+          call my_alloc(m_color, my_size, "m_color")
+          call my_alloc(tmp_list, my_size, "tmp_list")
+          call my_alloc(tmp_list2, my_size, "tmp_list2")
+          call my_alloc(s_index, my_size, 4, "s_index")
+          call my_alloc(m_index, my_size, 4, "m_index")
+          allocate(s_connect( my_size))
+          allocate(m_connect( my_size))
 
           s_index(1:my_size,1:4) = 0
           m_index(1:my_size,1:4) = 0
@@ -366,10 +371,10 @@
           enddo
 
 
-          deallocate(s_color)
-          deallocate(m_color)
-          deallocate(tmp_list)
-          deallocate(tmp_list2)
+          call my_dealloc(s_color)
+          call my_dealloc(m_color)
+          call my_dealloc(tmp_list)
+          call my_dealloc(tmp_list2)
           deallocate(s_connect)
           deallocate(m_connect)
 ! ----------------------------------------------------------------------------------------------------------------------

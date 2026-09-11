@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lec_inistate           ../starter/source/elements/initia/lec_inistate.F
 !||--- called by ------------------------------------------------------
@@ -56,6 +57,7 @@ C-----------------------------------------------
       USE STACK_MOD
       USE MATPARAM_DEF_MOD
       use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -127,14 +129,14 @@ C=======================================================================
       VARMAX = MAX(NSIGSH,NSIGI,NSIGI,NSIGTRUSS,NSIGBEAM,NSIGRS)
       IS_STATE = .FALSE.
 C
-      ALLOCATE (ID_SIGSH(NUMSHEL+NUMSH3N)     ,STAT=stat)
-      ALLOCATE (ID_SOLID_SIGI(NUMSOL)         ,STAT=stat)
-      ALLOCATE (ID_QUAD_SIGI(NUMQUAD)         ,STAT=stat)
-      ALLOCATE (ID_SIGSPRI(NUMSPRI)           ,STAT=stat)
-      ALLOCATE (ID_SIGBEAM(NUMBEAM)           ,STAT=stat)
-      ALLOCATE (ID_SIGTRUSS(NUMTRUS)          ,STAT=stat)
-      ALLOCATE (ID_SIGSPH(NUMSPH)          ,STAT=stat)
-      ALLOCATE (WORK(70000)                   ,STAT=stat)
+      call my_alloc(ID_SIGSH, NUMSHEL+NUMSH3N, "ID_SIGSH", stat=stat)
+      call my_alloc(ID_SOLID_SIGI, NUMSOL, "ID_SOLID_SIGI", stat=stat)
+      call my_alloc(ID_QUAD_SIGI, NUMQUAD, "ID_QUAD_SIGI", stat=stat)
+      call my_alloc(ID_SIGSPRI, NUMSPRI, "ID_SIGSPRI", stat=stat)
+      call my_alloc(ID_SIGBEAM, NUMBEAM, "ID_SIGBEAM", stat=stat)
+      call my_alloc(ID_SIGTRUSS, NUMTRUS, "ID_SIGTRUSS", stat=stat)
+      call my_alloc(ID_SIGSPH, NUMSPH, "ID_SIGSPH", stat=stat)
+      call my_alloc(WORK, 70000, "WORK", stat=stat)
 C
       IF(NUMSHEL+NUMSH3N > 0) ID_SIGSH(1:NUMSHEL+NUMSH3N) = 0
       IF(NUMSOL          > 0 )ID_SOLID_SIGI(1:NUMSOL) = 0
@@ -234,14 +236,14 @@ C-------------------------------------------------------------------------------
      9                  ID_SIGTRUSS,WORK         ,ID_SIGSPH    ,IS_STATE)
 
 C 
-      IF(NUMSOL           > 0) DEALLOCATE (ID_SOLID_SIGI)
-      IF(NUMQUAD          > 0 )DEALLOCATE (ID_QUAD_SIGI)
-      IF(NUMSHEL+NUMSH3N  > 0 )DEALLOCATE (ID_SIGSH)
-      IF(NUMSPRI         > 0 )DEALLOCATE (ID_SIGSPRI)
-      IF(NUMBEAM         > 0 )DEALLOCATE (ID_SIGBEAM)
-      IF(NUMTRUS         > 0 )DEALLOCATE (ID_SIGTRUSS)
-      IF(NUMSPH         > 0 )DEALLOCATE (ID_SIGSPH)
-      DEALLOCATE (WORK)
+      IF(NUMSOL           > 0) CALL MY_DEALLOC(ID_SOLID_SIGI)
+      IF(NUMQUAD          > 0 )CALL MY_DEALLOC(ID_QUAD_SIGI)
+      IF(NUMSHEL+NUMSH3N  > 0 )CALL MY_DEALLOC(ID_SIGSH)
+      IF(NUMSPRI         > 0 )CALL MY_DEALLOC(ID_SIGSPRI)
+      IF(NUMBEAM         > 0 )CALL MY_DEALLOC(ID_SIGBEAM)
+      IF(NUMTRUS         > 0 )CALL MY_DEALLOC(ID_SIGTRUSS)
+      IF(NUMSPH         > 0 )CALL MY_DEALLOC(ID_SIGSPH)
+      CALL MY_DEALLOC(WORK)
 C
       RETURN
       END

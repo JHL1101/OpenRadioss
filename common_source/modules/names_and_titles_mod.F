@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    names_and_titles_mod              ../common_source/modules/names_and_titles_mod.F
 !||--- called by ------------------------------------------------------
@@ -32,11 +33,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    anim_dcod_key_0                   ../engine/source/output/anim/reader/anim_dcod_key_0.F
 !||    anstckc                           ../starter/source/output/analyse/analyse_char.F
 !||    ascii_encoding_mu_letter          ../starter/source/starter/ascii_encoding_mu_letter.F90
+!||    bbc2005_calcul_coeffs             ../starter/source/materials/mat/mat131/yield_criterion/bbc2005_calcul_coeffs.F90
 !||    bigbox                            ../starter/source/model/box/bigbox.F
 !||    boxbox                            ../starter/source/model/box/boxbox.F
 !||    bsigini                           ../starter/source/elements/beam/bsigini.F
 !||    build_admesh                      ../starter/source/model/remesh/build_admesh.F
-!||    build_msg                         ../common_source/tools/memory/my_alloc.F90
+!||    build_msg                         ../common_source/tools/memory/my_alloc_tools.F90
 !||    buserini                          ../starter/source/elements/beam/buserini.F
 !||    c3grhead                          ../starter/source/elements/sh3n/coque3n/c3grhead.F
 !||    c3grtails                         ../starter/source/elements/sh3n/coque3n/c3grtails.F
@@ -49,6 +51,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    checkmp                           ../starter/source/elements/initia/initia.F
 !||    checkrby                          ../starter/source/constraints/general/rbody/checkrby.F
 !||    checksum_option_checksum_file     ../common_source/modules/output/checksum_mod.F90
+!||    checksum_option_out_file          ../common_source/modules/output/checksum_mod.F90
 !||    checksum_output_option_mod        ../common_source/modules/output/checksum_mod.F90
 !||    checksum_restart_read             ../common_source/modules/output/checksum_mod.F90
 !||    checksum_restart_write            ../common_source/modules/output/checksum_mod.F90
@@ -122,6 +125,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elt_box                           ../starter/source/model/sets/fill_clause_elt_box.F
 !||    eos_param_mod                     ../common_source/modules/mat_elem/eos_param_mod.F90
 !||    eosfun_usr2sys                    ../starter/source/materials/tools/eosfun_usr2sys.F90
+!||    f_anend                           ../starter/source/output/analyse/analyse_arret.F
 !||    facebox                           ../starter/source/model/box/bigbox.F
 !||    fail_param_mod                    ../common_source/modules/mat_elem/fail_param_mod.F90
 !||    fill_buffer_51                    ../starter/source/materials/mat/mat051/fill_buffer_51.F
@@ -177,6 +181,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    genani1                           ../starter/source/output/anim/genani1.F
 !||    genh3d                            ../engine/source/output/h3d/h3d_results/genh3d.F
 !||    get_skew45                        ../starter/source/elements/joint/rjoint/rini45.F
+!||    get_sort_key_shell3n              ../starter/source/elements/sh3n/get_sort_key_shell3n.F90
 !||    gr_entity_ini                     ../starter/source/model/group/gr_entity_ini.F
 !||    groupdef_mod                      ../common_source/modules/groupdef_mod.F
 !||    h3d_gene_keyword                  ../engine/source/output/h3d/input_list/h3d_gene_keyword.F
@@ -313,10 +318,15 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_eref                      ../starter/source/loads/reference_state/eref/hm_read_eref.F
 !||    hm_read_fail                      ../starter/source/materials/fail/hm_read_fail.F
 !||    hm_read_fail_biquad               ../starter/source/materials/fail/biquad/hm_read_fail_biquad.F
+!||    hm_read_fail_energy               ../starter/source/materials/fail/energy/hm_read_fail_energy.F
+!||    hm_read_fail_fld                  ../starter/source/materials/fail/fld/hm_read_fail_fld.F
 !||    hm_read_fail_gurson               ../starter/source/materials/fail/gurson/hm_read_fail_gurson.F
 !||    hm_read_fail_johnson              ../starter/source/materials/fail/johnson_cook/hm_read_fail_johnson.F
+!||    hm_read_fail_nxt                  ../starter/source/materials/fail/nxt/hm_read_fail_nxt.F
 !||    hm_read_fail_orthbiquad           ../starter/source/materials/fail/orthbiquad/hm_read_fail_orthbiquad.F
+!||    hm_read_fail_orthstrain           ../starter/source/materials/fail/orthstrain/hm_read_fail_orthstrain.F
 !||    hm_read_fail_tab2                 ../starter/source/materials/fail/tabulated/hm_read_fail_tab2.F
+!||    hm_read_fail_tensstrain           ../starter/source/materials/fail/tensstrain/hm_read_fail_tensstrain.F
 !||    hm_read_fail_user                 ../starter/source/materials/fail/failuser/hm_read_fail_user.F
 !||    hm_read_friction                  ../starter/source/interfaces/friction/reader/hm_read_friction.F
 !||    hm_read_friction_models           ../starter/source/interfaces/friction/reader/hm_read_friction_models.F
@@ -409,7 +419,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_mat114                    ../starter/source/materials/mat/mat114/hm_read_mat114.F
 !||    hm_read_mat115                    ../starter/source/materials/mat/mat115/hm_read_mat115.F
 !||    hm_read_mat116                    ../starter/source/materials/mat/mat116/hm_read_mat116.F
-!||    hm_read_mat117                    ../starter/source/materials/mat/mat117/hm_read_mat117.F
+!||    hm_read_mat117                    ../starter/source/materials/mat/mat117/hm_read_mat117.F90
 !||    hm_read_mat119                    ../starter/source/materials/mat/mat119/hm_read_mat119.F
 !||    hm_read_mat11_k_eps               ../starter/source/materials/mat/mat011/hm_read_mat11_k_eps.F
 !||    hm_read_mat12                     ../starter/source/materials/mat/mat012/hm_read_mat12.F
@@ -600,6 +610,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_visc                      ../starter/source/materials/visc/hm_read_visc.F
 !||    hm_read_window_user               ../starter/source/tools/userwi/hm_read_window_user.F
 !||    hm_read_xref                      ../starter/source/loads/reference_state/xref/hm_read_xref.F
+!||    hm_read_yield_criterion_bbc2005   ../starter/source/materials/mat/mat131/yield_criterion/hm_read_yield_criterion_BBC2005.F90
+!||    hm_s_ale                          ../starter/source/devtools/hm_reader/hm_s_ale.F90
 !||    hm_set                            ../starter/source/model/sets/hm_set.F
 !||    hm_setfxrbyon                     ../starter/source/constraints/fxbody/hm_setfxrbyon.F
 !||    hm_submodgre                      ../starter/source/groups/hm_submodgr.F
@@ -653,6 +665,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i25pwr3_e2s                       ../starter/source/interfaces/inter3d1/i25pwr3_e2s.F
 !||    i25pwr3e                          ../starter/source/interfaces/inter3d1/i25pwr3e.F
 !||    i25sti3                           ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i25sti_edg                        ../starter/source/interfaces/inter3d1/i25sti_edg.F
 !||    i2buc1                            ../starter/source/interfaces/inter3d1/i2buc1.F
 !||    i2surfs                           ../starter/source/interfaces/inter3d1/i2surfs.F
 !||    i2tid3                            ../starter/source/interfaces/inter3d1/i2tid3.F
@@ -715,7 +728,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    insurf_dx                         ../starter/source/interfaces/interf1/insurf_dx.F
 !||    insurfigeo                        ../starter/source/interfaces/interf1/insurfigeo.F
 !||    int2cy_chk                        ../starter/source/constraints/general/bcs/lecbcscyc.F
-!||    int2modif_nd                      ../starter/source/elements/solid/solide10/dim_s10edg.F
 !||    inter1_check_ale_lag_sides        ../starter/source/interfaces/int01/inter1_check_ale_lag_sides.F90
 !||    inter_ancmsg_mod                  ../engine/share/message_module/inter_ancmsg_mod.F
 !||    inter_dcod_friction               ../starter/source/interfaces/reader/inter_dcod_friction.F
@@ -742,7 +754,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    law69_nlsqf_auto                  ../starter/source/materials/tools/law69_nlsqf_auto.F
 !||    law69_upd                         ../starter/source/materials/mat/mat069/law69_upd.F
 !||    law70_upd                         ../starter/source/materials/mat/mat070/law70_upd.F
-!||    law76_upd                         ../starter/source/materials/mat/mat076/law76_upd.F
 !||    law77_upd                         ../starter/source/materials/mat/mat077/law77_upd.F
 !||    law90_upd                         ../starter/source/materials/mat/mat090/law90_upd.F
 !||    law92_nlsqf                       ../starter/source/materials/mat/mat092/law92_nlsqf.F90
@@ -897,6 +908,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    resol_head                        ../engine/source/engine/resol_head.F
 !||    ri2_int24p_ini                    ../starter/source/interfaces/inter3d1/i7remnode.F
 !||    rigid_mat                         ../starter/source/materials/mat/mat019/rigid_mat.F
+!||    rini135_rb                        ../starter/source/elements/joint/rjoint/rini135_rb.F90
 !||    rini32                            ../starter/source/properties/spring/hm_read_prop32.F
 !||    rini33_rb                         ../starter/source/elements/joint/rjoint/rini33_rb.F
 !||    rini45                            ../starter/source/elements/joint/rjoint/rini45.F
@@ -904,6 +916,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    rinit3                            ../starter/source/elements/spring/rinit3.F
 !||    rkini3                            ../starter/source/elements/spring/rkini3.F
 !||    rm_cand24                         ../starter/source/interfaces/inter3d1/i7remnode.F
+!||    rpart_inivel_check                ../starter/source/constraints/general/rbody/rbody_part_modif.F90
 !||    s10init3                          ../starter/source/elements/solid/solide10/s10init3.F
 !||    s16init3                          ../starter/source/elements/thickshell/solide16/s16init3.F
 !||    s20init3                          ../starter/source/elements/solid/solide20/s20init3.F

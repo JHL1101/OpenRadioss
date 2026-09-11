@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    phase_detection     ../starter/source/initial_conditions/inivol/phase_detection.F
 !||--- called by ------------------------------------------------------
@@ -59,6 +60,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !                   * if at least one node is near a surface --> need to compute the real distance
 !$ENDCOMMENT
         use element_mod , only :nixs,nixq,nixtg
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -115,9 +117,9 @@ C-----------------------------------------------
         INTEGER, DIMENSION(32) :: ID_NODE_SAVE
         integer, target :: nothing(1,1) !< dummy for indirection
 C-----------------------------------------------
-        ALLOCATE( TAG_ARRAY(NUMNOD) )   
-        ALLOCATE( SURF_NODE_LIST(NUMNOD) )
-        ALLOCATE( LIST_NODE(NUMNOD) )
+        call my_alloc(TAG_ARRAY, NUMNOD, "TAG_ARRAY")
+        call my_alloc(SURF_NODE_LIST, NUMNOD, "SURF_NODE_LIST")
+        call my_alloc(LIST_NODE, NUMNOD, "LIST_NODE")
         TAG_ARRAY(1:NUMNOD) = 0
         SURF_NODE_NUMBER = 0
 
@@ -136,8 +138,8 @@ C-----------------------------------------------
             ENDDO
         ENDDO
         
-        ALLOCATE( X_TMP(SURF_NODE_NUMBER) )
-        ALLOCATE( KEY2(SURF_NODE_NUMBER) )
+        call my_alloc(X_TMP, SURF_NODE_NUMBER, "X_TMP")
+        call my_alloc(KEY2, SURF_NODE_NUMBER, "KEY2")
         DO I=1,SURF_NODE_NUMBER
             X_TMP(I) = X(LEADING_DIMENSION,SURF_NODE_LIST(I))
             KEY2(I) = I
@@ -145,12 +147,12 @@ C-----------------------------------------------
 
         ! Sort according to chosen direction
         CALL MYQSORT(SURF_NODE_NUMBER,X_TMP,KEY2,info)
-        DEALLOCATE( X_TMP )
+        CALL MY_DEALLOC(X_TMP)
         ! ----------------------
 
         TAG_ARRAY(1:NUMNOD) = 0
         NEXT_NODE = 0
-        ALLOCATE( LOCAL_X(3,8) )
+        call my_alloc(LOCAL_X, 3, 8, "LOCAL_X")
 
         ! -----------------------
         ! loop over the solid / quad / triangle elements with 51/151 material
@@ -274,8 +276,8 @@ C-----------------------------------------------
                     ELSE
                         ! --------------------
                         ! find the nearest node
-                        ALLOCATE( ID_LIST(UNKNOWN_CELL_INDEX) )
-                        ALLOCATE( KEY1(UNKNOWN_CELL_INDEX) )
+                        call my_alloc(ID_LIST, UNKNOWN_CELL_INDEX, "ID_LIST")
+                        call my_alloc(KEY1, UNKNOWN_CELL_INDEX, "KEY1")
                         DO I=1,UNKNOWN_CELL_INDEX
                             IX = POSITION_SAVE(I,1)
                             IY = POSITION_SAVE(I,2)
@@ -327,8 +329,8 @@ C-----------------------------------------------
                             CALL PHASE_PROPAGATION(IX,IY,IZ,NB_CELL_X,NB_CELL_Y,NB_CELL_Z,NB_BOX_LIMIT,CELL)
                         ENDDO
                         ! --------------------
-                        DEALLOCATE( ID_LIST )
-                        DEALLOCATE( KEY1 )
+                        CALL MY_DEALLOC(ID_LIST)
+                        CALL MY_DEALLOC(KEY1)
                     ENDIF
                 ! -------------
                 ENDIF
@@ -337,15 +339,15 @@ C-----------------------------------------------
         ENDDO
         ! -----------------------
 
-        DEALLOCATE( LOCAL_X )
+        CALL MY_DEALLOC(LOCAL_X)
 
 
 
         ! -----------------------
         ! find the nearest node
-        ALLOCATE( LOCAL_X(3,NEXT_NODE) )
-        ALLOCATE( ID_LIST(NEXT_NODE) )
-        ALLOCATE( KEY1(NEXT_NODE) )
+        call my_alloc(LOCAL_X, 3, NEXT_NODE, "LOCAL_X")
+        call my_alloc(ID_LIST, NEXT_NODE, "ID_LIST")
+        call my_alloc(KEY1, NEXT_NODE, "KEY1")
 
         DO I=1,NEXT_NODE
             NODE_ID = LIST_NODE(I)
@@ -379,11 +381,11 @@ C-----------------------------------------------
 
         ! -----------------------
 
-        DEALLOCATE( KEY2 )
-        DEALLOCATE( TAG_ARRAY )   
-        DEALLOCATE( SURF_NODE_LIST )
-        DEALLOCATE( LIST_NODE )
-        DEALLOCATE( LOCAL_X )
+        CALL MY_DEALLOC(KEY2)
+        CALL MY_DEALLOC(TAG_ARRAY)
+        CALL MY_DEALLOC(SURF_NODE_LIST)
+        CALL MY_DEALLOC(LIST_NODE)
+        CALL MY_DEALLOC(LOCAL_X)
 
         RETURN
         END SUBROUTINE PHASE_DETECTION

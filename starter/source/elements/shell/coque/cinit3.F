@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cinit3                    ../starter/source/elements/shell/coque/cinit3.F
 !||--- called by ------------------------------------------------------
@@ -151,7 +152,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
+      CHARACTER(LEN=NCHARTITLE) :: TITR
       INTEGER I,J,N,IP,NDEPAR,IGTYP,NUVAR,ID,NLAY,II,IREP,IPROP,NUPARAM,
      .   IL,IR,IS,IT,CPT_ELTENS,IUN,NPTR,NPTS,NPTT,IXEL,ILAW,IMAT,IFAIL,
      .   IGMAT,JJ(9),NPT_ALL,MPT,LAYNPT_MAX,LAY_MAX
@@ -163,7 +164,6 @@ C-----------------------------------------------
      .                             E1X,E2X,E3X,E1Y,E2Y,E3Y,E1Z,E2Z,E3Z,
      .                             X2S,Y2S,X3S,Y3S,X4S,Y4S,
      .                             X2L,X3L,X4L,Y2L,Y3L,Y4L
-      my_real, DIMENSION(NEL) :: TEMPEL
       my_real, DIMENSION(:) ,POINTER :: UVAR,DIR1,DIR2
       my_real, ALLOCATABLE, DIMENSION(:) :: DIR_A,DIR_B
       my_real, DIMENSION(:), ALLOCATABLE :: PHI1,PHI2,COOR1,COOR2,COOR3,COOR4
@@ -175,8 +175,8 @@ C-----------------------------------------------
       TYPE(G_BUFEL_) ,POINTER :: GBUF
       TYPE(L_BUFEL_) ,POINTER :: LBUF
 C=======================================================================
-      CALL MY_ALLOC(MATLY,MVSIZ*LAY_MAX)
-      CALL MY_ALLOC(POSLY,MVSIZ,LAY_MAX*LAYNPT_MAX)
+      CALL MY_ALLOC(MATLY,MVSIZ*LAY_MAX,"MATLY")
+      CALL MY_ALLOC(POSLY,MVSIZ,LAY_MAX*LAYNPT_MAX,"POSLY")
       GBUF  => ELBUF_STR%GBUF
 c
       IMAT  = IXC(1,1+NFT)         ! mat N
@@ -209,35 +209,35 @@ C
       IF(NPT_ALL == 0 ) NPT_ALL = NLAY
 C----- NPT=0 for some cases      
       IF((IGTYP == 51 .OR. IGTYP == 52) .AND. IDRAPE > 0) THEN
-         ALLOCATE(PHI1(MVSIZ*NPT_ALL))
-         ALLOCATE(PHI2(NVSIZ*NPT_ALL))
-         ALLOCATE(DIR_A(NPT_ALL*NEL*2))
-         ALLOCATE(DIR_B(NPT_ALL*NEL*2))
+         call my_alloc(PHI1, MVSIZ*NPT_ALL, "PHI1")
+         call my_alloc(PHI2, NVSIZ*NPT_ALL, "PHI2")
+         call my_alloc(DIR_A, NPT_ALL*NEL*2, "DIR_A")
+         call my_alloc(DIR_B, NPT_ALL*NEL*2, "DIR_B")
          PHI1  = ZERO
          PHI2  = ZERO
          DIR_A = ZERO
          DIR_B = ZERO
-         ALLOCATE(COOR1(NPT_ALL*MVSIZ))
-         ALLOCATE(COOR2(NPT_ALL*MVSIZ))
-         ALLOCATE(COOR3(NPT_ALL*MVSIZ))
-         ALLOCATE(COOR4(NPT_ALL*MVSIZ))
+         call my_alloc(COOR1, NPT_ALL*MVSIZ, "COOR1")
+         call my_alloc(COOR2, NPT_ALL*MVSIZ, "COOR2")
+         call my_alloc(COOR3, NPT_ALL*MVSIZ, "COOR3")
+         call my_alloc(COOR4, NPT_ALL*MVSIZ, "COOR4")
          COOR1 = ZERO
          COOR2 = ZERO
          COOR3 = ZERO
          COOR4 = ZERO
       ELSE
-         ALLOCATE(PHI1(NLAY*MVSIZ))
-         ALLOCATE(PHI2(NLAY*MVSIZ))
-         ALLOCATE(DIR_A(NLAY*NEL*2))
-         ALLOCATE(DIR_B(NLAY*NEL*2))
+         call my_alloc(PHI1, NLAY*MVSIZ, "PHI1")
+         call my_alloc(PHI2, NLAY*MVSIZ, "PHI2")
+         call my_alloc(DIR_A, NLAY*NEL*2, "DIR_A")
+         call my_alloc(DIR_B, NLAY*NEL*2, "DIR_B")
          PHI1  = ZERO
          PHI2  = ZERO
          DIR_A = ZERO
          DIR_B = ZERO
-         ALLOCATE(COOR1(NLAY*MVSIZ))
-         ALLOCATE(COOR2(NLAY*MVSIZ))
-         ALLOCATE(COOR3(NLAY*MVSIZ))
-         ALLOCATE(COOR4(NLAY*MVSIZ))
+         call my_alloc(COOR1, NLAY*MVSIZ, "COOR1")
+         call my_alloc(COOR2, NLAY*MVSIZ, "COOR2")
+         call my_alloc(COOR3, NLAY*MVSIZ, "COOR3")
+         call my_alloc(COOR4, NLAY*MVSIZ, "COOR4")
          COOR1 = ZERO
          COOR2 = ZERO
          COOR3 = ZERO
@@ -650,11 +650,16 @@ C------------
         ENDDO
       ENDIF
 C---
-      IF (ALLOCATED(DIR_B))    DEALLOCATE(DIR_B)                                                          
-      IF (ALLOCATED(DIR_A))    DEALLOCATE(DIR_A)  
-      DEALLOCATE(PHI1,PHI2,COOR1,COOR2,COOR3,COOR4)  
-      DEALLOCATE(MATLY)
-      DEALLOCATE(POSLY)
+      IF (ALLOCATED(DIR_B))    CALL MY_DEALLOC(DIR_B)                                                          
+      IF (ALLOCATED(DIR_A))    CALL MY_DEALLOC(DIR_A)  
+      CALL MY_DEALLOC(PHI1)
+      CALL MY_DEALLOC(PHI2)
+      CALL MY_DEALLOC(COOR1)
+      CALL MY_DEALLOC(COOR2)
+      CALL MY_DEALLOC(COOR3)
+      CALL MY_DEALLOC(COOR4)
+      CALL MY_DEALLOC(MATLY)
+      CALL MY_DEALLOC(POSLY)
 C-----------------------------
       RETURN
       END SUBROUTINE CINIT3      
@@ -690,7 +695,7 @@ C-----------------------------------------------
 C------------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, NIT, NT, I1, I2, I3, I4
+      INTEGER I
       my_real
      .   X1(MVSIZ) , X2(MVSIZ) , X3(MVSIZ) , X4(MVSIZ) ,
      .   Y1(MVSIZ) , Y2(MVSIZ) , Y3(MVSIZ) , Y4(MVSIZ) ,

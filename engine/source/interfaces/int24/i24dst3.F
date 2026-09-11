@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i24dst3       ../engine/source/interfaces/int24/i24dst3.F
 !||--- called by ------------------------------------------------------
@@ -3472,7 +3473,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K,ITQ
+      INTEGER K,ITQ
       my_real
      .     AAA,BBB,VOL,XA,YA,ZA,XB,YB,ZB,XC,YC,ZC,XD,YD,ZD,
      .     XAB,YAB,ZAB,XBC,YBC,ZBC,XCA,YCA,ZCA,XBD,YBD,ZBD,
@@ -3777,7 +3778,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K,ITQ
+      INTEGER K,ITQ
       my_real
      .     AAA,BBB,VOL,XA,YA,ZA,XB,YB,ZB,XC,YC,ZC,XD,YD,ZD,
      .     XAB,YAB,ZAB,XBC,YBC,ZBC,XCA,YCA,ZCA,XBD,YBD,ZBD,
@@ -4064,7 +4065,7 @@ C     REAL
      .   ZZ1, ZZ2, ZZ3, ZZ4, XI1, XI2, XI3, XI4, YI1, YI2, YI3, YI4,
      .   ZI1, ZI2, ZI3, ZI4, XN1, YN1, ZN1, XN2, YN2, ZN2, XN3, YN3,
      .   ZN3, XN4, YN4, ZN4, AN, AREA, A12, A23, A34, A41, B12, B23,
-     .   B34, B41, AB1, AB2, TP, TM, SP, SM, N1,N2,N3,ALP,
+     .   B34, B41, AB1, AB2, N1,N2,N3,ALP,
      .   NN(3), SSC, TTC
 C------------------------------------------------
       IER = 0
@@ -4259,17 +4260,14 @@ C-----------------------------------------------
      .     XI1,  XI2,  XI3,  XI4,  XI5,
      .     YI1,  YI2,  YI3,  YI4,  YI5,
      .     ZI1,  ZI2,  ZI3,  ZI4,  ZI5,
-     .     XIA,  XIB,  XIC,
-     .     YIA,  YIB,  YIC,
-     .     ZIA,  ZIB,  ZIC,
-     .     XOI,YOI,ZOI,XS,YS,ZS,
+     .     XOI,YOI,ZOI,
      .     XM1, XM2, XM3, XM4, XM5, 
      .     YM1, YM2, YM3, YM4, YM5, 
      .     ZM1, ZM2, ZM3, ZM4, ZM5,LA0,LB0,LC0
       my_real
-     .     SX,SX1,SX2,SX3,SX4,SX5,SX0,
-     .     SY,SY1,SY2,SY3,SY4,SY5,SY0,
-     .     SZ,SZ1,SZ2,SZ3,SZ4,SZ5,SZ0,AAA,ADT,S2
+     .     SX1,SX2,SX3,SX4,SX5,SX0,
+     .     SY1,SY2,SY3,SY4,SY5,SY0,
+     .     SZ1,SZ2,SZ3,SZ4,SZ5,SZ0,AAA,ADT,S2
 C------------------------------------------------
          IF(VO12 <= ZERO .and. V12 >= ZERO )THEN
           IF ((ABS(SX125)+ABS(SY125)+ABS(SZ125))>EM20) THEN

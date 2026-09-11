@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 #ifdef MPI
 !||====================================================================
 !||    inipar                 ../engine/source/mpi/init/inipar.F
@@ -72,7 +73,7 @@ C-----------------------------------------------
       INTEGER NSPMDx2
       INTEGER :: COLOUR
       INTEGER (kind=MPI_ADDRESS_KIND) :: COLOUR_ADDR
-      INTEGER :: VALID
+      LOGICAL :: VALID
       CHARACTER FILNAM*100
 #if defined(_OPENMP)
       INTEGER OMP_GET_MAX_THREADS
@@ -87,7 +88,7 @@ C--------------------------------------------------
 C
         KEY = 0
         CALL MPI_INITIALIZED(KEY, IERR)
-        VALID = 0
+        VALID  = .FALSE.
         COLOUR_ADDR = 0
 
         CALL MPI_INIT(IERROR)
@@ -95,10 +96,10 @@ C
         CALL MPI_COMM_GET_ATTR(MPI_COMM_WORLD, MPI_APPNUM,
      *                            COLOUR_ADDR, VALID, IERROR)
 
-        IF (IERROR == MPI_SUCCESS) THEN
+        IF (IERROR == MPI_SUCCESS .AND. VALID) THEN
            COLOUR = INT(COLOUR_ADDR)
         ELSE
-           COLOUR = 0  ! Default color if attribute not found
+           COLOUR = 0
         ENDIF
         call coupling_configure(coupling, TRIM(coupling%FILNAM))  
 
@@ -110,7 +111,10 @@ C
 #endif
         CALL MPI_COMM_SIZE(SPMD_COMM_WORLD, NNODES, IERROR)
         CALL MPI_COMM_RANK(SPMD_COMM_WORLD, MYRANK, IERROR)
-C
+
+!       CALL MPI_COMM_SET_ERRHANDLER(MPI_COMM_WORLD, MPI_ERRORS_RETURN)
+!       CALL MPI_COMM_SET_ERRHANDLER(SPMD_COMM_WORLD, MPI_ERRORS_RETURN)
+
         DO JRANK=1,NNODES
           IT_SPMD(JRANK) = JRANK-1
         END DO

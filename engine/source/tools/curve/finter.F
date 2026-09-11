@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 #include "my_real.inc"
 !||====================================================================
 !||    finter                       ../engine/source/tools/curve/finter.F
@@ -32,30 +33,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    convec                       ../engine/source/constraints/thermic/convec.F
 !||    daasolv                      ../engine/source/fluid/daasolv.F
 !||    daasolvp                     ../engine/source/fluid/daasolvp.F
-!||    dam_fld_sol                  ../engine/source/output/h3d/h3d_results/h3d_sol_skin_scalar.F
 !||    ebcs11_propellant            ../engine/source/boundary_conditions/ebcs/ebcs11_propellant.F90
-!||    fail_biquad_b                ../engine/source/materials/fail/biquad/fail_biquad_b.F
-!||    fail_biquad_c                ../engine/source/materials/fail/biquad/fail_biquad_c.F
-!||    fail_biquad_ib               ../engine/source/materials/fail/biquad/fail_biquad_ib.F
-!||    fail_biquad_s                ../engine/source/materials/fail/biquad/fail_biquad_s.F
 !||    fail_connect                 ../engine/source/materials/fail/connect/fail_connect.F
-!||    fail_energy_b                ../engine/source/materials/fail/energy/fail_energy_b.F
-!||    fail_energy_c                ../engine/source/materials/fail/energy/fail_energy_c.F
-!||    fail_energy_ib               ../engine/source/materials/fail/energy/fail_energy_ib.F
-!||    fail_energy_s                ../engine/source/materials/fail/energy/fail_energy_s.F
 !||    fail_fabric_c                ../engine/source/materials/fail/fabric/fail_fabric_c.F
-!||    fail_fld_c                   ../engine/source/materials/fail/fld/fail_fld_c.F
-!||    fail_fld_tsh                 ../engine/source/materials/fail/fld/fail_fld_tsh.F
-!||    fail_fld_xfem                ../engine/source/materials/fail/fld/fail_fld_xfem.F
-!||    fail_gene1_b                 ../engine/source/materials/fail/gene1/fail_gene1_b.F90
-!||    fail_gene1_c                 ../engine/source/materials/fail/gene1/fail_gene1_c.F
-!||    fail_gene1_ib                ../engine/source/materials/fail/gene1/fail_gene1_ib.F90
-!||    fail_gene1_s                 ../engine/source/materials/fail/gene1/fail_gene1_s.F
-!||    fail_nxt_c                   ../engine/source/materials/fail/nxt/fail_nxt_c.F
-!||    fail_orthbiquad_c            ../engine/source/materials/fail/orthbiquad/fail_orthbiquad_c.F
-!||    fail_orthbiquad_s            ../engine/source/materials/fail/orthbiquad/fail_orthbiquad_s.F
-!||    fail_orthstrain              ../engine/source/materials/fail/orthstrain/fail_orthstrain_s.F
-!||    fail_orthstrain_c            ../engine/source/materials/fail/orthstrain/fail_orthstrain_c.F
 !||    fail_sahraei_s               ../engine/source/materials/fail/sahraei/fail_sahraei_s.F
 !||    fail_snconnect               ../engine/source/materials/fail/snconnect/fail_snconnect.F
 !||    fail_syazwan_c               ../engine/source/materials/fail/syazwan/fail_syazwan_c.F
@@ -70,10 +50,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    fail_tab_old_xfem            ../engine/source/materials/fail/tabulated/fail_tab_old_xfem.F
 !||    fail_tab_s                   ../engine/source/materials/fail/tabulated/fail_tab_s.F
 !||    fail_tab_xfem                ../engine/source/materials/fail/tabulated/fail_tab_xfem.F
-!||    fail_tensstrain_b            ../engine/source/materials/fail/tensstrain/fail_tensstrain_b.F
-!||    fail_tensstrain_c            ../engine/source/materials/fail/tensstrain/fail_tensstrain_c.F
-!||    fail_tensstrain_ib           ../engine/source/materials/fail/tensstrain/fail_tensstrain_ib.F
-!||    fail_tensstrain_s            ../engine/source/materials/fail/tensstrain/fail_tensstrain_s.F
 !||    fail_visual_b                ../engine/source/materials/fail/visual/fail_visual_b.F90
 !||    fail_visual_ib               ../engine/source/materials/fail/visual/fail_visual_ib.F90
 !||    finter_mixed_mod             ../engine/source/tools/finter_mixed.F90
@@ -95,7 +71,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i25therm                     ../engine/source/interfaces/int25/i25therm.F
 !||    i6ass3                       ../engine/source/interfaces/inter3d/i6ass3.F
 !||    i7therm                      ../engine/source/interfaces/int07/i7therm.F
-!||    idx_fld_sol                  ../engine/source/output/h3d/h3d_results/h3d_sol_skin_scalar.F
 !||    imp_kpres                    ../engine/source/implicit/imp_glob_k.F
 !||    incpflow                     ../engine/source/fluid/incpflow.F
 !||    lag_fxv                      ../engine/source/tools/lagmul/lag_fxv.F
@@ -116,7 +91,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sigeps101                    ../engine/source/materials/mat/mat101/sigeps101.F
 !||    sigeps105                    ../engine/source/materials/mat/mat105/sigeps105.F
 !||    sigeps111                    ../engine/source/materials/mat/mat111/sigeps111.F
-!||    sigeps117                    ../engine/source/materials/mat/mat117/sigeps117.F
 !||    sigeps187                    ../engine/source/materials/mat/mat187/sigeps187.F
 !||    sigeps28                     ../engine/source/materials/mat/mat028/sigeps28.F
 !||    sigeps33                     ../engine/source/materials/mat/mat033/sigeps33.F

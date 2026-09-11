@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cbadef     ../engine/source/elements/shell/coqueba/cbadef.F
 !||--- called by ------------------------------------------------------
@@ -53,7 +54,7 @@ C-----------------------------------------------
      .   BM(MVSIZ,36),BMF(MVSIZ,36),BF(MVSIZ,24),BC(MVSIZ,40),HX(MVSIZ,4),HY(MVSIZ,4)
       MY_REAL 
      .   VNRM(MVSIZ,12),VASTN(MVSIZ,16),VJFI(MVSIZ,3,2,4),
-     .   VQ(MVSIZ,3,3,4),VDEF(MVSIZ,8),DT1,AREA(*)
+     .   VQ(MVSIZ,3,3,4),VDEF(MVSIZ,8),AREA(*)
       MY_REAL 
      .   CDET(*),TC(MVSIZ,2,2),BRZ(MVSIZ,4,4)
 C-----------------------------------------------
@@ -61,13 +62,13 @@ C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
       INTEGER I, EP, IUN
       MY_REAL 
-     .   VPG(2,NPG),PG1,PG,THK,DETJ,DET,
+     .   VPG(2,NPG),PG1,PG,THK,
      .   TFN(3,2),BCX,BCY,BXY(3),BYX(3),
      .   V1(2),V2(2),RV1,RV2,
-     .   C1,C2,VT1,VT2,BC1,BC2,VB1,
-     .   VJF1(2,3),VJF(3,3),TBI(2,2),TBC(2,2),V11(4)
+     .   C1,C2,VT1,VT2,BC1,BC2,
+     .   TBI(2,2),TBC(2,2),V11(4)
       MY_REAL 
-     .   A_1,C11,C12,C21,C22,CC,BETA1,KSI1,KSIY1,BETA2,KSI2,KSIY2
+     .   A_1,C11,C12,C21,C22,BETA1,KSI1,BETA2,KSI2
        PARAMETER (PG=.577350269189626)
        PARAMETER (PG1=-.577350269189626)
 C--------------------------
@@ -863,7 +864,7 @@ C-----------------------------------------------
       INTEGER I,J,EP,NPG
       PARAMETER (NPG = 4)
       my_real 
-     .   AA4,BXV2,BYV1,ERZ,VPG(2,NPG),PG,PG1
+     .   BXV2,BYV1,ERZ,VPG(2,NPG),PG,PG1
        PARAMETER (PG=.577350269189626)
        PARAMETER (PG1=-.577350269189626)
 C--------------------------
@@ -953,7 +954,7 @@ C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
       INTEGER I,J
       my_real
-     .   AA4,BXV2,BYV1,A05,NXY,NYX,A05K(4),A05E(4),
+     .   A05,NXY,NYX,A05K(4),A05E(4),
      .   XIJ(MVSIZ,4),YIJ(MVSIZ,4),XIL(MVSIZ,4),YIL(MVSIZ,4)
 C--------(14,23,32,41)/4A----------X13:X13/A-----------------------------
       DO I=JFT,JLT
@@ -1294,7 +1295,7 @@ C-----------------------------------------------
       INTEGER I, EP
 C
       MY_REAL 
-     .   A_1,C11,C12,C21,C22,CDEMI
+     .   CDEMI
 C--------------------------
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----8
 #include "vectorize.inc"
@@ -1453,8 +1454,6 @@ C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
       INTEGER I, EP
 C
-      MY_REAL 
-     .   A_1,C11,C12,C21,C22,CDEMI
 C--------------------------
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----8
        DO EP=JFT,JLT 
@@ -1545,13 +1544,9 @@ C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
       INTEGER I, EP, IUN
       MY_REAL 
-     .   VPG(2,NPG),PG1,PG,THK,DETJ,DET,
-     .   TFN(3,2),BCX,BCY,BXY(3),BYX(3),
-     .   V1(2),V2(2),RV1,RV2,
-     .   C1,C2,VT1,VT2,BC1,BC2,VB1,TC(MVSIZ,2,2),
-     .   VJF1(2,3),VJF(3,3),TBI(2,2),TBC(2,2),V11(4)
-      MY_REAL 
-     .   A_1,C11,C12,C21,C22,CC,BETA1,KSI1,KSIY1,BETA2,KSI2,KSIY2
+     .   VPG(2,NPG),PG1,PG,
+     .   BXY(3),BYX(3),
+     .   C1,C2,TC(MVSIZ,2,2)
        PARAMETER (PG=.577350269189626)
        PARAMETER (PG1=-.577350269189626)
 C--------------------------
@@ -1785,7 +1780,7 @@ C-----------------------------------------------
       INTEGER I, EP
 C
       MY_REAL 
-     .   A_1,C11,C12,C21,C22,CDEMI,KXY,KYX
+     .   CDEMI,KXY,KYX
 C--------------------------
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----8
 #include "vectorize.inc"

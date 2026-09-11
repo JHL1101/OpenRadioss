@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 ! ======================================================================================================================
 !||====================================================================
 !||    anim_nodal_ssp_elems_mod   ../engine/source/output/anim/generate/anim_nodal_ssp_elems.F90
@@ -27,7 +28,7 @@
 !||    nodalssp                   ../engine/source/output/anim/generate/nodalssp.F
 !||====================================================================
       module anim_nodal_ssp_elems_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   PROCEDURES
@@ -38,11 +39,14 @@
 !||    anim_nodal_ssp_elems   ../engine/source/output/anim/generate/anim_nodal_ssp_elems.F90
 !||--- called by ------------------------------------------------------
 !||    nodalssp               ../engine/source/output/anim/generate/nodalssp.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    constant_mod           ../common_source/modules/constant_mod.F
 !||    elbufdef_mod           ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    initbuf_mod            ../engine/share/resol/initbuf.F
 !||    multi_fvm_mod          ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod          ../common_source/modules/precision_mod.F90
 !||====================================================================
         subroutine anim_nodal_ssp_elems( wa4, swa4, iparg, elbuf_tab, ix, nix, numel, is_written_node, &
@@ -58,6 +62,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -83,7 +89,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(sum_weight(numnod))
+          call my_alloc(sum_weight, numnod, "sum_weight")
           sum_weight = 0
           nnod = nix-3   !8-node brick or 4-node quad
 
@@ -134,7 +140,7 @@
             end if
           end do
 
-          deallocate(sum_weight)
+          call my_dealloc(sum_weight)
 !-----------------------------------------------
 
           return

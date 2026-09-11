@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch2_a_pon       ../engine/source/mpi/forces/spmd_exch2_a_pon.F
 !||--- called by ------------------------------------------------------
@@ -33,8 +34,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod                ../engine/share/modules/h3d_mod.F
 !||    heat_mod               ../engine/share/modules/heat_mod.F
 !||    interfaces_mod         ../common_source/modules/interfaces/interfaces_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
 !||    plyxfem_mod            ../engine/share/modules/plyxfem_mod.F
-!||    spmd_comm_world_mod    ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod               ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH2_A_PON(INTERFACES,
      1   IAD_ELEM,FR_ELEM,ADDCNE,PROCNE,FR_NBCC,
@@ -54,10 +56,12 @@ C--------------------------------------
         USE H3D_MOD
         USE GLOB_THERM_MOD
         USE INTERFACES_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : spmd_irecv, spmd_isend, spmd_waitany,
+     .                       spmd_wait
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -102,10 +106,9 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-        INTEGER MSGTYP, I, NOD, LOC_PROC, IERROR, INDEX, NISKYF, N, 
+        INTEGER MSGTYP, I, NOD, LOC_PROC, INDEX, NISKYF, N, 
      . SIZ,J,K,L,NB_NOD,CC,NBIRECV, II, NN, IPT, MSGOFF,
      .          IAD_RECV(NSPMD+1),
-     .          STATUS(MPI_STATUS_SIZE),
      .          REQ_R(NSPMD),REQ_S(NSPMD),IRINDEX(NSPMD),
      .          nbi,nbirct,nbisdt,l0,nbircp(NSPMD),nbisdp(NSPMD)
 
@@ -123,29 +126,29 @@ C-----------------------------------------------
 
 
 C === Allocate local arrays
-        ALLOCATE(ISKYF(NISKY))
-        ALLOCATE(ISKYFT(NISKY))
-        ALLOCATE(ITAGX(NUMNOD))
+        call my_alloc(ISKYF, NISKY, "ISKYF")
+        call my_alloc(ISKYFT, NISKY, "ISKYFT")
+        call my_alloc(ITAGX, NUMNOD, "ITAGX")
         ALLOCATE(ADSKYI(0:NUMNOD+1))
+! TODO: non-default lower bound, convert manually
 
-        ALLOCATE(RBUF(SIZE*LENR + 4*NPLYMAX*LENR1 +
-     .          (17*NLEVMAX+1)*LENR1+ NSPMD + 3*NFACNIT*LENR+LENC))
+        call my_alloc(RBUF, SIZE*LENR + 4*NPLYMAX*LENR1 +(17*NLEVMAX+1)*LENR1+ NSPMD + 3*NFACNIT*LENR+LENC, "RBUF")
 
-        ALLOCATE(FSKYIF(NFSKYI,NISKY))
-        ALLOCATE(FSKYT(NISKY))
+        call my_alloc(FSKYIF, NFSKYI, NISKY, "FSKYIF")
+        call my_alloc(FSKYT, NISKY, "FSKYT")
 
         IF(GLOB_THERM%INTHEAT /=  0) THEN
-          ALLOCATE(FTHESKYIF(NISKY))
-          ALLOCATE(CONDNSKYIF(NISKY))
+          call my_alloc(FTHESKYIF, NISKY, "FTHESKYIF")
+          call my_alloc(CONDNSKYIF, NISKY, "CONDNSKYIF")
         ELSE
-          ALLOCATE(FTHESKYIF(1))
-          ALLOCATE(CONDNSKYIF(1))
+          call my_alloc(FTHESKYIF, 1, "FTHESKYIF")
+          call my_alloc(CONDNSKYIF, 1, "CONDNSKYIF")
         ENDIF
 
         IF( INTPLYXFEM > 0) THEN
-          ALLOCATE(FSKYIF_PXFEM(5,NISKY))
+          call my_alloc(FSKYIF_PXFEM, 5, NISKY, "FSKYIF_PXFEM")
         ELSE
-          ALLOCATE(FSKYIF_PXFEM(5,1))
+          call my_alloc(FSKYIF_PXFEM, 5, 1, "FSKYIF_PXFEM")
         ENDIF
 
 C=======================================================================
@@ -174,9 +177,8 @@ C
             MSGTYP = MSGOFF
             NBIRECV = NBIRECV + 1
             IRINDEX(NBIRECV) = I
-            CALL MPI_IRECV(
-     S        RBUF(L),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_R(NBIRECV),IERROR)
+            CALL spmd_irecv(
+     S        RBUF(L),SIZ,IT_SPMD(I),MSGTYP,REQ_R(NBIRECV))
             L = L + SIZ
           ENDIF
           IAD_RECV(I+1) = L
@@ -506,11 +508,10 @@ C tag set to 0 of itagx on frontiere node
           ENDDO
         ENDIF
 
-        DEALLOCATE(ISKYF)
-        DEALLOCATE(FSKYT)
-        DEALLOCATE(ISKYFT)
-        ALLOCATE(SBUF(SIZE*LENS + 4*NPLYMAX*LENS1 +
-     .          (17*NLEVMAX+1)*LENS1+ NSPMD+ 3*NFACNIT*LENS+LENC))
+        call my_dealloc(ISKYF)
+        call my_dealloc(FSKYT)
+        call my_dealloc(ISKYFT)
+        call my_alloc(SBUF, SIZE*LENS + 4*NPLYMAX*LENS1 +(17*NLEVMAX+1)*LENS1+ NSPMD+ 3*NFACNIT*LENS+LENC, "SBUF")
 
 
 C
@@ -1152,9 +1153,8 @@ C
      .             SIZ = SIZ + 6*(IAD_ELEM(1,I+1)-IAD_ELEM(1,I))    !Output max contact forces
 C
             MSGTYP = MSGOFF
-            CALL MPI_ISEND(
-     S        SBUF(L0),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_S(I),IERROR)
+            CALL spmd_isend(
+     S        SBUF(L0),SIZ,IT_SPMD(I),MSGTYP,REQ_S(I))
           ENDIF
         ENDDO
 C
@@ -1162,7 +1162,7 @@ C decompactage
 C
         NBIRCT = 0
         DO II=1,NBIRECV
-          CALL MPI_WAITANY(NBIRECV,REQ_R,INDEX,STATUS,IERROR)
+          CALL spmd_waitany(REQ_R,NBIRECV,INDEX)
           I = IRINDEX(INDEX)
           NB_NOD = IAD_ELEM(1,I+1)-IAD_ELEM(1,I)
 C
@@ -1769,17 +1769,17 @@ C   wait terminaison isend
 C
         DO I = 1, NSPMD
           IF(IAD_ELEM(1,I+1)-IAD_ELEM(1,I)>0)
-     .      CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+     .      CALL spmd_wait(REQ_S(I))
         ENDDO
 
-        DEALLOCATE(RBUF)
-        DEALLOCATE(SBUF)
-        DEALLOCATE(FSKYIF)
-        DEALLOCATE(FTHESKYIF)
-        DEALLOCATE(CONDNSKYIF)
-        DEALLOCATE(FSKYIF_PXFEM)
-        DEALLOCATE(ITAGX)
-        DEALLOCATE(ADSKYI)
+        call my_dealloc(RBUF)
+        call my_dealloc(SBUF)
+        call my_dealloc(FSKYIF)
+        call my_dealloc(FTHESKYIF)
+        call my_dealloc(CONDNSKYIF)
+        call my_dealloc(FSKYIF_PXFEM)
+        call my_dealloc(ITAGX)
+        call my_dealloc(ADSKYI)
 
 
 C

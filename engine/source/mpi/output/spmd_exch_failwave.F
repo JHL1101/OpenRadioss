@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_failwave_boundaries   ../engine/source/mpi/output/spmd_exch_failwave.F
 !||--- called by ------------------------------------------------------
 !||    resol_init                 ../engine/source/engine/resol_init.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    failwave_mod               ../common_source/modules/failwave_mod.F
+!||    my_alloc_mod               ../common_source/tools/memory/my_alloc.F90
 !||    spmd_comm_world_mod        ../engine/source/mpi/spmd_comm_world.F90
 !||====================================================================
       SUBROUTINE SPMD_FAILWAVE_BOUNDARIES(FAILWAVE,IAD_ELEM,FR_ELEM)
@@ -38,6 +41,8 @@ C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
         USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        use my_alloc_mod
+
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -55,11 +60,11 @@ C-----------------------------------------------
       INTEGER P,J,TOTAL_NODES,NCOUNT,NOD
 C-----------------------------------------------
 
-      IF (ALLOCATED( FAILWAVE%FWAVE_IAD)) DEALLOCATE (FAILWAVE%FWAVE_IAD) 
-      IF (ALLOCATED( FAILWAVE%FWAVE_FR )) DEALLOCATE (FAILWAVE%FWAVE_FR) 
+      IF (ALLOCATED( FAILWAVE%FWAVE_IAD)) call my_dealloc(FAILWAVE%FWAVE_IAD)
+      IF (ALLOCATED( FAILWAVE%FWAVE_FR )) call my_dealloc(FAILWAVE%FWAVE_FR)
 
 C count the #boundaries failwave nodes
-      ALLOCATE(COUNT(NSPMD))
+      call my_alloc(COUNT, NSPMD, "COUNT")
       COUNT(1:NSPMD)=0
       TOTAL_NODES=0
       DO P=1,NSPMD
@@ -72,8 +77,8 @@ C count the #boundaries failwave nodes
         TOTAL_NODES = TOTAL_NODES + COUNT(P)
       ENDDO
 
-      ALLOCATE(FAILWAVE%FWAVE_IAD(NSPMD+1))
-      ALLOCATE(FAILWAVE%FWAVE_FR(TOTAL_NODES))
+      call my_alloc(FAILWAVE%FWAVE_IAD, NSPMD+1, "FAILWAVE%FWAVE_IAD")
+      call my_alloc(FAILWAVE%FWAVE_FR, TOTAL_NODES, "FAILWAVE%FWAVE_FR")
       FAILWAVE%FWAVE_IAD(1)=1
       DO P=2,NSPMD+1
          FAILWAVE%FWAVE_IAD(P)=FAILWAVE%FWAVE_IAD(P-1)+COUNT(P-1)
@@ -91,7 +96,7 @@ C count the #boundaries failwave nodes
       ENDDO
 
 
-      DEALLOCATE(COUNT)
+      call my_dealloc(COUNT)
       END
 
 
@@ -102,6 +107,7 @@ C count the #boundaries failwave nodes
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    failwave_mod          ../common_source/modules/failwave_mod.F
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_FAILWAVE(FAILWAVE)
@@ -114,6 +120,8 @@ C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
         USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+      use my_alloc_mod
+
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -163,8 +171,8 @@ C--------------------------------------------------------------------
 C 1. SEND MAXLEV (Stacked information to the others)
 C--------------------------------------------------------------------
       SIZ = FAILWAVE%FWAVE_IAD(NSPMD+1)-FAILWAVE%FWAVE_IAD(1)
-      ALLOCATE(RBUFI(SIZ))
-      ALLOCATE(SBUFI(SIZ))
+      call my_alloc(RBUFI, SIZ, "RBUFI")
+      call my_alloc(SBUFI, SIZ, "SBUFI")
 
 c--------------------------------------------------------------------
 c     MPI receive
@@ -256,8 +264,8 @@ C ---------------------------------------------------------------
       SIZ_SEND = (IAD_SEND(NSPMD+1)-IAD_SEND(1))
       SIZ_RECV = (IAD_RECV(NSPMD+1)-IAD_RECV(1))
 
-      ALLOCATE(SEND_BUF(SIZ_SEND))
-      ALLOCATE(RECV_BUF(SIZ_RECV))
+      call my_alloc(SEND_BUF, SIZ_SEND, "SEND_BUF")
+      call my_alloc(RECV_BUF, SIZ_RECV, "RECV_BUF")
 
 c      print*,ispmd,'send_buf', SIZ_SEND,' recv_buf:', SIZ_RECV
 c--------------------------------------------------------------------
@@ -360,11 +368,11 @@ c-------------------------------------------------------------------
           CALL MPI_WAIT(REQ_S2(I),STATUS,IERROR)
         ENDIF
       ENDDO
-      DEALLOCATE(SEND_BUF)
-      DEALLOCATE(RECV_BUF)
+      call my_dealloc(SEND_BUF)
+      call my_dealloc(RECV_BUF)
 
-      DEALLOCATE(RBUFI)
-      DEALLOCATE(SBUFI)
+      call my_dealloc(RBUFI)
+      call my_dealloc(SBUFI)
 
 #endif
 

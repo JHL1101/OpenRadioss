@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lecins                 ../starter/source/interfaces/interf1/lecins.F
 !||--- called by ------------------------------------------------------
@@ -67,6 +68,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE I2_SURFI_MOD ,         ONLY : I2_SURFI
       use element_mod , only : nixs
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -116,7 +118,8 @@ C-----------------------------------------------
      .   ISU1,ISU2,NRTM0,NRTM_SH,
      .   NRTS_NEW, NRTM_NEW,IBID,INTTH,
      .   NRTM_IGE,NRTM_FE,NRTS_IGE,NRTS_FE,
-     .   NMN_IGE,NMN_FE,NSN_IGE,NSN_FE,INTNITSCHE,IAD_IGE,GRBRIC_ID,NIN25
+     .   NMN_IGE,NMN_FE,NSN_IGE,NSN_FE,INTNITSCHE,
+     .   IAD_IGE,GRBRIC_ID,NIN25,NEDGE_L,NMN_1D
 
       INTEGER :: STAT
       INTEGER, DIMENSION(:), ALLOCATABLE, TARGET ::  NTAG_TARGET
@@ -128,7 +131,7 @@ C-----------------------------------------------
       CHARACTER(LEN=NCHARTITLE) :: TITR
       DATA MESS/'INTERFACE INPUT                         '/
 C=======================================================================
-       ALLOCATE(NTAG_TARGET(2*NUMNOD+1), STAT=Stat)
+       call my_alloc(NTAG_TARGET, 2*NUMNOD+1, "NTAG_TARGET", stat=Stat)
 
        NTAG(0:2*NUMNOD) => NTAG_TARGET(1:2*NUMNOD+1)
 
@@ -158,6 +161,8 @@ C
         INTTH  = IPARI(47,NI)
         INTNITSCHE  = IPARI(86,NI)
         GRBRIC_ID   = IPARI(83,NI) !int18
+        NEDGE_L = IPARI(101,NI) 
+        NMN_1D = IPARI(104,NI) 
         IRM    = 0
         IRS    = 0
 C- deactivated interfaces
@@ -261,7 +266,7 @@ c            END IF
             ELSEIF(IS1 == 2)THEN
               CALL INPOINT(NSN,NOINT,IGRNOD(ISU1)%ENTITY,ITAB,INTBUF_TAB(NI)%NSV)
             ELSEIF(IS1 == 3)THEN
-              LINE_NODES = > IGRSLIN(ISU1)%NODES(1:NRTS,1:2)
+              LINE_NODES => IGRSLIN(ISU1)%NODES(1:NRTS,1:2)
               CALL INSLIN(NRTS,NSN,INTBUF_TAB(NI)%IRECTS,NOINT,
      .                    LINE_NODES,ITAB,INTBUF_TAB(NI)%NSV,
      .                    NTAG)
@@ -634,7 +639,9 @@ C           necessary in the 2nd passage (see iddlevel)
      7      NOD2ELTG               ,KNOD2ELS               ,NOD2ELS                  ,IXS                    ,
      8      IXS10                  ,IXS16                  ,IXS20                    ,INTBUF_TAB(NI)%IRTSE   ,
      9      INTBUF_TAB(NI)%IS2SE   ,INTBUF_TAB(NI)%IS2PT   ,INTBUF_TAB(NI)%IS2ID     ,INTERFACES%PARAMETERS  ,
-     A      NIN25                  ,FLAG_ELEM_INTER25      )
+     A      NIN25                  ,FLAG_ELEM_INTER25      ,IGRSLIN                  ,
+     B      INTBUF_TAB(NI)%LEDGE   ,INTBUF_TAB(NI)%EBINFLG ,IPARI(68,NI)             ,IPARI(104,NI)          ,
+     C      INTBUF_TAB(NI)%MSR_1D  )
 C------initialization of doubler M_seg pour shells ---> move inside I24SURFI
         ENDIF
 C
@@ -645,7 +652,7 @@ C-----
       ENDDO
 C-----
        NULLIFY(NTAG)
-       DEALLOCATE(NTAG_TARGET)
+       CALL MY_DEALLOC(NTAG_TARGET)
 
       RETURN
       END

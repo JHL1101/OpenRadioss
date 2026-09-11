@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i2for28p_cin   ../engine/source/interfaces/interf/i2for28p_cin.F
 !||--- called by ------------------------------------------------------
 !||    i2for28p       ../engine/source/interfaces/interf/i2for28p.F
 !||--- calls      -----------------------------------------------------
 !||    i2forces       ../engine/source/interfaces/interf/i2forces.F
+!||    m33_p1         ../engine/source/interfaces/interf/m33_p1.F90
 !||--- uses       -----------------------------------------------------
 !||    h3d_mod        ../engine/share/modules/h3d_mod.F
+!||    m33_p1_mod     ../engine/source/interfaces/interf/m33_p1.F90
 !||====================================================================
       SUBROUTINE I2FOR28P_CIN(
      1             NSN      ,NMN     ,A      ,IRECT   ,DPARA   ,
@@ -41,6 +44,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE H3D_MOD
+      USE M33_P1_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -77,7 +81,7 @@ C     REAL
      .   X12,X22,X32,X42,Y12,Y22,Y32,Y42,Z12,Z22,Z32,Z42,
      .   XX,YY,ZZ,XXX,YYY,ZZZ,XY,YZ,ZX,XY2,YZ2,ZX2,
      .   A1,A2,A3,B1,B2,B3,C1,C2,C3,MR,MRX,MRY,MRZ,INX,STF,FACT,
-     .   FX(4),FY(4),FZ(4)
+     .   FX(4),FY(4),FZ(4),MR1
 C=======================================================================
 C
 C------------------------------
@@ -235,7 +239,9 @@ C
          MRX = (B1+C3+C2)
          MRY = (B2+C1+C3)
          MRZ = (B3+C2+C1)
-         MR=DET*INX*MAX(MRX,MRY,MRZ)
+         CALL M33_P1(B1,B2,B3,C1,C2,C3,MR1)
+!         MR=DET*INX*MAX(MRX,MRY,MRZ)
+          MR=DET*INX*MR1
 C
 C------------------------------------------------------
 C     MASSES & FORCES TRANSMISES AUX NODES MAINS
@@ -252,9 +258,9 @@ C
          XMSI=FOURTH*XMSI+MR*FACT
 C
          IF (IRODDL == 1) THEN
-           STF = FOURTH*STIFN(I)+ DET*MAX(MRX,MRY,MRZ)*(STIFR(I)+STIFN(I)*(XS*XS+YS*YS+ZS*ZS))
+           STF = FOURTH*STIFN(I)+ DET*MR1*(STIFR(I)+STIFN(I)*(XS*XS+YS*YS+ZS*ZS))
          ELSE
-           STF = FOURTH*STIFN(I)+ DET*MAX(MRX,MRY,MRZ)*(STIFN(I)*(XS*XS+YS*YS+ZS*ZS))
+           STF = FOURTH*STIFN(I)+ DET*MR1*(STIFN(I)*(XS*XS+YS*YS+ZS*ZS))
          ENDIF
 C
          I0 = I0BASE + IADX(K)

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_sph_scalar         ../engine/source/output/h3d/h3d_results/h3d_sph_scalar.F
 !||--- called by ------------------------------------------------------
@@ -329,8 +330,9 @@ C--------------------------------------------------
 C             VISCOSITE TURBULENTE
                 DO I=1,NEL
                   IF((MLW == 6 .OR. MLW == 17).AND.JTURB/=0)THEN
+                    N = I+NFT
                     IPRT=IPARTSP(N)
-              MT  =IPART(1,IPRT)
+                    MT  =IPART(1,IPRT)
                     VALUE(I)=PM(81,MT)*GBUF%RK(I)**2/
      .                     MAX(EM15,GBUF%RE(I))
                     IS_WRITTEN_VALUE(I) = 1  
@@ -570,18 +572,18 @@ C--------------------------------------------------
 C-------------------------------------------------- 
               ELSEIF(KEYWORD == 'TILLOTSON') THEN  
 C-------------------------------------------------- 
-                 N = I + NFT
-                 IPRT=IPARTSP(N)                                           
-                 MT  =IPART(1,IPRT) 
-                 IEOS = IPM(4,MT)                             
-                 IF(IEOS == 3)THEN                            
-                   EBUF => ELBUF_TAB(NG)%BUFLY(1)%EOS(1,1,1)   
+                   EBUF => ELBUF_TAB(NG)%BUFLY(1)%EOS(1,1,1)
                    NVAREOS = ELBUF_TAB(NG)%BUFLY(1)%NVAR_EOS  
-                   DO  I=1,NEL                                
-                     VALUE(I) = EBUF%VAR(I)                   
-                     IS_WRITTEN_VALUE(I) = 1                  
-                   ENDDO                                      
-                 ENDIF
+                   DO I=1,NEL
+                     N = I + NFT
+                     IPRT = IPARTSP(N)
+                     MT = IPART(1,IPRT)
+                     IEOS = IPM(4,MT)
+                     IF(IEOS == 3)THEN
+                       VALUE(I) = EBUF%VAR(I)
+                       IS_WRITTEN_VALUE(I) = 1
+                     ENDIF
+                   ENDDO
 C--------------------------------------------------
               ELSEIF(KEYWORD == 'NEIGHBOURS')THEN
 C--------------------------------------------------
@@ -593,6 +595,7 @@ C--------------------------------------------------
               ELSEIF(KEYWORD == 'VSTRAIN') then
 !--------------------------------------------------
                 DO I=1,NEL
+                  N = I + NFT
                   IPRT = IPARTSP(N)
                   MT = IPART(1,IPRT)
                   IF(PM(89,MT) > ZERO)THEN

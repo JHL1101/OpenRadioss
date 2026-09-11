@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i24sti3                 ../starter/source/interfaces/inter3d1/i24sti3.F
 !||--- called by ------------------------------------------------------
@@ -110,18 +111,18 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NDX, I, J, INRT, NELS, MT, JJ, JJJ, NELC,
-     .   MG, NUM, NPT, LL, L, NN, NELTG,N1,N2,N3,N4,IE,
-     .   IP, NLEV, MYLEV, K, P, R, T,NRT1,NRT2,NSHIF,
+      INTEGER NDX, I, J,
+     .   MG, L, NN, N1,N2,N3,N4,IE,
+     .   IP, NLEV, MYLEV, K, NRT1,NRT2,NSHIF,
      .   NS,IGTYP,NRTT,IPL,IPFMAX,
      .   IPFLMAX,NM,NEL,FC,PERM,NSHIFF,N,IPG
      
       INTEGER JPERM(4) ,FACES(4,6),TAB1(4),TAB2(4),FACES10(3,16)
 C     REAL
       my_real
-     .   DXM, GAPMX, GAPMN, AREA, VOL, DX,GAPS1,GAPS2, GAPM, DDX, 
-     .   GAPTMP, GAPSCALE,SX1,SY1,SZ1,SX2,SY2,SZ2,SX3,SY3,SZ3,
-     .   SLSFAC,XL,GAPS_MN
+     .   DXM, GAPMX, GAPMN, AREA, DX,GAPS1,GAPS2,
+     .   GAPSCALE,SX1,SY1,SZ1,SX2,SY2,SZ2,SX3,SY3,SZ3,
+     .   SLSFAC,GAPS_MN
       INTEGER, DIMENSION(:),ALLOCATABLE ::TAGNOD,TAGB
       DATA JPERM/2,3,4,1/
       DATA FACES/1,2,3,4,
@@ -171,7 +172,7 @@ C     NRT_SH nb of shells before symetrization, NRT nb of MAIN segments before s
 C------------------------------------
 C     GAP NODES SECONDS
 C------------------------------------
-      ALLOCATE(TAGB(NUMNOD))
+      call my_alloc(TAGB, NUMNOD, "TAGB")
       DO I=1,NUMNOD
         WA(I)=ZERO
       ENDDO
@@ -466,7 +467,7 @@ C -----NITSCHE method for contact : construction of tabs needed to compute equiv
 C IRECTS tab : case NRTS=NRTM, similar to irect 
 C                   but irects  (seg -> SECONDARY or MAIN node) / irect (seg -> local node)
 
-          ALLOCATE(TAGNOD(NUMNOD))
+          call my_alloc(TAGNOD, NUMNOD, "TAGNOD")
           TAGNOD(1:NUMNOD)=0
           DO NM=1,NMN
             TAGNOD(MSR(NM))=NM
@@ -479,7 +480,7 @@ C                   but irects  (seg -> SECONDARY or MAIN node) / irect (seg -> 
             ENDDO
           ENDDO
 
-          DEALLOCATE(TAGNOD)
+          CALL MY_DEALLOC(TAGNOD)
 
 C IELENRTS tab : Element number for each SECONDARY segment
           IF (ILEV==2) THEN
@@ -942,7 +943,7 @@ C-------shell elements
        END DO
       END IF
 
-      DEALLOCATE(TAGB)
+      CALL MY_DEALLOC(TAGB)
       RETURN
 
  1400 FORMAT(2X,'MIN,MAX OF SECONDARY GAP: ',2(1PG20.13))
@@ -1129,7 +1130,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NRT, NINT, NTY, NOINT,NSN,IGAP, NDDIM,NDX,INTFRIC,IGSTI
+      INTEGER NRT, NINT, NTY, NOINT,NSN,IGAP, NDX,INTFRIC,IGSTI
       INTEGER IRECT(4,*), IXS(NIXS,*), IXC(NIXC,*),
      .   NSV(*), IXTG(NIXTG,*), IXT(NIXT,*), IXP(NIXP,*),
      .   KNOD2ELS(*), KNOD2ELC(*), KNOD2ELTG(*), NOD2ELS(*), NOD2ELC(*), 
@@ -1157,14 +1158,14 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, INRT, NELS, MT, JJ, JJJ, NELC,
+      INTEGER I, INRT, NELS, MT, JJ, JJJ, NELC,
      .   MG,  NELTG,
      .   IP, NREV,IGTYP,IPGMAT,IGMAT,
      .   ISUBSTACK,IPL,IPG,NINV,ICONTR,NIN25
       INTEGER, DIMENSION(:),ALLOCATABLE  :: TAGELEMS,INDEXE
 C     REAL
       my_real
-     .   AREA, VOL, DX, GAPM, DDX, 
+     .   AREA, VOL, DX, GAPM,
      .   ST,BULK
       INTEGER :: IELEM(2)
       LOGICAL :: PRINT_ERROR
@@ -1173,9 +1174,9 @@ C----------------------
       NREV=0
       IPGMAT = 700
       IF(NUMELS > 0) THEN
-        CALL MY_ALLOC(TAGELEMS,NUMELS)
+        CALL MY_ALLOC(TAGELEMS,NUMELS,"TAGELEMS")
         TAGELEMS = 0
-        CALL MY_ALLOC(INDEXE,NUMELS)
+        CALL MY_ALLOC(INDEXE,NUMELS,"INDEXE")
         INDEXE = 0
       ENDIF
       NINV = 0
@@ -1760,7 +1761,8 @@ C      In SPMD you need an element associated with the edge otherwise error
        ENDIF
       END DO
 C
-      IF(NUMELS > 0) DEALLOCATE(TAGELEMS,INDEXE)
+      IF(NUMELS > 0) CALL MY_DEALLOC(TAGELEMS)
+      IF(NUMELS > 0) CALL MY_DEALLOC(INDEXE)
 C
       CALL ANCMSG(MSGID=3022,
      .             MSGTYPE=MSGWARNING,
@@ -1801,15 +1803,17 @@ C-----------------------------------------------
  !    +                      ' ARE REVERSED THE NORMAL DIRECTION')
       END
 !||====================================================================
-!||    i24bord     ../starter/source/interfaces/inter3d1/i24sti3.F
+!||    i24bord        ../starter/source/interfaces/inter3d1/i24sti3.F
 !||--- called by ------------------------------------------------------
-!||    i24sti3     ../starter/source/interfaces/inter3d1/i24sti3.F
+!||    i24sti3        ../starter/source/interfaces/inter3d1/i24sti3.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE I24BORD(NSEG,SURF_NODES ,TAGB)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1818,8 +1822,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,NLMAX,STAT,LL,I1,I2,I3,I4,I5,I1M,I2M,IS,BORD,BOLD
-      INTEGER NEXTK(4),IWORK(70000),NL
+      INTEGER J,K,L,NLMAX,STAT,LL,I1,I2,I3,I4,I1M,I2M,IS,BORD,BOLD
+      INTEGER NEXTK(4),IWORK(70000)
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: 
      .   LINEIX
       INTEGER, DIMENSION(:), ALLOCATABLE :: 
@@ -1827,7 +1831,7 @@ C-----------------------------------------------
       DATA NEXTK/2,3,4,1/
 C=======================================================================
       NLMAX = 4*NSEG
-      ALLOCATE (LINEIX(2,NLMAX)    ,STAT=stat)
+      call my_alloc(LINEIX, 2, NLMAX, "LINEIX", stat=stat)
       ALLOCATE (INDEX(2*NLMAX)     ,STAT=stat)
 c---------------------------------------
 c       search for all lines on the surface
@@ -1894,18 +1898,19 @@ c         last edge is a border
 
 
       DEALLOCATE (INDEX)
-      DEALLOCATE (LINEIX)
+      CALL MY_DEALLOC(LINEIX)
 C-----------
       RETURN
       END
 !||====================================================================
-!||    i24normns   ../starter/source/interfaces/inter3d1/i24sti3.F
+!||    i24normns      ../starter/source/interfaces/inter3d1/i24sti3.F
 !||--- called by ------------------------------------------------------
-!||    i24sti3     ../starter/source/interfaces/inter3d1/i24sti3.F
-!||    i25sti3     ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i24sti3        ../starter/source/interfaces/inter3d1/i24sti3.F
+!||    i25sti3        ../starter/source/interfaces/inter3d1/i25sti3.F
 !||--- calls      -----------------------------------------------------
-!||    normv3      ../starter/source/interfaces/inter3d1/i24tools.F
-!||    normvec     ../starter/source/interfaces/inter3d1/i24sti3.F
+!||    normv3         ../starter/source/interfaces/inter3d1/i24tools.F
+!||    normvec        ../starter/source/interfaces/inter3d1/i24sti3.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE I24NORMNS(
      1 X     ,IRECT ,NRT   ,NSN   ,NSV   ,PEN_OLD, STF)
@@ -1913,6 +1918,7 @@ C============================================================================
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1935,7 +1941,8 @@ C     REAL
       my_real, DIMENSION(:,:), ALLOCATABLE :: NORM
       INTEGER, DIMENSION(:), ALLOCATABLE :: ITAG  
 C=======================================================================
-       ALLOCATE(NORM(3,NUMNOD),ITAG(NUMNOD))
+       call my_alloc(NORM, 3, NUMNOD, "NORM")
+       call my_alloc(ITAG, NUMNOD, "ITAG")
        DO I=1,NUMNOD
         NORM(1,I) = ZERO
         NORM(2,I) = ZERO
@@ -2005,7 +2012,8 @@ C
         PEN_OLD(3,I) = NORM(3,NS)
       ENDDO
 C-----------
-       DEALLOCATE(NORM,ITAG)
+       CALL MY_DEALLOC(NORM)
+       CALL MY_DEALLOC(ITAG)
       RETURN
       END
 !||====================================================================
@@ -2251,8 +2259,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IY(4), N, JJ, II, K, NN, KK, IC, IAD,
-     .        NUSER, NUSERM
+      INTEGER IY(4), JJ, K, NN, KK, IC
 C     REAL
       my_real
      .   N1, N2, N3, DDS
@@ -2514,4 +2521,3 @@ C
 C-----------------------------------------------
       RETURN
       END
-

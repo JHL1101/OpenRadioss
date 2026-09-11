@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 #ifdef MPI
 !||====================================================================
 !||    spmd_fxb_for_pon      ../engine/source/mpi/kinematic_conditions/spmd_fxb_for_pon.F
@@ -73,7 +74,7 @@ C
          IAD=IADN(NFX)
          IF (ISPMD==PMAIN) THEN
             NSNT=FXBIPM(40,NFX)
-            ALLOCATE(FSKYL(NSNT,NME+NMOD))
+            ALLOCATE(FSKYL(NSNT, NME+NMOD))
             DO I=1,NME+NMOD
                DO J=1,NSN
                   JJ=NINT(FSKYFXB(IAD+J,1))
@@ -95,7 +96,7 @@ C
             DO I=1,NSPMD-1
                NSNPMAX=MAX(NSNPMAX,NSNP(I))
             ENDDO
-            ALLOCATE(FSKYP(NSNPMAX*(1+NME+NMOD),NSPMD-1))
+            ALLOCATE(FSKYP(NSNPMAX*(1+NME+NMOD), NSPMD-1))
             II=0
             DO I=1,NSPMD
                IF (ISPMD==I-1) CYCLE
@@ -131,7 +132,7 @@ C
      .                     ITAG, SPMD_COMM_WORLD, REQ(1), IERR)
             CALL MPI_WAIT(REQ, STAT, IERR)
 C
-            ALLOCATE(FSKYL(NSN,1+NME+NMOD))
+            ALLOCATE(FSKYL(NSN, 1+NME+NMOD))
             DO I=1,1+NME+NMOD
                DO J=1,NSN
                   FSKYL(J,I)=FSKYFXB(IAD+J,I)
@@ -143,7 +144,7 @@ C
      .                     ITAG, SPMD_COMM_WORLD, REQ(1), IERR)
             CALL MPI_WAIT(REQ, STAT, IERR)
 C
-            DEALLOCATE(FSKYL)
+           DEALLOCATE(FSKYL)
          ENDIF
       ENDDO
 C
@@ -195,7 +196,7 @@ C
          NSN=FXBIPM(18,NFX)
          AVAR=FXBIPM(13,NFX)
          IAD=IADN(NFX)
-         ALLOCATE(FSKYL(NSN,NME+NMOD))
+         ALLOCATE(FSKYL(NSN, NME+NMOD))
          DO I=1,NME+NMOD
             DO J=1,NSN
                JJ=NINT(FSKYFXB(IAD+J,1))

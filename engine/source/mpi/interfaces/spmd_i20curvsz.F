@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    spmd_i20curvsz        ../engine/source/mpi/interfaces/spmd_i20curvsz.F
+!||    spmd_i20curvsz   ../engine/source/mpi/interfaces/spmd_i20curvsz.F
 !||--- called by ------------------------------------------------------
-!||    i20mainf              ../engine/source/interfaces/int20/i20mainf.F
+!||    i20mainf         ../engine/source/interfaces/int20/i20mainf.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I20CURVSZ(NRTM  ,IRECT ,NUMNOD,IAD_ELEM,FR_ELEM,
      2                         ISDSIZ,IRCSIZ,ITAG  ,LENR    ,LENT   ,
@@ -35,7 +36,7 @@ C
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : spmd_irecv, spmd_send, spmd_wait
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -56,10 +57,9 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I ,J ,N1, N2, N3, N4, IERROR, IAD, SIZ, NB,
+      INTEGER I ,J ,N1, N2, N3, N4, IAD, SIZ, NB,
      .        MSGTYP, LOC_PROC, MSGOFF,
-     .        IBUFS(LENR), IBUFR(LENR),
-     .        STATUS(MPI_STATUS_SIZE),REQ_R(NSPMD)
+     .        IBUFS(LENR), IBUFR(LENR), REQ_R(NSPMD)
       DATA MSGOFF/194/
 
 C-----------------------------------------------
@@ -72,9 +72,9 @@ C
         SIZ = IAD_ELEM(1,I+1)-IAD_ELEM(1,I)
         IF(SIZ>0)THEN
           MSGTYP = MSGOFF 
-          CALL MPI_IRECV(
-     S      IBUFR(IAD),SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(I),IERROR)
+          CALL spmd_irecv(
+     S      IBUFR(IAD:IAD+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,
+     G      REQ_R(I))
             IAD = IAD + SIZ
         ENDIF
       END DO
@@ -109,9 +109,8 @@ C
             IAD = IAD + 1
           END DO
           MSGTYP = MSGOFF
-          CALL MPI_SEND(
-     S      IBUFS,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,IERROR)
+          CALL spmd_send(
+     S      IBUFS(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
         END IF
       END DO
 C
@@ -121,7 +120,7 @@ C
       DO I = 1, NSPMD
         SIZ = IAD_ELEM(1,I+1)-IAD_ELEM(1,I)
         IF(SIZ>0)THEN
-          CALL MPI_WAIT(REQ_R(I),STATUS,IERROR)
+          CALL spmd_wait(REQ_R(I))
           DO J=IAD_ELEM(1,I),IAD_ELEM(1,I+1)-1
             N1 = FR_ELEM(J)
             IAD = IAD + 1

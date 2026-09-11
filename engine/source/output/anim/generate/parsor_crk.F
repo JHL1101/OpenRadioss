@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    parsor_crk         ../engine/source/output/anim/generate/parsor_crk.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    crackxfem_mod      ../engine/share/modules/crackxfem_mod.F
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE PARSOR_CRK(IPARG  ,IXC     ,IXTG  ,EL2FA,IDCRK   ,
      .                      IAD_CRK,IAD_CRKG,NBF_L ,NBF  ,IEL_CRK ,
@@ -43,6 +45,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -67,7 +70,7 @@ C     REAL
 C=======================================================================
 C     CRK ELEMS INIT
 C-----------------------------------------------
-      CALL my_alloc(NP, NBF_L*4)
+      call my_alloc(NP, NBF_L*4, "NP")
       NEL_CRK = 0
       JJ = 0
       IE = 0
@@ -174,6 +177,6 @@ C
         END DO
       ENDIF
 C-----------
-      DEALLOCATE(NP)
+      call my_dealloc(NP)
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    intfop8          ../engine/source/interfaces/interf/intfop8.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod          ../engine/share/modules/h3d_mod.F
 !||    int8_mod         ../common_source/modules/interfaces/int8_mod.F90
 !||    intbufdef_mod    ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod       ../common_source/modules/output/output_mod.F90
 !||    sensor_mod       ../common_source/modules/sensor_mod.F90
 !||====================================================================
@@ -55,6 +58,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -170,7 +175,7 @@ c        IF(ISPMD/=0) GOTO 200 !TO REMOVE
            IF(STARTT<=TT .AND. TT<= STOPT) THEN
              IF(IPARI(48,N) == 2) THEN
                NSLV = IPARI(5,N)         
-               ALLOCATE(FTSAV_BUF(3,NSLV))
+               call my_alloc(FTSAV_BUF, 3, NSLV, "FTSAV_BUF")
                FTSAV_BUF(1:3,1:NSLV) = 0
                DO I = 1, NSLV
                  FTSAV_BUF(1,I) = INTBUF_TAB(N)%FTSAVX(I) 
@@ -184,7 +189,7 @@ c        IF(ISPMD/=0) GOTO 200 !TO REMOVE
                  INTBUF_TAB(N)%FTSAVY(I) = FTSAV_BUF(2,I)
                  INTBUF_TAB(N)%FTSAVZ(I) = FTSAV_BUF(3,I)
                ENDDO
-               DEALLOCATE(FTSAV_BUF)
+               call my_dealloc(FTSAV_BUF)
              ENDIF
            ENDIF
          ENDIF

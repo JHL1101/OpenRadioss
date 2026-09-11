@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sms_encin_2       ../engine/source/ams/sms_encin_2.F
 !||--- called by ------------------------------------------------------
@@ -41,6 +42,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    intstamp_mod      ../engine/share/modules/intstamp_mod.F
 !||    message_mod       ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod        ../common_source/modules/output/output_mod.F90
 !||    sensor_mod        ../common_source/modules/sensor_mod.F90
 !||    timer_mod         ../engine/source/system/timer_mod.F90
@@ -74,6 +77,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -154,15 +159,13 @@ C-----------------------------------------------
 C
       IF(IPARIT/=0)THEN
         IF(DEBUG(9)==0)THEN
-          ALLOCATE(IMV(2*NISKY_SMS+FR_RMS(NSPMD+1)),
-     .           MV (3*(2*NISKY_SMS+FR_RMS(NSPMD+1))),
-     .           MV6(6,3*(2*NISKY_SMS+FR_RMS(NSPMD+1))),
-     .           STAT=IERROR)
+          call my_alloc(IMV, 2*NISKY_SMS+FR_RMS(NSPMD+1), "IMV", stat=IERROR)
+          call my_alloc(MV, 3*(2*NISKY_SMS+FR_RMS(NSPMD+1)), "MV", stat=IERROR)
+          call my_alloc(MV6, 6, 3*(2*NISKY_SMS+FR_RMS(NSPMD+1)), "MV6", stat=IERROR)
         ELSE
-          ALLOCATE(IMV(NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1)),
-     .           MV (3*(NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1))),
-     .           MV6(6,3*(NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1))),
-     .           STAT=IERROR)
+          call my_alloc(IMV, NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1), "IMV", stat=IERROR)
+          call my_alloc(MV, 3*(NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1)), "MV", stat=IERROR)
+          call my_alloc(MV6, 6, 3*(NUMNOD+NNZ_SMS+2*NISKY_SMS+FR_RMS(NSPMD+1)), "MV6", stat=IERROR)
         END IF
         IF(IERROR/=0) THEN
           CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
@@ -383,7 +386,9 @@ C
       END IF
 C
       IF(IPARIT/=0)THEN
-        DEALLOCATE(IMV, MV, MV6)
+        call my_dealloc(IMV)
+        call my_dealloc(MV)
+        call my_dealloc(MV6)
       END IF
 C
 C     fin section //

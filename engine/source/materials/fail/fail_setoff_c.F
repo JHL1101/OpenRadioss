@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_setoff_c   ../engine/source/materials/fail/fail_setoff_c.F
 !||--- called by ------------------------------------------------------
@@ -404,11 +405,11 @@ c
  1000 FORMAT(1X,'-- RUPTURE (',A,') OF SHELL ELEMENT NUMBER ',I10)
  1100 FORMAT(1X,'-- RUPTURE (',A,') OF SHELL ELEMENT :',I10,' AT TIME :',G11.4)
  2000 FORMAT(1X,'-- FAILURE (',A,') OF LAYER',I3, ' ,SHELL ELEMENT NUMBER ',I10,
-     .       1X,' BELONGING TO PART ID :', I5)
+     .       1X,' BELONGING TO PART ID :', I10)
  2100 FORMAT(1X,'-- FAILURE (',A,') OF LAYER',I3, ' ,SHELL ELEMENT NUMBER ',I10,
-     .       1X,' BELONGING TO PART ID :', I5,' AT TIME :',G11.4)
+     .       1X,' BELONGING TO PART ID :', I10,' AT TIME :',G11.4)
  3000 FORMAT(1X,'-- FAILURE (',A,') OF PLY ID ',I10, ' ,SHELL ELEMENT NUMBER ',I10,
-     .       1X,' BELONGING TO PART ID :', I5)
+     .       1X,' BELONGING TO PART ID :', I10)
  3100 FORMAT(1X,'-- FAILURE (',A,') OF PLY ID ',I10, ' ,SHELL ELEMENT NUMBER ',I10,
-     .       1X,' BELONGING TO PART ID :', I5,' AT TIME :',G11.4)
+     .       1X,' BELONGING TO PART ID :', I10,' AT TIME :',G11.4)
       END

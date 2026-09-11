@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_sort_07                    ../engine/source/interfaces/int07/inter_sort_07.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_tri7gat                     ../engine/source/mpi/interfaces/spmd_int.F
 !||    startime                         ../engine/source/system/timer_mod.F90
 !||    stoptime                         ../engine/source/system/timer_mod.F90
+!||    sts_int7_bucket_sort_decide      ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
 !||    upgrade_multimp                  ../common_source/interf/upgrade_multimp.F
 !||--- uses       -----------------------------------------------------
 !||    check_sorting_criteria_mod       ../engine/source/interfaces/intsort/check_sorting_criteria.F90
@@ -44,8 +46,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inter7_collision_detection_mod   ../engine/source/interfaces/intsort/inter7_collision_detection.F90
 !||    inter_sorting_mod                ../engine/share/modules/inter_sorting_mod.F
 !||    inter_struct_mod                 ../engine/share/modules/inter_struct_mod.F
+!||    ists_sts_bp_algo_mod             ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
 !||    message_mod                      ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod                    ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                   ../common_source/tools/memory/my_dealloc.F90
 !||    timer_mod                        ../engine/source/system/timer_mod.F90
 !||    tri7box                          ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -72,11 +77,15 @@ C-----------------------------------------------
         USE INTER_STRUCT_MOD
         USE INTER_SORTING_MOD
         USE INTBUFDEF_MOD 
+        USE ISTS_STS_BP_ALGO_MOD, ONLY : STS_BP_ALGO,
+     .    STS_BP_ALGO_INT7_BUCKET, STS_INT7_BUCKET_SORT_DECIDE
         USE INTER7_COLLISION_DETECTION_MOD
         use check_sorting_criteria_mod , only : check_sorting_criteria
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 #include "spmd.inc"
@@ -121,31 +130,39 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
         INTEGER 
      .        LOC_PROC,
-     .        I, IP0, IP1, IP2, IP21, I_SK_OLD, I_STOK1, 
-     .        ADD1, NB_N_B, NOINT, INACTI, MULTIMP, IGAP, IFQ, ITIED
+     .        I_SK_OLD,
+     .        NB_N_B, NOINT, INACTI, MULTIMP, IFQ, ITIED
         INTEGER 
-     .        ILD, NCONT, NCONTACT, INACTII, INACIMP, INTTH,
+     .        ILD, NCONT, NCONTACT, INACIMP, INTTH,
      .        I_MEM,CAND_N_OLD,IDUM1(1),NMN_L, IVIS2,NUM_IMP
         my_real
      .   GAP,MAXBOX,MINBOX,TZINF,
-     .   XMAXL, YMAXL, ZMAXL, XMINL, YMINL, ZMINL, GAPMIN, GAPMAX,
-     .   C_MAXL,DRAD,MX,MY,MZ,DX,DY,DZ,SX,SY,SZ,SX2,SY2,SZ2,
-     .   CURV_MAX(NRTM_T),RDUM1(1)
+     .   GAPMIN, GAPMAX,
+     .   DRAD,
+     .   CURV_MAX(NRTM_T)
         my_real :: DGAPLOADP
-        REAL T1  !elapsed time in smp
         LOGICAL TYPE18
         INTEGER :: FIRST, LAST
         INTEGER :: NSN,NMN,NTY,NRTM
-        logical :: need_computation
+        logical :: need_computation, sts_time_active
+        real:: T1
 C-----------------------------------------------
+        NUM_IMP = 0
         ! --------------
         ! check if the current interface needs to be sorted
-        call check_sorting_criteria( need_computation,nin,npari,nspmd,  
+        call check_sorting_criteria( need_computation,nin,npari,nspmd,
      .                               itask,ipari(1,nin),tt,intbuf_tab )
+        sts_time_active = INTBUF_TAB%VARIABLES(t_start_index) <= TT
+     .    .AND. TT <= INTBUF_TAB%VARIABLES(t_stop_index)
+
+!       Apply the STS INT7-bucket sort-reuse policy at this Type 7
+!       sort entry point.
+        CALL STS_INT7_BUCKET_SORT_DECIDE(NCYCLE, sts_time_active,
+     .    IPARI(105,NIN), STS_BP_ALGO, INTBUF_TAB%I_STOK(1),
+     .    IPARI(22,NIN), IPARI(31,NIN), NUM_IMP, IPARI(85,NIN),
+     .    need_computation)
         if( .not.need_computation ) return
         ! --------------
-
-        NUM_IMP = 0
 
         I_MEM  = 0
         I_MEMG = 0
@@ -231,12 +248,16 @@ C
 
  50     CALL MY_BARRIER    
         IF(ITASK==0) THEN
-            IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) DEALLOCATE( LIST_REMOTE_S_NODE )
-            ALLOCATE( LIST_REMOTE_S_NODE(NSNR) )
+            IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) call my_dealloc(LIST_REMOTE_S_NODE)
+            call my_alloc(LIST_REMOTE_S_NODE, NSNR, "LIST_REMOTE_S_NODE")
             REMOTE_S_NODE = 0
         ENDIF
         CALL MY_BARRIER                          
 
+C       INT7_BUCKET: force bucket sorting (I7BUCE/I7TRI)
+C       so its CAND_N/CAND_E candidates feed STS_REMAP in ists_mainf.
+        IF(IPARI(105,NIN)==1.AND.STS_BP_ALGO==STS_BP_ALGO_INT7_BUCKET)
+     .     INTBUF_TAB%METRIC%ALGO = ALGO_BUCKET
         IF(IPARI(63,NIN) ==2 ) INTBUF_TAB%METRIC%ALGO = ALGO_VOXEL 
  
 #ifdef MPI
@@ -405,7 +426,7 @@ C
         END IF
 
       IF(ITASK==0) THEN
-        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) DEALLOCATE( LIST_REMOTE_S_NODE )
+        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) call my_dealloc(LIST_REMOTE_S_NODE)
       ENDIF
       CALL MY_BARRIER
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ancmsg                       ../engine/source/output/message/message.F
 !||--- called by ------------------------------------------------------
@@ -31,7 +32,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    animx                        ../engine/source/output/anim/generate/animx.F
 !||    arret_message                ../engine/source/system/arret_message.F
 !||    arret_message_slid           ../engine/source/system/arret_message.F
-!||    bcs_nrf                      ../engine/source/boundary_conditions/bcs_nrf.F90
 !||    bforc2                       ../engine/source/ale/bimat/bforc2.F
 !||    blero2                       ../engine/source/ale/bimat/blero2.F
 !||    chkv0_cy                     ../engine/source/constraints/general/bcs/bcscyc.F
@@ -174,6 +174,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ind_ktot                     ../engine/source/implicit/ind_glob_k.F
 !||    ini_k0h                      ../engine/source/implicit/imp_solv.F
 !||    ini_kisc                     ../engine/source/implicit/lin_solv.F
+!||    init_h3d_engine              ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    inivel_start                 ../engine/source/loads/general/inivel/inivel_start.F90
 !||    inter7_collision_detection   ../engine/source/interfaces/intsort/inter7_collision_detection.F90
 !||    inter_count_node_curv        ../engine/source/interfaces/generic/inter_count_node_curv.F
@@ -433,10 +434,8 @@ C-----------------------------------------------
 C
       CHARACTER(LEN=NCHARLINE100):: TMPLINE,MYFMT,TMPBUF
       CHARACTER(LEN=NCHAROUT) ::  TMPOUT
-      INTEGER ITYPE,ILINE,I,I0,J,J0,SBUFMSG(2),IFILE,IOLD,
-     .        INDXI,INDXR,INDXC,INDXTMPOUT,BUFLEN,
-     .        STMP
-      CHARACTER(LEN=NCHARLINE100):: BUFMSG(2,100),BUFFMT(2,100)
+      INTEGER ITYPE,ILINE,I,IOLD,
+     .        INDXI,INDXR,INDXC,INDXTMPOUT,BUFLEN
 C
       WRITE(ISTDO,'(/A,I10)')'MESSAGE ID : ',MSGID
       IF (IOUT/=0) THEN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i2buc1                 ../starter/source/interfaces/inter3d1/i2buc1.F
 !||--- called by ------------------------------------------------------
@@ -63,6 +64,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       use stack_mod , only : stack_ply
       use i2trivox_mod , only : i2trivox
       use file_descriptor_mod , only : iout
+      use my_alloc_mod
+      use my_dealloc_mod , only : my_dealloc
 C============================================================================
 C  this routine is called by: inint3(/inter3d1/inint3.f)
 C----------------------------------------------------------------------------
@@ -90,7 +93,7 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER NMN, NRTM, NSN, NOINT, IGNORE, NINT,ILEV
       INTEGER IRECT(4,*),NSV(*),NSEG(*),MWA(*)
-      INTEGER MSR(*),IRTL(*),MAXSIZ,KNOD2ELS(*), KNOD2ELC(*), 
+      INTEGER MSR(*),IRTL(*),KNOD2ELS(*), KNOD2ELC(*), 
      .   KNOD2ELTG(*), NOD2ELS(*), NOD2ELC(*), NOD2ELTG(*),
      .   IXC(NIXC,*),IXTG(NIXTG,*),IPARTC(*),
      .   IXS(NIXS,*),IXS10(*), IXS16(*), IXS20(*),IPARTTG(*),IGEO(*),
@@ -122,15 +125,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, L, N1, N2, N3, N4, I_AMAX,I_MEM
-      INTEGER I_ADD, ADESTK, NB_NC, NB_EC, ADNSTK,IEL,N
-      INTEGER IP1, IP2, IP21, IP22, IP31,J_STOK,I_BID,NB_N_B,IS,IAD,
-     .   MG,IP,NELS,NELC,NELTG,JJ,JJJ,IFLAG
+      INTEGER I, J, L, N1, N2, N3, N4
+      INTEGER IEL
+      INTEGER IS,IAD,MG,IP,NELS,NELC,NELTG,JJ,JJJ,IFLAG
 ! REAL
       my_real
      .   DX1,DY1,DZ1,DX3,DY3,DZ3,DX4,DY4,DZ4,DX6,DY6,DZ6,
      .   DD1,DD2,DD3,DD4,DD,XMIN,YMIN,ZMIN,MAXBOX,MINBOX,XMAX,YMAX,ZMAX,
-     .   BID,TZINFMIN,THKSECND,THKMAIN,AREA,VOL,GAPV(MVSIZ),DSEARCH
+     .   TZINFMIN,THKSECND,THKMAIN,AREA,VOL,DSEARCH
       my_real :: local_thkmain
       integer, dimension(3) :: cell_nb
       my_real, dimension(3) :: distance
@@ -141,7 +143,7 @@ C
 C=======================================================================
 ! 1-CALCULATION TAILLE DES ZONES INFLUENCES
 c
-      allocate(segment_data(nrtm,2))
+      call my_alloc(segment_data, nrtm, 2, "segment_data")
       segment_data(1:nrtm,1:2) = zero
       DD = ZERO
       DSEARCH = TZINF05
@@ -361,7 +363,7 @@ C
      .              igeo,dsearch,bound,tzinf05,segment_data, 
      .              dmin,thk,thk_part,x,geo,st,pm,stack,gapmin,gapmax)
 
-      deallocate(segment_data)
+      call my_dealloc(segment_data)
 
       if((ignore<=1).or.((ignore==2.or.ignore==3).and.dsearch/=zero)) then
         write(iout,2001) tzinf05

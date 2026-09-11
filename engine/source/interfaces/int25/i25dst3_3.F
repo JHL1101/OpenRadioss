@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25dst3_3   ../engine/source/interfaces/int25/i25dst3_3.F
 !||--- called by ------------------------------------------------------
@@ -38,7 +39,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      7 INACTI      ,KINI        ,ITAB        ,LB          ,LC          ,
      8 PENMIN      ,EPS         ,PENE        ,PENE_OLD    ,SUBTRIA     , 
      9 GAPV        ,IVIS2       ,IF_ADH      ,IFADHI      ,BASE_ADH    ,
-     A MVOISN      ,IBOUND      ,VTX_BISECTOR,DIST        ,TIME )
+     A MVOISN      ,IBOUND      ,VTX_BISECTOR,DIST        ,TIME        ,
+     B ETYP       )
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -74,6 +76,7 @@ C-----------------------------------------------
       REAL*4 VTX_BISECTOR(3,2,*)
       my_real  , INTENT(INOUT) :: DIST(MVSIZ)
       my_real  , INTENT(IN)    :: TIME
+      INTEGER  , INTENT(IN)    :: ETYP(MVSIZ)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -95,6 +98,7 @@ C-----------------------------------------------
      .        PN, VX, VY, VZ,
      .        NNE1,NNE2,NNE4
       DATA ITRIA/1,2,2,3,3,4,4,1/
+      LOGICAL :: SHELL_CONTACT
 C--------------------------------------------------------
 C     zone limite interpolation des normales
       EPSEG = (TWO+HALF)/HUNDRED
@@ -157,6 +161,13 @@ C
         GAPV(I)= MIN(GAPS(I)+LA(I)*GAP_MM(I)+LB(I)*GAP_NM(I1,I)+LC(I)*GAP_NM(I2,I),GAPMXL(I))
         BB(I)  = (XX(I,5)-XI(I))*NX(I)+(YY(I,5)-YI(I))*NY(I)+(ZZ(I,5)-ZI(I))*NZ(I)
 C
+        IF((ETYP(I)/= 0).OR.(GAPS(I)>ZERO)) THEN
+           SHELL_CONTACT = .TRUE.
+
+        ELSE
+           SHELL_CONTACT = .FALSE.
+        ENDIF
+C
         IF(IX3(I)/=IX4(I))THEN
 
           IF(BB(I) <= ZERO)THEN
@@ -182,7 +193,7 @@ C
             DIST(I)=DD
           ELSE
 
-            IF(BB(I) > ZERO .AND. LA(I) < EPSEG .AND. MVOISN(I,IT)/=0)THEN
+            IF(BB(I) > ZERO .AND. LA(I) < EPSEG .AND. (MVOISN(I,IT)/=0.OR..NOT.SHELL_CONTACT))THEN
 C
 C             zone limite interpolation des normales
 C
@@ -266,24 +277,24 @@ C             All other cases : normal == normal to the segment
             PENE(I)=MAX(ZERO,GAPV(I)-DD)
             DIST(I)=DD
 
-          ELSEIF(BB(I) > ZERO .AND. ((LA(I) < EPSEG .AND. MVOISN(I,1)/=0).OR.
-     .                               (LB(I) < EPSEG .AND. MVOISN(I,2)/=0).OR. 
-     .                               (LC(I) < EPSEG .AND. MVOISN(I,4)/=0)))THEN
+          ELSEIF(BB(I) > ZERO .AND. ((LA(I) < EPSEG .AND. (MVOISN(I,1)/=0.OR..NOT.SHELL_CONTACT)).OR.
+     .                               (LB(I) < EPSEG .AND. (MVOISN(I,2)/=0.OR..NOT.SHELL_CONTACT)).OR. 
+     .                               (LC(I) < EPSEG .AND. (MVOISN(I,4)/=0.OR..NOT.SHELL_CONTACT))))THEN
 C
 C           zone limite interpolation des normales
-            IF(LA(I) < EPSEG .AND. MVOISN(I,1)/=0)THEN
+            IF(LA(I) < EPSEG .AND. (MVOISN(I,1)/=0.OR..NOT.SHELL_CONTACT))THEN
               AAA=LB(I)+LC(I)
               AX=ZERO
               BX=LB(I)/AAA
               CX=LC(I)/AAA
               S = LA(I)/EPSEG
-            ELSEIF(LB(I) < EPSEG .AND. MVOISN(I,2)/=0)THEN
+            ELSEIF(LB(I) < EPSEG .AND. (MVOISN(I,2)/=0.OR..NOT.SHELL_CONTACT))THEN
               AAA=LA(I)+LC(I)
               AX=LA(I)/AAA
               BX=ZERO
               CX=LC(I)/AAA
               S = LB(I)/EPSEG
-            ELSEIF(LC(I) < EPSEG .AND. MVOISN(I,4)/=0)THEN
+            ELSEIF(LC(I) < EPSEG .AND. (MVOISN(I,4)/=0.OR..NOT.SHELL_CONTACT))THEN
               AAA=LA(I)+LB(I)
               AX=LA(I)/AAA
               BX=LB(I)/AAA
@@ -365,7 +376,14 @@ C
         I1=ITRIA(1,IT)
         I2=ITRIA(2,IT)
 C
-        IF(IX3(I)/=IX4(I))THEN
+C
+        IF((ETYP(I)/= 0).OR.(GAPS(I)>ZERO)) THEN
+           SHELL_CONTACT = .TRUE.
+        ELSE
+           SHELL_CONTACT = .FALSE.
+        ENDIF
+
+        IF(IX3(I)/=IX4(I).AND.SHELL_CONTACT)THEN
 
           IB1=IBOUND(I1,I)
           IB2=IBOUND(I2,I)
@@ -504,7 +522,7 @@ C
 
           END IF
  
-        ELSEIF(IX3(I)==IX4(I))THEN
+        ELSEIF(IX3(I)==IX4(I).AND.SHELL_CONTACT)THEN
 
           IB1=IBOUND(1,I)
           IB2=IBOUND(2,I)
@@ -525,9 +543,9 @@ C         projection onto the plane and signed distance to the plane
               NNE4 = (XH(I)-XX(I,5))*NNX(I,5)+(YH(I)-YY(I,5))*NNY(I,5)+(ZH(I)-ZZ(I,5))*NNZ(I,5)
 
 
-            IF((MVOISN(I,1)==0 .AND. NNE1 < NNE(I)) .OR.
+            IF(((MVOISN(I,1)==0 .AND. NNE1 < NNE(I)) .OR.
      .        (MVOISN(I,2)==0 .AND. NNE2 < NNE(I)) .OR.
-     .        (MVOISN(I,4)==0 .AND. NNE4 < NNE(I))) THEN
+     .        (MVOISN(I,4)==0 .AND. NNE4 < NNE(I)))) THEN
 
               NBORD=NBORD+1
               KBORD(NBORD)=I

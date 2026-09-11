@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r23l113def3        ../engine/source/elements/spring/r23l113def3.F
 !||--- called by ------------------------------------------------------
@@ -148,19 +149,16 @@ C     REAL
      .     B(MVSIZ), D(MVSIZ), EPLA(MVSIZ),
      .     DV(MVSIZ),VRT(MVSIZ),VRR(MVSIZ),
      .     DMN(MVSIZ),DMX(MVSIZ),XL0(MVSIZ),CRIT(MVSIZ),
-     .     XN(MVSIZ),FF(MVSIZ),LSCALE(MVSIZ),EE(MVSIZ),GF3(MVSIZ),
+     .     FF(MVSIZ),LSCALE(MVSIZ),EE(MVSIZ),GF3(MVSIZ),
      .     HX(MVSIZ), HY(MVSIZ), HZ(MVSIZ)
       my_real
      .     AT,DT05,XKA,YKA,ZKA,CC,CN,XA,XB,DLIM,VFAIL,
      .     X21, Y21, Z21, EPXY, EPXZ,
-     .     VX21, VY21, VZ21, RYAVP, RZAVP,EYZP,EXZP,
-     .     RYAV, RZAV,DEN, C, CP, EXYP,
-     .     X21PHI, Y21PHI, Z21PHI, VX21PHI, VY21PHI, VZ21PHI,
-     .     RYAV1, RZAV1, RYAV1P, RZAV1P,ASRATE,NOT_USED(2)
-      my_real :: MAX_SLOPE(MVSIZ)
+     .     VX21, VY21, VZ21,
+     .     RYAV, RZAV,
+     .     RYAV1, RZAV1, ASRATE,NOT_USED(2)
       DOUBLE PRECISION X0DP(MVSIZ)
       my_real ,DIMENSION(:), POINTER :: COORD_OLD
-      LOGICAL :: ANY_PYTHON_FUNCTION
       TARGET :: NOT_USED 
 C-----------------------------------------------
 C

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i7buc_vox1             ../starter/source/interfaces/inter3d1/i7buc_vox1.F
 !||--- called by ------------------------------------------------------
@@ -55,6 +56,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use intbufdef_mod 
       use margin_reduction_mod , only : margin_reduction
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -98,8 +100,8 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX
       INTEGER NBX,NBY,NBZ
       INTEGER (KIND=8) :: NBX8,NBY8,NBZ8,RES8,LVOXEL8
-      INTEGER I, J, K, I_ADD, L, LOC_PROC, N, ISZNSNR,
-     .        N1, N2, N3, N4, NCONTACT,I_BID,I_STOK_OLD,
+      INTEGER I, J, K, L, LOC_PROC,
+     .        N1, N2, N3, N4, NCONTACT,
      .        IX1,IY1,IZ1,IX2,IY2,IZ2,IX,IY,IZ
       my_real
      .         MARGE, AAA,TZINF_ST,MARGE_ST 
@@ -110,12 +112,10 @@ C-----------------------------------------------
      .   DX6,DY6,DZ6,
      .   DD1,DD2,DD3,DD4,DD,DD0,XMIN,YMIN,ZMIN,
      .   XMAX_M,YMAX_M,ZMAX_M,XMIN_M,YMIN_M,ZMIN_M,
-     .   XMAX_S,YMAX_S,ZMAX_S,XMIN_S,YMIN_S,ZMIN_S,
      .   XMAX,YMAX,ZMAX,XXX,YYY,ZZZ,
      .   XMINB, YMINB, ZMINB, XMAXB, YMAXB, ZMAXB,
      .   MEAN_X, MEAN_Y, MEAN_Z, DEV_X, DEV_Y, DEV_Z,
-     .   GAPV(MVSIZ),C_MAX,
-     .   TSTART,TSTOP,
+     .   C_MAX,
      .   XMINE,YMINE,ZMINE,XMAXE,YMAXE,ZMAXE,
      .   XX1,XX2,XX3,XX4,YY1,YY2,YY3,YY4,ZZ1,ZZ2,ZZ3,ZZ4
         my_real, DIMENSION(:), ALLOCATABLE :: CURV_MAX
@@ -129,12 +129,12 @@ C-----------------------------------------------
       IONE=1        !< Constant init
       IHUNDRED=100  !< Constant init
 
-      ALLOCATE( INDEX(NRTM) )
-      ALLOCATE( CURV_MAX(NRTM) )
-      ALLOCATE(LOCAL_NEXT_NOD(NSN))
-      ALLOCATE(IIX(NSN))
-      ALLOCATE(IIY(NSN))
-      ALLOCATE(IIZ(NSN))
+      call my_alloc(INDEX, NRTM, "INDEX")
+      call my_alloc(CURV_MAX, NRTM, "CURV_MAX")
+      call my_alloc(LOCAL_NEXT_NOD, NSN, "LOCAL_NEXT_NOD")
+      call my_alloc(IIX, NSN, "IIX")
+      call my_alloc(IIY, NSN, "IIY")
+      call my_alloc(IIZ, NSN, "IIZ")
       TYPE18=.FALSE.
       IF(INACTI==7)TYPE18=.TRUE.
 
@@ -447,7 +447,6 @@ C     complete initialization of voxel
         ENDDO
         INIVOXEL = MAX(INIVOXEL,(NBX+2)*(NBY+2)*(NBZ+2)+1)
 C------------------
-  200 CONTINUE
 C------------------
 !$OMP PARALLEL        
         CALL I7TRIVOX1(
@@ -504,11 +503,11 @@ C
         ENDIF
       ENDIF!(.NOT.TYPE18)
 C
-      DEALLOCATE( INDEX )
-      DEALLOCATE( CURV_MAX )
-      DEALLOCATE(LOCAL_NEXT_NOD)
-      DEALLOCATE(IIX)
-      DEALLOCATE(IIY)
-      DEALLOCATE(IIZ)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(CURV_MAX)
+      CALL MY_DEALLOC(LOCAL_NEXT_NOD)
+      CALL MY_DEALLOC(IIX)
+      CALL MY_DEALLOC(IIY)
+      CALL MY_DEALLOC(IIZ)
       RETURN
       END

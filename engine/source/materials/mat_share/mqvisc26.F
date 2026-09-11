@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mqvisc26   ../engine/source/materials/mat_share/mqvisc26.F
 !||--- called by ------------------------------------------------------
@@ -31,7 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      3   DT2T,    NELTST,  ITYPTST, AIRE,
      4   OFFG,    GEO,     PID,     VOL,
      5   VD2,     DELTAX,  VIS,     D1,
-     6   D2,      D3,      PNEW,    PSH,
+     6   D2,      D3,      PSH,
      7   MAT,     NGL,     QVIS,    SSP_EQ,
      8   XK,      NEL,     ITY,     ISMSTR,
      9   JTUR,    JTHE)
@@ -72,7 +73,7 @@ C-----------------------------------------------
      .   PM(NPROPM,*), OFF(*), RHO(*), RK(*), T(*), RE(*),STI(*),
      .   OFFG(*),GEO(NPROPG,*),
      .   VOL(*), VD2(*), DELTAX(*), SSP(*), AIRE(*), VIS(*), 
-     .   PSH(*), PNEW(*),QVIS(*) ,SSP_EQ(*), 
+     .   PSH(*), QVIS(*) ,SSP_EQ(*),
      .   D1(*), D2(*), D3(*), XK(*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -138,7 +139,6 @@ C
         DO I=1,NEL
           CNS2=GEO(17,MX)*SSP(I)*AL(I)*RHO(I)
           PSH(I)=PM(88,MT)
-          PNEW(I)=0.
           QAA = QA*QA*AD(I)
           QX(I)=(QB+CNS1)*SSP(I)+AL(I) * QAA
      .     + VISI*(TWO*VIS(I)+CNS2) / MAX(EM20,RHO(I)*DELTAX(I))
@@ -152,7 +152,6 @@ C
         DO I=1,NEL
           CNS2=PM(94,MT)*SSP(I)*AL(I)*RHO(I)
           PSH(I)=PM(88,MT)
-          PNEW(I)=0.
           QAA = QA*QA*AD(I)
           QX(I)=(QB+CNS1)*SSP(I)+DELTAX(I) *QAA
      .     + VISI*(2.*VIS(I)+CNS2) / MAX(EM20,RHO(I)*DELTAX(I))

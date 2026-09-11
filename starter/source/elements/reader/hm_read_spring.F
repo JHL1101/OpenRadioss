@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_spring    ../starter/source/elements/reader/hm_read_spring.F
 !||--- called by ------------------------------------------------------
@@ -62,6 +63,7 @@ C-----------------------------------------------
       USE READER_OLD_MOD , ONLY : LINE
       USE USER_ID_MOD , ONLY : ID_LIMIT
       use element_mod , only : nixr
+      use my_alloc_mod
 C----------------------------------------------------------
 C     READING ELEMENT RESSORT
 C     VERSION NUMEROTATION DES NODES LIBRE/MARS 90/DIM
@@ -118,12 +120,12 @@ C=======================================================================
 C--------------------------------------------------
 C      ALLOCS & INITS
 C--------------------------------------------------
-      ALLOCATE (SUB_SPRING(NUMELR),STAT=stat)
+      call my_alloc(SUB_SPRING, NUMELR, "SUB_SPRING", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SUB_SPRING') 
       SUB_SPRING(1:NUMELR) = 0
-      ALLOCATE (SKEWID(NUMELR),STAT=stat)
+      call my_alloc(SKEWID, NUMELR, "SKEWID", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SKEWID') 
@@ -210,7 +212,7 @@ C         Skews per element - PROP type23 and mat law 108 or PROP type8 - only
           ENDIF
         ENDDO
 C
-      IF(ALLOCATED(SUB_SPRING)) DEALLOCATE(SUB_SPRING)
+      IF(ALLOCATED(SUB_SPRING)) CALL MY_DEALLOC(SUB_SPRING)
 C-----------
       CALL ANCMSG(MSGID=402,                 
      .            MSGTYPE=MSGERROR,         
@@ -302,9 +304,9 @@ C--------------------------------------------------
 C
 C----
       RETURN
-  300 FORMAT(/' SPRING ELEMENTS'/
-     +        ' ---------------'/
-     + '    LOC-EL     GLO-EL       GEOM      NODE1      NODE2'
-     + '    (NODE3)                                    (MAT_ID)     (SKEW)')
+  300 FORMAT(/,' SPRING ELEMENTS',/
+     .        ' ---------------',/
+     . '    LOC-EL     GLO-EL       GEOM      NODE1      NODE2',
+     . '    (NODE3)                                    (MAT_ID)     (SKEW)')
       RETURN
       END

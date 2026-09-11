@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i24main_tri                  ../engine/source/interfaces/intsort/i24main_tri.F
 !||--- called by ------------------------------------------------------
@@ -45,6 +46,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    imp_intbuf                   ../engine/share/modules/imp_mod_def.F90
 !||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod                  ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    parameters_mod               ../common_source/modules/interfaces/parameters_mod.F
 !||    timer_mod                    ../engine/source/system/timer_mod.F90
 !||    tri7box                      ../engine/share/modules/tri7box.F
@@ -72,6 +75,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -200,7 +205,7 @@ C -------------------------------------------------------------
       CALL MY_BARRIER
 
       IF(ITASK==0)THEN
-       ALLOCATE (CAND_A(NSN+NSNROLD+3))
+       call my_alloc(CAND_A, NSN+NSNROLD+3, "CAND_A")
        CAND_A(1:NSN+NSNROLD+3)=0
         I_SK_OLD = INTBUF_TAB%I_STOK(1)
         CALL I24TRC(
@@ -431,7 +436,7 @@ C
         IF (IMONM > 0) CALL STOPTIME(TIMERS,26)
 !$OMP END SINGLE
       END IF
-      IF(ITASK==0)DEALLOCATE(CAND_A)
+      IF(ITASK==0) call my_dealloc(CAND_A)
 C
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,47 +15,52 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    i7main_tri                   ../engine/source/interfaces/intsort/i7main_tri.F
+!||    i7main_tri                    ../engine/source/interfaces/intsort/i7main_tri.F
 !||--- called by ------------------------------------------------------
-!||    imp_tripi                    ../engine/source/implicit/imp_int_k.F
-!||    inttri                       ../engine/source/interfaces/intsort/inttri.F
+!||    imp_tripi                     ../engine/source/implicit/imp_int_k.F
+!||    inttri                        ../engine/source/interfaces/intsort/inttri.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                       ../engine/source/output/message/message.F
-!||    arret                        ../engine/source/system/arret.F
-!||    check_sorting_criteria       ../engine/source/interfaces/intsort/check_sorting_criteria.F90
-!||    i18xsave                     ../engine/source/interfaces/int18/i18xsave.F
-!||    i7buce                       ../engine/source/interfaces/intsort/i7buce.F
-!||    i7buce_vox                   ../engine/source/interfaces/intsort/i7buce.F
-!||    i7trc                        ../engine/source/interfaces/intsort/i7trc.F
-!||    i7xsave                      ../engine/source/interfaces/intsort/i7xsave.F
-!||    imp_rnumcd                   ../engine/source/implicit/imp_int_k.F
-!||    my_barrier                   ../engine/source/system/machine.F
-!||    spmd_get_inacti7             ../engine/source/mpi/interfaces/send_cand.F
-!||    spmd_rnumcd                  ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_tri18_151vox            ../engine/source/mpi/interfaces/spmd_int.F
-!||    spmd_tri7gat                 ../engine/source/mpi/interfaces/spmd_int.F
-!||    spmd_tri7vox0                ../engine/source/mpi/interfaces/spmd_int.F
-!||    spmd_tri7vox_optimized       ../engine/source/mpi/interfaces/spmd_tri7vox_optimized.F
-!||    startime                     ../engine/source/system/timer_mod.F90
-!||    stoptime                     ../engine/source/system/timer_mod.F90
-!||    upgrade_multimp              ../common_source/interf/upgrade_multimp.F
+!||    ancmsg                        ../engine/source/output/message/message.F
+!||    arret                         ../engine/source/system/arret.F
+!||    check_sorting_criteria        ../engine/source/interfaces/intsort/check_sorting_criteria.F90
+!||    i18xsave                      ../engine/source/interfaces/int18/i18xsave.F
+!||    i7buce                        ../engine/source/interfaces/intsort/i7buce.F
+!||    i7buce_vox                    ../engine/source/interfaces/intsort/i7buce.F
+!||    i7trc                         ../engine/source/interfaces/intsort/i7trc.F
+!||    i7xsave                       ../engine/source/interfaces/intsort/i7xsave.F
+!||    imp_rnumcd                    ../engine/source/implicit/imp_int_k.F
+!||    my_barrier                    ../engine/source/system/machine.F
+!||    spmd_get_inacti7              ../engine/source/mpi/interfaces/send_cand.F
+!||    spmd_rnumcd                   ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_tri18_151vox             ../engine/source/mpi/interfaces/spmd_int.F
+!||    spmd_tri7gat                  ../engine/source/mpi/interfaces/spmd_int.F
+!||    spmd_tri7vox0                 ../engine/source/mpi/interfaces/spmd_int.F
+!||    spmd_tri7vox_optimized        ../engine/source/mpi/interfaces/spmd_tri7vox_optimized.F
+!||    startime                      ../engine/source/system/timer_mod.F90
+!||    stoptime                      ../engine/source/system/timer_mod.F90
+!||    sts_int7_bucket_sort_decide   ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
+!||    upgrade_multimp               ../common_source/interf/upgrade_multimp.F
 !||--- uses       -----------------------------------------------------
-!||    check_sorting_criteria_mod   ../engine/source/interfaces/intsort/check_sorting_criteria.F90
-!||    element_mod                  ../common_source/modules/elements/element_mod.F90
-!||    glob_therm_mod               ../common_source/modules/mat_elem/glob_therm_mod.F90
-!||    h3d_mod                      ../engine/share/modules/h3d_mod.F
-!||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    inter_sorting_mod            ../engine/share/modules/inter_sorting_mod.F
-!||    message_mod                  ../engine/share/message_module/message_mod.F
-!||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
-!||    timer_mod                    ../engine/source/system/timer_mod.F90
-!||    tri7box                      ../engine/share/modules/tri7box.F
+!||    check_sorting_criteria_mod    ../engine/source/interfaces/intsort/check_sorting_criteria.F90
+!||    element_mod                   ../common_source/modules/elements/element_mod.F90
+!||    glob_therm_mod                ../common_source/modules/mat_elem/glob_therm_mod.F90
+!||    h3d_mod                       ../engine/share/modules/h3d_mod.F
+!||    intbufdef_mod                 ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    inter_sorting_mod             ../engine/share/modules/inter_sorting_mod.F
+!||    ists_sts_bp_algo_mod          ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
+!||    message_mod                   ../engine/share/message_module/message_mod.F
+!||    multi_fvm_mod                 ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                  ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                ../common_source/tools/memory/my_dealloc.F90
+!||    timer_mod                     ../engine/source/system/timer_mod.F90
+!||    tri7box                       ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE I7MAIN_TRI(TIMERS,
      1                  IPARI   ,X       ,V       ,
@@ -74,12 +79,16 @@ C-----------------------------------------------
       USE H3D_MOD
       USE MULTI_FVM_MOD
       USE INTER_SORTING_MOD
+      USE ISTS_STS_BP_ALGO_MOD, ONLY : STS_BP_ALGO,
+     .  STS_BP_ALGO_INT7_BUCKET, STS_INT7_BUCKET_SORT_DECIDE
       use check_sorting_criteria_mod , only : check_sorting_criteria
       use glob_therm_mod
       use element_mod , only : nixs
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 #include "spmd.inc"
@@ -122,8 +131,8 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER 
      .        LOC_PROC,
-     .        I, IP0, IP2, IP21, I_SK_OLD, I_STOK1, 
-     .        ADD1, NB_N_B, NOINT, INACTI, MULTIMP, IGAP, IFQ, ITIED
+     .        IP0, I_SK_OLD,
+     .        NB_N_B, NOINT, INACTI, MULTIMP, IFQ, ITIED
       INTEGER 
      .        ILD, NCONT, NCONTACT, INACTII, INACIMP, INTTH,
      .        I_MEM,CAND_N_OLD,IDUM1(1),NMN_L, IVIS2
@@ -132,15 +141,25 @@ C-----------------------------------------------
      .   XMAXL, YMAXL, ZMAXL, XMINL, YMINL, ZMINL, GAPMIN, GAPMAX,
      .   C_MAXL,DRAD,MX,MY,MZ,DX,DY,DZ,SX,SY,SZ,SX2,SY2,SZ2,
      .   CURV_MAX(NRTM_T),RDUM1(1)
-      REAL T1  !elapsed time in smp
+      real T1
+
       LOGICAL TYPE18
       INTEGER :: NRTM,NSN,NMN,NTY
-      logical :: need_computation
+      logical :: need_computation, sts_time_active
 C-----------------------------------------------
       ! --------------
       ! check if the current interface needs to be sorted
-      call check_sorting_criteria( need_computation,nin,npari,nspmd,  
+      call check_sorting_criteria( need_computation,nin,npari,nspmd,
      .                             itask,ipari(1,nin),tt,intbuf_tab )
+      sts_time_active = INTBUF_TAB%VARIABLES(t_start_index) <= TT
+     .  .AND. TT <= INTBUF_TAB%VARIABLES(t_stop_index)
+
+!     Apply the STS INT7-bucket sort-reuse policy at this Type 7
+!     triangular sort entry point.
+      CALL STS_INT7_BUCKET_SORT_DECIDE(NCYCLE, sts_time_active,
+     .  IPARI(105,NIN), STS_BP_ALGO, INTBUF_TAB%I_STOK(1),
+     .  IPARI(22,NIN), IPARI(31,NIN), NUM_IMP, IPARI(85,NIN),
+     .  need_computation)
       if( .not.need_computation ) return
       ! --------------
       I_MEM  = 0
@@ -216,10 +235,10 @@ C Barrier in all cases for bminma [and cur_max_max]
 C
       IF(ITASK==0)THEN
         IF(.NOT. ALLOCATED(INTBUF_TAB%CAND_A)) THEN
-          ALLOCATE(INTBUF_TAB%CAND_A(NSNROLD+NSN+3))   
+          call my_alloc(INTBUF_TAB%CAND_A, NSNROLD+NSN+3, "INTBUF_TAB%CAND_A")
         ELSEIF(SIZE(INTBUF_TAB%CAND_A)<NSNROLD+NSN+3) THEN
-          DEALLOCATE(INTBUF_TAB%CAND_A)
-          ALLOCATE(INTBUF_TAB%CAND_A(NSN+NSNROLD+3))
+          call my_dealloc(INTBUF_TAB%CAND_A)
+          call my_alloc(INTBUF_TAB%CAND_A, NSN+NSNROLD+3, "INTBUF_TAB%CAND_A")
         ENDIF
       ENDIF
 
@@ -243,7 +262,7 @@ C MWA = MWAG ON TASK 0
      2      INTBUF_TAB%CAND_P,INTBUF_TAB%FTSAVX,INTBUF_TAB%FTSAVY,INTBUF_TAB%FTSAVZ,
      3      INTBUF_TAB%CAND_A        ,INTBUF_TAB%IFPEN ,INACTI           ,IFQ              ,
      4      NUM_IMP          ,IND_IMP          ,INTBUF_TAB%STFNS ,NIN              ,
-     5      NSN ,ITIED,INTBUF_TAB%CAND_F )
+     5      NSN ,ITIED,INTBUF_TAB%CAND_F ,IPARI(105,NIN) )
 C store INACTI as negative
           IF(I_SK_OLD==0)INACTI=-ABS(INACTI)
           INTBUF_TAB%I_STOK(1)=I_SK_OLD
@@ -446,11 +465,15 @@ C      ENDIF
 
  50   CALL MY_BARRIER
       IF(ITASK==0) THEN
-        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) DEALLOCATE( LIST_REMOTE_S_NODE )
-        ALLOCATE( LIST_REMOTE_S_NODE(NSNR) )
+        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) call my_dealloc(LIST_REMOTE_S_NODE)
+        call my_alloc(LIST_REMOTE_S_NODE, NSNR, "LIST_REMOTE_S_NODE")
         REMOTE_S_NODE = 0
       ENDIF
       CALL MY_BARRIER
+!     INT7_BUCKET broad-phase: force bucket sorting (I7BUCE/I7TRI)
+!     so its CAND_N/CAND_E candidates feed STS_REMAP in ists_mainf.
+      IF(IPARI(105,NIN)==1.AND.STS_BP_ALGO==STS_BP_ALGO_INT7_BUCKET)
+     .   INTBUF_TAB%METRIC%ALGO = ALGO_BUCKET
 !     IF REMNODE Then VOXEL                               
       IF(IPARI(63,NIN) ==2 ) INTBUF_TAB%METRIC%ALGO = ALGO_VOXEL 
  
@@ -596,7 +619,7 @@ C
       END IF
 
       IF(ITASK==0) THEN
-        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) DEALLOCATE( LIST_REMOTE_S_NODE )
+        IF(ALLOCATED( LIST_REMOTE_S_NODE ) ) call my_dealloc(LIST_REMOTE_S_NODE)
       ENDIF
       CALL MY_BARRIER
 C

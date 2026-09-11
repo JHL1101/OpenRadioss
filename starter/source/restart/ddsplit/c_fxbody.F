@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    c_fxbody1   ../starter/source/restart/ddsplit/c_fxbody.F
 !||--- called by ------------------------------------------------------
@@ -155,11 +156,12 @@ C
       RETURN
       END
 !||====================================================================
-!||    c_fxbody2   ../starter/source/restart/ddsplit/c_fxbody.F
+!||    c_fxbody2      ../starter/source/restart/ddsplit/c_fxbody.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit     ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
-!||    nlocal      ../starter/source/spmd/node/ddtools.F
+!||    nlocal         ../starter/source/spmd/node/ddtools.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE C_FXBODY2(
      .   FXBIPM   , FXBNOD  , NODLOCAL, IPARG   , FXBELM ,
@@ -172,6 +174,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -499,7 +502,8 @@ C
                ENDDO
             ELSEIF (IFILE==1) THEN
                LVSIG=NELS*7+NELC*10+NELT*2+NELP*8+NELTG*10
-               ALLOCATE(VSIG(LVSIG), VSIG2(LVSIG))
+               call my_alloc(VSIG, LVSIG, "VSIG")
+               call my_alloc(VSIG2, LVSIG, "VSIG2")
                IAD=0
                DO J=1,LVSIG/6
                   IRCS=IRCS+1
@@ -664,7 +668,8 @@ C
                   IRCS_L=IRCS_L+1
                   WRITE(IFXS_L+ITASK,REC=IRCS_L) (VSIG2(IAD+K),K=1,JJ)
                ENDIF
-               DEALLOCATE(VSIG, VSIG2)
+               CALL MY_DEALLOC(VSIG)
+               CALL MY_DEALLOC(VSIG2)
             ENDIF
          ENDDO
          FXBIPM_L(21,NFX)=NELS_L

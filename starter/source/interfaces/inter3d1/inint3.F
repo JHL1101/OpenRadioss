@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inint3                           ../starter/source/interfaces/inter3d1/inint3.F
 !||--- called by ------------------------------------------------------
@@ -143,7 +144,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      G                  T2_CONNEC     ,NOM_OPT             ,ICODE                 ,ISKEW        ,IREMNODE_EDG,
      H                  S_APPEND_ARRAY,X_APPEND            ,MASS_APPEND           ,N2D          ,FLAG_REMOVED_NODE,
      I                  NSPMD         ,INTER_TYPE2_NUMBER  ,ELEM_LINKED_TO_SEGMENT,SINSCR       ,SICODE  ,
-     J                  SITAB         ,NIN25               ,FLAG_ELEM_INTER25     ,MULTI_FVM    ,IRESP   )
+     J                  SITAB         ,NIN25               ,FLAG_ELEM_INTER25     ,MULTI_FVM    ,IRESP   ,
+     L                  NIXX          ,S_NOD2EL1D          ,IINTTHICK             )
 C-----------------------------------------------
 C   D e s c r i p t i o n
 C-----------------------------------------------
@@ -169,6 +171,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -222,7 +225,7 @@ C-----------------------------------------------
       INTEGER, INTENT(in) :: S_APPEND_ARRAY !< size of X/MASS _APPEND
       my_real, DIMENSION(3*S_APPEND_ARRAY), TARGET :: X_APPEND !< extended position array for interface 18 + law 151
       my_real, DIMENSION(S_APPEND_ARRAY), TARGET :: MASS_APPEND !< extended mass array for interface 18 + law 151
-      INTEGER , INTENT(IN) :: IRESP
+      INTEGER , INTENT(IN) :: IRESP,nixx,S_NOD2EL1D,IINTTHICK
       CHARACTER(LEN=NCHARTITLE)::TITR
       TYPE(INTERSURFP) :: INTERCEP(3,NINTER)
       TYPE(INTBUF_STRUCT_), DIMENSION(NINTER), INTENT(inout) :: INTBUF_TAB !< interface data 
@@ -241,19 +244,19 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NRTS, NRTM, NSN, NMN, NMN0, NTY, NST, NMT, IBUC, NOINT,
-     .   NSNE, NMNE,NLINS,NLINM,NLN,L16,L17,L20,L21,L22,L23,J31P,J36P,
+     .   NSNE, L16,L17,L20,L21,L22,L23,J31P,J36P,
      .   I, I_STOK,IRS,IRM,ILEV,IDEL2,IPROJ,
      .   NSEG, NGROUS, NG, INACTI,IWPENE,ISTOK, 
      .   JLT_NEW,IGAP,MULTIMP,INPENE,ISEARCH,ITIED,
-     .   IGN,IGE,NME,NMES,NAD,EAD,ISU1,ISU2,L30,
-     .   INTTH, IBIDON,NLINSA,NLINMA,ISS2,IFS2,ISYM,IGNORE,NCONT,ICURV,
-     .   DIMFLAG,IPEN0,INTKG,INTPLY,NRTSE,NSN0,ITH, NADMSR, NEDGE, IERROR, IT19,INT_TYP,
-     .   NRTM_FE, NRTM_IGE,NMN_IGE,NMN_FE,NRTS_FE, NRTS_IGE,NSN_IGE,NSN_FE,L,IEDG4,IS1,
+     .   IGN,IGE,NME,NMES,ISU1,ISU2,
+     .   INTTH, IBIDON,IGNORE,NCONT,ICURV,
+     .   IPEN0,INTKG,INTPLY,NRTSE,NSN0, NADMSR, NEDGE, IT19,INT_TYP,
+     .   NRTM_FE, NRTM_IGE,NMN_IGE,NMN_FE,NRTS_FE, NRTS_IGE,NSN_IGE,NSN_FE,IEDG4,IS1,
      .   IVIS2, ISHARP, IEDGE, INACTBID, ITHK25, IGAP0,IGSTI
       INTEGER :: NUMNOD_P ! fake numnod for interface type 7, NUMNOD_P can be = to NUMNOD or NUMNOD+NUMELS
       INTEGER
-     .   N1(MVSIZ),N2(MVSIZ),M1(4,MVSIZ),M2(4,MVSIZ),NRTM0,NRTM_SH,IWPENE0,IAD,NBRIC,GRBRIC_ID,II,IBRIC,IAD_IXINT,
-     .   NODEID, INOD, MVOISN(MVSIZ,4),IBOUND(4,MVSIZ)
+     .   N1(MVSIZ),N2(MVSIZ),M1(4,MVSIZ),M2(4,MVSIZ),NRTM0,NRTM_SH,IWPENE0,IAD,NBRIC,GRBRIC_ID,
+     .   MVOISN(MVSIZ,4),IBOUND(4,MVSIZ)
       INTEGER ITASK, NEDGE_T, ESHIFT, NRTM_T, SSHIFT, MULNSNE, MULNSNS, MULTIMPE, MULTIMPS, NCONTE, 
      .        CAND_E_OLD(2), I_MEME(2),
      .        I_START, I_MEM_REM, NEW_SIZE,I_FIN
@@ -267,7 +270,6 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:),ALLOCATABLE :: IPARTNS,INOD2LIN,TAGSECND,NOD2LIN,PERM,PERMINV
       my_real, DIMENSION(:),ALLOCATABLE, TARGET :: XE
       my_real, DIMENSION(:),POINTER :: PTR_X,PTR_MS
-      INTEGER, POINTER :: pIXINT
       INTEGER, DIMENSION(:),ALLOCATABLE :: IPARTSM
 C-----------------------------------------------
       INTEGER, DIMENSION(MVSIZ) ::PROV_N,PROV_E
@@ -294,13 +296,14 @@ C-----------------------------------------------
      .   GAPVE(MVSIZ),
      .   EX(4,MVSIZ), EY(4,MVSIZ), EZ(4,MVSIZ), FX(MVSIZ), FY(MVSIZ), FZ(MVSIZ)
       LOGICAL PRINT_WARNING,LAW151_TYPE18,TYPE18
-      CHARACTER FILNAM*100
       INTEGER :: TOTAL_NUMBER_CANDIDATE
-      INTEGER :: SKIP_TYPE25_EDGE_2_EDGE !< flag for interface 25 :( : if edge to edge is used by interface type 25, need to do the computation after the initialization of LEDGE array | (0) no interface 25 with e2e --> nodes can be removed, (1) interface 25 with e2e --> other interfaces can be treated, (2) only the interface type 25 with e2e is treated 
+      INTEGER :: SKIP_TYPE25_EDGE_2_EDGE
+! < flag for interface 25 :( : if edge to edge is used by interface type 25, need to do the computation after the
+! initialization of LEDGE array | (0) no interface 25 with e2e --> nodes can be removed, (1) interface 25 with e2e -->
+! other interfaces can be treated, (2) only the interface type 25 with e2e is treated
       INTEGER :: FLAG_OUTPUT
       INTEGER, DIMENSION(NINTER) :: NREMN
       LOGICAL :: LOCAL_FLAG_REMOVED_NODE
-      INTEGER :: NN, NNI,ijk
       LOGICAL :: IS_USED_WITH_LAW151
 C=======================================================================
       INPENE   = 0
@@ -376,7 +379,7 @@ C-----------------------------------------------------------------------
 C
        CALL ININT0(
      1    X                ,INTBUF_TAB(NIN)%IRECTM  ,INTBUF_TAB(NIN)%NSEGM ,INTBUF_TAB(NIN)%NRT  ,INTBUF_TAB(NIN)%MSR,
-     2    INTBUF_TAB(NIN)%NSV   ,INTBUF_TAB(NIN)%ILOCS   ,NSN              ,NMN            ,NRTM ,INTBUF_TAB(NIN)%S_IRECTM,
+     2INTBUF_TAB(NIN)%NSV   ,INTBUF_TAB(NIN)%ILOCS   ,NSN              ,NMN            ,NRTM ,INTBUF_TAB(NIN)%S_IRECTM,
      3    INTBUF_TAB(NIN)%S_NRT  )
        CALL I1CHK3(
      1    X                ,INTBUF_TAB(NIN)%IRECTS  ,IXS              ,NRTS           ,IXC           ,
@@ -415,7 +418,8 @@ C-----------------------------------------------------------------------
        L23 = L22+NST
        CALL ININT0(
      1    X                    ,INTBUF_TAB(NIN)%IRECTM  ,INSCR(L21)  ,INSCR(L23)  ,INTBUF_TAB(NIN)%MSR,
-     2    INTBUF_TAB(NIN)%NSV  ,INSCR(L16)              ,NSN         ,NMN         ,NRTM               ,INTBUF_TAB(NIN)%S_IRECTM,
+     2INTBUF_TAB(NIN)%NSV  ,INSCR(L16)              ,NSN         ,NMN         ,NRTM               ,
+     &INTBUF_TAB(NIN)%S_IRECTM,
      3    SINSCR-L23+1 )
 
        IF (IPARI(13,NIN)>0) THEN ! check for s/s input is done before
@@ -495,7 +499,7 @@ C
          CALL I2CHK3(
      1   X                 ,INTBUF_TAB(NIN)%IRECTM ,IXS                ,NRTM                   ,IXC             ,
      2   -NIN           ,NSN               ,INTBUF_TAB(NIN)%MSR     ,NOINT                  ,
-     3   IXTG              ,INTBUF_TAB(NIN)%IRTLM  ,INTBUF_TAB(NIN)%CSTS    ,INTBUF_TAB(NIN)%DPARA       ,GEO             ,
+     3IXTG              ,INTBUF_TAB(NIN)%IRTLM  ,INTBUF_TAB(NIN)%CSTS    ,INTBUF_TAB(NIN)%DPARA       ,GEO             ,
      4   PM                ,KNOD2ELS          ,KNOD2ELC           ,KNOD2ELTG              ,NOD2ELS         ,
      5   NOD2ELC           ,NOD2ELTG          ,IGRSURF(ISU2)      ,THK                    ,
      6   NTY               ,IXS10             ,IXS16              ,IXS20                  ,IGEO            ,
@@ -507,9 +511,9 @@ C
        IGNORE = IPARI(34,NIN)
        IPROJ  = IPARI(57,NIN)
        CALL I2BUC1(
-     1   X                 ,INTBUF_TAB(NIN)%IRECTM ,INTBUF_TAB(NIN)%NSV    ,NSEG                    ,INTBUF_TAB(NIN)%IRTLM,
+     1X                 ,INTBUF_TAB(NIN)%IRECTM ,INTBUF_TAB(NIN)%NSV    ,NSEG                    ,INTBUF_TAB(NIN)%IRTLM,
      2   NMN               ,NRTM              ,MWA               ,NSN                     ,RWA             ,
-     3   NOINT             ,INTBUF_TAB(NIN)%MSR    ,INTBUF_TAB(NIN)%CSTS   ,INTBUF_TAB(NIN)%DPARA        ,TZINF           ,
+     3NOINT             ,INTBUF_TAB(NIN)%MSR    ,INTBUF_TAB(NIN)%CSTS   ,INTBUF_TAB(NIN)%DPARA        ,TZINF           ,
      4   IGNORE            ,THK               ,KNOD2ELS          ,KNOD2ELC                ,KNOD2ELTG       ,
      5   NOD2ELS           ,NOD2ELC           ,NOD2ELTG          ,
      6   -NIN           ,IXC               ,IXTG              ,THK_PART                ,IPARTC          ,
@@ -531,11 +535,12 @@ C
 C
 C      Warning : NMN, NSN, K13, K14 et K15 updated by I2TID3
        CALL I2TID3(
-     1    X                ,INTBUF_TAB(NIN)%IRECTM ,INTBUF_TAB(NIN)%CSTS   ,INTBUF_TAB(NIN)%MSR          ,INTBUF_TAB(NIN)%NSV  ,
+     1X                ,INTBUF_TAB(NIN)%IRECTM ,INTBUF_TAB(NIN)%CSTS   ,INTBUF_TAB(NIN)%MSR          ,
+     &INTBUF_TAB(NIN)%NSV  ,
      2    INTBUF_TAB(NIN)%IRTLM ,ITAB              ,IKINE             ,IKINE1                  ,INTBUF_TAB(NIN)%DPARA,
      3    IPARI(1,NIN)     ,TZINF             ,IDDLEVEL          ,
      4    ID               ,TITR              ,INTBUF_TAB(NIN)   ,INTBUF_TAB(NIN)%VARIABLES(4) , IPROJ,
-     5    IXS              ,IXC               ,IXS10             ,IXS16                   ,IXS20,INTBUF_TAB(NIN)%CSTS_BIS,
+     5IXS              ,IXC               ,IXS10             ,IXS16                   ,IXS20,INTBUF_TAB(NIN)%CSTS_BIS,
      6    NSN_MULTI_CONNEC ,T2_ADD_CONNEC     ,T2_NB_CONNEC      ,T2_CONNEC               ,IXTG)
 C    
        NSN = IPARI(5,NIN)
@@ -670,7 +675,7 @@ C-----------------------------------------------------------------------
        DRAD = INTBUF_TAB(NIN)%VARIABLES(32)
 
        IF(INTBUF_TAB(NIN)%S_NIGE/=0) THEN
-            ALLOCATE(XE(3*(NUMNOD+INTBUF_TAB(NIN)%S_NIGE)))
+            call my_alloc(XE, 3*(NUMNOD+INTBUF_TAB(NIN)%S_NIGE), "XE")
             XE(1:3*NUMNOD) = X(1:3*NUMNOD)
             XE(3*NUMNOD+1:3*(NUMNOD+INTBUF_TAB(NIN)%S_NIGE)) = INTBUF_TAB(NIN)%XIGE(1:3*INTBUF_TAB(NIN)%S_NIGE)
             PTR_X(3*NUMNOD+1:3*(NUMNOD+INTBUF_TAB(NIN)%S_NIGE)) => XE(3*NUMNOD+1:3*(NUMNOD+INTBUF_TAB(NIN)%S_NIGE))
@@ -703,12 +708,12 @@ C----------------
      2    GEO              ,NRTM_FE                 , IXC             ,-NIN          , INTBUF_TAB(NIN)%STFAC,
      3    NTY              ,INTBUF_TAB(NIN)%VARIABLES(2) , NOINT           ,INTBUF_TAB(NIN)%STFNS , NSN             ,
      4    PTR_MS           ,INTBUF_TAB(NIN)%NSV          , IXTG            ,IGAP             , RWA             ,
-     5    INTBUF_TAB(NIN)%GAP_S ,INTBUF_TAB(NIN)%GAP_M        ,INTBUF_TAB(NIN)%VARIABLES(13),IXT       , IXP             ,
+     5INTBUF_TAB(NIN)%GAP_S ,INTBUF_TAB(NIN)%GAP_M        ,INTBUF_TAB(NIN)%VARIABLES(13),IXT       , IXP             ,
      6    INTBUF_TAB(NIN)%VARIABLES(6),INTBUF_TAB(NIN)%VARIABLES(16),INACTI     ,KNOD2ELS         , KNOD2ELC        ,
      7    KNOD2ELTG        ,NOD2ELS                 ,NOD2ELC          ,NOD2ELTG         , IGRSURF(ISU2)   ,
-     8    IPARI(47,NIN)    ,INTBUF_TAB(NIN)%IELES        ,INTBUF_TAB(NIN)%IELEC ,INTBUF_TAB(NIN)%AREAS , SH4TREE         ,
+     8IPARI(47,NIN)    ,INTBUF_TAB(NIN)%IELES        ,INTBUF_TAB(NIN)%IELEC ,INTBUF_TAB(NIN)%AREAS , SH4TREE         ,
      9    SH3TREE          ,IPART                   ,IPARTC           ,IPARTTG          , THK             ,
-     C    THK_PART         ,INTBUF_TAB(NIN)%VARIABLES(28),INTBUF_TAB(NIN)%GAP_SL,INTBUF_TAB(NIN)%GAP_ML,NOD2EL1D         ,
+     CTHK_PART         ,INTBUF_TAB(NIN)%VARIABLES(28),INTBUF_TAB(NIN)%GAP_SL,INTBUF_TAB(NIN)%GAP_ML,NOD2EL1D         ,
      D    KNOD2EL1D        ,IXR                     ,ITAB             ,INTBUF_TAB(NIN)%VARIABLES(7),IXS10      ,
      E    IXS16            ,IXS20                   ,ID               ,TITR             , IDDLEVEL        ,
      F    DRAD             ,IGEO                    ,FILLSOL          ,stack%pm         , IWORKSH         ,
@@ -800,7 +805,7 @@ C
         LLT = MIN0( NVSIZ, I_STOK - NFT )
 
         CALL I7COR3(
-     1  PTR_X   ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
+     1PTR_X   ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
      2  INTBUF_TAB(NIN)%STFM,INTBUF_TAB(NIN)%STFNS,GAPV    ,IGAP    ,INTBUF_TAB(NIN)%VARIABLES(2) ,
      3  INTBUF_TAB(NIN)%GAP_S,INTBUF_TAB(NIN)%GAP_M,1,INTBUF_TAB(NIN)%VARIABLES(13),INTBUF_TAB(NIN)%VARIABLES(16),
      4  INTBUF_TAB(NIN)%GAP_SL,INTBUF_TAB(NIN)%GAP_ML,ZERO,IX1     ,IX2   ,
@@ -1001,7 +1006,7 @@ C
         LFT = 1
         LLT = MIN0( NVSIZ, I_STOK - NFT )
         CALL I7COR3(
-     1  X       ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
+     1X       ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
      2  INTBUF_TAB(NIN)%STFM,INTBUF_TAB(NIN)%STFNS,GAPV    ,IGAP    ,INTBUF_TAB(NIN)%VARIABLES(2) ,
      3  INTBUF_TAB(NIN)%GAP_S,INTBUF_TAB(NIN)%GAP_M,1,INTBUF_TAB(NIN)%VARIABLES(13),INTBUF_TAB(NIN)%VARIABLES(16),
      4  RDUM,RDUM,DRAD,IX1     ,IX2   ,
@@ -1106,7 +1111,9 @@ C
 C
        IF (IREMNODE == 1) THEN
 C
-          ALLOCATE(INOD2LIN(NUMNOD+1),TAGSECND(NUMNOD),NOD2LIN(2*NRTM))
+          call my_alloc(INOD2LIN, NUMNOD+1, "INOD2LIN")
+          call my_alloc(TAGSECND, NUMNOD, "TAGSECND")
+          call my_alloc(NOD2LIN, 2*NRTM, "NOD2LIN")
           I_START = 1
           I_MEM_REM = 0
           DO WHILE (I_START < NRTM)
@@ -1128,20 +1135,24 @@ C
 C
           ENDDO
 C
-          DEALLOCATE(INOD2LIN,TAGSECND,NOD2LIN)
+          CALL MY_DEALLOC(INOD2LIN)
+          CALL MY_DEALLOC(TAGSECND)
+          CALL MY_DEALLOC(NOD2LIN)
           IREMNODE = 0  
 C
         ENDIF
 
        CALL I11BUC_VOX1(
      1   X         ,INTBUF_TAB(NIN)%IRECTS  ,INTBUF_TAB(NIN)%IRECTM       ,NRTS               ,NMN,
-     2   NRTM      ,NSN                ,INTBUF_TAB(NIN)%CAND_E       ,INTBUF_TAB(NIN)%CAND_N  ,INTBUF_TAB(NIN)%VARIABLES(2),
+     2NRTM      ,NSN                ,INTBUF_TAB(NIN)%CAND_E       ,INTBUF_TAB(NIN)%CAND_N  ,
+     &INTBUF_TAB(NIN)%VARIABLES(2),
      3   NOINT    ,I_STOK              ,INTBUF_TAB(NIN)%VARIABLES(8) ,MAXBOX             ,MINBOX,
      4   NCONT    ,MULTIMP,                 INTBUF_TAB(NIN)%MSR,
      5   INTBUF_TAB(NIN)%ADCCM,INTBUF_TAB(NIN)%CHAIN,ITAB,INTBUF_TAB(NIN)%NSV, 
      6   0, I_MEM     ,ID,TITR     ,IDDLEVEL,INTBUF_TAB(NIN)%VARIABLES(4),
      7   DRAD, INTERCEP,IGAP,INTBUF_TAB(NIN)%GAP_S,INTBUF_TAB(NIN)%GAP_M, 
-     8   INTBUF_TAB(NIN)%GAP_SL,INTBUF_TAB(NIN)%GAP_ML ,INTBUF_TAB(NIN)%VARIABLES(13),IPARI(63,NIN),INTBUF_TAB(NIN)%KREMNODE,
+     8INTBUF_TAB(NIN)%GAP_SL,INTBUF_TAB(NIN)%GAP_ML ,INTBUF_TAB(NIN)%VARIABLES(13),IPARI(63,NIN),
+     &INTBUF_TAB(NIN)%KREMNODE,
      3   INTBUF_TAB(NIN)%REMNODE,INTBUF_TAB(NIN)%VARIABLES(46))
 C
        INTBUF_TAB(NIN)%VARIABLES(5) = 0
@@ -1181,7 +1192,8 @@ C
         LLT = MIN0( NVSIZ, I_STOK - NFT )
         JLT_NEW = 0
         CALL I11DST3(
-     1   LLT    ,INTBUF_TAB(NIN)%VARIABLES(13),INTBUF_TAB(NIN)%CAND_N(1+NFT),INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%IRECTS,
+     1LLT    ,INTBUF_TAB(NIN)%VARIABLES(13),INTBUF_TAB(NIN)%CAND_N(1+NFT),INTBUF_TAB(NIN)%CAND_E(1+NFT),
+     &INTBUF_TAB(NIN)%IRECTS,
      2   INTBUF_TAB(NIN)%IRECTM,NX          ,NY         ,NZ        ,
      4   N1        ,N2          ,M1         ,M2        ,JLT_NEW   ,
      5   X         ,IGAP        ,INTBUF_TAB(NIN)%GAP_S ,INTBUF_TAB(NIN)%GAP_M,GAPV,
@@ -1486,7 +1498,7 @@ C-----------------------------------------------------------------------
 C
 C      NODAL AND ELEMENTARY STIFFNESS
 C----  INTBUF_TAB(NIN)%CRIT V/A is used temporarily for sorting and Pen-max
-       ALLOCATE(IPARTNS(NSN))
+       call my_alloc(IPARTNS, NSN, "IPARTNS")
        IPARTNS(1:NSN)=0
        CALL I24STI3(
      1 X         ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%STFM  ,IXS       ,PM ,
@@ -1672,7 +1684,7 @@ C---------PENE_OLD(5,NI)=ZERO
        DO I=1,NSN
         INTBUF_TAB(NIN)%PENE_OLD(1+5*(I-1)+4)=ZERO
        END DO
-       ALLOCATE(PENMIN(NSN))
+       call my_alloc(PENMIN, NSN, "PENMIN")
        PENMIN=EP10
        IWPENE0 = 0
        DO NG=1,NGROUS
@@ -1681,7 +1693,7 @@ C---------PENE_OLD(5,NI)=ZERO
         LFT = 1
         LLT = MIN0( NVSIZ, I_STOK - NFT )
         CALL I24COR3(
-     1    X     ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
+     1X     ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%CAND_E(1+NFT),INTBUF_TAB(NIN)%CAND_N(1+NFT) ,
      2    INTBUF_TAB(NIN)%STFM,INTBUF_TAB(NIN)%STFNS,GAPV   ,IGAP    ,INTBUF_TAB(NIN)%VARIABLES(2) ,
      3    INTBUF_TAB(NIN)%GAP_S,INTBUF_TAB(NIN)%GAP_M)
         CALL I24PEN3(X    ,INTBUF_TAB(NIN)%IRECTM ,GAPV        ,INTBUF_TAB(NIN)%CAND_E(1+NFT),
@@ -1777,7 +1789,8 @@ c    .                     INTBUF_TAB(NIN)%XFIC,
 c    .                     RWA)
 c      CLOSE(67)
 
-        DEALLOCATE(PENMIN,IPARTNS)
+        CALL MY_DEALLOC(PENMIN)
+        CALL MY_DEALLOC(IPARTNS)
        END IF !(NGROUS>0) THEN
        IF (INACTI==5.OR.INACTI==-1) THEN
 C---       PEN_OLD(1:3,1:NSN)=ZERO
@@ -1829,47 +1842,14 @@ C Initialize ISPT2 Arrays for cycle 0 in case of INACTI
 C-----------------------------------------------------------------------
       ELSEIF(NTY==25) THEN
         
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%EDGE_BISECTOR,INTBUF_TAB(NIN)%S_EDGE_BISECTOR)
+          CALL MY_ALLOC(INTBUF_TAB(NIN)%EDGE_BISECTOR,INTBUF_TAB(NIN)%S_EDGE_BISECTOR,"INTBUF_TAB(NIN)%EDGE_BISECTOR")
           INTBUF_TAB(NIN)%EDGE_BISECTOR(1:INTBUF_TAB(NIN)%S_EDGE_BISECTOR) = 0
 
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%VTX_BISECTOR,INTBUF_TAB(NIN)%S_VTX_BISECTOR)
+          CALL MY_ALLOC(INTBUF_TAB(NIN)%VTX_BISECTOR,INTBUF_TAB(NIN)%S_VTX_BISECTOR,"INTBUF_TAB(NIN)%VTX_BISECTOR")
           INTBUF_TAB(NIN)%VTX_BISECTOR(1:INTBUF_TAB(NIN)%S_VTX_BISECTOR) = 0
 
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%PENM,INTBUF_TAB(NIN)%S_PENM)
-          INTBUF_TAB(NIN)%PENM(1:INTBUF_TAB(NIN)%S_PENM) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%DISTM,INTBUF_TAB(NIN)%S_DISTM)
-          INTBUF_TAB(NIN)%DISTM(1:INTBUF_TAB(NIN)%S_DISTM) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%LBM,INTBUF_TAB(NIN)%S_LBM)
-          INTBUF_TAB(NIN)%LBM(1:INTBUF_TAB(NIN)%S_LBM) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%LCM,INTBUF_TAB(NIN)%S_LCM)
-          INTBUF_TAB(NIN)%LCM(1:INTBUF_TAB(NIN)%S_LCM) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%E2S_NOD_NORMAL,INTBUF_TAB(NIN)%S_E2S_NOD_NORMAL)
+          CALL MY_ALLOC(INTBUF_TAB(NIN)%E2S_NOD_NORMAL,INTBUF_TAB(NIN)%S_E2S_NOD_NORMAL,"INTBUF_TAB(NIN)%E2S_NOD_NORMAL")
           INTBUF_TAB(NIN)%E2S_NOD_NORMAL(1:INTBUF_TAB(NIN)%S_E2S_NOD_NORMAL )= 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVX_E,INTBUF_TAB(NIN)%S_FTSAVX_E ) 
-          INTBUF_TAB(NIN)%FTSAVX_E(1:INTBUF_TAB(NIN)%S_FTSAVX_E) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVY_E,INTBUF_TAB(NIN)%S_FTSAVY_E ) 
-          INTBUF_TAB(NIN)%FTSAVY_E(1:INTBUF_TAB(NIN)%S_FTSAVY_E) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVZ_E,INTBUF_TAB(NIN)%S_FTSAVZ _E) 
-          INTBUF_TAB(NIN)%FTSAVZ_E(1:INTBUF_TAB(NIN)%S_FTSAVZ_E) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVX_E2S,INTBUF_TAB(NIN)%S_FTSAVX_E2S ) 
-          INTBUF_TAB(NIN)%FTSAVX_E2S(1:INTBUF_TAB(NIN)%S_FTSAVX_E2S) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVY_E2S,INTBUF_TAB(NIN)%S_FTSAVY_E2S ) 
-          INTBUF_TAB(NIN)%FTSAVY_E2S(1:INTBUF_TAB(NIN)%S_FTSAVY_E2S) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FTSAVZ_E2S,INTBUF_TAB(NIN)%S_FTSAVZ _E2S) 
-          INTBUF_TAB(NIN)%FTSAVZ_E2S(1:INTBUF_TAB(NIN)%S_FTSAVZ_E2S) = 0
-
-          CALL MY_ALLOC(INTBUF_TAB(NIN)%FARM,INTBUF_TAB(NIN)%S_FARM) !KD(18)
-          INTBUF_TAB(NIN)%FARM(1:INTBUF_TAB(NIN)%S_FARM) = 0 
 
 C-----------------------------------------------------------------------
 C
@@ -1882,7 +1862,14 @@ C      IPEN0 = IPARI(54,NIN)
        ISHARP= IPARI(84,NIN)
        NRTM0=NRTM-NRTM_SH
        IF(INTTH > 0) DRAD = INTBUF_TAB(NIN)%VARIABLES(32)
+       IF(IPARI(72,NIN) > 0) THEN ! friction model : 
+          call my_alloc(IPARTSM, NRTM, "IPARTSM") ! saving parts id of main segments :friction mode + mvoisin research
+          IPARTSM(1:NRTM)=0
+       ELSE
+          call my_alloc(IPARTSM, 0, "IPARTSM")
+       ENDIF
 
+       IF(NRTM >0) THEN
        CALL I7ERR3(
      1  X         ,NRTM     ,INTBUF_TAB(NIN)%IRECTM  ,NOINT     ,ITAB,ID,TITR,
      2  IX1      ,IX2    ,IX3    ,IX4    ,X1     ,
@@ -1892,18 +1879,13 @@ C      IPEN0 = IPARI(54,NIN)
      6  Y0       ,Z0     ,XN1    ,YN1     ,ZN1   ,
      7  XN2      ,YN2    ,ZN2    ,XN3     ,YN3   ,
      8  ZN3      ,XN4    ,YN4    ,ZN4      )
+       ENDIF
 C-----------------------------------------------------------
 C        NODAL AND ELEMENTARY STIFFNESS
 C-----------------------------------------------------------
        GAPSCALE=INTBUF_TAB(NIN)%VARIABLES(13) 
        ! Warning : VARIABLES(13) is modified after, to store GAPMIN
-
-       IF(IPARI(72,NIN) > 0) THEN ! friction model : 
-          ALLOCATE(IPARTSM(NRTM)) ! saving parts id of main segments :friction mode + mvoisin research
-          IPARTSM(1:NRTM)=0
-       ELSE
-          ALLOCATE(IPARTSM(0))
-       ENDIF
+       IF(NRTM >0) THEN
        CALL I25STI3(
      1 X          ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%STFM  ,IXS           ,PM                 ,
      2 GEO        ,NRTM0            ,IXC              ,-NIN       ,INTBUF_TAB(NIN)%STFAC(1),
@@ -1925,7 +1907,9 @@ C-----------------------------------------------------------
      K GAPM_L_MX  ,GAPS_L_MX        ,IPARTSM         ,DRAD          ,IPARTT                 ,
      J IPARTP     ,IPARTR           ,INTBUF_TAB(NIN)%IELEM_M , IPARI(100,NIN),ELEM_LINKED_TO_SEGMENT,
      K NIN25      , FLAG_ELEM_INTER25,INTBUF_TAB(NIN)%VARIABLES(49),INTBUF_TAB(NIN)%VARIABLES(50),
-     M INTBUF_TAB(NIN)%VARIABLES(51),INTBUF_TAB(NIN)%VARIABLES(52))
+     M INTBUF_TAB(NIN)%VARIABLES(51),INTBUF_TAB(NIN)%VARIABLES(52) )
+
+       ENDIF
        IPARI(21,NIN) = IGAP
 C-----------------------------------------------------------
 C      ELEMENT NEIGHBROURS & FREE EDGES
@@ -1947,29 +1931,35 @@ C
      .                                                                        IPARI(90,NIN),
      7  INTBUF_TAB(NIN)%ADDSUBE,INTBUF_TAB(NIN)%LISUBE,INTBUF_TAB(NIN)%INFLG_SUBE,NOINT,NMN,INTBUF_TAB(NIN)%MSR,
      8  NOM_OPT,ILEV,INTBUF_TAB(NIN)%MBINFLG,INTBUF_TAB(NIN)%EBINFLG,INTBUF_TAB(NIN)%IELEM_M,
-     9  IPARI(100,NIN))
+     9  IPARI(100,NIN),IPARI(101,NIN))
+
 
        IF(IEDGE/=0)THEN
          NCONTE   =IPARI(68,NIN) ! See tale = Edge is to see ...
          IPARI(88,NIN)=NCONTE ! See tale = Edge is to see ...
        END IF
+       NADMSR=IPARI(67,NIN)
+       NEDGE =IPARI(68,NIN)
 
        ITHK25 = IPARI(91,NIN)
+       IF(NRTM >0) THEN
        CALL I25INI_GAP_N(
      1 NRTM  ,INTBUF_TAB(NIN)%IRECTM,IXS   ,GEO   ,IXC       ,IXTG  ,
      2 IXT   ,IXP   ,IPART  ,IPARTC   ,IPARTTG  ,
      3 THK   ,THK_PART,INTBUF_TAB(NIN)%GAP_NM,INTBUF_TAB(NIN)%GAP_M,NMN   ,
      4 INTBUF_TAB(NIN)%MSR,INTBUF_TAB(NIN)%GAPN_M,
      .                  INTBUF_TAB(NIN)%VARIABLES(36),GAPSCALE,IGEO  ,
-     5 INTBUF_TAB(NIN)%MSEGTYP24 ,INTBUF_TAB(NIN)%GAPMSAV, ITHK25,IGAP,INTBUF_TAB(NIN)%VARIABLES(50),INTBUF_TAB(NIN)%VARIABLES(52))
+     5INTBUF_TAB(NIN)%MSEGTYP24 ,INTBUF_TAB(NIN)%GAPMSAV, ITHK25,IGAP,INTBUF_TAB(NIN)%VARIABLES(50),
+     &INTBUF_TAB(NIN)%VARIABLES(52))
+       ENDIF
 
-       NADMSR=IPARI(67,NIN)
-       NEDGE =IPARI(68,NIN)
+       IF(NRTM >0) THEN
        CALL I25NORM(NRTM,INTBUF_TAB(NIN)%IRECTM,NUMNOD,X,INTBUF_TAB(NIN)%EDGE_BISECTOR,
      .              NSN,INTBUF_TAB(NIN)%MSR,ITAB,NRTM0,INTBUF_TAB(NIN)%MSEGTYP24,
      .              INTBUF_TAB(NIN)%MVOISIN,INTBUF_TAB(NIN)%EVOISIN,NEDGE,INTBUF_TAB(NIN)%LEDGE,
      .              INTBUF_TAB(NIN)%LBOUND,INTBUF_TAB(NIN)%ADMSR,INTBUF_TAB(NIN)%VTX_BISECTOR,
      .              INTBUF_TAB(NIN)%E2S_NOD_NORMAL,NADMSR,IEDGE,INTBUF_TAB(NIN)%IELEM_M)
+       ENDIF
 C-----------------------------------------------------------
 C      IGAP = 2 (IREM GAP)
 C-----------------------------------------------------------
@@ -1979,6 +1969,7 @@ C
          INTBUF_TAB(NIN)%VARIABLES(13)=ZERO ! fake value
          INTBUF_TAB(NIN)%VARIABLES(16)=EP30 ! fake value
 C
+        IF(NRTM >0) THEN
          CALL I7REMNODE(IREMNODE,NOINT,TITR,INTBUF_TAB(NIN),NUMNOD+NUMFAKENODIGEO ,
      1   X,NRTM     ,INTBUF_TAB(NIN)%IRECTM,INTBUF_TAB(NIN)%NSV,NSN, 
      2 ITAB ,INTBUF_TAB(NIN)%GAP_S,INTBUF_TAB(NIN)%GAP_M,INTBUF_TAB(NIN)%VARIABLES(13),INTBUF_TAB(NIN)%VARIABLES(16),
@@ -1986,12 +1977,14 @@ C
      4 IPARI(62,NIN) ,NTY       ,IPARI(1,NIN)     ,I_MEM_REM ,GAPM_MX            ,
      5 GAPS_MX   ,GAPM_L_MX ,GAPS_L_MX ,ILEV      ,INTBUF_TAB(NIN)%NBINFLG ,
      6 INTBUF_TAB(NIN)%MBINFLG,INTBUF_TAB(NIN)%VARIABLES(46),npari)
+        ENDIF
 C
        END IF
        IF (NSPMD>1.AND.IDDLEVEL==0.AND.FLAG_REMOVED_NODE) THEN   
         FLAG_OUTPUT = 0
         NREMN(1:NINTER) = 0
-        IF (INTER_TYPE2_NUMBER >0) CALL REMN_I2OP(NIN,NIN,IPARI,INTBUF_TAB,ITAB,NOM_OPT,NREMN,FLAG_OUTPUT,SKIP_TYPE25_EDGE_2_EDGE)
+      IF (INTER_TYPE2_NUMBER >0) CALL REMN_I2OP(NIN,NIN,IPARI,INTBUF_TAB,ITAB,NOM_OPT,NREMN,FLAG_OUTPUT,
+     &SKIP_TYPE25_EDGE_2_EDGE)
        ENDIF
 C-----------------------------------------------------------
 C
@@ -2004,6 +1997,9 @@ C
        LOCAL_FLAG_REMOVED_NODE = FLAG_REMOVED_NODE
        IF(IDDLEVEL==0.AND.FLAG_REMOVED_NODE) LOCAL_FLAG_REMOVED_NODE = .FALSE.
        I_MEM = 0
+       I_STOK = 0
+       IF(NRTM >0) THEN 
+
        CALL I25BUC_VOX1(
      1 X        ,INTBUF_TAB(NIN)%IRECTM  ,INTBUF_TAB(NIN)%NSV,INTBUF_TAB(NIN)%VARIABLES(4),
      2 NMN      ,NRTM             ,NSN        ,intbuf_tab(nin)  ,
@@ -2019,15 +2015,24 @@ C
      C IXS, IXS10, IXS16, IXS20,ICODE,ISKEW, 
      D DRAD,INTBUF_TAB(NIN)%VARIABLES(46),NRTM,LOCAL_FLAG_REMOVED_NODE,
      E INTBUF_TAB(NIN)%IELEM_M,nin,npari,ipari(1,nin))
-
+       ENDIF
 C       
        IF(IEDGE/=0)THEN
-
          CALL I25STI_EDG(
      1   NEDGE          ,INTBUF_TAB(NIN)%LEDGE  ,INTBUF_TAB(NIN)%STFE  ,INTBUF_TAB(NIN)%STFM  ,IGAP             ,
-     2   INTBUF_TAB(NIN)%GAPE,INTBUF_TAB(NIN)%GAP_E_L,INTBUF_TAB(NIN)%GAP_M ,INTBUF_TAB(NIN)%GAP_ML,INTBUF_TAB(NIN)%GAP_SL,                                                                   
-     3   INTBUF_TAB(NIN)%VARIABLES(40),IPARI(72,NIN),INTBUF_TAB(NIN)%IPARTFRIC_E,INTBUF_TAB(NIN)%IPARTFRICM,IPARTSM ,               
-     4   BGAPEMX_L     ,NSN                ,INTBUF_TAB(NIN)%NSV   )
+     2INTBUF_TAB(NIN)%GAPE,INTBUF_TAB(NIN)%GAP_E_L,INTBUF_TAB(NIN)%GAP_M ,INTBUF_TAB(NIN)%GAP_ML,INTBUF_TAB(NIN)%GAP_SL,
+     3INTBUF_TAB(NIN)%VARIABLES(40),IPARI(72,NIN),INTBUF_TAB(NIN)%IPARTFRIC_E,INTBUF_TAB(NIN)%IPARTFRICM,IPARTSM ,
+     4   BGAPEMX_L     ,NSN                ,INTBUF_TAB(NIN)%NSV  ,IPARI(101,NIN)                           ,  -NIN  ,
+     5   NOD2EL1D      ,KNOD2EL1D          ,IXT                  ,IXP                                      ,IXR     ,
+     6   KXX            ,nixx              ,S_NOD2EL1D           ,
+     7   IXX           ,IPARTT             ,IPARTP               ,IPARTX                                   ,IPARTR  ,
+     8   GEO           ,INTBUF_TAB(NIN)%STFAC(1),GAPSCALE ,INTBUF_TAB(NIN)%VARIABLES(36),INTBUF_TAB(NIN)%VARIABLES(28),
+     9 INTBUF_FRIC_TAB ,ID                 ,INTBUF_TAB(NIN)%VARIABLES(50),INTBUF_TAB(NIN)%VARIABLES(52)    ,TITR    ,
+     A THK_PART        ,PM                 ,TAGPRT_FRIC         ,LELX                                      , X      ,
+     B THK             , IXTG              ,IXC                 ,IGEO                                      ,IPARTTG  ,
+     C IPARTC          ,IINTTHICK          ,KNOD2ELC            ,KNOD2ELTG                                 ,NOD2ELC  ,
+     D NOD2ELTG        ,stack%pm           ,IWORKSH             )
+
 
          INTBUF_TAB(NIN)%I_STOK_E(1:2)=0
          CAND_E_OLD(1:2) = INTBUF_TAB(NIN)%I_STOK_E(1:2)
@@ -2038,7 +2043,12 @@ C
 C
         IF (IREMNODE_EDG == 1) THEN
 C
-          ALLOCATE(INOD2LIN(NUMNOD+1),TAGSECND(NUMNOD),NOD2LIN(2*NEDGE),PERM(NEDGE),PERMINV(NEDGE),GAP_MAXNEIGH(NEDGE))
+          call my_alloc(INOD2LIN, NUMNOD+1, "INOD2LIN")
+          call my_alloc(TAGSECND, NUMNOD, "TAGSECND")
+          call my_alloc(NOD2LIN, 2*NEDGE, "NOD2LIN")
+          call my_alloc(PERM, NEDGE, "PERM")
+          call my_alloc(PERMINV, NEDGE, "PERMINV")
+          call my_alloc(GAP_MAXNEIGH, NEDGE, "GAP_MAXNEIGH")
           I_START = 1
           I_MEM_REM = 0
           I_FIN = 0
@@ -2046,7 +2056,7 @@ C
 C
             CALL I25REMLINE(
      1      X      ,NEDGE  ,INTBUF_TAB(NIN)%LEDGE,NUMNOD         ,INTBUF_TAB(NIN)%GAPE     ,INTBUF_TAB(NIN)%GAP_E_L    ,
-     2      IGAP0  ,IGAP   ,DRAD            ,INTBUF_TAB(NIN)%VARIABLES(40),BGAPEMX_L  ,INTBUF_TAB(NIN)%KREMNODE_EDG,      
+     2IGAP0  ,IGAP   ,DRAD            ,INTBUF_TAB(NIN)%VARIABLES(40),BGAPEMX_L  ,INTBUF_TAB(NIN)%KREMNODE_EDG,
      3      INTBUF_TAB(NIN)%REMNODE_EDG,IPARI(94,NIN),I_START        ,I_MEM_REM            ,INOD2LIN              ,
      4      TAGSECND ,NOD2LIN     ,INTBUF_TAB(NIN)%VARIABLES(46)     ,PERM                 ,PERMINV               ,
      5      GAP_MAXNEIGH)
@@ -2068,11 +2078,15 @@ C
 C
           ENDDO
 C
-          DEALLOCATE(INOD2LIN,TAGSECND,NOD2LIN,PERM,PERMINV,GAP_MAXNEIGH)
+          CALL MY_DEALLOC(INOD2LIN)
+          CALL MY_DEALLOC(TAGSECND)
+          CALL MY_DEALLOC(NOD2LIN)
+          CALL MY_DEALLOC(PERM)
+          CALL MY_DEALLOC(PERMINV)
+          CALL MY_DEALLOC(GAP_MAXNEIGH)
           IREMNODE_EDG = 0  
 C
         ENDIF
-
 
          ITASK     = 0
          ESHIFT    = 0
@@ -2095,7 +2109,7 @@ C
      1     X      ,INTBUF_TAB(NIN)%IRECTM,INACTBID,NSN     ,
      2     NMN    ,INTBUF_TAB(NIN)%CANDM_E2E ,INTBUF_TAB(NIN)%CANDS_E2E ,
      3     GAP    ,NOINT       ,INTBUF_TAB(NIN)%I_STOK_E(1) ,MULNSNE    ,BMINMA       ,
-     4     MARGE  ,VMAXDT      ,DRAD ,ESHIFT ,NEDGE_T     ,
+     4     INTBUF_TAB(NIN)%VARIABLES(25)  ,VMAXDT      ,DRAD ,ESHIFT ,NEDGE_T     ,
      5     SSHIFT ,NRTM_T      ,INTBUF_TAB(NIN)%STFM ,INTBUF_TAB(NIN)%STFNS,
      6     NCONTE      ,INTBUF_TAB(NIN)%GAP_M       ,ITASK      ,INTBUF_TAB(NIN)%VARIABLES(40),
      7     I_MEME ,ITAB   ,INTBUF_TAB(NIN)%MBINFLG,INTBUF_TAB(NIN)%EBINFLG,INTBUF_TAB(NIN)%I_STOK_E(2) ,
@@ -2105,8 +2119,9 @@ C
      B     INTBUF_TAB(NIN)%LEDGE,INTBUF_TAB(NIN)%ADMSR,INTBUF_TAB(NIN)%EDGE_BISECTOR,INTBUF_TAB(NIN)%VTX_BISECTOR,
      C     INTBUF_TAB(NIN)%CANDM_E2S ,INTBUF_TAB(NIN)%CANDS_E2S,IBIDON,INTBUF_TAB(NIN)%CAND_PS,INTBUF_TAB(NIN)%GAPE,
      D     INTBUF_TAB(NIN)%GAP_E_L,INTBUF_TAB(NIN)%VARIABLES(46),FLAG_REMOVED_NODE,
-     E     INTBUF_TAB(NIN)%S_KREMNODE_E2S,INTBUF_TAB(NIN)%S_REMNODE_E2S,INTBUF_TAB(NIN)%KREMNODE_E2S,INTBUF_TAB(NIN)%REMNODE_E2S,
-     F     INTBUF_TAB(NIN)%S_KREMNODE_EDG)
+     EINTBUF_TAB(NIN)%S_KREMNODE_E2S,INTBUF_TAB(NIN)%S_REMNODE_E2S,INTBUF_TAB(NIN)%KREMNODE_E2S,
+     &INTBUF_TAB(NIN)%REMNODE_E2S,
+     F     INTBUF_TAB(NIN)%S_KREMNODE_EDG,INTBUF_TAB(NIN)%STFE,IPARI(101,NIN),INTBUF_TAB(NIN)%VARIABLES(4))
 
          IF(I_MEME(1) /=0 .OR. I_MEME(2)/=0)THEN
            NCONTE   = IPARI(88,NIN)
@@ -2134,7 +2149,8 @@ C
        ! update the weight of candidate's pair for the domain decomposition
        IF (IDDLEVEL==0.AND.NSPMD>1)THEN
          TOTAL_NUMBER_CANDIDATE = I_STOK
-         IF(IEDGE/=0) TOTAL_NUMBER_CANDIDATE = TOTAL_NUMBER_CANDIDATE + INTBUF_TAB(NIN)%I_STOK_E(1) + INTBUF_TAB(NIN)%I_STOK_E(2)
+      IF(IEDGE/=0) TOTAL_NUMBER_CANDIDATE = TOTAL_NUMBER_CANDIDATE + INTBUF_TAB(NIN)%I_STOK_E(1) +
+     &INTBUF_TAB(NIN)%I_STOK_E(2)
          IF ( ((NELEMINT+TOTAL_NUMBER_CANDIDATE)) > INTER_CAND%S_IXINT_2) THEN
            CALL UPGRADE_IXINT(INTER_CAND,NELEMINT,TOTAL_NUMBER_CANDIDATE)
          ENDIF
@@ -2160,6 +2176,7 @@ C-------------------------------------------------------------
 C        INITIAL PENETRATIONS
 C-------------------------------------------------------------
          NGROUS=1+(I_STOK-1)/NVSIZ
+         IF(I_STOK == 0) NGROUS = 0
          IF (NGROUS>0) THEN
 C
            DO I=1,4*NSN
@@ -2186,6 +2203,7 @@ C
      B        INTBUF_TAB(NIN)%GAP_M   ,GAPM  ,INTBUF_TAB(NIN)%GAP_NM, GAP_NM,
      C        INTBUF_TAB(NIN)%GAP_SL ,INTBUF_TAB(NIN)%GAP_ML ,GAPMXL,INTBUF_TAB(NIN)%LBOUND ,IBOUND )
 
+
             CALL I25PEN3(LLT    ,INTBUF_TAB(NIN)%CAND_N(1+NFT),INTBUF_TAB(NIN)%CAND_E(1+NFT),PENMN ,PENMAX,
      2                   X1     ,X2     ,X3     ,X4     ,X0     ,
      3                   Y1     ,Y2     ,Y3     ,Y4     ,Y0     ,
@@ -2197,6 +2215,7 @@ C
      9                   NNX     ,NNY    ,NNZ   ,GAP_NM  ,MVOISN,
      A                   GAPMXL  ,IVIS2  ,IBOUND,INTBUF_TAB(NIN)%VTX_BISECTOR,ILEV,
      B                   INACTI )
+
 
            ENDDO
 C
@@ -2211,6 +2230,12 @@ C
          END IF !(NGROUS>0) THEN
 C-------------------------------------------------------------
          CALL ANCMSG(MSGID=1164, MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR,PRMOD=MSG_PRINT)
+
+C-----cancel pressfit if no initial pene     
+        IF (INACTI==-1.AND.IWPENE == 0) THEN
+         IPARI(40,NIN) = 0
+         CALL ANCMSG(MSGID=1566,MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR)
+        END IF
 C
          IF(IWPENE /= 0.AND. IDDLEVEL == 1)THEN
            IF(INACTI==0)THEN
@@ -2332,7 +2357,6 @@ C
             CALL SHRINK_ARRAY(INTBUF_TAB(NIN)%CAND_PS,4*ISTOK)
             CALL SHRINK_ARRAY(INTBUF_TAB(NIN)%CANDM_E2S,ISTOK)
             CALL SHRINK_ARRAY(INTBUF_TAB(NIN)%CANDS_E2S,ISTOK)
-            CALL SHRINK_ARRAY(INTBUF_TAB(NIN)%IFPEN_E2S,ISTOK)
           END IF
 C------------------------------------------------------------
           CALL ANCMSG(MSGID=1631,MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR,PRMOD=MSG_PRINT)
@@ -2349,13 +2373,13 @@ C
         END IF !(NGROUS>0) THEN
 C
        END IF ! IF(IDDLEVEL==1)THEN
-       DEALLOCATE (IPARTSM)
+       CALL MY_DEALLOC(IPARTSM)
 C-----------------------------------------------------------------------
       ENDIF
 C-----------------------------------------------------------------------
       IF(IWPENE/=0) THEN
          IF(INPENE/=0 .AND. IDDLEVEL == 1)THEN
-          IF(.NOT.TYPE18)CALL ANCMSG(MSGID=343,MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR,I2=IWPENE,I3=INPENE)
+      IF(.NOT.TYPE18)CALL ANCMSG(MSGID=343,MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR,I2=IWPENE,I3=INPENE)
          ELSEIF (IDDLEVEL == 1.AND.NTY/=24) THEN
           IF(.NOT.TYPE18)CALL ANCMSG(MSGID=499, MSGTYPE=MSGWARNING,ANMODE=ANINFO_BLIND_1,I1=ID,C1=TITR,I2=IWPENE)
          ENDIF
@@ -2376,27 +2400,13 @@ C-----------------------------------------------------------------------
 
 
       IF(ALLOCATED(INTBUF_TAB(NIN)%VTX_BISECTOR)) THEN
-        DEALLOCATE(INTBUF_TAB(NIN)%VTX_BISECTOR)
+        CALL MY_DEALLOC(INTBUF_TAB(NIN)%VTX_BISECTOR)
       ENDIF
       IF(ALLOCATED(INTBUF_TAB(NIN)%EDGE_BISECTOR)) THEN
-        DEALLOCATE(INTBUF_TAB(NIN)%EDGE_BISECTOR)
+        CALL MY_DEALLOC(INTBUF_TAB(NIN)%EDGE_BISECTOR)
       ENDIF
-      IF(ALLOCATED(INTBUF_TAB(NIN)%PENM)) THEN
-        DEALLOCATE(INTBUF_TAB(NIN)%PENM)
-      ENDIF
-      IF(ALLOCATED(INTBUF_TAB(NIN)%DISTM)) DEALLOCATE(INTBUF_TAB(NIN)%DISTM)
-      IF(ALLOCATED(INTBUF_TAB(NIN)%LBM))   DEALLOCATE(INTBUF_TAB(NIN)%LBM)
-      IF(ALLOCATED(INTBUF_TAB(NIN)%LCM ))  DEALLOCATE(INTBUF_TAB(NIN)%LCM)
-      IF(ALLOCATED(INTBUF_TAB(NIN)%E2S_NOD_NORMAL))  DEALLOCATE(INTBUF_TAB(NIN)%E2S_NOD_NORMAL)
-      IF(ALLOCATED(INTBUF_TAB(NIN)%E2S_ACTNOR))  DEALLOCATE(INTBUF_TAB(NIN)%E2S_ACTNOR)
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVX_E)    ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVX_E)    
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVY_E)    ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVY_E)    
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVZ_E)    ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVZ_E)    
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVX_E2S)  ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVX_E2S)  
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVY_E2S)  ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVY_E2S)  
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FTSAVZ_E2S)  ) DEALLOCATE(INTBUF_TAB(NIN)%FTSAVZ_E2S)  
-      IF(ALLOCATED(INTBUF_TAB(NIN)%FARM)  ) DEALLOCATE(INTBUF_TAB(NIN)%FARM)  
-
+      IF(ALLOCATED(INTBUF_TAB(NIN)%E2S_NOD_NORMAL))  CALL MY_DEALLOC(INTBUF_TAB(NIN)%E2S_NOD_NORMAL)
+      IF(ALLOCATED(INTBUF_TAB(NIN)%E2S_ACTNOR)) call my_dealloc(INTBUF_TAB(NIN)%E2S_ACTNOR)
 
 C
       RETURN
@@ -2411,15 +2421,9 @@ C---+----1----+----2----+----3----+----4----+----5----+----6----+----7--
      +'   NODE    SECONDARY  SEGMENT                                      S               T')
  2007 FORMAT(//'    IMPACT CANDIDATES',/,'   SECONDARY        MAIN SEGMENT NODES '/'   NODE ')
  2011 FORMAT(//'    IMPACT CANDIDATES',/,'  MAIN   NODES     SECONDARY  NODES ')
- 2012 FORMAT(2X,'** WARNING ** THIS INTERFACE CONNECTS',' LAGRANGIAN MATERIALS')
  2181 FORMAT(//,1X,'INTERFACE NUMBER. . . . . . . . . . . . . .',I10/
      +         ,1X,'INTERFACE TYPE. . . . . . . . . . . . . . .    18')
- 2200 FORMAT(2X,/,I8,' TINY INITIAL PENETRATIONS WILL BE TAKEN INTO
-     + ACCOUNT')
- 2300 FORMAT(2X,/,I8,' INITIAL PENETRATIONS WILL BE IGNORED ')
- 2400 FORMAT(2X,/,'IPEN_MAX = ',1PG20.13,'HAS BEEN USED')
  2500 FORMAT(/,
      .    'FICTIVE NODES ADDED FOR EDGE . . . . . . . . =',I10/,
      .    'RATIO of Fictive SECONDARY nodes/SECONDARY nodes. .  =',1PG20.13/)
       END
-

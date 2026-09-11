@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    polyhedr1   ../starter/source/airbag/polyhedr1.F
+!||    polyhedr1      ../starter/source/airbag/polyhedr1.F
 !||--- called by ------------------------------------------------------
-!||    fvmesh1     ../starter/source/airbag/fvmesh.F
+!||    fvmesh1        ../starter/source/airbag/fvmesh.F
 !||--- calls      -----------------------------------------------------
-!||    arret       ../starter/source/system/arret.F
-!||    c_tricall   ../starter/stub/fvmbags_stub.F
+!||    arret          ../starter/source/system/arret.F
+!||    c_tricall      ../starter/stub/fvmbags_stub.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE POLYHEDR1(IPOLY, RPOLY   , POLB  , NPOLB, POLH,
      .                     NPOLH, NRPMAX  , NPHMAX, IBRIC, LMIN,
@@ -35,6 +37,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -85,7 +88,10 @@ C--------------------------------
          I=POLB(II)
          NNP=IPOLY(2,I)
          NHOL=0
-         ALLOCATE(PNODES(2,NNP), PSEG(2,NNP),PTRI(3,2*NNP),PHOLES(2,1))
+         call my_alloc(PNODES, 2, NNP, "PNODES")
+         call my_alloc(PSEG, 2, NNP, "PSEG")
+         call my_alloc(PTRI, 3, 2*NNP, "PTRI")
+         call my_alloc(PHOLES, 2, 1, "PHOLES")
          PTRI(1:3,1:2*NNP) = 0
 C
 C Coordinates of vertices in the polygon's plane
@@ -158,7 +164,10 @@ C-------------------------------------------------------------------------------
            ENDDO
          ENDDO ! II=1,NPOLB
 C
-         DEALLOCATE(PNODES, PSEG, PTRI, PHOLES)
+         CALL MY_DEALLOC(PNODES)
+         CALL MY_DEALLOC(PSEG)
+         CALL MY_DEALLOC(PTRI)
+         CALL MY_DEALLOC(PHOLES)
       ENDDO
 C--------------------------------------------------------------
 C Construction polygone-arete
@@ -167,10 +176,10 @@ C POLEDG(i,j+1) gives the number of the j-th edge
 C Edgver (I, 1) NUMERO of the first summit of the edge I
 C Edgver (I, 2) number of the second summit of the edge I
 C--------------------------------------------------------------
-      ALLOCATE (XX(NPOLB*NPPMAX*2))
-      ALLOCATE (YY(NPOLB*NPPMAX*2))
-      ALLOCATE (ZZ(NPOLB*NPPMAX*2))
-      ALLOCATE (EDGVER(NPOLB*NPPMAX,2))
+      call my_alloc(XX, NPOLB*NPPMAX*2, "XX")
+      call my_alloc(YY, NPOLB*NPPMAX*2, "YY")
+      call my_alloc(ZZ, NPOLB*NPPMAX*2, "ZZ")
+      call my_alloc(EDGVER, NPOLB*NPPMAX, 2, "EDGVER")
       DO I=1,NPOLB
          DO J=1,NPPMAX+1
             POLEDG(I,J)=0
@@ -233,8 +242,8 @@ C Edgpol (I, 1) gives the number of polygons connected to the ARETE I
 C EDGPOL(i,j+1) donne le numero du jeme polygone
 C EDGLOC(i,k) gives the position of edge i in POLEDG
 C---------------------------------------------------------------
-      ALLOCATE(EDGPOL(NEDGE,5))
-      ALLOCATE(EDGLOC(NEDGE,4))
+      call my_alloc(EDGPOL, NEDGE, 5, "EDGPOL")
+      call my_alloc(EDGLOC, NEDGE, 4, "EDGLOC")
       DO I=1,NEDGE
          DO J=1,4
             EDGPOL(I,J)=0
@@ -772,10 +781,12 @@ C
           ENDIF
       ENDDO  ! J=1,NEDGE
 C
-      DEALLOCATE (EDGPOL)
-      DEALLOCATE (EDGLOC)
-      DEALLOCATE (EDGVER)
-      DEALLOCATE (XX,YY,ZZ)
+      CALL MY_DEALLOC(EDGPOL)
+      CALL MY_DEALLOC(EDGLOC)
+      CALL MY_DEALLOC(EDGVER)
+      CALL MY_DEALLOC(XX)
+      CALL MY_DEALLOC(YY)
+      CALL MY_DEALLOC(ZZ)
 C
       NPOLH=0
       DO I=1,ICMAX

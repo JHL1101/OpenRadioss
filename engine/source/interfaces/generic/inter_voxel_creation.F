@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,21 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_voxel_creation   ../engine/source/interfaces/generic/inter_voxel_creation.F
 !||--- called by ------------------------------------------------------
 !||    inter_prepare_sort     ../engine/source/interfaces/generic/inter_prepare_sort.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    intbufdef_mod          ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    inter_sorting_mod      ../engine/share/modules/inter_sorting_mod.F
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE INTER_VOXEL_CREATION(IPARI,INTBUF_TAB,X,NIN,SORT_COMM)
 !$COMMENT
@@ -42,6 +45,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -80,13 +84,13 @@ C-----------------------------------------------
         IF(NSN==0) RETURN
         !   ------------------
         !   allocation
-        IF( ALLOCATED( SORT_COMM(NIN)%NEXT_NOD ) ) DEALLOCATE(SORT_COMM(NIN)%NEXT_NOD)
-        IF( ALLOCATED( SORT_COMM(NIN)%LAST_NOD ) ) DEALLOCATE(SORT_COMM(NIN)%LAST_NOD)
+        IF( ALLOCATED( SORT_COMM(NIN)%NEXT_NOD ) ) call my_dealloc(SORT_COMM(NIN)%NEXT_NOD)
+        IF( ALLOCATED( SORT_COMM(NIN)%LAST_NOD ) ) call my_dealloc(SORT_COMM(NIN)%LAST_NOD)
 
-        IF( ALLOCATED( SORT_COMM(NIN)%IIX ) ) DEALLOCATE(SORT_COMM(NIN)%IIX)
-        IF( ALLOCATED( SORT_COMM(NIN)%IIY ) ) DEALLOCATE(SORT_COMM(NIN)%IIY)
-        IF( ALLOCATED( SORT_COMM(NIN)%IIZ ) ) DEALLOCATE(SORT_COMM(NIN)%IIZ)
-        IF( ALLOCATED( SORT_COMM(NIN)%VOXEL ) ) DEALLOCATE(SORT_COMM(NIN)%VOXEL)
+        IF( ALLOCATED( SORT_COMM(NIN)%IIX ) ) call my_dealloc(SORT_COMM(NIN)%IIX)
+        IF( ALLOCATED( SORT_COMM(NIN)%IIY ) ) call my_dealloc(SORT_COMM(NIN)%IIY)
+        IF( ALLOCATED( SORT_COMM(NIN)%IIZ ) ) call my_dealloc(SORT_COMM(NIN)%IIZ)
+        IF( ALLOCATED( SORT_COMM(NIN)%VOXEL ) ) call my_dealloc(SORT_COMM(NIN)%VOXEL)
 
         ALLOCATE(SORT_COMM(NIN)%NEXT_NOD(NSN))
         ALLOCATE(SORT_COMM(NIN)%LAST_NOD(NSN))

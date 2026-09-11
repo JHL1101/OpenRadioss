@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    write_failparam        ../starter/source/materials/fail/write_failparam.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE FAIL_PARAM_MOD
       USE NAMES_AND_TITLES_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -51,28 +53,29 @@ C-----------------------------------------------
       INTEGER ,DIMENSION(:) ,ALLOCATABLE :: IBUF
       my_real ,DIMENSION(:) ,ALLOCATABLE :: RBUF
 C=======================================================================
-      LENI = 10
-      ALLOCATE (IBUF(LENI))
+      LENI = 11
+      call my_alloc(IBUF, LENI, "IBUF")
 c
       IBUF(1)  = FAIL%IRUPT
       IBUF(2)  = FAIL%FAIL_ID
       IBUF(3)  = FAIL%NUPARAM
       IBUF(4)  = FAIL%NIPARAM
       IBUF(5)  = FAIL%NUVAR
-      IBUF(6)  = FAIL%NFUNC
-      IBUF(7)  = FAIL%NTABLE
-      IBUF(8)  = FAIL%NTABLE4D
-      IBUF(9)  = FAIL%NMOD 
-      IBUF(10) = FAIL%FAIL_IP
+      IBUF(6)  = FAIL%NVARTMP
+      IBUF(7)  = FAIL%NFUNC
+      IBUF(8)  = FAIL%NTABLE
+      IBUF(9)  = FAIL%NTABLE4D
+      IBUF(10) = FAIL%NMOD 
+      IBUF(11) = FAIL%FAIL_IP
 c
       CALL WRITE_I_C(IBUF,LENI)
-      DEALLOCATE(IBUF)
+      CALL MY_DEALLOC(IBUF)
 c
       LENR = 1
-      ALLOCATE (RBUF(LENR))
+      call my_alloc(RBUF, LENR, "RBUF")
       RBUF(1) = FAIL%PTHK
       CALL WRITE_DB(RBUF ,LENR)
-      DEALLOCATE(RBUF)
+      CALL MY_DEALLOC(RBUF)
       LEN = LEN + LENI + LENR
 c
 c     write law keyword and keywords of failure modes

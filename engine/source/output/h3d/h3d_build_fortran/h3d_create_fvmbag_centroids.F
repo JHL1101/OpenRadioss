@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_create_fvmbag_centroids   ../engine/source/output/h3d/h3d_build_fortran/h3d_create_fvmbag_centroids.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    fvbag_mod                     ../engine/share/modules/fvbag_mod.F
 !||    groupdef_mod                  ../common_source/modules/groupdef_mod.F
+!||    my_alloc_mod                  ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE H3D_CREATE_FVMBAG_CENTROIDS(MONVOL,VOLMON, FVDATA, NFVBAG, SMONVOL, SVOLMON, AIRBAGS_NODE_ID_SHIFT)
 C-----------------------------------------------
@@ -48,6 +51,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -105,10 +110,10 @@ C-----------------------------------------------
               
               IF(NPOLH > 0)THEN ! if there are any polyhedron
 
-                 ALLOCATE(ITAB_FVMBAG(NPOLH))
-                 ALLOCATE(TAGNOD_FVMBAG(NPOLH))
-                 ALLOCATE(XYZ_FVMBAG(3,NPOLH))
-                 ALLOCATE(DISP_FVMBAG(3,NPOLH))
+                 call my_alloc(ITAB_FVMBAG, NPOLH, "ITAB_FVMBAG")
+                 call my_alloc(TAGNOD_FVMBAG, NPOLH, "TAGNOD_FVMBAG")
+                 call my_alloc(XYZ_FVMBAG, 3, NPOLH, "XYZ_FVMBAG")
+                 call my_alloc(DISP_FVMBAG, 3, NPOLH, "DISP_FVMBAG")
                  
                  DO II=1, FVDATA(IFV)%NPOLH !loop over polyhedra composing the airbag mesh
                    
@@ -127,10 +132,10 @@ C-----------------------------------------------
 
                  CALL C_H3D_CREATE_NODES(ITAB_FVMBAG,NPOLH,XYZ_FVMBAG,TAGNOD_FVMBAG,DISP_FVMBAG)
                  
-                 DEALLOCATE(ITAB_FVMBAG)
-                 DEALLOCATE(TAGNOD_FVMBAG)
-                 DEALLOCATE(XYZ_FVMBAG)
-                 DEALLOCATE(DISP_FVMBAG)
+                 call my_dealloc(ITAB_FVMBAG)
+                 call my_dealloc(TAGNOD_FVMBAG)
+                 call my_dealloc(XYZ_FVMBAG)
+                 call my_dealloc(DISP_FVMBAG)
                  NNODES = NNODES + FVDATA(IFV)%NPOLH
 
               ENDIF !NNODES>0

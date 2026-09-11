@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fillcne_xfem   ../starter/source/elements/xfem/fillcne_xfem.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .   IEL_CRKXFEM   ,INOD_CRKXFEM   ,IXC    ,IXTG , CEP,
      .   ADDCNE_CRKXFEM,CNE_XFE,CEL_XFE,CEP_XFE,CRKNODIAD )
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -65,11 +67,11 @@ C-----------------------------------------------
 C=======================================================================
 C   CALCULATION OF CNE ADDCNE_CRKXFEM CEL for XFEM part
 C-----------------------------------------------
-      ALLOCATE(KNOD2ELC(NUMNOD+1))
+      call my_alloc(KNOD2ELC, NUMNOD+1, "KNOD2ELC")
       KNOD2ELC = 0
-      ALLOCATE(TAGSKYC(4,NUMELC))
+      call my_alloc(TAGSKYC, 4, NUMELC, "TAGSKYC")
       TAGSKYC = 0
-      ALLOCATE(TAGSKYTG(3,NUMELTG))
+      call my_alloc(TAGSKYTG, 3, NUMELTG, "TAGSKYTG")
       TAGSKYTG = 0
 C
       DO I = 0, NCRKXFE + 1           ! NCRKXFE = Nb of nodes xfem
@@ -194,7 +196,9 @@ c
         ENDDO
       ENDDO
 c-----------
-      DEALLOCATE(TAGSKYC,TAGSKYTG,KNOD2ELC)
+      CALL MY_DEALLOC(TAGSKYC)
+      CALL MY_DEALLOC(TAGSKYTG)
+      CALL MY_DEALLOC(KNOD2ELC)
 c-----------
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_quad_vector        ../engine/source/output/h3d/h3d_results/h3d_quad_vector.F
 !||--- called by ------------------------------------------------------
@@ -94,31 +95,19 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real
-     .   DAM1(MVSIZ),DAM2(MVSIZ),
-     .   WPLA(MVSIZ),DMAX(MVSIZ),WPMAX(MVSIZ),FAIL(MVSIZ),
-     .   EPST1(MVSIZ),EPST2(MVSIZ),EPSF1(MVSIZ),EPSF2(MVSIZ),
-     .   VALUE(3),FF0,GG0,HH0,LL0,MM0,NN0,MASS(MVSIZ)
+     .   VALUE(3)
       my_real
-     .   OFF, P,VONM2,S1,S2,S12,S3,DMGMX,FAC,
-     .   DIR1_1,DIR1_2,DIR2_1,DIR2_2,AA,BB,V1,V2,V3,X21,X32,X34,
-     .   X41,Y21,Y32,Y34,Y41,Z21,Z32,Z34,Z41,SUMA,VR,VS,X31,Y31,
-     .   Z31,E11,E12,E13,E21,E22,E23,SUM,AREA,X2L,VAR,
-     .   E1X,E1Y,E1Z,E2X,E2Y,E2Z,E3X,E3Y,E3Z,RX,RY,RZ,SX,SY,SZ,
-     .   VG(5),VLY(5),VE(5),BUFMAT(*),
-     .   S11,S22,S33,S4,S5,S6,CRIT,VALUE1,VALUE2
+     .   BUFMAT(*)
       my_real
      .   EVAR(3,MVSIZ)
       INTEGER I, NG, NEL, NPTR, NPTS, NPTT, NLAY, ILAY, 
-     .        IR,IS,IT,IL,MLW, NUVAR,IUS,LENF,PTF,PTM,PTS,NFAIL,
-     .        N,NN,K,K1,K2,JTURB,MT,IMID,IALEL,IPID,ISH3N,NNI,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN9,NF,BUF,NVARF,
-     .        OFFSET,IHBE,NPTM,NPG, MPT,IPT,IADD,IADR,IPMAT,IFAILT,
-     .        IIGEO,IADI,ISUBSTACK,ITHK,NERCVOIS(*),NESDVOIS(*),
-     .        LERCVOIS(*),LESDVOIS(*),ID_PLY,NB_PLYOFF,IOK,IADBUF,NUPARAM,
-     .        IMAT,IVISC,IPOS,ITRIMAT
+     .        IR,IS,IT,MLW, NUVAR,
+     .        JTURB,
+     .        ISUBSTACK,NERCVOIS(*),NESDVOIS(*),
+     .        LERCVOIS(*),LESDVOIS(*),
+     .        IVISC
       INTEGER 
-     .        PTE(4),PTP(4),PTMAT(4),PTVAR(4),NPT_ALL,IPLY,
-     .        ID_ELEM_TMP(MVSIZ),NIX,IOK_PART(MVSIZ),JJ(6),NPGT,IUVAR,
+     .        IOK_PART(MVSIZ),JJ(6),IUVAR,
      .        IS_WRITTEN_VALUE(MVSIZ)
  
  
@@ -199,7 +188,14 @@ c
 C--------------------------------------------------
             IF (KEYWORD == 'VECT/VEL') THEN 
 C--------------------------------------------------
-               IF (MLW == 151) THEN
+               IF (MLW == 151 .AND. N2D == 2) THEN
+                  DO I = 1, NEL
+                     EVAR(1,I) = ZERO
+                     EVAR(2,I) = MULTI_FVM%VEL(2, I + NFT)
+                     EVAR(3,I) = MULTI_FVM%VEL(3, I + NFT)
+                     IS_WRITTEN_VECTOR(I) = 1
+                  ENDDO
+               ELSE IF (MLW == 151) THEN
                   DO I = 1, NEL
                      EVAR(1,I) = MULTI_FVM%VEL(1, I + NFT)
                      EVAR(2,I) = MULTI_FVM%VEL(2, I + NFT)
@@ -218,7 +214,9 @@ C--------------------------------------------------
                ENDIF
                IF (JCVT == 0 .OR. ISORTH /= 0) THEN
 C                OUTPUT TENSOR STORED IN GLOBAL SYSTEM TO BE TRANSFERRED IN THE ELEMENT LOCAL ONE
-                 CALL QROTA_VECT(X,IXQ(1,NFT+1),JCVT,EVAR,GBUF%GAMA,NEL)
+                 IF (MLW /= 151 .OR. N2D /= 2) THEN
+                    CALL QROTA_VECT(X,IXQ(1,NFT+1),JCVT,EVAR,GBUF%GAMA,NEL)
+                 END IF
                ENDIF
 C--------------------------------------------------
             ELSEIF (KEYWORD == 'VECT/ACC') THEN

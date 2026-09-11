@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,54 +15,71 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    get_mpi_operator_mod   ../engine/source/mpi/get_mpi_operator.F90
 !||--- called by ------------------------------------------------------
 !||    spmd_allreduce_mod     ../engine/source/mpi/spmd_allreduce.F90
 !||    spmd_iallreduce_mod    ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_ireduce_mod       ../engine/source/mpi/generic/spmd_ireduce.F90
 !||    spmd_mod               ../engine/source/mpi/spmd_mod.F90
+!||    spmd_reduce_mod        ../engine/source/mpi/generic/spmd_reduce.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_operator_mod      ../engine/source/mpi/generic/spmd_operator.F90
 !||====================================================================
       module get_mpi_operator_mod
-        implicit none
-        integer, parameter :: SPMD_MAX = 1
-        integer, parameter :: SPMD_MIN = 2
-        integer, parameter :: SPMD_SUM = 3
-        integer, parameter :: SPMD_PROD = 4
-        integer, parameter :: TAG_BARRIER = -1
-        integer, parameter :: TAG_REDUCE = -5
-        integer, parameter :: TAG_ALLREDUCE = -6
-        integer, parameter :: TAG_IALLREDUCE = -7
-
-
+        use spmd_operator_mod, only: SPMD_MAX, SPMD_MIN, SPMD_SUM, SPMD_PROD
       contains
 !! \brief Get the MPI operator for a given SPMD operator
 !||====================================================================
-!||    get_mpi_operator          ../engine/source/mpi/get_mpi_operator.F90
+!||    get_mpi_operator            ../engine/source/mpi/get_mpi_operator.F90
 !||--- called by ------------------------------------------------------
-!||    spmd_allreduce_double     ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_allreduce_doubles    ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_allreduce_int        ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_allreduce_ints       ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_allreduce_real       ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_allreduce_reals      ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_iallreduce_double    ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_doubles   ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_int       ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_ints      ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_mod       ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_real      ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_iallreduce_reals     ../engine/source/mpi/spmd_iallreduce.F90
-!||    spmd_reduce_double        ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_reduce_doubles       ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_reduce_int           ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_reduce_ints          ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_reduce_real          ../engine/source/mpi/spmd_allreduce.F90
-!||    spmd_reduce_reals         ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_double       ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_doubles      ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_doubles2d    ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_int          ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_ints         ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_ints2d       ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_mod          ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_real         ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_reals        ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_allreduce_reals2d      ../engine/source/mpi/spmd_allreduce.F90
+!||    spmd_iallreduce_double      ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_doubles     ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_doubles2d   ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_int         ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_ints        ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_ints2d      ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_mod         ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_real        ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_reals       ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_iallreduce_reals2d     ../engine/source/mpi/spmd_iallreduce.F90
+!||    spmd_ireduce_double         ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_doubles        ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_doubles2d      ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_int            ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_ints           ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_ints2d         ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_mod            ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_real           ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_reals          ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_ireduce_reals2d        ../engine/source/mpi/generic/spmd_ireduce.F90
+!||    spmd_mod                    ../engine/source/mpi/spmd_mod.F90
+!||    spmd_reduce_double          ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_doubles         ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_doubles2d       ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_int             ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_ints            ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_ints2d          ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_mod             ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_real            ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_reals           ../engine/source/mpi/generic/spmd_reduce.F90
+!||    spmd_reduce_reals2d         ../engine/source/mpi/generic/spmd_reduce.F90
 !||====================================================================
         function get_mpi_operator(spmd_op) result(mpi_operator)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -95,8 +112,7 @@
             mpi_operator = MPI_OP_NULL
           end select
 #else
-          mpi_operator = spmd_op
+          mpi_operator = 0
 #endif
         end function get_mpi_operator
-      end module get_mpi_operator_mod
-
+      end module

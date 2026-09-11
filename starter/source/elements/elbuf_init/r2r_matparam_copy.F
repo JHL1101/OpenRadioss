@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_matparam_copy    ../starter/source/elements/elbuf_init/r2r_matparam_copy.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE MATPARAM_DEF_MOD
       USE MULTIMAT_PARAM_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -62,7 +64,7 @@ c
         MATPARAM_TAB(I)%NFUNC              = MATPARAM_INI(I)%NFUNC
         MATPARAM_TAB(I)%NTABLE             = MATPARAM_INI(I)%NTABLE
         IF (MATPARAM_TAB(I)%NTABLE > 0) THEN
-          ALLOCATE(MATPARAM_TAB(I)%TABLE(MATPARAM_TAB(I)%NTABLE))
+          allocate(MATPARAM_TAB(I)%TABLE(MATPARAM_TAB(I)%NTABLE))
           DO J=1,MATPARAM_TAB(I)%NTABLE
             MATPARAM_TAB(I)%TABLE(J) = MATPARAM_INI(I)%TABLE(J)
           END DO
@@ -93,7 +95,7 @@ c
         MATPARAM_TAB(I)%VISC%NFUNC         = MATPARAM_INI(I)%VISC%NFUNC
         MATPARAM_TAB(I)%VISC%NTABLE        = MATPARAM_INI(I)%VISC%NTABLE
         IF (MATPARAM_TAB(I)%VISC%NTABLE > 0) THEN
-          ALLOCATE(MATPARAM_TAB(I)%VISC%TABLE(MATPARAM_TAB(I)%VISC%NTABLE))
+          allocate(MATPARAM_TAB(I)%VISC%TABLE(MATPARAM_TAB(I)%VISC%NTABLE))
           DO J=1,MATPARAM_TAB(I)%VISC%NTABLE
             MATPARAM_TAB(I)%VISC%TABLE(J) = MATPARAM_INI(I)%VISC%TABLE(J)
           END DO
@@ -118,17 +120,17 @@ c
 c
         MATPARAM_TAB(I)%COMPATIBILITY_EOS  = MATPARAM_INI(I)%COMPATIBILITY_EOS
 c
-        ALLOCATE(MATPARAM_TAB(I)%UPARAM(NUPARAM))
+        call my_alloc(MATPARAM_TAB(I)%UPARAM, NUPARAM, "MATPARAM_TAB(I)%UPARAM")
         IF (NUPARAM > 0) THEN
           MATPARAM_TAB(I)%UPARAM(1:NUPARAM) = MATPARAM_INI(I)%UPARAM(1:NUPARAM)
         END IF
 !
-        ALLOCATE(MATPARAM_TAB(I)%IPARAM(NIPARAM))
+        call my_alloc(MATPARAM_TAB(I)%IPARAM, NIPARAM, "MATPARAM_TAB(I)%IPARAM")
         IF (NIPARAM > 0) THEN
           MATPARAM_TAB(I)%IPARAM(1:NIPARAM) = MATPARAM_INI(I)%IPARAM(1:NIPARAM)
         END IF
 
-        ALLOCATE(MATPARAM_TAB(I)%FAIL(NFAIL))
+        allocate(MATPARAM_TAB(I)%FAIL(NFAIL))
         IF (NFAIL > 0) THEN
           DO IFAIL=1,NFAIL
             MATPARAM_TAB(I)%FAIL(IFAIL)%KEYWORD = MATPARAM_INI(I)%FAIL(IFAIL)%KEYWORD
@@ -137,29 +139,34 @@ c
             MATPARAM_TAB(I)%FAIL(IFAIL)%NUPARAM = MATPARAM_INI(I)%FAIL(IFAIL)%NUPARAM
             MATPARAM_TAB(I)%FAIL(IFAIL)%NIPARAM = MATPARAM_INI(I)%FAIL(IFAIL)%NIPARAM
             MATPARAM_TAB(I)%FAIL(IFAIL)%NUVAR   = MATPARAM_INI(I)%FAIL(IFAIL)%NUVAR
+            MATPARAM_TAB(I)%FAIL(IFAIL)%NVARTMP = MATPARAM_INI(I)%FAIL(IFAIL)%NVARTMP
             MATPARAM_TAB(I)%FAIL(IFAIL)%NFUNC   = MATPARAM_INI(I)%FAIL(IFAIL)%NFUNC
             MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE  = MATPARAM_INI(I)%FAIL(IFAIL)%NTABLE
             MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE4D= MATPARAM_INI(I)%FAIL(IFAIL)%NTABLE4D
             MATPARAM_TAB(I)%FAIL(IFAIL)%NMOD    = MATPARAM_INI(I)%FAIL(IFAIL)%NMOD
             MATPARAM_TAB(I)%FAIL(IFAIL)%FAIL_IP = MATPARAM_INI(I)%FAIL(IFAIL)%FAIL_IP
             MATPARAM_TAB(I)%FAIL(IFAIL)%PTHK    = MATPARAM_INI(I)%FAIL(IFAIL)%PTHK
-            ALLOCATE(MATPARAM_TAB(I)%FAIL(IFAIL)%UPARAM(MATPARAM_TAB(I)%FAIL(IFAIL)%NUPARAM))
+      call my_alloc(MATPARAM_TAB(I)%FAIL(IFAIL)%UPARAM, MATPARAM_TAB(I)%FAIL(IFAIL)%NUPARAM,
+     &"MATPARAM_TAB(I)%FAIL(IFAIL)%UPARAM")
             DO J=1,MATPARAM_TAB(I)%FAIL(IFAIL)%NUPARAM
               MATPARAM_TAB(I)%FAIL(IFAIL)%UPARAM(J) = MATPARAM_INI(I)%FAIL(IFAIL)%UPARAM(J)
             END DO
-            ALLOCATE(MATPARAM_TAB(I)%FAIL(IFAIL)%IPARAM(MATPARAM_TAB(I)%FAIL(IFAIL)%NIPARAM))
+      call my_alloc(MATPARAM_TAB(I)%FAIL(IFAIL)%IPARAM, MATPARAM_TAB(I)%FAIL(IFAIL)%NIPARAM,
+     &"MATPARAM_TAB(I)%FAIL(IFAIL)%IPARAM")
             DO J=1,MATPARAM_TAB(I)%FAIL(IFAIL)%NIPARAM
               MATPARAM_TAB(I)%FAIL(IFAIL)%IPARAM(J) = MATPARAM_INI(I)%FAIL(IFAIL)%IPARAM(J)
             END DO
-            ALLOCATE(MATPARAM_TAB(I)%FAIL(IFAIL)%IFUNC(MATPARAM_TAB(I)%FAIL(IFAIL)%NFUNC))
+      call my_alloc(MATPARAM_TAB(I)%FAIL(IFAIL)%IFUNC, MATPARAM_TAB(I)%FAIL(IFAIL)%NFUNC,
+     &"MATPARAM_TAB(I)%FAIL(IFAIL)%IFUNC")
             DO J=1,MATPARAM_TAB(I)%FAIL(IFAIL)%NFUNC
               MATPARAM_TAB(I)%FAIL(IFAIL)%IFUNC(J) = MATPARAM_INI(I)%FAIL(IFAIL)%IFUNC(J)
             END DO
-            ALLOCATE(MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE(MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE))
+      call my_alloc(MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE, MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE,
+     &"MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE")
             DO J=1,MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE
               MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE(J) = MATPARAM_INI(I)%FAIL(IFAIL)%TABLE(J)
             END DO
-            ALLOCATE(MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE4D(MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE4D))
+            allocate(MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE4D(MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE4D))
             DO J=1,MATPARAM_TAB(I)%FAIL(IFAIL)%NTABLE4D
               MATPARAM_TAB(I)%FAIL(IFAIL)%TABLE4D(J) = MATPARAM_INI(I)%FAIL(IFAIL)%TABLE4D(J)
             END DO
@@ -170,8 +177,8 @@ c
           CALL MATPARAM_INI(I)%EOS%COPYTO(MATPARAM_TAB(I)%EOS)
         ENDIF
 
-        ALLOCATE(MATPARAM_TAB(I)%MULTIMAT%MID(NBMAT))
-        ALLOCATE(MATPARAM_TAB(I)%MULTIMAT%VFRAC(NBMAT))
+        call my_alloc(MATPARAM_TAB(I)%MULTIMAT%MID, NBMAT, "MATPARAM_TAB(I)%MULTIMAT%MID")
+        call my_alloc(MATPARAM_TAB(I)%MULTIMAT%VFRAC, NBMAT, "MATPARAM_TAB(I)%MULTIMAT%VFRAC")
         IF (NBMAT > 0) THEN
           MATPARAM_TAB(I)%MULTIMAT%NB  = MATPARAM_INI(I)%MULTIMAT%NB
           MATPARAM_TAB(I)%MULTIMAT%OLD_DATA_FORMAT  = MATPARAM_INI(I)%MULTIMAT%OLD_DATA_FORMAT

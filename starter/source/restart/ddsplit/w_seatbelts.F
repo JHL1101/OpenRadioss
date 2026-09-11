@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 
 !||====================================================================
@@ -58,7 +59,7 @@ C-----------------------------------------------
 C
       DO I = 1, NSLIPRING
 C
-        IF (NLOCAL(SLIPRING(I)%FRAM(1)%NODE(2),P)==1) THEN
+        IF (SLIPRING(I)%PROC==P) THEN
 C
           CALL WRITE_I_C(SLIPRING(I)%ID, 1)
           CALL WRITE_I_C(SLIPRING(I)%IDG, 1)
@@ -121,7 +122,7 @@ C
 C
       DO I = 1, NRETRACTOR
 C
-        IF (NLOCAL(RETRACTOR(I)%NODE(2),P)==1) THEN
+        IF (RETRACTOR(I)%PROC==P) THEN
           CALL WRITE_I_C(RETRACTOR(I)%ID, 1)
           CALL WRITE_I_C(RETRACTOR(I)%IDG, 1)
           CALL WRITE_I_C(RETRACTOR(I)%UPDATE, 1)
@@ -234,8 +235,9 @@ C
 C
       IF (N_ANCHOR_REMOTE_SEND_L > 0) THEN
         CALL WRITE_I_C(ANCHOR_REMOTE_SEND_L%ADD_PROC, NSPMD+1)
+        CALL WRITE_I_C(ANCHOR_REMOTE_SEND_L%BUF_INDEX, N_ANCHOR_REMOTE_SEND_L)
         CALL WRITE_I_C(ANCHOR_REMOTE_SEND_L%NODE, N_ANCHOR_REMOTE_SEND_L)
-        LEN_IA = LEN_IA + NSPMD + 1 + N_ANCHOR_REMOTE_SEND_L     
+        LEN_IA = LEN_IA + NSPMD + 1 + 2*N_ANCHOR_REMOTE_SEND_L     
       ENDIF
 C
       IF (P ==1) THEN

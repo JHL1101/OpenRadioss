@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    prepare_split_i25e2e   ../starter/source/spmd/prepare_split_i25e2e.F
 !||--- called by ------------------------------------------------------
@@ -32,7 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i25_fie_mod            ../starter/share/modules1/i25_fie_mod.F
 !||    message_mod            ../starter/share/message_module/message_mod.F
 !||====================================================================
-      SUBROUTINE PREPARE_SPLIT_I25E2E(NSPMD, INTBUF_TAB , IPARI, INTERCEP)
+      SUBROUTINE PREPARE_SPLIT_I25E2E(NSPMD, INTBUF_TAB , IPARI, INTERCEP,CEP,SCEP)
 C-----------------------------------------------
 C   M o d u l e s
 C----------------------------------------------- 
@@ -40,6 +41,7 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD 
       USE I25_FIE_MOD 
       USE FRONT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -53,18 +55,18 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER,             INTENT(IN) ::    NSPMD
+      INTEGER,             INTENT(IN) ::    NSPMD,SCEP
       INTEGER,             INTENT(IN) ::    IPARI(NPARI,*)
+      INTEGER, DIMENSION(SCEP), INTENT(IN) :: CEP !< connectivity element --> processor
       TYPE(INTERSURFP),    INTENT(IN) ::    INTERCEP(3,NINTER)
       TYPE(INTBUF_STRUCT_),INTENT(INOUT) :: INTBUF_TAB(*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER :: IEDGE
-      INTEGER :: ISPMD
       INTEGER :: NEDGE
       INTEGER :: NIN
-      INTEGER :: I,J,K, NRTM, NTY, CS,CM
+      INTEGER :: I,J,K, NRTM, NTY, CM
       INTEGER :: SH_EDGE,SOL_EDGE
       INTEGER, DIMENSION(:), ALLOCATABLE :: CEP_EDGE,CEPM
       INTEGER, DIMENSION(:), ALLOCATABLE :: LOCAL_ID_EDG
@@ -77,8 +79,8 @@ C C++ interface
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: secondaryRemoteCount
       INTEGER :: LOCAL_CAND_COUNT(NSPMD)
 C-----------------------------------------------
-        ALLOCATE(I25_SPLIT_CAND(NINTER,NSPMD))
-        ALLOCATE(I25_FIE(NINTER,NSPMD))
+        allocate(I25_SPLIT_CAND(NINTER, NSPMD))
+        allocate(I25_FIE(NINTER, NSPMD))
 
         DO  NIN = 1,NINTER
           NTY=IPARI(7,NIN)
@@ -90,26 +92,27 @@ C         WRITE(6,*) NIN,NTY,IEDGE
           NEDGE = IPARI(68,NIN)
           NRTM = IPARI(4,NIN) 
           ALLOCATE(CEP_EDGE(NEDGE)) !saved also temporarily in LEDGE
-          ALLOCATE(LOCAL_ID_EDG(NEDGE))
-          ALLOCATE(LOCAL_ID_SEG(NRTM))
+          call my_alloc(LOCAL_ID_EDG, NEDGE, "LOCAL_ID_EDG")
+          call my_alloc(LOCAL_ID_SEG, NRTM, "LOCAL_ID_SEG")
           CALL LOCAL_EDGE_NUMBERING(NEDGE,NRTM,NSPMD,
      .                              INTBUF_TAB(NIN)%LEDGE,
      .                              INTERCEP(1,NIN)%P, ! = CEP_SEG
      .                              LOCAL_ID_SEG,
      .                              CEP_EDGE,
-     .                              LOCAL_ID_EDG)
+     .                              LOCAL_ID_EDG,
+     .                              CEP,SCEP)
         
          nbCandE2E = INTBUF_TAB(NIN)%I_STOK_E(1)
          nbCandE2S = INTBUF_TAB(NIN)%I_STOK_E(2)
 
 
          nbCand = nbCandE2E + nbCandE2S 
-         ALLOCATE(localIdx(nbCand))
-         ALLOCATE(secondaryRemoteCount(NSPMD,NSPMD))
-         ALLOCATE(CANDM(nbCand))
-         ALLOCATE(CANDS(nbCand))
-         ALLOCATE(CEPM(NEDGE+NRTM))
-         ALLOCATE(LOCAL_ID(NEDGE+NRTM))
+         call my_alloc(localIdx, nbCand, "localIdx")
+         call my_alloc(secondaryRemoteCount, NSPMD, NSPMD, "secondaryRemoteCount")
+         call my_alloc(CANDM, nbCand, "CANDM")
+         call my_alloc(CANDS, nbCand, "CANDS")
+         call my_alloc(CEPM, NEDGE+NRTM, "CEPM")
+         call my_alloc(LOCAL_ID, NEDGE+NRTM, "LOCAL_ID")
          LOCAL_ID(1:NEDGE) = LOCAL_ID_EDG(1:NEDGE)
          LOCAL_ID(NEDGE+1:NEDGE+NRTM) = LOCAL_ID_SEG(1:NRTM)
 
@@ -119,7 +122,7 @@ C         WRITE(6,*) NIN,NTY,IEDGE
          CANDM(nbCandE2E+1:nbCand) = NEDGE + INTBUF_TAB(NIN)%CANDM_E2S(1:nbCandE2S) 
          CANDS(nbCandE2E+1:nbCand) = INTBUF_TAB(NIN)%CANDS_E2S(1:nbCandE2S) 
          CEPM(1:NEDGE) = CEP_EDGE(1:NEDGE)
-         CEPM(NEDGE+1:NEDGE+NRTM) = INTERCEP(1,NIN)%P(1:NRTM) - 1
+         IF(NRTM >0) CEPM(NEDGE+1:NEDGE+NRTM) = INTERCEP(1,NIN)%P(1:NRTM) - 1
 
          CALL CPP_COUNT_CANDIDATES(nbCand,
      .     sizeM, !sizeM,
@@ -136,13 +139,13 @@ C         WRITE(6,*) NIN,NTY,IEDGE
 
           DO I = 1,NSPMD
             I25_FIE(NIN,I)%NEDGE_TOT = 0 
-            ALLOCATE(I25_FIE(NIN,I)%NEDGE(NSPMD))
+            call my_alloc(I25_FIE(NIN,I)%NEDGE, NSPMD, "I25_FIE(NIN,I)%NEDGE")
             I25_FIE(NIN,I)%NEDGE(1:NSPMD) = 0
             DO J = 1,NSPMD
               I25_FIE(NIN,I)%NEDGE(J) = I25_FIE(NIN,I)%NEDGE(J) + secondaryRemoteCount(J,I) 
               I25_FIE(NIN,I)%NEDGE_TOT = I25_FIE(NIN,I)%NEDGE_TOT + secondaryRemoteCount(J,I) 
             ENDDO
-            ALLOCATE(I25_FIE(NIN,I)%ID(I25_FIE(NIN,I)%NEDGE_TOT))
+            call my_alloc(I25_FIE(NIN,I)%ID, I25_FIE(NIN,I)%NEDGE_TOT, "I25_FIE(NIN,I)%ID")
             I25_FIE(NIN,I)%ID(1:I25_FIE(NIN,I)%NEDGE_TOT) = -666
 C           WRITE(6,*) I,"NEDGE_TOT=",I25_FIE(NIN,I)%NEDGE_TOT
           ENDDO
@@ -155,9 +158,9 @@ C         E2E
           DO I = 1, NSPMD 
              I25_SPLIT_CAND(NIN,I)%NB_CAND_E2E = LOCAL_CAND_COUNT(I)
 C            WRITE(6,*) "SPLIT_CAND size",I-1,LOCAL_CAND_COUNT(I)
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%CANDM_E2E(LOCAL_CAND_COUNT(I)))
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%CANDS_E2E(LOCAL_CAND_COUNT(I)))
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%ID_E2E(LOCAL_CAND_COUNT(I)))
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%CANDM_E2E, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%CANDM_E2E")
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%CANDS_E2E, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%CANDS_E2E")
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%ID_E2E, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%ID_E2E")
              LOCAL_CAND_COUNT(I) = 0
           ENDDO
           DO I = 1, nbCandE2E
@@ -184,9 +187,9 @@ C         E2S
           ENDDO
           DO I = 1, NSPMD 
              I25_SPLIT_CAND(NIN,I)%NB_CAND_E2S = LOCAL_CAND_COUNT(I)
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%CANDM_E2S(LOCAL_CAND_COUNT(I)))
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%CANDS_E2S(LOCAL_CAND_COUNT(I)))
-             ALLOCATE(I25_SPLIT_CAND(NIN,I)%ID_E2S(LOCAL_CAND_COUNT(I)))
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%CANDM_E2S, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%CANDM_E2S")
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%CANDS_E2S, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%CANDS_E2S")
+             call my_alloc(I25_SPLIT_CAND(NIN,I)%ID_E2S, LOCAL_CAND_COUNT(I), "I25_SPLIT_CAND(NIN,I)%ID_E2S")
              LOCAL_CAND_COUNT(I) = 0
           ENDDO
           DO I = 1, nbCandE2S
@@ -213,15 +216,15 @@ C            ENDDO
 C         ENDDO
 CC ==========
            
-          DEALLOCATE(CANDM)
-          DEALLOCATE(CANDS)
-          DEALLOCATE(localIdx)
-          DEALLOCATE(secondaryRemoteCount)
-          DEALLOCATE(CEPM)
+          CALL MY_DEALLOC(CANDM)
+          CALL MY_DEALLOC(CANDS)
+          CALL MY_DEALLOC(localIdx)
+          CALL MY_DEALLOC(secondaryRemoteCount)
+          CALL MY_DEALLOC(CEPM)
           DEALLOCATE(CEP_EDGE)
-          DEALLOCATE(LOCAL_ID_SEG)
-          DEALLOCATE(LOCAL_ID_EDG)
-          DEALLOCATE(LOCAL_ID)
+          CALL MY_DEALLOC(LOCAL_ID_SEG)
+          CALL MY_DEALLOC(LOCAL_ID_EDG)
+          CALL MY_DEALLOC(LOCAL_ID)
 
         ENDDO
       END SUBROUTINE
@@ -236,7 +239,8 @@ CC ==========
      .                                 CEP_SEG,
      .                                 LOCAL_ID_SEG,
      .                                 CEP_EDGE,
-     .                                 LOCAL_ID_EDG)
+     .                                 LOCAL_ID_EDG,
+     .                                 CEP,SCEP)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -254,6 +258,8 @@ C-----------------------------------------------
       INTEGER, INTENT(INOUT) ::  LOCAL_ID_SEG(NRTM)
       INTEGER, INTENT(INOUT) ::  CEP_EDGE(NEDGE)
       INTEGER, INTENT(INOUT) ::  LOCAL_ID_EDG(NEDGE)
+      INTEGER, INTENT(IN) ::  SCEP
+      INTEGER, DIMENSION(SCEP), INTENT(IN) :: CEP !< connectivity element --> processor
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -264,7 +270,7 @@ C-----------------------------------------------
       INTEGER :: NB_BOUNDARY_EDGES_REMOTE(NSPMD) ! boundary edges treated by the other domain 
       INTEGER :: EDGE_LOCAL(NSPMD)
       INTEGER :: ISPMD
-      INTEGER :: I,E1,E2,K1,K2,K
+      INTEGER :: I,E1,E2,K
 C-----------------------------------------------
       NRTM_LOCAL(1:NSPMD) = 0
       EDGE_LOCAL(1:NSPMD) = 0
@@ -278,7 +284,7 @@ C FREE EDGES
       DO I=1, NEDGE
         E1=LEDGE(1,I)
         E2=LEDGE(3,I)
-        IF(E2 == 0) THEN
+        IF(E2 == 0.AND.IABS(LEDGE(7,I))/=3) THEN
           ISPMD = CEP_SEG(E1)
           NB_FREE_EDGES(ISPMD) = NB_FREE_EDGES(ISPMD) + 1
           EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) + 1
@@ -292,37 +298,54 @@ C FREE EDGES
 
 C INTERNAL EDGES 
       DO I=1, NEDGE
-        E1=LEDGE(1,I)
-        E2=LEDGE(3,I)
-        ISPMD = CEP_SEG(E1)
-        IF(E2 > 0 ) THEN ! edge not boundary
-        IF(ISPMD /= CEP_SEG(E2)) CYCLE ! edge not internal
-          NB_INTERNAL_EDGES(ISPMD) = NB_INTERNAL_EDGES(ISPMD) + 1
-          EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) + 1 
-          CEP_EDGE(I) = ISPMD - 1
-          LOCAL_ID_EDG(I) = EDGE_LOCAL(ISPMD)
-          ASSERT(LEDGE(9,I) == 0)
-          LEDGE(9,I) = ISPMD - 1
-          LEDGE(10,I) = LOCAL_ID_EDG(I)
-        END IF
+        IF(IABS(LEDGE(7,I))/=3) THEN
+          E1=LEDGE(1,I)
+          E2=LEDGE(3,I)
+          ISPMD = CEP_SEG(E1)
+          IF(E2 > 0 ) THEN ! edge not boundary
+          IF(ISPMD /= CEP_SEG(E2)) CYCLE ! edge not internal
+            NB_INTERNAL_EDGES(ISPMD) = NB_INTERNAL_EDGES(ISPMD) + 1
+            EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) + 1 
+            CEP_EDGE(I) = ISPMD - 1
+            LOCAL_ID_EDG(I) = EDGE_LOCAL(ISPMD)
+            ASSERT(LEDGE(9,I) == 0)
+            LEDGE(9,I) = ISPMD - 1
+            LEDGE(10,I) = LOCAL_ID_EDG(I)
+          END IF
+        ELSE
+          E1=LEDGE(15,I)
+           IF(E1 /= 0) THEN
+              ISPMD = CEP(E1) + 1
+             NB_INTERNAL_EDGES(ISPMD) = NB_INTERNAL_EDGES(ISPMD) + 1
+              EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) + 1
+              CEP_EDGE(I) = ISPMD - 1
+              LOCAL_ID_EDG(I) = EDGE_LOCAL(ISPMD)
+              ASSERT(LEDGE(9,I) == 0)
+              LEDGE(9,I) = ISPMD - 1
+              LEDGE(10,I) = LOCAL_ID_EDG(I)
+           END IF
+        ENDIF
       ENDDO
 
 C BOUNDARY EDGE LOCAL
       DO I=1, NEDGE
-        E1=LEDGE(1,I)
-        E2=LEDGE(3,I)
-        ISPMD = CEP_SEG(E1)
-        IF(E2 > 0 ) THEN ! edge not boundary
-        IF(ISPMD == CEP_SEG(E2)) CYCLE ! edge internal
-          NB_BOUNDARY_EDGES_LOCAL(ISPMD) = NB_BOUNDARY_EDGES_LOCAL(ISPMD) + 1
-          EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) +1 
-          CEP_EDGE(I) = ISPMD - 1
-          LOCAL_ID_EDG(I) = EDGE_LOCAL(ISPMD)
-          ASSERT(LEDGE(9,I) == 0)
-          LEDGE(9,I) = ISPMD - 1
-          LEDGE(10,I) = LOCAL_ID_EDG(I)
-        END IF
+        IF(IABS(LEDGE(7,I))/=3) THEN
+          E1=LEDGE(1,I)
+          E2=LEDGE(3,I)
+          ISPMD = CEP_SEG(E1)
+          IF(E2 > 0 ) THEN ! edge not boundary
+          IF(ISPMD == CEP_SEG(E2)) CYCLE ! edge internal
+            NB_BOUNDARY_EDGES_LOCAL(ISPMD) = NB_BOUNDARY_EDGES_LOCAL(ISPMD) + 1
+            EDGE_LOCAL(ISPMD) = EDGE_LOCAL(ISPMD) +1 
+            CEP_EDGE(I) = ISPMD - 1
+            LOCAL_ID_EDG(I) = EDGE_LOCAL(ISPMD)
+            ASSERT(LEDGE(9,I) == 0)
+            LEDGE(9,I) = ISPMD - 1
+            LEDGE(10,I) = LOCAL_ID_EDG(I)
+          END IF
+        ENDIF
       ENDDO
+
 
 
       DO I = 1,NEDGE

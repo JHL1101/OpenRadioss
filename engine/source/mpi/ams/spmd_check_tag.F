@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_check_tag    ../engine/source/mpi/ams/spmd_check_tag.F
 !||--- called by ------------------------------------------------------
@@ -30,6 +31,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    intbufdef_mod     ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod       ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    restmod           ../engine/share/modules/restart_mod.F
 !||    tri7box           ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -45,6 +48,8 @@ C-----------------------------------------------
 C-------------------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -88,14 +93,14 @@ C-----------------------------------------------
         ! -----------------
         IF(I_STOK>0) THEN
            ! -----------------
-            ALLOCATE( CAND_N_LOC( I_STOK ) , STAT=IERROR)
+            call my_alloc(CAND_N_LOC, I_STOK, "CAND_N_LOC", stat=IERROR)
             IF(IERROR/=0) THEN
                 CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                 CALL ARRET(2)
             ENDIF
             CAND_N_LOC(1:I_STOK) = 0
             ! ---------
-            ALLOCATE( CAND_E_LOC( I_STOK ) , STAT=IERROR)
+            call my_alloc(CAND_E_LOC, I_STOK, "CAND_E_LOC", stat=IERROR)
             IF(IERROR/=0) THEN
                 CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                 CALL ARRET(2)
@@ -103,7 +108,7 @@ C-----------------------------------------------
             CAND_E_LOC(1:I_STOK) = 0 
             ! ---------
             IF((NTY==7.OR.NTY==20).AND.(INACTI==5.OR.INACTI==6.OR.INACTI==7)) THEN
-                ALLOCATE( CAND_P_LOC( I_STOK ) , STAT=IERROR)
+                call my_alloc(CAND_P_LOC, I_STOK, "CAND_P_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
@@ -112,28 +117,28 @@ C-----------------------------------------------
             ENDIF
             ! ---------
             IF((NTY==7.OR.NTY==20).AND.IFQ>0) THEN
-                ALLOCATE( CAND_FX_LOC( I_STOK ) , STAT=IERROR)
+                call my_alloc(CAND_FX_LOC, I_STOK, "CAND_FX_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
                 ENDIF
                 CAND_FX_LOC(1:I_STOK) = 0 
                 ! ---------
-                ALLOCATE( CAND_FY_LOC( I_STOK ) , STAT=IERROR)
+                call my_alloc(CAND_FY_LOC, I_STOK, "CAND_FY_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
                 ENDIF
                 CAND_FY_LOC(1:I_STOK) = 0 
                 ! ---------
-                ALLOCATE( CAND_FZ_LOC( I_STOK ) , STAT=IERROR)
+                call my_alloc(CAND_FZ_LOC, I_STOK, "CAND_FZ_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
                 ENDIF
                 CAND_FZ_LOC(1:I_STOK) = 0
                 ! ---------
-                ALLOCATE( IFPEN_LOC( I_STOK ) , STAT=IERROR)
+                call my_alloc(IFPEN_LOC, I_STOK, "IFPEN_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
@@ -143,7 +148,7 @@ C-----------------------------------------------
             ENDIF 
             ! ---------
             IF(NTY==7.AND.ITIED/=0) THEN
-                ALLOCATE( CAND_F_LOC( 8*I_STOK ) , STAT=IERROR)
+                call my_alloc(CAND_F_LOC, 8*I_STOK, "CAND_F_LOC", stat=IERROR)
                 IF(IERROR/=0) THEN
                         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                         CALL ARRET(2)
@@ -256,20 +261,18 @@ C-----------------------------------------------
      .         INTBUF_TAB%CAND_F(1:8*I_STOK) = CAND_F_LOC(1:8*I_STOK)
             ENDIF
             ENDIF
-            DEALLOCATE( CAND_N_LOC )
-            DEALLOCATE( CAND_E_LOC )
+            call my_dealloc(CAND_N_LOC)
+            call my_dealloc(CAND_E_LOC)
             IF(NTY==24.OR.NTY==25)THEN ! nothing to do 
             ELSE
-              IF((NTY==7.OR.NTY==20).AND.(INACTI==5.OR.INACTI==6.OR.INACTI==7))
-     .          DEALLOCATE( CAND_P_LOC )
+              IF((NTY==7.OR.NTY==20).AND.(INACTI==5.OR.INACTI==6.OR.INACTI==7)) call my_dealloc(CAND_P_LOC)
               IF(IFQ>0) THEN
-               DEALLOCATE( CAND_FX_LOC )
-               DEALLOCATE( CAND_FY_LOC )
-               DEALLOCATE( CAND_FZ_LOC )
-               DEALLOCATE( IFPEN_LOC   )
+               call my_dealloc(CAND_FX_LOC)
+               call my_dealloc(CAND_FY_LOC)
+               call my_dealloc(CAND_FZ_LOC)
+               call my_dealloc(IFPEN_LOC)
               ENDIF
-              IF(NTY==7.AND.ITIED/=0) 
-     .          DEALLOCATE( CAND_F_LOC )
+              IF(NTY==7.AND.ITIED/=0) call my_dealloc(CAND_F_LOC)
             ENDIF
            ! -----------------   
         ENDIF        ! i_sotk > 0

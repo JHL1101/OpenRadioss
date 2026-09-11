@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    genoutp           ../engine/source/output/sty/genoutp.F
 !||--- called by ------------------------------------------------------
@@ -67,6 +68,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod      ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod       ../common_source/modules/elements/element_mod.F90
 !||    inoutfile_mod     ../common_source/modules/inoutfile_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod        ../common_source/modules/output/output_mod.F90
 !||    stack_mod         ../engine/share/modules/stack_mod.F
 !||====================================================================
@@ -92,6 +95,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -149,7 +154,7 @@ C-----------------------------------------------
       INTEGER :: LEN_TMP_NAME
       CHARACTER(len=2148) :: TMP_NAME
 C-----------------------------------------------
-      ALLOCATE(ITABG(LENG))
+      call my_alloc(ITABG, LENG, "ITABG")
       I161=1
       I16A=I161+LNOPT1*NRBODY0
       I16B=I16A+LNOPT1*NACCELM
@@ -291,7 +296,7 @@ C-----------------------------------------------
       IF (NSPMD > 1) THEN
         CALL OUTP_ARSZ_SS(IPARG,DD_IAD,IPM,IXS,SIZP0_SS,SIZLOC_SS,SIZWR_SS)
       ELSE
-        ALLOCATE(SIZLOC_WRITE(2*NSPGROUP+2))
+        call my_alloc(SIZLOC_WRITE, 2*NSPGROUP+2, "SIZLOC_WRITE")
         CALL COUNT_ARSZ_SS(IPARG,DD_IAD,IPM,IXS,SIZLOC_SS,SIZLOC_WRITE)
         SIZP0_SS(:)=SIZLOC_SS(:)
         SIZWR_SS(1:2) = -1
@@ -301,7 +306,7 @@ C-----------------------------------------------
         ENDDO
         SIZWR_SS(1) = SIZWR_SS(1)+6
         SIZWR_SS(2) = SIZWR_SS(2)+6
-        DEALLOCATE(SIZLOC_WRITE)
+        call my_dealloc(SIZLOC_WRITE)
       ENDIF
       IF(OUTP_SS(1) == 1) CALL OUTP_S_S( 1,'OFF       ',
      .   ' Delete flag (1.0:On 0.0:Off)           ' 
@@ -372,7 +377,7 @@ C-----------------------------------------------
           CALL OUTP_ARSZ_CS(IPARG,IXC,IXTG,IGEO,IPM,DD_IAD,
      .                       SIZP0_CS,SIZLOC_CS,SIZWR_CS)
         ELSE
-          ALLOCATE(SIZLOC_WRITE(2*NSPGROUP+2))
+          call my_alloc(SIZLOC_WRITE, 2*NSPGROUP+2, "SIZLOC_WRITE")
           CALL COUNT_ARSZ_CS(IPARG,IXC,IXTG,IGEO,IPM,DD_IAD,
      .                       SIZLOC_CS,SIZLOC_WRITE)
           SIZP0_CS(1:2)=SIZLOC_CS(1:2)+6
@@ -383,7 +388,7 @@ C-----------------------------------------------
           ENDDO
           SIZWR_CS(1) = SIZWR_CS(1)+6
           SIZWR_CS(2) = SIZWR_CS(2)+6
-          DEALLOCATE(SIZLOC_WRITE)
+          call my_dealloc(SIZLOC_WRITE)
         ENDIF
 
       IF (OUTP_CS(1) == 1) CALL OUTP_C_S( 6,'OFF        ',
@@ -516,7 +521,7 @@ C-----------------------------------------------
        IF (NSPMD > 1) THEN
          CALL OUTP_ARSZ_SPS(IPARG,DD_IAD,SIZLOC,SIZP0,SIZW_P0)
        ELSE
-         ALLOCATE(SIZLOC_WRITE(NSPGROUP+1))
+         call my_alloc(SIZLOC_WRITE, NSPGROUP+1, "SIZLOC_WRITE")
          CALL COUNT_ARSZ_SPS(IPARG,DD_IAD,SIZLOC,SIZLOC_WRITE)
          SIZP0 = SIZLOC
          SIZW_P0 = -1
@@ -524,7 +529,7 @@ C-----------------------------------------------
           SIZW_P0 = MAX(SIZW_P0,SIZLOC_WRITE(I))
          ENDDO
          SIZW_P0 = SIZW_P0 + 6    
-         DEALLOCATE(SIZLOC_WRITE)
+         call my_dealloc(SIZLOC_WRITE)
        ENDIF
 
       IF(OUTP_SPS(1) == 1) CALL OUTP_SP_S( 1,'OFF       ',
@@ -592,7 +597,7 @@ C-----------------------------------------------
        ELSE
          SIZP0_ST = -1
          SIZLOC_ST = -1
-         ALLOCATE( SIZLOC_WRITE(3*NSPGROUP+3) )
+         call my_alloc(SIZLOC_WRITE, 3*NSPGROUP+3, "SIZLOC_WRITE")
          CALL COUNT_ARSZ_ST(IPARG,DD_IAD,SIZLOC_ST,SIZLOC_WRITE)
          SIZP0_ST(1:3) = SIZLOC_WRITE(3*NSPGROUP+1:3*NSPGROUP+3)+8
          SIZWR_ST(1:3) = -1
@@ -602,7 +607,7 @@ C-----------------------------------------------
           SIZWR_ST(3) = MAX(SIZWR_ST(3),SIZLOC_WRITE(2*NSPGROUP+I))
          ENDDO
          SIZWR_ST(1:3)= SIZWR_ST(1:3)+8
-         DEALLOCATE( SIZLOC_WRITE )
+         call my_dealloc(SIZLOC_WRITE)
        ENDIF
 
       IF(OUTP_ST(1) == 1) CALL OUTP_S_T( 2,'STRESS    ',
@@ -624,7 +629,7 @@ C-----------------------------------------------
       IF (NSPMD > 1) THEN
         CALL OUTP_ARSZ_CT(IPARG,DD_IAD,SIZLOC_CT,SIZP0_CT,SIZWR_CT,ELBUF_TAB)
       ELSE
-        ALLOCATE(SIZLOC_WRITE(3*NSPGROUP+3))
+        call my_alloc(SIZLOC_WRITE, 3*NSPGROUP+3, "SIZLOC_WRITE")
         CALL COUNT_ARSZ_CT(IPARG,DD_IAD,SIZLOC_CT,SIZLOC_WRITE,ELBUF_TAB)
         SIZP0_CT(1)=SIZLOC_CT(1)
         SIZP0_CT(2:3)=SIZLOC_CT(2:3)
@@ -635,7 +640,7 @@ C-----------------------------------------------
          SIZWR_CT(3) = MAX(SIZWR_CT(3),SIZLOC_WRITE(2*NSPGROUP+I))
         ENDDO
         SIZWR_CT(1) = SIZWR_CT(1) + 6
-        DEALLOCATE(SIZLOC_WRITE)
+        call my_dealloc(SIZLOC_WRITE)
       ENDIF
 
       IF(OUTP_CT(1) == 1) CALL OUTP_C_T( 1,'STRESS_MEM',
@@ -730,7 +735,7 @@ C-----------------------------------------------
        IF (NSPMD > 1) THEN
          CALL OUTP_ARSZ_SPT(IPARG,DD_IAD,SIZLOC,SIZP0,SIZW_P0)
        ELSE
-         ALLOCATE(SIZLOC_WRITE(NSPGROUP+1))
+         call my_alloc(SIZLOC_WRITE, NSPGROUP+1, "SIZLOC_WRITE")
          CALL COUNT_ARSZ_SPT(IPARG,DD_IAD,SIZLOC,SIZLOC_WRITE)
          SIZP0 = SIZLOC
          SIZW_P0 = -1
@@ -738,7 +743,7 @@ C-----------------------------------------------
           SIZW_P0 = MAX(SIZW_P0,SIZLOC_WRITE(I))
          ENDDO 
          SIZW_P0 = SIZW_P0 + 6
-         DEALLOCATE(SIZLOC_WRITE)
+         call my_dealloc(SIZLOC_WRITE)
        ENDIF
 
       IF(OUTP_SPT(1) == 1) CALL OUTP_SP_T('STRESS    ',
@@ -748,14 +753,14 @@ C-----------------------------------------------
        IF (NSPMD > 1) THEN
          CALL OUTP_ARSZ_SPTT(IPARG,DD_IAD,SIZLOC,SIZP0,SIZW_P0)
        ELSE
-         ALLOCATE(SIZLOC_WRITE(NSPGROUP+1))
+         call my_alloc(SIZLOC_WRITE, NSPGROUP+1, "SIZLOC_WRITE")
          CALL COUNT_ARSZ_SPTT(IPARG,DD_IAD,SIZLOC,SIZLOC_WRITE)
          SIZP0 = SIZLOC
          SIZW_P0 = -1
          DO I=1,NSPGROUP
           SIZW_P0 = MAX(SIZW_P0,SIZLOC_WRITE(I))
          ENDDO  
-         DEALLOCATE(SIZLOC_WRITE)
+         call my_dealloc(SIZLOC_WRITE)
        ENDIF
 
       IF(OUTP_SPT(2) == 1) CALL OUTP_SP_TT('STR_FUL    ',
@@ -767,7 +772,7 @@ C-----------------------------------------------
       IF (NSPMD > 1) THEN
         CALL OUTP_ARSZ_RS(IPARG,DD_IAD,SIZLOC,SIZP0,SIZW_P0)
       ELSE
-        ALLOCATE(SIZLOC_WRITE(NSPGROUP+1))
+        call my_alloc(SIZLOC_WRITE, NSPGROUP+1, "SIZLOC_WRITE")
         CALL COUNT_ARSZ_RS(IPARG,DD_IAD,SIZLOC,SIZLOC_WRITE)
         SIZP0 = SIZLOC_WRITE(NSPGROUP+1)
         SIZW_P0 = -1
@@ -775,7 +780,7 @@ C-----------------------------------------------
          SIZW_P0 = MAX(SIZW_P0,SIZLOC_WRITE(I))
         ENDDO  
         SIZW_P0 = SIZW_P0 + 6
-        DEALLOCATE(SIZLOC_WRITE)
+        call my_dealloc(SIZLOC_WRITE)
       ENDIF
 
       IF(OUTP_RS(1) == 1)CALL OUTP_R_S(1,'OFF       ', 
@@ -789,7 +794,7 @@ C-----------------------------------------------
        CALL OUTP_ARSZ_RT(IPARG,IGEO,GEO,IXR,DD_IAD,
      .                   SIZLOC,SIZP0,SIZW_P0)
       ELSE
-        ALLOCATE(SIZLOC_WRITE(NSPGROUP+1))
+        call my_alloc(SIZLOC_WRITE, NSPGROUP+1, "SIZLOC_WRITE")
         CALL COUNT_ARSZ_RT(IPARG,IGEO,GEO,IXR,DD_IAD,
      .                     SIZLOC,SIZLOC_WRITE)
         SIZP0 = SIZLOC
@@ -798,7 +803,7 @@ C-----------------------------------------------
          SIZW_P0 = MAX(SIZW_P0,SIZLOC_WRITE(I))
         ENDDO   
         SIZW_P0 = SIZW_P0 + 6 
-        DEALLOCATE(SIZLOC_WRITE)
+        call my_dealloc(SIZLOC_WRITE)
       ENDIF
 C
       IF(OUTP_RS(2) == 1)CALL OUTP_R_T('FULL    ',

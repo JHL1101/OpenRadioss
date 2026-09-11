@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    asspar4            ../engine/source/assembly/asspar4.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ale_mod            ../common_source/modules/ale/ale_mod.F
 !||    connectivity_mod   ../common_source/modules/connectivity.F90
 !||    glob_therm_mod     ../common_source/modules/mat_elem/glob_therm_mod.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod   ../common_source/modules/nodal_arrays.F90
 !||    plyxfem_mod        ../engine/share/modules/plyxfem_mod.F
 !||====================================================================
@@ -56,6 +59,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -113,9 +118,9 @@ C element
 C-----------------------------------------------
 
         VIND_SIZE=MAX(NODLT-NODFT+1,IVSIZE)
-        ALLOCATE(VIND1(VIND_SIZE))
-        ALLOCATE(VIND2(VIND_SIZE))
-        ALLOCATE(VIND3(VIND_SIZE))
+        call my_alloc(VIND1, VIND_SIZE, "VIND1")
+        call my_alloc(VIND2, VIND_SIZE, "VIND2")
+        call my_alloc(VIND3, VIND_SIZE, "VIND3")
         CHUNK_NODE = int(NUMNOD / (10*NTHREAD))
         if( CHUNK_NODE<2) CHUNK_NODE = int(NUMNOD/NTHREAD)
         CHUNK_NODE = max(1,CHUNK_NODE)
@@ -995,9 +1000,9 @@ C
         CALL MY_BARRIER
 C-----------------------------------------------
 C
-        DEALLOCATE(VIND1)
-        DEALLOCATE(VIND2)
-        DEALLOCATE(VIND3)
+        call my_dealloc(VIND1)
+        call my_dealloc(VIND2)
+        call my_dealloc(VIND3)
 
         RETURN
       END SUBROUTINE ASSPAR4

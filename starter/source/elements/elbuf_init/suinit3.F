@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    suinit3                ../starter/source/elements/elbuf_init/suinit3.F
 !||--- called by ------------------------------------------------------
@@ -324,7 +325,7 @@ c
      4       MAS(1,6) ,MAS(1,7) ,MAS(1,8) ,INN(1,1) ,INN(1,2) ,
      5       INN(1,3) ,INN(1,4) ,INN(1,5) ,INN(1,6) ,INN(1,7) ,
      6       INN(1,8) ,PM       ,MAT      ,GBUF%OFF ,GBUF%EINT,
-     7       PTSOL    ,SIGSP    ,NSIGI    ,NUVAR    )
+     7       PTSOL    ,SIGSP    ,NSIGI    ,NUVAR    ,MAT_PARAM(IMAT(1)))
       ENDIF
 C
       DO J=1,8

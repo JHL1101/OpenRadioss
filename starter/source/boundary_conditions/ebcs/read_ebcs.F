@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_ebcs                     ../starter/source/boundary_conditions/ebcs/read_ebcs.F
 !||--- called by ------------------------------------------------------
@@ -54,7 +55,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    submodel_mod                  ../starter/share/modules1/submodel_mod.F
 !||    table_mod                     ../starter/share/modules1/table_mod.F
 !||====================================================================
-      SUBROUTINE READ_EBCS(IGRSURF,MULTI_FVM,NPC1,LSUBMODEL,EBCS_TAB,N2D)
+      SUBROUTINE READ_EBCS(IGRSURF,MULTI_FVM,NPC1,LSUBMODEL,EBCS_TAB,N2D,INVERS)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -91,6 +92,7 @@ C-----------------------------------------------
       TYPE(SUBMODEL_DATA) LSUBMODEL(NSUBMOD)
       TYPE(T_EBCS_TAB), INTENT(INOUT) :: EBCS_TAB
       INTEGER,INTENT(IN) :: N2D
+      INTEGER,INTENT(IN) :: INVERS
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -215,7 +217,7 @@ C-----------------------------------------------
             allocate (t_ebcs_nrf :: EBCS_TAB%tab(ii)%poly)
             select type (twf => EBCS_TAB%tab(ii)%poly)
             type is (t_ebcs_nrf)
-              CALL HM_READ_EBCS_NRF(IGRSURF, MULTI_FVM, UNITAB, ID, TITR, UID, LSUBMODEL, twf)
+              CALL HM_READ_EBCS_NRF(IGRSURF, MULTI_FVM, UNITAB, ID, TITR, UID, LSUBMODEL, INVERS, twf)
             end select
 
          CASE ('PROPELLANT')

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,24 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    int18_alloc     ../engine/source/interfaces/int18/int18_alloc.F
+!||    int18_alloc      ../engine/source/interfaces/int18/int18_alloc.F
 !||--- called by ------------------------------------------------------
-!||    resol           ../engine/source/engine/resol.F
+!||    resol            ../engine/source/engine/resol.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    array_mod       ../common_source/modules/array_mod.F
-!||    groupdef_mod    ../common_source/modules/groupdef_mod.F
-!||    multi_fvm_mod   ../common_source/modules/ale/multi_fvm_mod.F90
-!||    tri7box         ../engine/share/modules/tri7box.F
+!||    array_mod        ../common_source/modules/array_mod.F
+!||    groupdef_mod     ../common_source/modules/groupdef_mod.F
+!||    multi_fvm_mod    ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
         SUBROUTINE INT18_ALLOC(NUMBER_INTER18,INTER18_LIST,MULTI_FVM,IPARI,XCELL_REMOTE, NSPMD)
 !$COMMENT
@@ -51,6 +55,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 #include      "com04_c.inc"
@@ -98,15 +104,15 @@ C-----------------------------------------------
         !   number & list of interface 18 for MULTI_FVM solve
         MULTI_FVM%NUMBER_INT18 = 0
         IF(MULTI_FVM%IS_INT18_LAW151) MULTI_FVM%NUMBER_INT18 = NUMBER_INTER18
-        ALLOCATE( MULTI_FVM%INT18_LIST(MULTI_FVM%NUMBER_INT18) )
+        call my_alloc(MULTI_FVM%INT18_LIST, MULTI_FVM%NUMBER_INT18, "MULTI_FVM%INT18_LIST")
         !   allocation of X/V/MASS extended to NUMNOD+NUMELS
         !   1:NUMNOD --> classical x/v/mass
         !   NUMNOD+1:NUMNOD+NUMELS --> x/v/mass of phantom nodes (located to the center of 
         !                              the ALE elements)
-        ALLOCATE( MULTI_FVM%X_APPEND(3*MY_SIZE) )
-        ALLOCATE( MULTI_FVM%V_APPEND(3*MY_SIZE) )
-        ALLOCATE( MULTI_FVM%MASS_APPEND(MY_SIZE) )
-        ALLOCATE( MULTI_FVM%KINET_APPEND(MY_SIZE) )
+        call my_alloc(MULTI_FVM%X_APPEND, 3*MY_SIZE, "MULTI_FVM%X_APPEND")
+        call my_alloc(MULTI_FVM%V_APPEND, 3*MY_SIZE, "MULTI_FVM%V_APPEND")
+        call my_alloc(MULTI_FVM%MASS_APPEND, MY_SIZE, "MULTI_FVM%MASS_APPEND")
+        call my_alloc(MULTI_FVM%KINET_APPEND, MY_SIZE, "MULTI_FVM%KINET_APPEND")
         !   allocation of force array : size = NUMELS
         MY_SIZE_2 = MY_SIZE_2 * NTHREAD
         
@@ -118,9 +124,9 @@ C-----------------------------------------------
 
         MULTI_FVM%SIZE_FORCE_INT_1 = 3
         MULTI_FVM%SIZE_FORCE_INT_2 = MY_SIZE_3
-        ALLOCATE( MULTI_FVM%FORCE_INT(3,MY_SIZE_3) )
+        call my_alloc(MULTI_FVM%FORCE_INT, 3, MY_SIZE_3, "MULTI_FVM%FORCE_INT")
         !   allocation of INT18_GLOBAL_LIST : marker for the interface /INT18+LAW151
-        ALLOCATE( MULTI_FVM%INT18_GLOBAL_LIST(NINTER) )
+        call my_alloc(MULTI_FVM%INT18_GLOBAL_LIST, NINTER, "MULTI_FVM%INT18_GLOBAL_LIST")
 
         ! --------------------------
         ! allocation of remote array for parith/on
@@ -128,7 +134,7 @@ C-----------------------------------------------
             ALLOCATE( MULTI_FVM%R_AFI(NINTER) )  
             DO II=1,MULTI_FVM%NUMBER_INT18
                 N = INTER18_LIST(II) ! list of interface 18 + law151
-                IF( ALLOCATED( MULTI_FVM%R_AFI(N)%R_FORCE_INT ) ) DEALLOCATE( MULTI_FVM%R_AFI(N)%R_FORCE_INT )
+                IF( ALLOCATED( MULTI_FVM%R_AFI(N)%R_FORCE_INT ) ) call my_dealloc(MULTI_FVM%R_AFI(N)%R_FORCE_INT)
                 NODFI = 0
                 DO P = 1,NSPMD
                   NODFI = NODFI + NSNFI(N)%P(P)
@@ -142,10 +148,10 @@ C-----------------------------------------------
         ENDIF 
         ! allocation of local array for parith/on
         IF(IPARIT/=0) THEN
-            ALLOCATE( MULTI_FVM%FORCE_INT_PON(3,6,MY_SIZE_2) )
+            call my_alloc(MULTI_FVM%FORCE_INT_PON, 3, 6, MY_SIZE_2, "MULTI_FVM%FORCE_INT_PON")
             MULTI_FVM%SIZE_FORCE_INT_PON = MY_SIZE_2
         ELSE
-            ALLOCATE( MULTI_FVM%FORCE_INT_PON(0,0,0) )
+            call my_alloc(MULTI_FVM%FORCE_INT_PON, 0, 0, 0, "MULTI_FVM%FORCE_INT_PON")
             MULTI_FVM%SIZE_FORCE_INT_PON = 0
         ENDIF
         ! --------------------------

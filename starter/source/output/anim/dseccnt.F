@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dseccnt       ../starter/source/output/anim/dseccnt.F
 !||--- called by ------------------------------------------------------
@@ -48,11 +49,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J, I, K, K1, N, NSEG, N1, N2, N3, N4,NSEGC, NSEGTG,
-     .    ITYP, KK,ITMP, K0, K5, K9
-      my_real
-     .   XX1, YY1, ZZ1, XX2, YY2, ZZ2, XX3, YY3, ZZ3,
-     .   XX4, YY4, ZZ4, D13, XXC, YYC, ZZC
+      INTEGER J, I, K, N, N1, N2, N3, N4,NSEGC, NSEGTG,
+     .    ITYP, KK, K0, K5, K9
       INTEGER NSEGS, POWER2(8),IPACK,
      .         II(8), N5, N6, N7, N8, K3
       DATA POWER2/1,2,4,8,16,32,64,128/

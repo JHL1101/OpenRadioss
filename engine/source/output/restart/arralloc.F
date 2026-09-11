@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    restalloc               ../engine/source/output/restart/arralloc.F
 !||--- called by ------------------------------------------------------
@@ -60,6 +61,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    outmax_mod              ../common_source/modules/outmax_mod.F
 !||    output_mod              ../common_source/modules/output/output_mod.F90
 !||    pinchtype_mod           ../common_source/modules/pinchtype_mod.F
+!||    q1np_restart_mod        ../common_source/modules/q1np_restart_mod.F90
 !||    rbe3_mod                ../common_source/modules/constraints/rbe3_mod.F90
 !||    restmod                 ../engine/share/modules/restart_mod.F
 !||    rwall_mod               ../common_source/modules/constraints/rwall_mod.F90
@@ -109,6 +111,7 @@ C-----------------------------------------------
       use rbe3_mod
       use rwall_mod
       use element_mod , only : nixs,nixq,nixc,nixt,nixr,nixp,nixtg
+      USE Q1NP_RESTART_MOD
       use sfem_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -131,6 +134,8 @@ C-----------------------------------------------
 #include      "task_c.inc"
 #include      "couple_c.inc"
 #include      "warn_c.inc"
+#include      "sysunit.inc"
+#include      "units_c.inc"
 #include      "parit_c.inc"
 #include      "intstamp_c.inc"
 #include      "spmd_c.inc"
@@ -153,11 +158,11 @@ C-----------------------------------------------
       type(glob_therm_) ,intent(inout) :: GLOB_THERM
       type(rbe3_) ,intent(inout) :: RBE3
       type(rwall_),intent(inout) :: RWALL
-      type(sfem_), intent(inout) :: SFEM
+      type(global_sfem_), intent(inout) :: SFEM
 C----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IERR0,IERROR, NBMAT,ISIZ1,ISIZ2
+      INTEGER IERR0, IERROR, NBMAT, ISIZ1, ISIZ2, NKQ1NP_LOC
 C-----------------------------------------------
       IERROR = 0
 C to avoid conflict with IERR in common
@@ -243,6 +248,85 @@ C       ISKEW = e
         ALLOCATE (IXR(SIXR),STAT=IERR)
         IF (IERR/=0) GOTO 1000
         IXR = 0  
+
+C Q1Np element arrays
+        IF (NUMELQ1NP_G > 0) THEN
+          NKQ1NP_LOC = NKQ1NP_G
+          IF (NKQ1NP_LOC <= 0 .AND. SKQ1NP_G > 0) THEN
+            NKQ1NP_LOC = SKQ1NP_G / NUMELQ1NP_G
+          ENDIF
+          IF (NKQ1NP_LOC <= 0) THEN
+            WRITE(ISTDO,'(A)') 
+     .        ' ** ERROR: Invalid NKQ1NP dimension (<=0)'
+            GOTO 1000
+          ENDIF
+          IF (MOD(SKQ1NP_G,NUMELQ1NP_G) /= 0) THEN
+            WRITE(ISTDO,'(A,I10,A,I10)') 
+     .        ' ** WARNING: SKQ1NP_G=', SKQ1NP_G,
+     .        ' not divisible by NUMELQ1NP=', NUMELQ1NP_G
+          ENDIF
+          NKQ1NP_G = NKQ1NP_LOC
+          CALL MY_ALLOC(KQ1NP_TAB, NKQ1NP_G, NUMELQ1NP_G, 'KQ1NP_TAB', STAT=IERR)
+          IF (IERR/=0) GOTO 1000
+          KQ1NP_TAB = 0
+          
+          IF (SIQ1NP_G > 0) THEN
+            CALL MY_ALLOC(IQ1NP_TAB, SIQ1NP_G, 'IQ1NP_TAB', STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            IQ1NP_TAB = 0
+          ELSE
+            CALL MY_ALLOC(IQ1NP_TAB, 0, 'IQ1NP_TAB', STAT=IERR)
+          ENDIF
+          
+          IF (SQ1NPBULK_G > 0) THEN
+            CALL MY_ALLOC(IQ1NP_BULK_TAB, SQ1NPBULK_G, 'IQ1NP_BULK_TAB', STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            IQ1NP_BULK_TAB = 0
+          ELSE
+            CALL MY_ALLOC(IQ1NP_BULK_TAB, 0, 'IQ1NP_BULK_TAB', STAT=IERR)
+          ENDIF
+          
+          IF (SQ1NPWEIGHT_L_G > 0) THEN
+            CALL MY_ALLOC(Q1NP_WTAB, SQ1NPWEIGHT_L_G, 'Q1NP_WTAB', STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            Q1NP_WTAB = ZERO
+          ELSE
+            CALL MY_ALLOC(Q1NP_WTAB, 0, 'Q1NP_WTAB', STAT=IERR)
+          ENDIF
+          
+          IF (SQ1NPKNOT_L_G > 0) THEN
+            CALL MY_ALLOC(Q1NP_KTAB, SQ1NPKNOT_L_G, 'Q1NP_KTAB', STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            Q1NP_KTAB = ZERO
+          ELSE
+            CALL MY_ALLOC(Q1NP_KTAB, 0, 'Q1NP_KTAB', STAT=IERR)
+          ENDIF
+          
+          IF (SQ1NPCTRL_SHARED_G > 0) THEN
+            CALL MY_ALLOC(Q1NP_CPTAB, 3, SQ1NPCTRL_SHARED_G, 'Q1NP_CPTAB', STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            Q1NP_CPTAB = ZERO
+          ELSE
+            CALL MY_ALLOC(Q1NP_CPTAB, 3, 0, 'Q1NP_CPTAB', STAT=IERR)
+          ENDIF
+C         Q1NP inverse connectivity (local solid element -> Q1NP element)
+          IF (NUMELS > 0) THEN
+            ALLOCATE (KQ1NP_TAB_INV(NUMELS),STAT=IERR)
+            IF (IERR/=0) GOTO 1000
+            KQ1NP_TAB_INV = 0
+          ELSE
+            ALLOCATE (KQ1NP_TAB_INV(0),STAT=IERR)
+          ENDIF
+        ELSE
+          NKQ1NP_G = 0
+          CALL MY_ALLOC(KQ1NP_TAB, 0, 0, 'KQ1NP_TAB', STAT=IERR)
+          CALL MY_ALLOC(IQ1NP_TAB, 0, 'IQ1NP_TAB', STAT=IERR)
+          CALL MY_ALLOC(IQ1NP_BULK_TAB, 0, 'IQ1NP_BULK_TAB', STAT=IERR)
+          CALL MY_ALLOC(Q1NP_WTAB, 0, 'Q1NP_WTAB', STAT=IERR)
+          CALL MY_ALLOC(Q1NP_KTAB, 0, 'Q1NP_KTAB', STAT=IERR)
+          CALL MY_ALLOC(Q1NP_CPTAB, 3, 0, 'Q1NP_CPTAB', STAT=IERR)
+          ALLOCATE (KQ1NP_TAB_INV(0),STAT=IERR)
+        ENDIF
 
 C       ALLOCATE (ITAB(SITAB),STAT=IERR)
 C       IF (IERR/=0) GOTO 1000
@@ -452,9 +536,6 @@ C        IF (IERR/=0) GOTO 1000
         IF (IERR/=0) GOTO 1000
         MADCLNOD = 0
 
-        ALLOCATE (MADFAIL(SMADFAIL),STAT=IERR)
-        IF (IERR/=0) GOTO 1000
-        MADFAIL = 0 
         ALLOCATE (MADIDX(SMADIDX),STAT=IERR)
         IF (IERR/=0) GOTO 1000
         MADIDX = 0 
@@ -2086,7 +2167,7 @@ C
         ELSEIF (ALEMUSCL_PAram%I_LAW == 37) THEN   
            NBMAT = 1                  
         ELSE                          
-           NBMAT = 0                  
+           NBMAT = TRIMAT
         ENDIF                         
         CALL SEGVAR%create(NBMAT)
 
@@ -2274,6 +2355,8 @@ C
         IF (N_ANCHOR_REMOTE_SEND > 0) THEN
           ALLOCATE (ANCHOR_REMOTE_SEND%ADD_PROC(NSPMD+1),STAT=IERR)
           IF (IERR/=0) GOTO 1000 
+          ALLOCATE (ANCHOR_REMOTE_SEND%BUF_INDEX(N_ANCHOR_REMOTE_SEND),STAT=IERR)
+          IF (IERR/=0) GOTO 1000
           ALLOCATE (ANCHOR_REMOTE_SEND%NODE(N_ANCHOR_REMOTE_SEND),STAT=IERR)
           IF (IERR/=0) GOTO 1000
         ENDIF
@@ -2541,7 +2624,7 @@ C   I67E
 C   I67F
         WRITE(IOUT,'(I4,A13,I8)') ISPMD+1,' SMADNOD : ',SMADNOD
 C   I67G
-        WRITE(IOUT,'(I4,A13,I8)') ISPMD+1,' SMADFAIL: ',SMADFAIL
+C        WRITE(IOUT,'(I4,A13,I8)') ISPMD+1,' SMADFAIL: ',SMADFAIL
 C   I68
         WRITE(IOUT,'(I4,A13,I8)') ISPMD+1,' SNPBY :   ',SNPBY
 C   I68A

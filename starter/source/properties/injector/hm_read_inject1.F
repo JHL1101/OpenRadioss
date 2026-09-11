@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_inject1                ../starter/source/properties/injector/hm_read_inject1.F
 !||--- called by ------------------------------------------------------
@@ -33,7 +34,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_get_int_array_index         ../starter/source/devtools/hm_reader/hm_get_int_array_index.F
 !||    hm_get_intv                    ../starter/source/devtools/hm_reader/hm_get_intv.F
 !||    nintri                         ../starter/source/system/nintrr.F
-!||    usr2sys                        ../starter/source/system/sysfus.F
 !||--- uses       -----------------------------------------------------
 !||    elbuftag_mod                   ../starter/share/modules1/elbuftag_mod.F
 !||    hm_option_read_mod             ../starter/share/modules1/hm_option_read_mod.F
@@ -77,18 +77,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IG,I,J,K,NGASES,IFLOW,IJET,NOD1,NOD2,NOD3,
-     .        ICURPT
+      INTEGER IG,I,J,NGASES,IFLOW
       INTEGER MAT_ID(2,100),F_IDMASS(2,100),F_IDTEMP(2,100),
-     .        F_IDMF(2,100),MW_MIXTURE,MW_MIXTURE_OK,
-     .        NB_POINTS,NB_POINTS_1,NB_POINTS_OLD,
-     .        IFUN_REF,IFUN_TMP,IFUN_TMP_USR
+     .        F_IDMF(2,100),
+     .        IFUN_TMP,IFUN_TMP_USR
       my_real
      .        FSMASS(100),FSTEMP(100),ASTIME,
      .        MOLFR(100),
      .        CPAI_MIX,CPBI_MIX,CPCI_MIX,CPDI_MIX,CPEI_MIX,CPFI_MIX,
-     .        MF_TOT,MOL_TOT,MASS_TOT,MASS_INI,MOL_INI,MWI_MIXTURE,
-     .        STP_GAMA_MIX,STP_TEMP,MASS_MOL,INIT_MASS,CPI_MIX,
+     .        MOL_TOT,MASS_TOT,MASS_INI,MOL_INI,MWI_MIXTURE,
+     .        STP_GAMA_MIX,STP_TEMP,INIT_MASS,CPI_MIX,
      .        R_IGC1, FAC_TIME, FAC_MASS, FAC_TEMP
       CHARACTER MESS*40
       DATA MESS/'INJECTOR PROPERTY SET                   '/
@@ -97,7 +95,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER NINTRI,USR2SYS
+      INTEGER NINTRI
 C=======================================================================
 C
       IS_ENCRYPTED = .FALSE.

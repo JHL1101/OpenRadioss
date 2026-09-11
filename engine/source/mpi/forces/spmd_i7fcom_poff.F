@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,37 +15,38 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    spmd_i7fcom_poff      ../engine/source/mpi/forces/spmd_i7fcom_poff.F
+!||    spmd_i7fcom_poff     ../engine/source/mpi/forces/spmd_i7fcom_poff.F
 !||--- called by ------------------------------------------------------
-!||    resol                 ../engine/source/engine/resol.F
+!||    resol                ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
-!||    putdpdaanc            ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_fiadd11_poff     ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_fiadd17_poff     ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_fiadd20_poff     ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_fiadd20e_poff    ../engine/source/mpi/interfaces/spmd_i7tool.F
-!||    spmd_fiadd25e_poff    ../engine/source/mpi/interfaces/spmd_fiadd25e_poff.F
-!||    spmd_fiadd_poff       ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    ancmsg               ../engine/source/output/message/message.F
+!||    arret                ../engine/source/system/arret.F
+!||    putdpdaanc           ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_fiadd11_poff    ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_fiadd17_poff    ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_fiadd20_poff    ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_fiadd20e_poff   ../engine/source/mpi/interfaces/spmd_i7tool.F
+!||    spmd_fiadd25e_poff   ../engine/source/mpi/interfaces/spmd_fiadd25e_poff.F
+!||    spmd_fiadd_poff      ../engine/source/mpi/interfaces/spmd_i7tool.F
 !||--- uses       -----------------------------------------------------
-!||    groupdef_mod          ../common_source/modules/groupdef_mod.F
-!||    h3d_mod               ../engine/share/modules/h3d_mod.F
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    interfaces_mod        ../common_source/modules/interfaces/interfaces_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    multi_fvm_mod         ../common_source/modules/ale/multi_fvm_mod.F90
-!||    output_mod            ../common_source/modules/output/output_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25ebox             ../engine/share/modules/tri25ebox.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    groupdef_mod         ../common_source/modules/groupdef_mod.F
+!||    h3d_mod              ../engine/share/modules/h3d_mod.F
+!||    intbufdef_mod        ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    interfaces_mod       ../common_source/modules/interfaces/interfaces_mod.F90
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    multi_fvm_mod        ../common_source/modules/ale/multi_fvm_mod.F90
+!||    output_mod           ../common_source/modules/output/output_mod.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri25ebox            ../engine/share/modules/tri25ebox.F
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_I7FCOM_POFF(OUTPUT,
      1   IPARI   ,A       ,STIFN   ,VISCN   ,
@@ -72,7 +73,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : spmd_irecv, spmd_isend, spmd_wait
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -119,7 +120,6 @@ C-----------------------------------------------
      .        IBC, ISECIN, IBAG, NOINT, NTY, LEN11, N1, N2,LENI,INACTI,
      . IADM,IALLOCS, IALLOCR, LEN17, IGN, IGE, NMES, NME,
      .        LEN7T,LEN20,LEN20T, LEN20E, INC, MSGOFF,LEN11T,
-     . STATUS(MPI_STATUS_SIZE),
      .        DEBUT(NINTER), DEBUTE(NINTER),LL0,
 c parasiz car variable en save
      .        ADDS(PARASIZ+1), ADDR(PARASIZ+1),
@@ -240,9 +240,9 @@ C Partie Edge
             SIZ = L+1-ADD
             IF(SIZ>0)THEN
               MSGTYP = MSGOFF
-              CALL MPI_IRECV(
-     .          BBUFR(ADD),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_RI(P),IERROR    )
+              CALL spmd_irecv(
+     .          BBUFR(ADD),SIZ,IT_SPMD(P),MSGTYP,
+     .          REQ_RI(P))
             ENDIF
           ENDIF
         ENDDO
@@ -1108,9 +1108,9 @@ C fin edge
             SIZ = L+1-ADD
             IF(SIZ>0)THEN
               MSGTYP = MSGOFF
-              CALL MPI_ISEND(
-     .          BBUFS(ADD),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+              CALL spmd_isend(
+     .          BBUFS(ADD),SIZ,IT_SPMD(P),MSGTYP,
+     .          REQ_SI(P))
             ENDIF
           ENDIF
         ENDDO
@@ -1124,7 +1124,7 @@ C Attente IRECV
 C
         DO P = 1, NSPMD
           IF(ADDR(P+1)-ADDR(P)>0) THEN
-            CALL MPI_WAIT(REQ_RI(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_RI(P))
             L = ADDR(P)
             DO II = 1, NBINTC
               NIN = INTLIST(II)
@@ -1277,7 +1277,7 @@ C Attente ISEND
 C
         DO P = 1, NSPMD
           IF(ADDS(P+1)-ADDS(P)>0) THEN
-            CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_SI(P))
           ENDIF
         ENDDO
 C Deallocation S

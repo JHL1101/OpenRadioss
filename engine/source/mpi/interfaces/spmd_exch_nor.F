@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_exch_nor         ../engine/source/mpi/interfaces/spmd_exch_nor.F
+!||    spmd_exch_nor   ../engine/source/mpi/interfaces/spmd_exch_nor.F
 !||--- called by ------------------------------------------------------
-!||    i25normp              ../engine/source/interfaces/int25/i25norm.F
+!||    i25normp        ../engine/source/interfaces/int25/i25norm.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_NOR(
      1   NI25,IAD_FREDG,FR_EDG,NOD_NORMAL,WNOD_NORMAL,SIZE,NADMSR,
@@ -42,7 +43,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -68,7 +69,7 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER MSGTYP,I,NOD,LOC_PROC,IERROR,INDEX, M, E, IS,
+      INTEGER MSGTYP,I,NOD,LOC_PROC,INDEX, M, E, IS,
      .        SIZ,J,L0,L,CC,II, MSGOFF,
      .        STATUS(MPI_STATUS_SIZE)
       REAL*4 RZERO
@@ -115,9 +116,9 @@ c                  print *,'recoit siz',ispmd+1,i,ni25,siz
               MSGTYP = MSGOFF
               NBIRECV = NBIRECV + 1
               IRINDEX(NBIRECV) = I
-              CALL MPI_IRECV(
-     S          RBUF(L0),SIZ,MPI_REAL4,IT_SPMD(I),MSGTYP,
-     G          SPMD_COMM_WORLD,REQ_R(NBIRECV),IERROR)
+              CALL SPMD_IRECV(
+     S          RBUF(L0:L0+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,
+     G          REQ_R(NBIRECV))
             ENDIF
           ENDIF
           IAD_RECV(I+1) = L
@@ -186,9 +187,9 @@ c                  print *,'envoi siz',ispmd+1,i,ni25,siz
               MSGTYP = MSGOFF
               NBISEND = NBISEND + 1
               ISINDEX(NBISEND)=I
-              CALL MPI_ISEND(
-     S        SBUF(L0),SIZ,MPI_REAL4,IT_SPMD(I),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_S(I),IERROR)
+              CALL SPMD_ISEND(
+     S        SBUF(L0:L0+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,
+     G        REQ_S(I))
             ENDIF
           END IF
         ENDDO
@@ -198,7 +199,7 @@ C
 C decompactage
 C
         DO II=1,NBIRECV
-          CALL MPI_WAITANY(NBIRECV,REQ_R,INDEX,STATUS,IERROR)
+          CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX,STATUS)
           I = IRINDEX(INDEX)
           L = IAD_RECV(I)
 
@@ -286,7 +287,7 @@ c                print *,'recoit',ispmd+1,i,j-IAD_FREDG(NI25,I)+1,mseglo(m),mvoi
 C
         DO II=1,NBISEND
           I = ISINDEX(II)
-          CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S(I),STATUS)
         ENDDO
 C
       END IF
@@ -294,4 +295,3 @@ C
 #endif
       RETURN
       END
-

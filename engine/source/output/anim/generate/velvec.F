@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    velvec                 ../engine/source/output/anim/generate/velvec.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_vgath             ../engine/source/mpi/anim/spmd_vgath.F
 !||    write_r_c              ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
 !||    plyxfem_mod            ../engine/share/modules/plyxfem_mod.F
 !||====================================================================
       SUBROUTINE VELVEC(V,V_TEMP,IVOIS,AL,NODCUT,NNWL,NNSRG,
@@ -41,6 +43,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -131,7 +134,7 @@ C
        IF (NSPMD == 1) THEN 
          IF (NFNOD_PXFEM>0) THEN
             IF(IFUNC == 1) THEN    
-              ALLOCATE(PLYVELVEC(3,NFNOD_PXFEM))
+              call my_alloc(PLYVELVEC, 3, NFNOD_PXFEM, "PLYVELVEC")
               DO JJ =1,NPLYPART
                IPLY = INDX(JJ) 
                DO ND=1,PLYNOD(IPLY)%PLYNUMNODS
@@ -143,11 +146,11 @@ C
                  PLYVELVEC(3,EMPL) =  PLY(IPLY)%V(3,N)
                ENDDO  
               ENDDO  
-              CALL WRITE_R_C(PLYVELVEC,3*NFNOD_PXFEM)
-              DEALLOCATE(PLYVELVEC)
+              CALL WRITE_R_C(PLYVELVEC(1,1),3*NFNOD_PXFEM)
+              call my_dealloc(PLYVELVEC)
 C
             ELSEIF(IFUNC == 2)THEN
-              ALLOCATE(PLYVELVEC(3,NFNOD_PXFEM))
+              call my_alloc(PLYVELVEC, 3, NFNOD_PXFEM, "PLYVELVEC")
               DO JJ =1,NPLYPART
                  IPLY = INDX(JJ)              
                  DO ND=1,PLYNOD(IPLY)%PLYNUMNODS
@@ -159,11 +162,11 @@ C
                    PLYVELVEC(3,EMPL) = PLY(IPLY)%U(3,N)
                  ENDDO  
                ENDDO  
-               CALL WRITE_R_C(PLYVELVEC,3*NFNOD_PXFEM)
-               DEALLOCATE(PLYVELVEC)
+               CALL WRITE_R_C(PLYVELVEC(1,1),3*NFNOD_PXFEM)
+               call my_dealloc(PLYVELVEC)
 
             ELSEIF(IFUNC == 3) THEN
-                ALLOCATE(PLYVELVEC(3,NFNOD_PXFEM))
+                call my_alloc(PLYVELVEC, 3, NFNOD_PXFEM, "PLYVELVEC")
                 DO JJ =1,NPLYPART
                   IPLY = INDX(JJ) 
                   DO ND=1,PLYNOD(IPLY)%PLYNUMNODS
@@ -175,8 +178,8 @@ C
                      PLYVELVEC(3,EMPL) = PLY(IPLY)%A(3,N)
                  ENDDO  
                ENDDO 
-               CALL WRITE_R_C(PLYVELVEC,3*NFNOD_PXFEM)
-               DEALLOCATE(PLYVELVEC)
+               CALL WRITE_R_C(PLYVELVEC(1,1),3*NFNOD_PXFEM)
+               call my_dealloc(PLYVELVEC)
             ELSE 
                R4 = ZERO
                DO I=1,NFNOD_PXFEM
@@ -274,9 +277,9 @@ C----------------------------------------------
       my_real, DIMENSION(:,:),ALLOCATABLE :: V
       INTEGER LOC_PROC,PMAIN
 C=======================================================================
-      CALL MY_ALLOC(RWA,3,NSECT)
-      CALL MY_ALLOC(RWAL,3,NRWALL)
-      CALL MY_ALLOC(V,3,NUMNOD)
+      call my_alloc(RWA, 3, NSECT, "RWA")
+      call my_alloc(RWAL, 3, NRWALL, "RWAL")
+      call my_alloc(V, 3, NUMNOD, "V")
       LOC_PROC = ISPMD + 1
 C
       DO I=1,NUMNOD
@@ -469,9 +472,9 @@ c----------------------------
       ENDIF
  300  CONTINUE
 C-----------
-      DEALLOCATE(RWA)
-      DEALLOCATE(RWAL)
-      DEALLOCATE(V)
+      call my_dealloc(RWA)
+      call my_dealloc(RWAL)
+      call my_dealloc(V)
       RETURN
       END
 
@@ -519,7 +522,7 @@ C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
       REAL, DIMENSION(:,:), ALLOCATABLE :: VG
 C-----------------------------------------------
-      CALL MY_ALLOC(VG,3,NUMNODG)
+      call my_alloc(VG, 3, NUMNODG, "VG")
       S3000 = 3000.
       S     = ZERO
 
@@ -628,7 +631,7 @@ c----------------------------
         ENDIF
       ENDIF!(ISPMD==0) 
 c----------------------------  
-      DEALLOCATE(VG)
+      call my_dealloc(VG)
       RETURN
       END
 
@@ -639,6 +642,8 @@ c----------------------------
 !||--- calls      -----------------------------------------------------
 !||    spmd_glob_dsum9   ../engine/source/mpi/interfaces/spmd_th.F
 !||    write_r_c         ../common_source/tools/input_output/write_routines.c
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE VELVECC21(V,V_TEMP,IVOIS,AL,NODCUT,NNWL,
      .                  NNSRG,NODGLOB,WEIGHT,NFVNOD,NFNOD_PXFEM,
@@ -646,6 +651,7 @@ c----------------------------
 C-----------------------------s------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -695,7 +701,7 @@ C
         ENDDO
        ENDIF
       ELSE
-        ALLOCATE(V_TMP(3,NUMNODG))
+        call my_alloc(V_TMP, 3, NUMNODG, "V_TMP")
         DO I=1,NUMNODG
            V_TMP(1,I) =VG21(1,I)
            V_TMP(2,I) =VG21(2,I)
@@ -721,7 +727,7 @@ C
              CALL WRITE_R_C(R4,1)
           ENDDO
         ENDIF
-        DEALLOCATE(V_TMP)
+        call my_dealloc(V_TMP)
       ENDIF
 C
 C option non parallelisee !
@@ -956,7 +962,7 @@ C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
       my_real, DIMENSION(:,:), ALLOCATABLE :: VGLOBAL
 C-----------------------------------------------
-      CALL MY_ALLOC(VGLOBAL,3,NUMNOD)
+      call my_alloc(VGLOBAL, 3, NUMNOD, "VGLOBAL")
       S3000 = 3000.
       S = 0.
 C
@@ -1043,7 +1049,7 @@ c----------------------------
       ENDIF
 C-------------
  300  CONTINUE
-      DEALLOCATE(VGLOBAL)
+      call my_dealloc(VGLOBAL)
       RETURN
       END
 
@@ -1062,6 +1068,7 @@ C-------------
 !||    i22edge_mod      ../common_source/modules/interfaces/cut-cell-buffer_mod.F
 !||    i22tri_mod       ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    initbuf_mod      ../engine/share/resol/initbuf.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE VELVECC22(ELBUF_TAB,IPARG,IFLG,IXS,IXQ,ITAB)
 C-----------------------------------------------
@@ -1086,6 +1093,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1114,7 +1122,7 @@ C-----------------------------------------------
        NBL = NB                                                                                                                                      
        NIN = 1              
        !---------------------------------------------------------!  
-       ALLOCATE(BUFFER(3,NUMNOD))
+       call my_alloc(BUFFER, 3, NUMNOD, "BUFFER")
        BUFFER(:,:)           = ZERO  
              
        DO IB=NBF,NBL    
@@ -1187,7 +1195,7 @@ C-----------------------------------------------
          CALL WRITE_R_C(R4,1)
        ENDDO!next I
           
-       DEALLOCATE(BUFFER)   
+       call my_dealloc(BUFFER)
       !---------------------------------------------------------! 
 
       RETURN

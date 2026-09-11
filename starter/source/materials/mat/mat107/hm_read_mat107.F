@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat107           ../starter/source/materials/mat/mat107/hm_read_mat107.F
 !||--- called by ------------------------------------------------------
@@ -77,11 +78,8 @@ C
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-       INTEGER I, J, ILAW, Ires, Itab, Ismooth
-       INTEGER TAB_YLD1,TAB_TEMP1,TAB_YLD2,TAB_TEMP2,TAB_YLD3,TAB_TEMP3,
-     .         TAB_YLD4,TAB_TEMP4,TAB_YLD5,TAB_TEMP5,TAB_YLD1C,TAB_TEMP1C,
-     .         TAB_YLD2C,TAB_TEMP2C,TAB_YLDT,TAB_TEMPT,TAB_YLDC,TAB_TEMPC,
-     .         TAB_YLDS,TAB_TEMPS
+       INTEGER ILAW, Ires, Itab, Ismooth
+       INTEGER TAB_YLD1,TAB_YLD2,TAB_YLD1C,TAB_YLD2C,TAB_YLDT
 C     REAL
       my_real
      .   RHO0,RHOR,
@@ -89,17 +87,11 @@ C     REAL
      .   K1,K2,K3,K4,K5,K6,G1C,D1,D2,SIGY1,
      .   CINI1,S1,SIGY2,CINI2,S2,SIGY1C,CINI1C,
      .   S1C,SIGY2C,CINI2C,S2C,SIGYT,CINIT,ST,
-     .   FCUT,C1,SSP,A11,A12,A21,A22,XI1,XI2,
+     .   SSP,A11,A12,A21,A22,XI1,XI2,
      .   DMIN,DMAX,
-     .   K,E3C,CC,NU1P,NU2P,NU4P,NU5P,
-     .   S01,A01,B01,C01,S02,A02,B02,C02,
-     .   S03,A03,B03,C03,S04,A04,B04,C04,
-     .   S05,A05,B05,C05,ASIG,BSIG,CSIG,
-     .   TAU0,ATAU,BTAU,
-     .   XSCALE1,YSCALE1,XSCALE2,YSCALE2,XSCALE3,YSCALE3,
-     .   XSCALE4,YSCALE4,XSCALE5,YSCALE5,XSCALEC,YSCALEC,
-     .   XSCALES,YSCALES,XSCALE1C,YSCALE1C,XSCALE2C,YSCALE2C,
-     .   XSCALET,YSCALET,XSCALE_UNIT,YSCALE_UNIT,ASRATE,TREF
+     .   XSCALE1,YSCALE1,XSCALE2,YSCALE2,
+     .   XSCALE1C,YSCALE1C,XSCALE2C,YSCALE2C,
+     .   XSCALET,YSCALET,XSCALE_UNIT,YSCALE_UNIT,ASRATE
 C     
       LOGICAL :: IS_AVAILABLE,IS_ENCRYPTED
 C=======================================================================

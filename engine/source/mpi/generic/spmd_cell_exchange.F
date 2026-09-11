@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_cell_exchange         ../engine/source/mpi/generic/spmd_cell_exchange.F
 !||--- called by ------------------------------------------------------
@@ -37,7 +38,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inter_struct_mod           ../engine/share/modules/inter_struct_mod.F
 !||    message_mod                ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod              ../common_source/modules/ale/multi_fvm_mod.F90
-!||    spmd_comm_world_mod        ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
 !||    timer_mod                  ../engine/source/system/timer_mod.F90
 !||    tri7box                    ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -66,7 +67,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -102,7 +103,7 @@ C-----------------------------------------------
 #ifdef MPI
       INTEGER MSGTYP, LOC_PROC, P, IDEB, 
      . L, LEN,
-     . STATUS(MPI_STATUS_SIZE),IERROR,
+     . IERROR,
      . REQ_RD(NSPMD),
      . INDEXI,
      . MSGOFF4,MSGOFF5,
@@ -162,15 +163,15 @@ C================================================================
             LEN = NSNFI(NIN)%P(P)*RSIZ
             MSGTYP = MSGOFF4 
             OFFSET(L) = IDEB
-            CALL MPI_IRECV(
-     1        XREM(1,IDEB),LEN,REAL,IT_SPMD(P),
-     2        MSGTYP,SPMD_COMM_WORLD,REQ_RD(L),IERROR)
+            CALL SPMD_IRECV(
+     1        XREM(1:RSIZ,IDEB:IDEB+NSNFI(NIN)%P(P)-1),LEN,IT_SPMD(P),
+     2        MSGTYP,REQ_RD(L))
      
             LEN2 = NSNFI(NIN)%P(P)*ISIZ
             MSGTYP = MSGOFF5 
-            CALL MPI_IRECV(
-     1        IREM(1,IDEB),LEN2,MPI_INTEGER,IT_SPMD(P),
-     2        MSGTYP,SPMD_COMM_WORLD,REQ_RD2(L),IERROR)
+            CALL SPMD_IRECV(
+     1        IREM(1:ISIZ,IDEB:IDEB+NSNFI(NIN)%P(P)-1),LEN2,IT_SPMD(P),
+     2        MSGTYP,REQ_RD2(L))
             IDEB = IDEB + NSNFI(NIN)%P(P)                  
           ENDDO
         ENDIF
@@ -184,15 +185,14 @@ C================================================================
             IF(SORT_COMM(NIN)%NB(P)/=0 ) THEN
                 MSGTYP = MSGOFF4
                 SIZE_S = SORT_COMM(NIN)%NB(P) * SORT_COMM(NIN)%RSIZ
-                CALL MPI_ISEND(
-     1          SORT_COMM(NIN)%DATA_PROC(P)%RBUF(1),SIZE_S,REAL,IT_SPMD(P),MSGTYP,
-     2            SPMD_COMM_WORLD,SORT_COMM(NIN)%REQ_SD2(P),ierror)
+                CALL SPMD_ISEND(
+     1          SORT_COMM(NIN)%DATA_PROC(P)%RBUF(1:SIZE_S),SIZE_S,IT_SPMD(P),MSGTYP,
+     2          SORT_COMM(NIN)%REQ_SD2(P))
                 MSGTYP = MSGOFF5
                 SIZE_S = SORT_COMM(NIN)%NB(P) * SORT_COMM(NIN)%ISIZ
-                CALL MPI_ISEND(
-     1            SORT_COMM(NIN)%DATA_PROC(P)%IBUF(1),SIZE_S,MPI_INTEGER,
-     2            IT_SPMD(P),MSGTYP,
-     3            SPMD_COMM_WORLD,SORT_COMM(NIN)%REQ_SD3(P),ierror)
+                CALL SPMD_ISEND(
+     1            SORT_COMM(NIN)%DATA_PROC(P)%IBUF(1:SIZE_S),SIZE_S,IT_SPMD(P),
+     2            MSGTYP,SORT_COMM(NIN)%REQ_SD3(P))
             ENDIF
         ENDIF
       ENDDO
@@ -210,7 +210,7 @@ C================================================================
       IF(IRCVFROM(NIN,LOC_PROC)/=0) THEN  !   nmn > 0
        IF(NSNR>0) THEN   !   nsnr>0 only on proc with nmn>0
          DO L = 1, SORT_COMM(NIN)%NBIRECV
-          CALL MPI_WAITANY(SORT_COMM(NIN)%NBIRECV,REQ_RD,INDEXI,STATUS,IERROR) !XREM
+          CALL SPMD_WAITANY(REQ_RD,SORT_COMM(NIN)%NBIRECV,INDEXI) !XREM
 
          ! CALL MPI_WAITANY(SORT_COMM(NIN)%NBIRECV,REQ_RD2,INDEXI,STATUS,IERROR)
 
@@ -233,7 +233,7 @@ C================================================================
      .                    xrem,
      .                    inter_struct(nin)%box_limit_main)
           endif
-          CALL MPI_WAIT(REQ_RD2(INDEXI),STATUS,IERROR) !IREM
+          CALL SPMD_WAIT(REQ_RD2(INDEXI)) !IREM
 
     
          ENDDO
@@ -253,10 +253,10 @@ C================================================================
             IF(P/=LOC_PROC) THEN
               IF(SORT_COMM(NIN)%NB(P)/=0) THEN
                 IF(NMN/=0) THEN
-                    CALL MPI_WAIT(SORT_COMM(NIN)%REQ_SD2(P),STATUS,IERROR) 
+                    CALL SPMD_WAIT(SORT_COMM(NIN)%REQ_SD2(P))
                     DEALLOCATE(SORT_COMM(NIN)%DATA_PROC(P)%RBUF)
                     !   can be moved if local nsn>0 & local nmn=0  
-                    CALL MPI_WAIT(SORT_COMM(NIN)%REQ_SD3(P),STATUS,IERROR) 
+                    CALL SPMD_WAIT(SORT_COMM(NIN)%REQ_SD3(P))
                     DEALLOCATE(SORT_COMM(NIN)%DATA_PROC(P)%IBUF)         
                     SORT_COMM(NIN)%NB(P) = 0             
                 ENDIF

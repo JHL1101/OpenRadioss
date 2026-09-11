@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    yctrl                  ../starter/source/initial_conditions/inista/yctrl.F
 !||--- called by ------------------------------------------------------
 !||    lectur                 ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                 ../starter/source/output/message/message.F
+!||    freerr                 ../starter/source/starter/freform.F
 !||--- uses       -----------------------------------------------------
 !||    format_mod             ../starter/share/modules1/format_mod.F90
 !||    message_mod            ../starter/share/message_module/message_mod.F
@@ -61,15 +63,11 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER 
-     .      I,J,NGAUSS,NLAYER ,
-     .      NUMS,NIP,NUVAR,JJHBE,J1,NU,IP,N,NPSOLID,
-     .      K,IHBE,NPG,ND,NVAR_SHELL,NPT,NE,
-     .      NVSHELL0,NUSHELL0,NORTSHEL0,NUSOLID0,NELS,KK,JJ,
-     .      ISOLNOD,ISOLID,IFRAM,IORTH,IREP,IGTYP,ISH3N,NDIR,NLAYERS,
-     .      UID,SUB_ID,NLAY,NPTR,NPTS,NPTT,IFAIL,IRUPT_TYP,NVAR_RUPT,
-     .      ILAY,IMAT,NPT_MAX,NUBEAM0,NVSH_STRA,ISMSTR
-      CHARACTER MESS*40
-      CHARACTER(LEN=NCHARKEY) :: KEY2, KEY3
+     .      I,J,
+     .      NUMS,NIP,NUVAR,JJHBE,J1,NU,N,
+     .      K,IHBE,NPG,ND,NVAR_SHELL,
+     .      NVSHELL0,NUSHELL0,NORTSHEL0,NELS,KK,
+     .      NUBEAM0,NVSH_STRA
 C=======================================================================
       NFILSOL=0
       NUMSOL =0
@@ -308,7 +306,7 @@ C
          REWIND(IIN4)
          GOTO 430
        ENDIF
- 232  IF(LINE(1:33)/='/SOLID     /TENSOR    /STRESS')GOTO 230
+      IF(LINE(1:33)/='/SOLID     /TENSOR    /STRESS')GOTO 230
        READ(IIN4,FMT='(A)',END=235,ERR=399)LINE
 C         
         NVSOLID1 = MAX(NVSOLID1, 6)
@@ -321,7 +319,7 @@ C
          REWIND(IIN4)
          GOTO 444
        ENDIF
- 432  IF(LINE(1:33)/='/SOLID     /TENSOR    /STRAIN_FUL')GOTO 430
+      IF(LINE(1:33)/='/SOLID     /TENSOR    /STRAIN_FUL')GOTO 430
        READ(IIN4,FMT='(A)',END=435,ERR=399)LINE
 C         
        I = 0
@@ -388,7 +386,7 @@ cc       ENDIF
       RETURN
  399  CONTINUE
        CALL ANCMSG(MSGID=557, MSGTYPE=MSGERROR, ANMODE=ANINFO_BLIND_1)
- 999  CALL FREERR(3)
+       CALL FREERR(3)
       RETURN
       END
 

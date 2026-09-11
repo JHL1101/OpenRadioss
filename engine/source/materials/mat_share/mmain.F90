@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,18 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mmain_mod    ../engine/source/materials/mat_share/mmain.F90
 !||--- called by ------------------------------------------------------
 !||    bforc2       ../engine/source/ale/bimat/bforc2.F
 !||    ig3duforc3   ../engine/source/elements/ige3d/ig3duforc3.F
+!||    q1np_forc3   ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2      ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    qforc2       ../engine/source/elements/solid_2d/quad/qforc2.F
 !||    s10forc3     ../engine/source/elements/solid/solide10/s10forc3.F
@@ -54,6 +56,7 @@
 !||--- called by ------------------------------------------------------
 !||    bforc2                  ../engine/source/ale/bimat/bforc2.F
 !||    ig3duforc3              ../engine/source/elements/ige3d/ig3duforc3.F
+!||    q1np_gp_mat             ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2                 ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    qforc2                  ../engine/source/elements/solid_2d/quad/qforc2.F
 !||    s10forc3                ../engine/source/elements/solid/solide10/s10forc3.F
@@ -143,7 +146,6 @@
 !||    mqviscb                 ../engine/source/materials/mat_share/mqviscb.F
 !||    mreploc                 ../engine/source/materials/mat_share/mreploc.F
 !||    mrotens                 ../engine/source/materials/mat_share/mrotens.F
-!||    mtheta                  ../engine/source/materials/mat_share/mtheta.F
 !||    mulaw                   ../engine/source/materials/mat_share/mulaw.F90
 !||    put_etfac               ../engine/source/elements/solid/solide8z/put_etfac.F
 !||    putsignor3              ../engine/source/elements/solid/solide8z/putsignor3.F
@@ -411,6 +413,7 @@
           &        idamp_freq_range,visctype
           integer :: ifunc(maxfunc)
           integer :: nvartmp_eos
+          integer ,dimension(:) ,pointer :: vartmp
 
           ! Float/Double
           real(kind=WP) :: facq0,e1,e2,e3,e4,e5,e6,alpha,tref,tmelt
@@ -681,7 +684,7 @@
 !-----due to too much returns of qa, temporarily add iresp here
           if((ale%global%incomp/=1.or.(jeul+jale)/=1).and.jlag/=0.and.n2d==0.and.jsph==0.and.iresp==1&
           &.and.impl_s==0.and.ismstr/=1.and.ismstr/=3.and.ismstr/=11)then
-!-----due to issue w/ sp ----in srho3.f r4_amu is calculated for sp :
+!-----due to issue with sp ----in srho3.f r4_amu is calculated for sp :
 !--    r4_amu =vol0dp/voldp -1   because rho*voldp=rho0*vol0dp
             amu(1:nel) =  r4_amu(1:nel)
           else
@@ -753,7 +756,7 @@
 ! --------------------------------------------------------
 !    thermal material istrope expansion
 ! --------------------------------------------------------
-          if (iexpan > 0 .and. jthe < 0 .and. tt/=zero ) then
+          if (iexpan > 0 .and. jthe < 0 .and. tt/=zero .and. mtn /= 137) then
             if (ismstr==4) then
               amu(1:nel)  = amu(1:nel) /(amu(1:nel) + one) ! to get amu = 1-rho0/rho
             end if
@@ -774,9 +777,9 @@
               eth(i)= alpha *(tempel(i)-tempel0(i))*off(i)
               lbuf%forth(i) = lbuf%forth(i) + eth(i)  ! lbuf%forth the total thermal strain over time
               epsth(i)= three*lbuf%forth(i)
-              dxx(i)  = dxx(i)-eth(i)/dt1
-              dyy(i)  = dyy(i)-eth(i)/dt1
-              dzz(i)  = dzz(i)-eth(i)/dt1
+              dxx(i)  = dxx(i)-eth(i)/max(dt1,em20)
+              dyy(i)  = dyy(i)-eth(i)/max(dt1,em20)
+              dzz(i)  = dzz(i)-eth(i)/max(dt1,em20)
               dvol(i) = dvol(i)-three*eth(i)*vol_avg(i)
               amu(i)  = amu(i) + epsth(i)
               sigkk(i)= lbuf%sig(nel*(1-1)+i)+lbuf%sig(nel*(2-1)+i)+lbuf%sig(nel*(3-1)+i)
@@ -800,7 +803,7 @@
           eostyp = mat_elem%mat_param(imat)%ieos
           pnew(:) = zero
           nvartmp_eos = elbuf_tab(ng)%bufly(ilay)%nvartmp_eos
-          if (eostyp > 0 .and. mtn /= 12 ) then
+          if (eostyp > 0 .and. mtn /= 12 .and. mtn /= 105) then
             call eosmain(0         ,nel      ,eostyp  ,pm        ,off      ,lbuf%eint,&
               lbuf%rho  ,rho0     ,amu     ,amu2      ,espe     ,&
               dvol      ,df       ,voln    ,mat       ,psh      ,&
@@ -922,108 +925,7 @@
 !----------------
             if (istrain > 0 .and.&
             &(h3d_strain == 1 .or. th_strain == 1 )) then
-!
-              ! strain rate
-              do i=1,nel
-                ep1(i) = dxx(i)*off(i)
-                ep2(i) = dyy(i)*off(i)
-                ep3(i) = dzz(i)*off(i)
-                ep4(i) = d4(i) *off(i)
-                ep5(i) = d5(i) *off(i)
-                ep6(i) = d6(i) *off(i)
-              end do
-              ! strain
-              if (jcvt > 0) then
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-              else if (isorth /= 0) then
-!---------------------------
-!       orthotrope global
-!---------------------------
-                call mreploc(&
-                &gama,    r11,     r12,     r13,&
-                &r21,     r22,     r23,     r31,&
-                &r32,     r33,     rx,      ry,&
-                &rz,      sx,      sy,      sz,&
-                &tx,      ty,      tz,      nel,&
-                &jsph)
-                do i=1,nel
-                  ep4(i) = half*ep4(i)
-                  ep5(i) = half*ep5(i)
-                  ep6(i) = half*ep6(i)
-                end do
-                call mrotens(1,nel,ep1,ep2,ep3,ep4,ep5,ep6,&
-                &r11,r21,r31,r12,r22,r32,r13,r23,r33)
-                do i=1,nel
-                  ep4(i) = two*ep4(i)
-                  ep5(i) = two*ep5(i)
-                  ep6(i) = two*ep6(i)
-                end do
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-              else
-!---------------------------
-!       isotrope global
-!---------------------------
-#include "vectorize.inc"
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-#include "vectorize.inc"
-                do i=1,nel
-                  wxxf = wxx(i)*off(i)
-                  wyyf = wyy(i)*off(i)
-                  wzzf = wzz(i)*off(i)
-                  q1 = lbuf%stra(nel*(4-1) + i)*wzzf
-                  q2 = lbuf%stra(nel*(6-1) + i)*wyyf
-                  q3 = lbuf%stra(nel*(5-1) + i)*wxxf
-                  str1 = lbuf%stra(nel*(1-1) + i)-q1+q2
-                  str2 = lbuf%stra(nel*(2-1) + i)+q1-q3
-                  str3 = lbuf%stra(nel*(3-1) + i)-q2+q3
-                  str4 = lbuf%stra(nel*(4-1) + i)+&
-                  &two*wzzf*(lbuf%stra(nel*(1-1) + i)-lbuf%stra(nel*(2-1) + i))+&
-                  &wyyf*lbuf%stra(nel*(5-1) + i)-wxxf*lbuf%stra(nel*(6-1) + i)
-                  str5 = lbuf%stra(nel*(5-1) + i)+&
-                  &two*wxxf*(lbuf%stra(nel*(2-1) + i)-lbuf%stra(nel*(3-1) + i))+&
-                  &wzzf*lbuf%stra(nel*(6-1) + i)-wyyf*lbuf%stra(nel*(4-1) + i)
-                  str6 = lbuf%stra(nel*(6-1) + i)+&
-                  &two*wyyf*(lbuf%stra(nel*(3-1) + i)-lbuf%stra(nel*(1-1) + i))+&
-                  &wxxf*lbuf%stra(nel*(4-1) + i)-wzzf*lbuf%stra(nel*(5-1) + i)
-                  lbuf%stra(nel*(1-1) + i) = str1
-                  lbuf%stra(nel*(2-1) + i) = str2
-                  lbuf%stra(nel*(3-1) + i) = str3
-                  lbuf%stra(nel*(4-1) + i) = str4
-                  lbuf%stra(nel*(5-1) + i) = str5
-                  lbuf%stra(nel*(6-1) + i) = str6
-                end do
-              end if ! if (jcvt > 0)
-              ! strain update
-              do i=1,nel
-                lbuf%stra(nel*(1-1) + i) = lbuf%stra(nel*(1-1) + i) + es1(i)
-                lbuf%stra(nel*(2-1) + i) = lbuf%stra(nel*(2-1) + i) + es2(i)
-                lbuf%stra(nel*(3-1) + i) = lbuf%stra(nel*(3-1) + i) + es3(i)
-                lbuf%stra(nel*(4-1) + i) = lbuf%stra(nel*(4-1) + i) + es4(i)
-                lbuf%stra(nel*(5-1) + i) = lbuf%stra(nel*(5-1) + i) + es5(i)
-                lbuf%stra(nel*(6-1) + i) = lbuf%stra(nel*(6-1) + i) + es6(i)
-              end do
-            end if ! if (istrain > 0
+            end if ! no need in mmain now
 !
 !----------------
           else if (mtn == 3) then
@@ -1115,110 +1017,6 @@
             &tmu,      einc,     mtn,      vol_avg,&
             &nel,      jtur,     jlag,     jpor)
 !----------------
-            if (istrain > 0 .and.&
-            &(h3d_strain == 1 .or. th_strain == 1 )) then
-!
-              ! strain rate
-              do i=1,nel
-                ep1(i) = dxx(i)*off(i)
-                ep2(i) = dyy(i)*off(i)
-                ep3(i) = dzz(i)*off(i)
-                ep4(i) = d4(i) *off(i)
-                ep5(i) = d5(i) *off(i)
-                ep6(i) = d6(i) *off(i)
-              end do
-              ! strain
-              if (jcvt > 0) then
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-              else if (isorth /= 0) then
-!---------------------------
-!       orthotrope global
-!---------------------------
-                call mreploc(&
-                &gama,    r11,     r12,     r13,&
-                &r21,     r22,     r23,     r31,&
-                &r32,     r33,     rx,      ry,&
-                &rz,      sx,      sy,      sz,&
-                &tx,      ty,      tz,      nel,&
-                &jsph)
-                do i=1,nel
-                  ep4(i) = half*ep4(i)
-                  ep5(i) = half*ep5(i)
-                  ep6(i) = half*ep6(i)
-                end do
-                call mrotens(1,nel,ep1,ep2,ep3,ep4,ep5,ep6,&
-                &r11,r21,r31,r12,r22,r32,r13,r23,r33)
-                do i=1,nel
-                  ep4(i) = two*ep4(i)
-                  ep5(i) = two*ep5(i)
-                  ep6(i) = two*ep6(i)
-                end do
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-              else
-!---------------------------
-!       isotrope global
-!---------------------------
-#include "vectorize.inc"
-                do i=1,nel
-                  es1(i) = ep1(i)*dt1
-                  es2(i) = ep2(i)*dt1
-                  es3(i) = ep3(i)*dt1
-                  es4(i) = ep4(i)*dt1
-                  es5(i) = ep5(i)*dt1
-                  es6(i) = ep6(i)*dt1
-                end do
-#include "vectorize.inc"
-                do i=1,nel
-                  wxxf = wxx(i)*off(i)
-                  wyyf = wyy(i)*off(i)
-                  wzzf = wzz(i)*off(i)
-                  q1 = lbuf%stra(nel*(4-1) + i)*wzzf
-                  q2 = lbuf%stra(nel*(6-1) + i)*wyyf
-                  q3 = lbuf%stra(nel*(5-1) + i)*wxxf
-                  str1 = lbuf%stra(nel*(1-1) + i)-q1+q2
-                  str2 = lbuf%stra(nel*(2-1) + i)+q1-q3
-                  str3 = lbuf%stra(nel*(3-1) + i)-q2+q3
-                  str4 = lbuf%stra(nel*(4-1) + i)+&
-                  &two*wzzf*(lbuf%stra(nel*(1-1) + i)-lbuf%stra(nel*(2-1) + i))+&
-                  &wyyf*lbuf%stra(nel*(5-1) + i)-wxxf*lbuf%stra(nel*(6-1) + i)
-                  str5 = lbuf%stra(nel*(5-1) + i)+&
-                  &two*wxxf*(lbuf%stra(nel*(2-1) + i)-lbuf%stra(nel*(3-1) + i))+&
-                  &wzzf*lbuf%stra(nel*(6-1) + i)-wyyf*lbuf%stra(nel*(4-1) + i)
-                  str6 = lbuf%stra(nel*(6-1) + i)+&
-                  &two*wyyf*(lbuf%stra(nel*(3-1) + i)-lbuf%stra(nel*(1-1) + i))+&
-                  &wxxf*lbuf%stra(nel*(4-1) + i)-wzzf*lbuf%stra(nel*(5-1) + i)
-                  lbuf%stra(nel*(1-1) + i) = str1
-                  lbuf%stra(nel*(2-1) + i) = str2
-                  lbuf%stra(nel*(3-1) + i) = str3
-                  lbuf%stra(nel*(4-1) + i) = str4
-                  lbuf%stra(nel*(5-1) + i) = str5
-                  lbuf%stra(nel*(6-1) + i) = str6
-                end do
-              end if ! if (jcvt > 0)
-              ! strain update
-              do i=1,nel
-                lbuf%stra(nel*(1-1) + i) = lbuf%stra(nel*(1-1) + i) + es1(i)
-                lbuf%stra(nel*(2-1) + i) = lbuf%stra(nel*(2-1) + i) + es2(i)
-                lbuf%stra(nel*(3-1) + i) = lbuf%stra(nel*(3-1) + i) + es3(i)
-                lbuf%stra(nel*(4-1) + i) = lbuf%stra(nel*(4-1) + i) + es4(i)
-                lbuf%stra(nel*(5-1) + i) = lbuf%stra(nel*(5-1) + i) + es5(i)
-                lbuf%stra(nel*(6-1) + i) = lbuf%stra(nel*(6-1) + i) + es6(i)
-              end do
-            end if ! if (istrain > 0
 !----------------
 !
           else if (mtn == 5) then
@@ -1311,11 +1109,6 @@
             &dvol,               voln,               pturb,               tmu,&
             &vis,                vd2,                mat,                pid,&
             &lft,                llt,                jpor,               jclose)
-            if (jthe == 1) then
-              call mtheta(pm,       lbuf%eint,lbuf%temp,amu,   &
-                c1,       c2,       df,       psh,   &
-                pc,       mat,      nel)
-            end if
 !
           else if (mtn == 10) then
             call m10law(pm      ,off      ,lbuf%sig  ,lbuf%eint,lbuf%rho,&
@@ -1568,10 +1361,7 @@
             &vd2,     dvol,    aire,    einc,&
             &pturb,   alogey,  nel,&
             &lft,     llt,     jpor)
-            if(jthe == 1)call mtheta(&
-            &pm,       lbuf%eint,lbuf%temp,amu,&
-            &c1,       c2,       df,       psh,&
-            &pc,       mat,      nel)
+
           else if (mtn == 18) then
             call m18law(&
             &pm,         lbuf%vol,   lbuf%eint,  lbuf%temp,&
@@ -1707,9 +1497,10 @@
             &cxx,        lbuf%vol,   lbuf%epsd,  lbuf%pla,&
             &lbuf%stra,  sigl,       lbuf%tsaiwu,&
             &lbuf%off,   ngl,        nel,        nft,&
-            &ilay,       npt,        ipg,&
+            &ilay,       npg,        ipg,&
             &jcvt,       jsph,       isorth,     lbuf%dmg,&
-            &elbuf_tab(ng)%bufly(ilay)%l_dmg,gbuf%ierr)
+            &elbuf_tab(ng)%bufly(ilay)%l_dmg,gbuf%ierr,&
+            &gbuf%noff,  nlay,       igtyp )
 !
             if (jsph == 0) then
               call mqviscb(&
@@ -1760,7 +1551,7 @@
               &dt2t,     neltst,   ityptst,  aire,&
               &lbuf%off, geo,      pid,      voln,&
               &vd2,      deltax,   vis,      dxx,&
-              &dyy,      dzz,      pnew,     psh,&
+              &dyy,      dzz,      psh,&
               &mat,      ngl,      qvis,     ssp_eq,&
               &xk,       nel,      ity,      ismstr,&
               &jtur,     jthe)
@@ -1963,7 +1754,7 @@
           end if
 
           eostyp = mat_elem%mat_param(imat)%ieos
-          if (eostyp > 0 .and. mtn /=12 ) then
+          if (eostyp > 0 .and. mtn /=12 .and. mtn /= 105) then
             l_eos_called = .true.
             nvartmp_eos = elbuf_tab(ng)%bufly(ilay)%nvartmp_eos
             call eosmain(1         ,nel         ,eostyp     ,pm       ,off      ,lbuf%eint,&
@@ -2047,7 +1838,9 @@
             glob_therm%heat_meca = glob_therm%heat_meca + heat_meca_l
 !$omp end critical
           end if
-          if((iexpan > 0).and.(jthe < 0).and.(tt/=0)) then
+!    same exclusion as above: law 137 already updates lbuf%eintth itself
+!    inside sigeps137, using its own trapezoidal old+new stress average.
+          if((iexpan > 0).and.(jthe < 0).and.(tt/=0).and.(mtn /= 137)) then
             do i=1,nel
               sigkk(i) = lbuf%sig(nel*(1-1)+i)+lbuf%sig(nel*(2-1)+i)+lbuf%sig(nel*(3-1)+i)
               lbuf%eintth(i) = lbuf%eintth(i)-half*sigkk(i)*eth(i)
@@ -2383,7 +2176,8 @@
               end if
 !
 !----
-              uvarf => fbuf%floc(ir)%var
+              uvarf  =>fbuf%floc(ir)%var
+              vartmp =>fbuf%floc(ir)%vartmp
               irupt  = fbuf%floc(ir)%ilawf
               nvarf  = fbuf%floc(ir)%nvar
               dfmax => fbuf%floc(ir)%dammx
@@ -2393,7 +2187,8 @@
               failparam => mat_elem%mat_param(imat)%fail(ir)
               nparam  = mat_elem%mat_param(imat)%fail(ir)%nuparam
               niparam = mat_elem%mat_param(imat)%fail(ir)%niparam
-              uparamf=>mat_elem%mat_param(imat)%fail(ir)%uparam(1:nparam)
+              nvartmp = mat_elem%mat_param(imat)%fail(ir)%nvartmp
+              uparamf=> mat_elem%mat_param(imat)%fail(ir)%uparam(1:nparam)
               iparamf=> mat_elem%mat_param(imat)%fail(ir)%iparam(1:niparam)
               nfunc  = mat_elem%mat_param(imat)%fail(ir)%nfunc
               ifunc(1:nfunc) = mat_elem%mat_param(imat)%fail(ir)%ifunc(1:nfunc)
@@ -2510,23 +2305,23 @@
                 &tdel )
               else if(irupt == 10)then
 !---- strain tension
-                call fail_tensstrain_s(llt ,nparam,nvarf,nfunc,ifunc      ,&
-                &npf ,tf  ,tt  ,dt1  ,uparamf,&
-                &ngl ,deltax   ,tstar ,ismstr,&
-                &es1 ,es2 ,es3 ,es4  ,es5  ,es6     ,&
-                &ss1 ,ss2 ,ss3 ,ss4  ,ss5  ,ss6     ,&
-                &epsp,uvarf,off,dfmax,tdel    ,&
-                &mfxx   ,mfxy   ,mfxz   ,mfyx    ,mfyy   ,mfyz   ,&
-                &mfzx   ,mfzy   ,mfzz   ,lbuf%dmgscl)
+                call fail_tensstrain_s(failparam,             &
+                llt    ,nvarf  ,nvartmp,uvarf   ,vartmp  ,    &
+                ngl    ,deltax ,tstar  ,ismstr  ,tt      ,    &
+                es1    ,es2    ,es3    ,es4     ,es5     ,es6     ,&
+                ss1    ,ss2    ,ss3    ,ss4     ,ss5     ,ss6     ,&
+                epsp   ,off    ,dfmax  ,tdel    ,&
+                mfxx   ,mfxy   ,mfxz   ,mfyx    ,mfyy   ,mfyz   ,&
+                mfzx   ,mfzy   ,mfzz   ,lbuf%dmgscl)
 !
               else if(irupt == 11)then
 !---- energy failure
-                call fail_energy_s(&
-                &llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,npf      ,&
-                &tf       ,tt       ,dt1      ,uparamf,ngl ,epsp     ,&
-                &uvarf    ,off      ,dfmax    ,tdel     ,lbuf%dmgscl,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
-                &de1      ,de2      ,de3      ,de4      ,de5      ,de6      )
+                call fail_energy_s(failparam  ,  &
+                 llt      ,nvarf    ,nvartmp  ,uvarf    ,vartmp   ,    &
+                 tt       ,dt1      ,ngl      ,epsp     ,&
+                 off      ,dfmax    ,tdel     ,lbuf%dmgscl,&
+                 ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
+                 de1      ,de2      ,de3      ,de4      ,de5      ,de6      )
               else if (irupt == 13) then
 !---- chang - chang
                 call fail_changchang_s(&
@@ -2569,14 +2364,13 @@
                 &off      ,table    ,dfmax    ,tdel     ,nfunc     ,ifunc     )
               else if (irupt == 24) then
 !   --- orthotropic strain failure
-                call fail_orthstrain(&
-                &llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,&
-                &npf      ,tf       ,tt       ,dt1      ,uparamf,ismstr,&
-                &ep1      ,ep2      ,ep3      ,ep4      ,ep5      ,ep6     ,&
-                &es1      ,es2      ,es3      ,es4      ,es5      ,es6     ,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6     ,&
-                &uvarf    ,off      ,ipg      ,ngl      ,dfmax    ,tdel    ,&
-                &gbuf%uelr,npg      ,deltax   ,lf_dammx )
+                call fail_orthstrain(failparam,                               &
+                 llt      ,nvarf    ,tt       ,dt1      ,ismstr   ,           &
+                 ep1      ,ep2      ,ep3      ,ep4      ,ep5      ,ep6     ,  &
+                 es1      ,es2      ,es3      ,es4      ,es5      ,es6     ,  &
+                 ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6     ,  &
+                 uvarf    ,off      ,ipg      ,ngl      ,dfmax    ,tdel    ,  &
+                 gbuf%uelr,npg      ,deltax   ,lf_dammx ,nvartmp  ,vartmp  )
               else if (irupt == 27) then
 ! ---   extended mohr coulomb failure model
                 call fail_emc(&
@@ -2596,10 +2390,10 @@
               else if (irupt == 30) then
 !  --- biquadratic failure model
                 call fail_biquad_s(mat_elem%mat_param(imat)%fail(ir),       &
-                &llt      ,nvarf    ,nfunc    ,ifunc    ,el_len   ,&
-                &npf      ,tf       ,tt       ,tdel     ,&
-                &ngl      ,dpla     ,uvarf    ,off      ,dfmax    ,lbuf%dmgscl,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      )
+                 llt      ,nvarf    ,nvartmp  ,uvarf    ,vartmp   ,&
+                 tt       ,tdel     ,el_len   ,&
+                 ngl      ,dpla     ,off      ,dfmax    ,lbuf%dmgscl,&
+                 ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      )
               else if (irupt == 34) then
 !  --- cockroft-latham failure model
                 call fail_cockroft_s(llt ,nparam,nvarf,&
@@ -2629,24 +2423,22 @@
 !
               else if (irupt == 38) then
 !  --- orthotropic biquadratic failure model
-                call fail_orthbiquad_s(&
-                &llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,&
-                &npf      ,tf       ,tt       ,dt1      ,uparamf,&
-                &ngl      ,dpla     ,epsp     ,uvarf    ,off      ,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
-                &dfmax    ,tdel     ,el_len   )
+                call fail_orthbiquad_s(mat_elem%mat_param(imat)%fail(ir),&
+                llt      ,nvarf    ,nvartmp  ,uvarf    ,vartmp   ,&
+                tt       ,ngl      ,dpla     ,epsp     ,off      ,&
+                ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
+                dfmax    ,tdel     ,el_len   )
 !
               else if (irupt == 39) then
 !  --- gene1 failure model
-                call fail_gene1_s(&
-                &llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,lbuf%off ,&
-                &npf      ,tf       ,tt       ,dt1      ,uparamf,ipg ,&
-                &ngl      ,gbuf%dt  ,epsp     ,uvarf    ,off      ,npg      ,&
-                &es1      ,es2      ,es3      ,es4      ,es5      ,es6      ,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
-                &el_temp  ,voln     ,dfmax    ,tdel     ,deltax   ,table    ,&
-                &ir       ,elbuf_tab(ng),ilay ,ntabl_fail,itabl_fail,lf_dammx,&
-                &niparam  ,iparamf  )
+                call fail_gene1_s(mat_elem%mat_param(imat)%fail(ir),&
+                 llt      ,nvarf    ,uvarf    ,nvartmp  ,vartmp   ,lbuf%off ,&
+                 tt       ,dt1      ,ipg      ,&
+                 ngl      ,gbuf%dt  ,epsp     ,off      ,npg      ,&
+                 es1      ,es2      ,es3      ,es4      ,es5      ,es6      ,&
+                 ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
+                 el_temp  ,voln     ,dfmax    ,tdel     ,deltax   ,table    ,&
+                 ir       ,elbuf_tab(ng),ilay ,ntabl_fail,itabl_fail,lf_dammx)
 !
               else if (irupt == 40) then
 !  --- rtcl failure model
@@ -2658,19 +2450,19 @@
               else if (irupt == 41) then
 !---- tabulated failure model version 2
                 call fail_tab2_s(&
-                &llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,&
-                &npf      ,table    ,tf       ,tt       ,uparamf,&
-                &ngl      ,el_len   ,dpla     ,epsp     ,uvarf    ,&
-                &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
-                &el_temp  ,off      ,dfmax    ,tdel     ,lbuf%dmgscl,&
-                &gbuf%uelr,ipg      ,npg      ,lbuf%off ,ntabl_fail,itabl_fail,&
-                  gbuf%noff,voln      )
+                 llt      ,nparam   ,nvarf    ,nfunc    ,ifunc    ,&
+                 npf      ,table    ,tf       ,tt       ,uparamf,  &
+                 ngl      ,el_len   ,dpla     ,epsp     ,uvarf    ,&
+                 ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,  &
+                 el_temp  ,off      ,dfmax    ,tdel     ,lbuf%dmgscl,          &
+                 gbuf%uelr,ipg      ,npg      ,lbuf%off ,ntabl_fail,itabl_fail,&
+                 gbuf%noff,voln     ,nvartmp  ,vartmp   )
 !
               else if (irupt == 42) then
 !---- inievo failure model
                 call fail_inievo_s(&
-                &llt      ,nparam   ,nvarf    ,&
-                &table    ,ntabl_fail,itabl_fail,tt       ,uparamf,&
+                &llt      ,nparam   ,nvarf    ,nvartmp  ,vartmp   ,&
+                &table    ,ntabl_fail,itabl_fail,tt     ,uparamf  ,&
                 &ngl      ,el_len   ,dpla     ,epsp     ,uvarf    ,&
                 &ss1      ,ss2      ,ss3      ,ss4      ,ss5      ,ss6      ,&
                 &el_pla   ,el_temp  ,sigy     ,off      ,dfmax    ,&
@@ -2830,7 +2622,7 @@
           if(ipartsph/=0)then
             do i=1,nel
               if(off(i) > zero .and. off(i) < one)then
-! replace solid w/sph within the same cycle.
+! replace solid with sph within the same cycle.
                 off(i)=zero
                 lbuf%sig(nel*(1-1) + i)  = zero
                 lbuf%sig(nel*(2-1) + i)  = zero

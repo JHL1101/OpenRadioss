@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    userin3     ../starter/source/elements/solid/solide/userin3.F
 !||--- called by ------------------------------------------------------
@@ -49,7 +50,7 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER IPM(NPROPMI,*)
-      INTEGER NIX, N, JPS,IUSER,NSIGS,IDEF,JHBE,IGTYP,L_SIGB,IMAT
+      INTEGER NIX, IUSER,NSIGS,IDEF,JHBE,IGTYP,L_SIGB,IMAT
       INTEGER IX(NIX,*), NSIGI, NUVAR,NEL,STRAGLOB(*),PT(*)
       INTEGER, INTENT(IN) :: L_PLA
 C     REAL
@@ -60,14 +61,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IIP,JPT, II, JJ, IPT, IPP,IUS,IPSU,IPS,
+      INTEGER I, II, JJ, IPP,IUS,IPSU,IPS,
      .        IFLAGINI,NVAR_TMP,IADB,NRATE
       my_real
      .   GAMA(6),TENS(6)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
-C-----------------------------------------------
-      INTEGER MA
 C-----------------------------------------------
       DO I=LFT,LLT                                                       
         IF (STRAGLOB(I) == 1 )THEN                                       
@@ -186,13 +185,11 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IIP,JPT, II, JJ
+      INTEGER I, II, JJ
       my_real
      .   GAMA(6),TENS(6)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
-C-----------------------------------------------
-      INTEGER MA
 C-----------------------------------------------
       DO I=LFT,LLT                                                       
         II=NFT+I

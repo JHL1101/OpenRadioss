@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    printime          ../engine/source/system/printime.F
 !||--- called by ------------------------------------------------------
@@ -39,11 +40,13 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    write_dpdb        ../common_source/tools/input_output/write_db.F
 !||--- uses       -----------------------------------------------------
 !||    inoutfile_mod     ../common_source/modules/inoutfile_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
 !||    output_mod        ../common_source/modules/output/output_mod.F90
+!||    sfem_mod          ../common_source/modules/elements/sfem_mod.F90
 !||    time_mod          ../engine/share/modules/time_mod.F
 !||    timer_mod         ../engine/source/system/timer_mod.F90
 !||====================================================================
-      SUBROUTINE PRINTIME(T,ITHERM,OUTPUT)
+      SUBROUTINE PRINTIME(T,ITHERM,OUTPUT,sfem)
 C     timers display routine
 C-----------------------------------------------
 C   M o d u l e s
@@ -52,9 +55,11 @@ C-----------------------------------------------
       USE TIME_MOD
       USE INOUTFILE_MOD
       USE OUTPUT_MOD
+      use sfem_mod , only : global_sfem_
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -64,6 +69,7 @@ C-----------------------------------------------
 #include        "com04_c.inc"
 #include        "scr05_c.inc"
 #include        "sms_c.inc"
+#include        "sphcom.inc"
 #include        "task_c.inc"
 #include        "timerc_c.inc"
 #include        "timeri_c.inc"
@@ -80,16 +86,14 @@ C-----------------------------------------------
       TYPE(TIMER_), INTENT(INOUT) :: T
       INTEGER ,INTENT(IN) :: ITHERM
       TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT
+      type(global_sfem_), intent(in) :: sfem !< global fem data
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, NPROC, MSGTAG, IRSIZE, J, IH, IM, IS
-      DOUBLE PRECISION  SECS, TOTAL, CUMUL(MAX_NB_TIMER),
-     .        AVERAGE(MAX_NB_TIMER), DEVIATION(MAX_NB_TIMER),
-     .        DMIN(MAX_NB_TIMER), DMAX(MAX_NB_TIMER),CUMUL_MAT,CUMUL_ELEM,
-     .        CUMUL_FAIL,ARRAY(NSPMD),X_MINVALUE,X_MAXVALUE,Y_MAXVALUE
+      DOUBLE PRECISION SECS, TOTAL, CUMUL(MAX_NB_TIMER), CUMUL_MAT, CUMUL_ELEM, CUMUL_FAIL, CUMUL_SPH
       INTEGER MEMUSE(NSPMD),MEM_L,MMIN,MMAX,MTOT,MAVR,
-     .        OUTSIZE,RFILESIZE,NB_INTERV
+     .        OUTSIZE,RFILESIZE
       INTEGER VMPEAK, VMSIZE,VMRSS,VMHWM, VMSTK,MEMSTAT(5,NSPMD),
      .        GOT_MEM_MAP
       CHARACTER(LEN=9) TITLES(MAX_NB_TIMER)
@@ -156,9 +160,9 @@ C nproc = number of domains, all SMP tasks count as one proc
 CC      NPROC = MAX(NTHREAD,NSPMD)
 CC smp nproc = ntask, spmd nproc = NSPMD
 
-      ALLOCATE(CPUTIME(MAX_NB_TIMER,NSPMD))
-      ALLOCATE(SYSTIME(MAX_NB_TIMER,NSPMD))
-      ALLOCATE(REALTIME(MAX_NB_TIMER,NSPMD))
+      call my_alloc(CPUTIME, MAX_NB_TIMER, NSPMD, "CPUTIME")
+      call my_alloc(SYSTIME, MAX_NB_TIMER, NSPMD, "SYSTIME")
+      call my_alloc(REALTIME, MAX_NB_TIMER, NSPMD, "REALTIME")
 
       DO I = 1, MAX_NB_TIMER
        ! copy local timers 
@@ -283,14 +287,14 @@ C
       WRITE(ISTDO,*)'                          ** CPU USER TIME **'
       WRITE(ISTDO,*)' '
 
-        CALL PRINT_SUMMARY(1,MAX_NB_TIMER,CPUTIME,TITLES,ISTDO,ITHERM) 
+        CALL PRINT_SUMMARY(1,MAX_NB_TIMER,CPUTIME,TITLES,ISTDO,ITHERM,sfem) 
 
       WRITE(IOUT,*)' '
       WRITE(IOUT,*)'                          ** CPU USER TIME **'
       WRITE(IOUT,*)' '
 
         
-        CALL PRINT_SUMMARY(1,MAX_NB_TIMER,CPUTIME,TITLES,IOUT,ITHERM) 
+        CALL PRINT_SUMMARY(1,MAX_NB_TIMER,CPUTIME,TITLES,IOUT,ITHERM,sfem) 
 
 
 
@@ -344,12 +348,13 @@ C---------------------------
          CUMUL(J) = CUMUL(J) + CPUTIME(J,I)
         ENDDO
       ENDDO
+      CUMUL_SPH = CUMUL(87) + CUMUL(88) + CUMUL(89)
       IF(IDTMINS==0.AND.IDTMINS_INT==0)THEN
         TOTAL = CUMUL(1)-CUMUL(2)-CUMUL(8)-CUMUL(3)-CUMUL(4)-CUMUL(5)
-     -                  -CUMUL(9)-CUMUL(MACRO_TIMER_ALEMAIN)
+     -       -CUMUL(9)-CUMUL(MACRO_TIMER_ALEMAIN)-CUMUL_SPH
       ELSE
         TOTAL = CUMUL(1)-CUMUL(2)-CUMUL(8)-CUMUL(3)-CUMUL(4)-CUMUL(5)
-     -                  -CUMUL(9)-CUMUL(39)-CUMUL(MACRO_TIMER_ALEMAIN) 
+     -       -CUMUL(9)-CUMUL(39)-CUMUL(MACRO_TIMER_ALEMAIN)-CUMUL_SPH
       END IF
       IF(CUMUL(1)<=ZERO)CUMUL(1)=EM10
 
@@ -383,7 +388,9 @@ C---------------------------
      + CUMUL(MACRO_TIMER_ALEMAIN),
      + 100*CUMUL(MACRO_TIMER_ALEMAIN)/CUMUL(1),' % '
       ENDIF
-
+      IF(NUMSPH>0) THEN
+      WRITE(ISTDO,'(A,E9.4,3x,F6.2,A)')' SPH..........................: ',CUMUL_SPH,100*CUMUL_SPH/CUMUL(1),' % '
+      ENDIF
       WRITE(ISTDO,'(A,E9.4,3x,F6.2,A)')' OTHERS (including I/O)......: ',
      +  TOTAL,100*TOTAL/CUMUL(1),' % '
       WRITE(ISTDO,'(A,E9.4,3x,F6.2,A)')' TOTAL.......................: ',
@@ -426,6 +433,10 @@ c     ENDIF
      +  CUMUL(MACRO_TIMER_ALEMAIN)
      +  ,100*CUMUL(MACRO_TIMER_ALEMAIN)/CUMUL(1),' % '
         ENDIF
+      IF(NUMSPH>0) THEN
+      WRITE(IOUT,'(A,E9.4,3x,F6.2,A)')' SPH..........................: ',
+     + CUMUL_SPH,100*CUMUL_SPH/CUMUL(1),' % '
+      ENDIF
       WRITE(IOUT,'(A,E9.4,3x,F6.2,A)')' OTHERS (including I/O)......: ',
      +  TOTAL,100*TOTAL/CUMUL(1),' % '
       WRITE(IOUT,'(A,E9.4,3x,F6.2,A)')' TOTAL.......................: ',
@@ -439,7 +450,7 @@ C
        WRITE(IOUT,*)'                          ** ELAPSED TIME **'    
        WRITE(IOUT,*)' '                                               
         
-        CALL PRINT_SUMMARY(2,MAX_NB_TIMER,REALTIME,TITLES,IOUT,ITHERM) 
+        CALL PRINT_SUMMARY(2,MAX_NB_TIMER,REALTIME,TITLES,IOUT,ITHERM,sfem) 
 
        IF(.FALSE.)THEN
         WRITE(IOUT,*)' '
@@ -650,12 +661,12 @@ C      SECS = SECS/CLOCKRATE
       WRITE(IOUT,6100)IH,IM,IS
       IF(NPROC>1.AND.SECS>ZERO)WRITE(IOUT,8000)CUMUL(1)/SECS
 
- 1000 FORMAT(' ** PROCESSOR NUMBER **',16(I8,5x,"%",2x))
- 2000 FORMAT(' #PROC  ','CONT.SORT  ','CONT. F   ','ELEMENT  ',
-     .       'KIN.COND.  ','INTEGR.','    I/O     ','TASK0     ',
-     .       'ASSEMB.   ','RESOL  ')
- 3000 FORMAT(' #PROC  ','FORCES    ','RBY.FOR.  ','RBY.VEL.  ',
-     .       'VELOCITIES','   TOTAL   ','% CPU')
+! 1000 FORMAT(' ** PROCESSOR NUMBER **',16(I8,5x,"%",2x))
+! 2000 FORMAT(' #PROC  ','CONT.SORT  ','CONT. F   ','ELEMENT  ',
+!     .       'KIN.COND.  ','INTEGR.','    I/O     ','TASK0     ',
+!     .       'ASSEMB.   ','RESOL  ')
+! 3000 FORMAT(' #PROC  ','FORCES    ','RBY.FOR.  ','RBY.VEL.  ',
+!     .       'VELOCITIES','   TOTAL   ','% CPU')
  5550 FORMAT(I4,3x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,
      +       1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,1x,E9.4,
      +       1x,E9.4,1x,E9.4)

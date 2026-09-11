@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_a_sol2sph   ../engine/source/mpi/elements/spmd_sph.F
 !||--- called by ------------------------------------------------------
 !||    splissv               ../engine/source/elements/sph/splissv.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait             ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -195,7 +195,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sptrivox        ../engine/source/elements/sph/sptrivox.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait       ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    message_mod     ../engine/share/message_module/message_mod.F
 !||    sphbox          ../engine/share/modules/sphbox.F
@@ -293,7 +292,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sphprep           ../engine/source/elements/sph/sphprep.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait         ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox            ../engine/share/modules/sphbox.F
 !||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
@@ -370,7 +368,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sphprep        ../engine/source/elements/sph/sphprep.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -478,7 +475,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    forintp        ../engine/source/elements/forintp.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -710,7 +706,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    forintp          ../engine/source/elements/forintp.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait        ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox           ../engine/share/modules/sphbox.F
 !||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
@@ -813,7 +808,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sponfv         ../engine/source/elements/sph/sponfv.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -926,7 +920,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    splissv        ../engine/source/elements/sph/splissv.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -1042,7 +1035,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    spclasv        ../engine/source/elements/sph/spclasv.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -1189,7 +1181,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    forintp        ../engine/source/elements/forintp.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -1292,7 +1283,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    forintp        ../engine/source/elements/forintp.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox         ../engine/share/modules/sphbox.F
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
@@ -1490,7 +1480,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    forintp         ../engine/source/elements/forintp.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait       ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox          ../engine/share/modules/sphbox.F
 !||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
@@ -1617,7 +1606,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sponof2               ../engine/source/elements/sph/sponof2.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait             ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox                ../engine/share/modules/sphbox.F
 !||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
@@ -1823,7 +1811,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    sponof2          ../engine/source/elements/sph/sponof2.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait        ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    sphbox           ../engine/share/modules/sphbox.F
 !||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
@@ -1913,16 +1900,17 @@ C
       END
 C
 !||====================================================================
-!||    spmd_sphgetd   ../engine/source/mpi/elements/spmd_sph.F
+!||    spmd_sphgetd     ../engine/source/mpi/elements/spmd_sph.F
 !||--- called by ------------------------------------------------------
-!||    sponfv         ../engine/source/elements/sph/sponfv.F
+!||    sponfv           ../engine/source/elements/sph/sponfv.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    weight0        ../engine/source/elements/sph/weight.F
-!||    weight1        ../engine/source/elements/sph/weight.F
+!||    weight0          ../engine/source/elements/sph/weight.F
+!||    weight1          ../engine/source/elements/sph/weight.F
 !||--- uses       -----------------------------------------------------
-!||    sphbox         ../engine/share/modules/sphbox.F
-!||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    sphbox           ../engine/share/modules/sphbox.F
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_SPHGETD(KXSP,IXSP,ISPHIO,X,WASPACT,NOD2SP,
      .                        SPBUF,V,A,ASPHR,DSPHR)
@@ -1934,6 +1922,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -1974,25 +1964,22 @@ C-----------------------------------------------
      .                                   REC_IPPV,SEND_IPPV,SEND_IPPV2
 
       INTEGER 
-     .        
      .        NS,
      .        IPPV,J,M,JNOD,IMPOSE,JMPOSE,
-     . NP,K,JMPOSE2,IPPVR,INDICE
-     .        IDEB2, C, INDICE, IDEB2,N1, SIZ,INDICE1,
+     .        NP,K,JMPOSE2,IPPVR,
+     .        CC, INDICE, IDEB2,N1, SIZ,INDICE1,
      .        NBIS,MSGOFF,MSGOFF2,MSGOFF3
 
        my_real
      .        BUFS(12,NSPHS), BUFR(12,NSPHR)
        my_real
      .       VX,VY,VZ,
-     .       
      .       XI,YI,ZI,XJ,YJ,ZJ,DMIN,DD,
      .       DI,RHOI,DJ,RHOJ,DIJ,
      .       VXJ,VYJ,VZJ,
      .       VJ,VJX,VJY,VJZ,
      .       WGHT,WGRAD(3),WGRDX,WGRDY,WGRDZ,
      .       DXX,DXY,DXZ,DYX,DYY,DYZ,DZX,DZY,DZZ,
-     .       
      .       ALPHAI,ALPHAXI,ALPHAYI,ALPHAZI,ALPHAI2,XP,YP,ZP  
        LOGICAL :: CONDITION
        DATA MSGOFF /2020/
@@ -2004,9 +1991,14 @@ C-----------------------------------------------
 c get DX* and V* values, store in DSPHR
 c use in sponfv
 
-      ALLOCATE(TMP_IPPV(3,NSPHR),CPT_TMP(NSPMD))
-      ALLOCATE(MYPSPHS(NSPMD+1),MYPSPHS2(NSPMD+1),MYPSPHR(NSPMD+1))
-      ALLOCATE(SEND_IPPV(NSPHR),SEND_IPPV2(NSPHR),REC_IPPV(NSPHS))
+      call my_alloc(TMP_IPPV, 3, NSPHR, "TMP_IPPV")
+      call my_alloc(CPT_TMP, NSPMD, "CPT_TMP")
+      call my_alloc(MYPSPHS, NSPMD+1, "MYPSPHS")
+      call my_alloc(MYPSPHS2, NSPMD+1, "MYPSPHS2")
+      call my_alloc(MYPSPHR, NSPMD+1, "MYPSPHR")
+      call my_alloc(SEND_IPPV, NSPHR, "SEND_IPPV")
+      call my_alloc(SEND_IPPV2, NSPHR, "SEND_IPPV2")
+      call my_alloc(REC_IPPV, NSPHS, "REC_IPPV")
 
       TMP_IPPV(1:3,1:NSPHR) = 0
       MYPSPHS(1:NSPMD+1)=0 
@@ -2182,8 +2174,8 @@ C
 c treatment
         IF(MYPSPHR(P)/=0)THEN
           DO N = 1, MYPSPHR(P)
-            C = REC_IPPV(IDEB2+N)
-            ICELL = LSPHS(C+IDEB)
+            CC = REC_IPPV(IDEB2+N)
+            ICELL = LSPHS(CC+IDEB)
             INOD = KXSP(3,ICELL)
             NP=ICELL
             XP=X(1,INOD)
@@ -2403,8 +2395,14 @@ C
 C  
 c      ENDIF !ENDIF IPPVR > 0
       
-      DEALLOCATE(TMP_IPPV,MYPSPHS,MYPSPHS2,MYPSPHR)
-      DEALLOCATE(SEND_IPPV,SEND_IPPV2,REC_IPPV,CPT_TMP)
+      call my_dealloc(TMP_IPPV)
+      call my_dealloc(MYPSPHS)
+      call my_dealloc(MYPSPHS2)
+      call my_dealloc(MYPSPHR)
+      call my_dealloc(SEND_IPPV)
+      call my_dealloc(SEND_IPPV2)
+      call my_dealloc(REC_IPPV)
+      call my_dealloc(CPT_TMP)
 
 #endif
       RETURN

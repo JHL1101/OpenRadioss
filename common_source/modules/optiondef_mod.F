@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    optiondef_mod                   ../common_source/modules/optiondef_mod.F
 !||--- called by ------------------------------------------------------
@@ -86,10 +87,13 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    st_qaprint_model_tools          ../starter/source/output/qaprint/st_qaprint_model_tools.F
 !||--- uses       -----------------------------------------------------
 !||    names_and_titles_mod            ../common_source/modules/names_and_titles_mod.F
+!||    precision_mod                   ../common_source/modules/precision_mod.F90
 !||====================================================================
       MODULE OPTIONDEF_MOD
 !-----------------------------------------------------------------------
         USE NAMES_AND_TITLES_MOD, ONLY: NCHARTITLE
+        USE PRECISION_MOD, ONLY: WP
+        PRIVATE WP
 !-----------------------------------------------------------------------
 #include "my_real.inc"
 !-----------------------------------------------------------------------
@@ -121,6 +125,16 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
           my_real   :: RPMAS ! ADMAS added to PARTS (or NODES)
         END TYPE PART_
 !--------------
+        !--------------
+        TYPE NODE_
+          REAL(KIND=WP) :: MASS    ! mass value for a node
+          REAL(KIND=WP) :: IXX     ! xx component of added inertia tensor for a node
+          REAL(KIND=WP) :: IYY     ! yy component of added inertia tensor for a node
+          REAL(KIND=WP) :: IZZ     ! zz component of added inertia tensor for a node
+          REAL(KIND=WP) :: IXY     ! xy component of added inertia tensor for a node
+          REAL(KIND=WP) :: IXZ     ! xz component of added inertia tensor for a node
+          REAL(KIND=WP) :: IYZ     ! yz component of added inertia tensor for a node
+        END TYPE NODE_
         TYPE ADMAS_
           INTEGER   :: ID ! - ADMAS IDENTIFIER
           CHARACTER(LEN=NCHARTITLE) :: TITLE ! ADMAS title
@@ -134,6 +148,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !                    = 5 ! Mass is added to each single node
 !                    = 6 ! Additional mass distributed on each single part
 !                    = 7 ! Final mass distributed on each single part
+!                    = 10 ! Inertia is added to each node of node group
+!                    = 15 ! Inertia is added to each single node
           INTEGER   :: WEIGHT_FLAG  ! Flag to switch between area weighted distribution and volume
 !                                   weighted distribution of the added mass to parts)
 !                    = 0 ! Volume weighted distribution (shell and solid parts) (default)
@@ -141,6 +157,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
           INTEGER   :: NPART ! NUMBER of parts to get ADMAS
           INTEGER, DIMENSION(:),ALLOCATABLE :: PARTID ! PART_ID to get ADMAS
           TYPE (PART_) ,DIMENSION(:) ,ALLOCATABLE :: PART  ! PARTS get ADMAS
+!
+          INTEGER :: NBNOD ! NUMBER of nodes to get ADMAS
+          INTEGER :: GRNODID ! node group id for ADMAS type 0,1,10
+          INTEGER, DIMENSION(:) ,ALLOCATABLE :: NODEID ! node ids list to add INERTIA
+          TYPE (NODE_) , DIMENSION(:) ,ALLOCATABLE :: NODE  ! node to store inertia/mass values for /admas type 10 and 15
         END TYPE ADMAS_
 !-----------------------------------------------------------------------
 !--------------

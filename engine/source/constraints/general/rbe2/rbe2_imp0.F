@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rbe2_imp0    ../engine/source/constraints/general/rbe2/rbe2_imp0.F
 !||--- called by ------------------------------------------------------
@@ -55,8 +56,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, M, NS ,NML, IAD,JJ,IROT,IADS,MAX_M,
-     .        JT(3,NRBE2),JR(3,NRBE2),NM,NN,NSJ,IADJ,NSN,ISK,IC,IRAD
+      INTEGER N, M, IAD,
+     .        JT(3,NRBE2),JR(3,NRBE2),NSJ,IADJ,NSN,ISK,IC,IRAD
 C     REAL
 C-----------------------------------------------
       CALL PRERBE2(IRBE2 ,JT  ,JR   )
@@ -120,8 +121,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, M, NS ,NML, IAD,JJ,IROT,IADS,IC,
-     .        JT(3,NRBE2),JR(3,NRBE2),NM,NN,NSN,IADJ,ISK,IRAD
+      INTEGER J, N, M, IAD,IC,
+     .        JT(3,NRBE2),JR(3,NRBE2),NSN,IADJ,ISK,IRAD
 C     REAL
 C-----------------------------------------------
       CALL PRERBE2(IRBE2 ,JT  ,JR   )
@@ -196,12 +197,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NIR, I, J, J1, J2, J3, J4, K, JD, II, L, JJ,
-     .        I1,ID,NL,NI,NJ,NIDOF,ND,NDI,NDJ,NDM,NM,L1,NM1,
-     .        NIR1,IR,IP,ISTIF,IMD,N,NTDOF
+      INTEGER I, J, J1, K,
+     .        I1,ID,NI,NIDOF,ND,NDM,
+     .        IR,IP,ISTIF,IMD,N,NTDOF
 C     REAL
       my_real
-     .   KDD(6,6),BD(6),XS,YS,ZS,TMP
+     .   KDD(6,6),BD(6),XS,YS,ZS
 C------------------------------------
 C     velocities of the secondary nodes
 C------------------------------------
@@ -336,12 +337,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NIR, I, J, J1, J2, J3, J4, K, JD, II, L, JJ,
-     .        I1,ID,NL,NI,NJ,NIDOF,ND,NDI,NDJ,NDM,NM,L1,NM1,
-     .        NIR1,IR,IP,ISTIF,IMD,N,NT,NR,IC,JT1(3),JR1(3)
+      INTEGER I, J, J1, K,
+     .        I1,ID,NI,NIDOF,ND,
+     .        IR,IP,IMD,N,NT,NR,IC,JT1(3),JR1(3)
 C     REAL
       my_real
-     .   KDD(6,6),BD(6),XS,YS,ZS,TMP,CDT(3,3),CDTR(3,3),CDR(3,3)
+     .   KDD(6,6),XS,YS,ZS,CDT(3,3),CDTR(3,3),CDR(3,3)
 C------------------------------------
 C     velocities of the secondary nodes
 C------------------------------------
@@ -481,8 +482,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, M, NS ,NML, IAD,JJ,IROT,IADS,
-     .        JT(3,NRBE2),JR(3,NRBE2),NSN,NSJ,ISK
+      INTEGER N, M, IAD,
+     .        JT(3,NRBE2),JR(3,NRBE2),NSN,ISK
 C     REAL
 C-----------------------------------------------
       CALL PRERBE2(IRBE2 ,JT  ,JR   )
@@ -527,7 +528,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ISK, I, N, J,NI,NJ,J1,K,L,ID,JD,ND,IMD,NIDOF
+      INTEGER I, N, K,ID,ND
 C     REAL
       my_real
      .   XS,YS,ZS,BD(6)
@@ -608,11 +609,11 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ISK, I, N, J,NI,NJ,J1,K,L,ID,JD,ND,IMD,NDS,
-     .        IT,IR,IC,JT1(3),JR1(3)
+      INTEGER I, N, K,L,ID,ND,
+     .        IR,IC,JT1(3),JR1(3)
 C     REAL
       my_real
-     .   XS,YS,ZS,LXS,LYS,LZS,BD(6),BDL(6),BB(3),BM(3),
+     .   XS,YS,ZS,BD(6),BB(3),BM(3),
      .   CDT(3,3),CDTR(3,3),CDR(3,3)
 C------------------------------------
 C     velocities of the secondary nodes
@@ -695,7 +696,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J,K,L
+      INTEGER I, J
         DO I=1,ND
          DO J=1,ND
           KDD(I,J)=KDD(I,J)+KDD(J,I)
@@ -730,7 +731,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J,ICT
+      INTEGER ICT
 C------------------------KT=QtJTQ-----------------------
       ICT = JT(1)*100+JT(2)*10+JT(3)
       CALL CDI_BCN(ICT   ,SKEW  ,JT   ,KT  ,JT1 )
@@ -758,7 +759,7 @@ C-----------------------------------------------
       INTEGER NI,NJ
 C     REAL
       my_real
-     .    XS,YS,ZS, KDD(6,6),CDT(3,3),CDR(3,3),CDTR(3,3)
+     .    KDD(6,6),CDT(3,3),CDR(3,3),CDTR(3,3)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -821,7 +822,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J,L
+      INTEGER I, J
 C     REAL
       my_real
      .   K(6,6)
@@ -876,7 +877,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L,ND
+      INTEGER J,K,J1,ND
       my_real
      .   EJ(3),EJ1(3),S,EA,EB
 C----------------100-------------------------
@@ -1022,7 +1023,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,J1,L,ND
+      INTEGER I,J,K,J1
       my_real
      .   EJ(3),EJ1(3),S,EA,EB
 C-------JT1 presente the real consentration dof----------------------
@@ -1177,7 +1178,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,J1,L,NS,ND,NR
+      INTEGER I,J,K,J1,NS,ND,NR
       my_real
      .   EJ(3),EJ1(3),S,EA,EB
 C----------------100-------------------------
@@ -1334,8 +1335,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,ND,J1,K1,L1,ID,SHF,JFT,KFT,LFT,NL,NJ,
-     .        IT(6),KK,IDJ,IDL,JJ,SHL
+      INTEGER I,ND,J1,K1,L1,SHF,JFT,KFT,LFT,NL,NJ,
+     .        IDJ,IDL,JJ,SHL
       my_real
      .   KDD(6,6),KII(6,6)
 C------------K :free; J,L to be condentrated----------------------
@@ -1459,7 +1460,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,J1,L,ND,ICT
+      INTEGER I,J,K,J1,ICT
       my_real
      .   EJ(3),EJ1(3),S,XL,YL,ZL,VQ(3,3),KK(3,3),SA,SB
 C-------JT1 presente the real consentration dof----------------------
@@ -1660,12 +1661,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NIR, I, J, J1, J2, J3, J4, K, JD, II, L, JJ,
-     .        I1,ID,NL,NI,NJ,NIDOF,ND,NDI,NDJ,NDM,NM,L1,NM1,
-     .        NIR1,IR,IP,ISTIF,IMD,N,NT,NR,IC,JT1(3),JR1(3)
+      INTEGER J, K,
+     .        I1,ND,
+     .        N,NT,NR,IC,JT1(3),JR1(3)
 C     REAL
       my_real
-     .   XS,YS,ZS,TMP,CDT(3,3),CDTR(3,3),CDR(3,3),SKEW(LSKEW),
+     .   XS,YS,ZS,CDT(3,3),CDTR(3,3),CDR(3,3),SKEW(LSKEW),
      .   KII(6,6)
 C------------------------------------
 C     velocities of the secondary nodes
@@ -1756,9 +1757,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, J1, J2, J3, J4, K, JD, II, L, JJ,
-     .        ND,NDI,NDJ,NDM,NM,L1,NM1,
-     .        IMD,N,NT,NR,IC,JT1(3),JR1(3),NDOFI
+      INTEGER J, K,
+     .        ND,
+     .        N,JT1(3),JR1(3),NDOFI
 C     REAL
       my_real
      .   XS,YS,ZS,CDT(3,3),CDTR(3,3),CDR(3,3),SKEW(LSKEW),

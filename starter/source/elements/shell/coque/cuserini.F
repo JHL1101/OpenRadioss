@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cuserini       ../starter/source/elements/shell/coque/cuserini.F
 !||--- called by ------------------------------------------------------
@@ -51,7 +52,7 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER JFT,JLT,NUMEL,NIX,NFT,NPT,ISTRAIN,IR,IS,NLAY,NSIGSH,
-     .   NEL,NUMSH,ILAW
+     .   NEL,NUMSH
       INTEGER IX(NIX,*),PTSH(*)
       my_real
      .   SIGSH(NSIGSH,*)
@@ -59,9 +60,8 @@ C-----------------------------------------------
 C------------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,II,JJ,KK,N,NPTI,NU,NIP,NUVAR,NVARS,NPG,IPT,
+      INTEGER I,J,II,JJ,KK,N,NU,NIP,NUVAR,NVARS,NPG,IPT,
      .        IPT_ALL,IT,ILAY,NPTT,L_SIGB
-      TYPE(L_BUFEL_)  ,POINTER :: LBUF     
       TYPE(BUF_LAY_)  ,POINTER :: BUFLY     
       my_real, DIMENSION(:), POINTER :: UVAR,SIGA,SIGB,SIGC
 C=======================================================================

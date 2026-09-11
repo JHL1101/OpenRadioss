@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22mainf           ../engine/source/interfaces/int22/i22mainf.F
 !||--- called by ------------------------------------------------------
@@ -41,6 +42,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i22tri_mod         ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    intbufdef_mod      ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod        ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod         ../common_source/modules/output/output_mod.F90
 !||    timer_mod          ../engine/source/system/timer_mod.F90
 !||====================================================================
@@ -81,6 +84,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -258,8 +263,8 @@ C
 c------------------------------------------------
       CALL MY_BARRIER()
       IF(JTASK==1)THEN
-       ALLOCATE(SURF(3,NRTMDIM))
-       ALLOCATE(PRES(NRTMDIM))
+       call my_alloc(SURF, 3, NRTMDIM, "SURF")
+       call my_alloc(PRES, NRTMDIM, "PRES")
        DO I = 1, NRTM
          PRES(I)   = ZERO
          SURF(1,I) = ZERO
@@ -289,7 +294,7 @@ C
           ENDIF
         ENDDO
         IF (SFSAVPARIT /= 0) THEN
-          ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK),STAT=IERROR)
+          call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .           C1='(/INTER/TYPE22)')
@@ -303,7 +308,7 @@ C
             ENDDO
           ENDDO
         ELSE
-          ALLOCATE(FSAVPARIT(0,0,0),STAT=IERROR)
+          call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .           C1='(/INTER/TYPE22)')
@@ -407,7 +412,7 @@ c
           CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK,
      .        FBSAV6, 12, 6, DIMFB, ISENSINT )
       ENDIF
-      IF (ALLOCATED(FSAVPARIT)) DEALLOCATE (FSAVPARIT)
+      IF (ALLOCATED(FSAVPARIT)) call my_dealloc(FSAVPARIT)
 C
       IF(INACTI==7.AND.IBAG/=0)THEN                         
         CALL MY_BARRIER()                                     
@@ -424,8 +429,8 @@ C
       CALL MY_BARRIER()  
                 
       IF(JTASK == 1) THEN
-        IF(ALLOCATED(SURF))DEALLOCATE(SURF)
-        IF(ALLOCATED(PRES))DEALLOCATE(PRES)        
+        IF(ALLOCATED(SURF)) call my_dealloc(SURF)
+        IF(ALLOCATED(PRES)) call my_dealloc(PRES)
       ENDIF
 
 C

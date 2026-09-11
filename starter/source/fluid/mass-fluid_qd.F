@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mass_fluid_qd   ../starter/source/fluid/mass-fluid_qd.F
 !||--- called by ------------------------------------------------------
@@ -42,6 +43,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -88,7 +90,7 @@ C Collocation BEM
       WI(2,2)=THIRD
       WI(3,2)=ONE_OVER_6
       WI(4,2)=ONE_OVER_6
-      ALLOCATE(BBEM(NEL,NEL), STAT = AERR)
+      call my_alloc(BBEM, NEL, NEL, "BBEM", stat=AERR)
       IF (AERR /= 0) THEN
          CALL ANCMSG(MSGID = 1710, ANMODE=ANINFO, MSGTYPE = MSGERROR) 
       ENDIF
@@ -345,7 +347,7 @@ C---------------------------------------------------
 C 2- Compute fluid mass matrix MFLE
 C---------------------------------------------------
       IF (ILVOUT>=1) WRITE(ISTDO,'(A)') ' .. FLUID MASS MATRIX'
-      ALLOCATE(EBEM(NEL,NEL), STAT = AERR)
+      call my_alloc(EBEM, NEL, NEL, "EBEM", stat=AERR)
       IF (AERR /= 0) THEN
          CALL ANCMSG(MSGID = 1710, ANMODE=ANINFO, MSGTYPE = MSGERROR) 
       ENDIF
@@ -467,8 +469,8 @@ C
            ENDDO
         ENDDO
       ENDIF
-      IF (ALLOCATED(BBEM)) DEALLOCATE(BBEM)
-      IF (ALLOCATED(EBEM))DEALLOCATE(EBEM)    
+      IF (ALLOCATED(BBEM)) CALL MY_DEALLOC(BBEM)
+      IF (ALLOCATED(EBEM))CALL MY_DEALLOC(EBEM)
             
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_node_from_element        ../starter/source/model/sets/create_node_from_element.F
 !||--- called by ------------------------------------------------------
@@ -45,6 +46,7 @@ C-----------------------------------------------
       USE SETDEF_MOD
       USE TAG_NODE_FROM_PART_SPHCEL_MOD
       use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -77,9 +79,9 @@ C-----------------------------------------------
       INTEGER IEXT,ELTYP,NOD
 C=======================================================================
 !
-      ALLOCATE(TAGNOD(NUMNOD))
+      call my_alloc(TAGNOD, NUMNOD, "TAGNOD")
       TAGNOD(:) = 0
-      ALLOCATE(CLAUSE_NODE(NUMNOD))
+      call my_alloc(CLAUSE_NODE, NUMNOD, "CLAUSE_NODE")
 
       IND=0
 !
@@ -194,16 +196,16 @@ C=======================================================================
 C-----------
       LIMIT = NUMNOD/2
       IF (IND < LIMIT)THEN                                  ! cheaper to use Order on small node groups
-        ALLOCATE(IDX(2*IND))
-        ALLOCATE(SORT(IND))
+        call my_alloc(IDX, 2*IND, "IDX")
+        call my_alloc(SORT, IND, "SORT")
         SORT(1:IND) = CLAUSE_NODE(1:IND)
         CALL MY_ORDERS(0,IWORK,SORT,IDX,IND,1)
 
         DO I=1,IND
           CLAUSE_NODE(I) = SORT(IDX(I))
         ENDDO
-        DEALLOCATE(IDX)
-        DEALLOCATE(SORT)
+        CALL MY_DEALLOC(IDX)
+        CALL MY_DEALLOC(SORT)
       ELSE
        IND = 0
        DO I=1,NUMNOD
@@ -225,13 +227,13 @@ C-----------
         ! clause node allocation
         SZ=0
         CLAUSE%NB_NODE = IND
-        IF(ALLOCATED( CLAUSE%NODE )) DEALLOCATE( CLAUSE%NODE )
-        ALLOCATE( CLAUSE%NODE(IND) )
+        IF(ALLOCATED( CLAUSE%NODE )) CALL MY_DEALLOC(CLAUSE%NODE)
+        call my_alloc(CLAUSE%NODE, IND, "CLAUSE%NODE")
         CLAUSE%NODE(1:IND) = CLAUSE_NODE(1:IND)
       ENDIF
 C-----------
-      DEALLOCATE(TAGNOD)
-      DEALLOCATE(CLAUSE_NODE)
+      CALL MY_DEALLOC(TAGNOD)
+      CALL MY_DEALLOC(CLAUSE_NODE)
 C-----------
       RETURN
       END

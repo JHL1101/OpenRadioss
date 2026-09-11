@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_i18kine_msf_com_poff   ../engine/source/mpi/interfaces/spmd_i18kine_msf_com_poff.F
 !||--- called by ------------------------------------------------------
 !||    i18main_kine_1              ../engine/source/interfaces/int18/i18main_kine.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod         ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod                    ../engine/source/mpi/spmd_mod.F90
 !||    tri7box                     ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_I18KINE_MSF_COM_POFF(MTF,IAD_ELEM,FR_ELEM,ITAB)
@@ -37,7 +38,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -77,9 +78,8 @@ C Preparation of recv
         SIZ = (IAD_ELEM(1,P+1)-IAD_ELEM(1,P))*9
         IF(SIZ/=0)THEN
           MSGTYP = MSGOFF 
-          CALL MPI_IRECV(
-     S      BBUFR(L),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_RI(P),IERROR)
+          CALL SPMD_IRECV(
+     S      BBUFR(L:L+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_RI(P))
             L = L + SIZ
         ENDIF
       END DO
@@ -111,9 +111,8 @@ C
           MSGTYP = MSGOFF 
           SIZ = IADS(1+P)-IADS(P)
           L = IADS(P)
-          CALL MPI_ISEND(
-     S      BBUFS(L),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_SI(P),IERROR)
+          CALL SPMD_ISEND(
+     S      BBUFS(L:L+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,REQ_SI(P))
        ENDIF
       ENDDO
 
@@ -124,7 +123,7 @@ C Recv
 C   test if msg requires to send to complete by test interface
         NB = IAD_ELEM(1,P+1)-IAD_ELEM(1,P)
         IF(NB>0)THEN
-          CALL MPI_WAIT(REQ_RI(P),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_RI(P),STATUS)
           L=IADR(P)
           DO J=IAD_ELEM(1,P),IAD_ELEM(1,P+1)-1
               NOD = FR_ELEM(J)
@@ -145,7 +144,7 @@ C End of send
       DO P = 1, NSPMD
           SIZ=IADS(P+1)-IADS(P)
           IF(SIZ>0) THEN
-            CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+            CALL SPMD_WAIT(REQ_SI(P),STATUS)
           ENDIF
       ENDDO
 

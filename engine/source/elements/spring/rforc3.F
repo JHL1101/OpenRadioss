@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rforc3              ../engine/source/elements/spring/rforc3.F
 !||--- called by ------------------------------------------------------
@@ -78,6 +79,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    h3d_mod             ../engine/share/modules/h3d_mod.F
 !||    message_mod         ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    preload_axial_mod   ../engine/source/elements/spring/preload_axial.F90
 !||    python_funct_mod    ../common_source/modules/python_mod.F90
 !||    sensor_mod          ../common_source/modules/sensor_mod.F90
@@ -101,7 +104,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      F   ITASK,     H3D_DATA,  JSMS,      NFT,
      G   IAD,       IGRE,      PRELD1,    STF_F,
      H   STF,       SANIN,     IRESP,     IMPL_S,
-     I   IDYNA,     SNPC)
+     I   IDYNA,     SNPC,      FLG_SPR_DT)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -116,6 +119,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -146,6 +151,7 @@ C-----------------------------------------------
       INTEGER IXR(NIXR,*), NPF(SNPC),IADR(3,*),IPARTR(*),
      .        IGEO(NPROPGI,*),JFT,JLT,NELTST ,ITYPTST,OFFSET,
      .        NEL,MTN,GRTH(*),IGRTH(*),FLG_KJ2,ITASK
+      INTEGER, INTENT(INOUT) ::  FLG_SPR_DT
       INTEGER, INTENT(IN) :: JSMS
       my_real DT2T ,
      .   GEO(NPROPG,*),X(*),F(*),TF(STF),SKEW(LSKEW,*),FSKY(*),
@@ -508,7 +514,8 @@ C
      3   MS,       IN,       MSRT,     DMELRT,
      4   GBUF%G_DT,GBUF%DT,  NGL,      XCR,
      5   XIN,      XM,       XKM,      XCM,
-     6   XKR,      NC1,      NC2,      JSMS)
+     6   XKR,      NC1,      NC2,      JSMS,
+     7   NEL,      GBUF%RBODY_NODE,    FLG_SPR_DT)
         CALL RBILAN(
      1   GBUF%EINT,PARTSAV,  IXR,      GEO,
      2   V,        IPARTR,   BID,      GRESAV,
@@ -531,7 +538,8 @@ C
      8   X2,             Y2,             Z2,             IEQUIL,
      9   EXX,            EYX,            EZX,            EXY,
      A   EYY,            EZY,            EXZ,            EYZ,
-     B   EZZ,            NC1,            NC2,            NEL)
+     B   EZZ,            NC1,            NC2,            NEL,
+     C   MTN )
         ELSE
           CALL R2CUM3P(
      1   GBUF%FOR(II(1)),GBUF%FOR(II(2)),GBUF%FOR(II(3)),GBUF%MOM(II(1)),
@@ -544,7 +552,7 @@ C
      8   Y2,             Z2,             IEQUIL,         EXX,
      9   EYX,            EZX,            EXY,            EYY,
      A   EZY,            EXZ,            EYZ,            EZZ,
-     B   NEL,            NFT)
+     B   NEL,            NFT,            MTN  )
         ENDIF
 C=======================================================================
       ELSEIF (IGTYP == 12) THEN
@@ -692,7 +700,8 @@ C
      3   MS,       IN,       MSRT,     DMELRT,
      4   GBUF%G_DT,GBUF%DT,  NGL,      XCR,
      5   XIN,      XM,       XKM,      XCM,
-     6   XKR,      NC1,      NC2,      JSMS)
+     6   XKR,      NC1,      NC2,      JSMS,
+     7   NEL,      GBUF%RBODY_NODE,    FLG_SPR_DT)
         CALL RBILAN(
      1   GBUF%EINT,         PARTSAV,           IXR,               GEO,
      2   V,                 IPARTR,            GBUF%LENGTH(II(1)),GRESAV,
@@ -813,7 +822,8 @@ C
      3   MS,       IN,       MSRT,     DMELRT,
      4   GBUF%G_DT,GBUF%DT,  NGL,      XCR,
      5   XIN,      XM,       XKM,      XCM,
-     6   XKR,      NC1,      NC2,      JSMS)
+     6   XKR,      NC1,      NC2,      JSMS,
+     7   NEL,      GBUF%RBODY_NODE,    FLG_SPR_DT)
         CALL RBILAN(
      1   GBUF%EINT,         PARTSAV,           IXR,               GEO,
      2   V,                 IPARTR,            GBUF%LENGTH(II(1)),GRESAV,
@@ -870,10 +880,10 @@ C=======================================================================
      9   NC2,      NEL)
 
         CALL R5DEF3(
-     1   AL,                    GBUF%V_REPCVT(II(1):), GBUF%V_REPCVT(II(2):), GBUF%V_REPCVT(II(3):),
-     2   GBUF%VR_REPCVT(II(1):),GBUF%VR_REPCVT(II(2):),GBUF%VR_REPCVT(II(3):), FR_WAVE,
-     3   FR_W_E,                GBUF%EINT,             GBUF%FOR(II(1):),      GBUF%MOM(II(1):),
-     4   GBUF%MOM(II(2):),      GBUF%MOM(II(3):),      GBUF%FOR(II(2):),      GBUF%FOR(II(3):),
+     1   AL,                    GBUF%V_REPCVT(II(1)), GBUF%V_REPCVT(II(2)), GBUF%V_REPCVT(II(3)),
+     2   GBUF%VR_REPCVT(II(1)),GBUF%VR_REPCVT(II(2)),GBUF%VR_REPCVT(II(3)), FR_WAVE,
+     3   FR_W_E,                GBUF%EINT,             GBUF%FOR(II(1)),      GBUF%MOM(II(1)),
+     4   GBUF%MOM(II(2)),      GBUF%MOM(II(3)),      GBUF%FOR(II(2)),      GBUF%FOR(II(3)),
      5   PARTSAV,               IPARTR,                EXX,                   EYX,
      6   EZX,                   EXY,                   EYY,                   EZY,
      7   EXZ,                   EYZ,                   EZZ,                   RX1,
@@ -908,7 +918,7 @@ C
              USER_VR_REPCVTY(I) = GBUF%VR_REPCVT(II(2)+I-1)
              USER_VR_REPCVTZ(I) = GBUF%VR_REPCVT(II(3)+I-1)
           ENDDO
-          ALLOCATE(USER_UVAR(NUVAR*NEL))
+          call my_alloc(USER_UVAR, NUVAR*NEL, "USER_UVAR")
           USER_UVAR(1:NUVAR*NEL)=GBUF%VAR(1:NUVAR*NEL)
         ENDIF
 
@@ -992,7 +1002,7 @@ C
              GBUF%VR_REPCVT(II(3)+I-1) = USER_VR_REPCVTZ(I)
           ENDDO
           GBUF%VAR(1:NUVAR*NEL) = USER_UVAR(1:NUVAR*NEL)
-          DEALLOCATE(USER_UVAR)
+          call my_dealloc(USER_UVAR)
         ENDIF
 C
         DO I=JFT,JLT
@@ -1152,7 +1162,6 @@ C=======================================================================
 C
         NUVAR  = NINT(GEO(25,I0))
                  IF (IGTYP == 45) FLG_KJ2 = 1
-C
         CALL RGJOINT(
      1   JFT,                JLT,                IPARTR,             NEL,
      2   NUVAR,              IOUT,               I0,                 IADR,

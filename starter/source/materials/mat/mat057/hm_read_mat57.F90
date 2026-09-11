@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat57_mod   ../starter/source/materials/mat/mat057/hm_read_mat57.F90
 !||--- called by ------------------------------------------------------
@@ -68,6 +69,7 @@
           use func_table_copy_mod
           use table_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                 implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -224,8 +226,8 @@
           end if
 !
           !< Allocation of material parameters tables
-          allocate(matparam%iparam(matparam%niparam))
-          allocate(matparam%uparam(matparam%nuparam))
+          call my_alloc(matparam%iparam,matparam%niparam,"matparam%iparam")
+          call my_alloc(matparam%uparam,matparam%nuparam,"matparam%uparam")
           allocate(matparam%table(matparam%ntable))
 !
           !< Elastic parameters
@@ -312,12 +314,14 @@
           ! -> dmg(nel,2:nmod+1) = Damage modes output
           mtag%g_dmg = 1 + matparam%nmod
           mtag%l_dmg = 1 + matparam%nmod
-          ! -> Modes allocation and definition
+          ! Allocate and define modes
           allocate(matparam%mode(matparam%nmod))
           matparam%mode(1) = "Maximum plastic strain failure"
           matparam%mode(2) = "Tensile failure damage"
 !
           !< Properties compatibility
+          call init_mat_keyword(matparam,"ELASTO_PLASTIC")
+          call init_mat_keyword(matparam,"BARLAT1989")
           call init_mat_keyword(matparam,"SHELL_ORTHOTROPIC")
 !
           !-------------------------------------------------------------------------

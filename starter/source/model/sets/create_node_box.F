@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_node_box          ../starter/source/model/sets/create_node_box.F
 !||--- called by ------------------------------------------------------
@@ -62,6 +63,8 @@ C-----------------------------------------------
       USE HM_OPTION_READ_MOD
       USE OPTIONDEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARFIELD
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -89,7 +92,6 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NINDX_B
       INTEGER IDS_MAX, BOXLIST_SIZE,SZ_BOXNDS
-      INTEGER IWORK(70000)
 !
       INTEGER, ALLOCATABLE, DIMENSION(:) :: BOXNDS,BOXLIST
      .                                      
@@ -100,7 +102,7 @@ C=======================================================================
 !
       NINDX_B = 0
 !
-      ALLOCATE(BOXNDS(NUMNOD))
+      call my_alloc(BOXNDS, NUMNOD, "BOXNDS")
       SZ_BOXNDS = 0
 
 
@@ -110,7 +112,7 @@ C=======================================================================
 
       CALL HM_GET_INT_ARRAY_INDEX('idsmax' ,IDS_MAX ,JCLAUSE,IS_AVAILABLE,LSUBMODEL)      ! Get the numbers of boxes to read
 
-      ALLOCATE(BOXLIST(IDS_MAX))
+      call my_alloc(BOXLIST, IDS_MAX, "BOXLIST")
       BOXLIST_SIZE=0
 
       CALL READ_CLAUSE_BOX(IBOX   ,IS_AVAILABLE ,LSUBMODEL ,JCLAUSE, IDS_MAX ,   
@@ -124,9 +126,11 @@ C=======================================================================
      *                           BOXNDS, SZ_BOXNDS      )
 
 
-      ALLOCATE (CLAUSE%NODE(SZ_BOXNDS))
+      call my_alloc(CLAUSE%NODE, SZ_BOXNDS, "CLAUSE%NODE")
       CLAUSE%NODE(1:SZ_BOXNDS) = BOXNDS(1:SZ_BOXNDS)
       CLAUSE%NB_NODE = SZ_BOXNDS
 
+      call my_dealloc(BOXNDS)
+      call my_dealloc(BOXLIST)
       RETURN
       END

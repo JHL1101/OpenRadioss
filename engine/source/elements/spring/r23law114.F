@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r23law114          ../engine/source/elements/spring/r23law114.F
 !||--- called by ------------------------------------------------------
@@ -60,7 +61,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      E   GRESAV,               GRTH,                 IGRTH,                MSRT,
      F   DMELRT,               FLAG_SLIPRING_UPDATE, FLAG_RETRACTOR_UPDATE,H3D_DATA,
      G   JSMS,                 IGRE,                 NFT,                  NSENSOR,
-     h   STF,                  SANIN ,               IRESP,                SNPC)
+     h   STF,                  SANIN ,               IRESP,                SNPC,
+     i   FLG_SPR_DT)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -87,7 +89,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      type(python_), intent(in) :: PYTHON
+C     REDEF3 declares PYTHON as INTENT(INOUT).
+      type(python_), intent(inout) :: PYTHON
       INTEGER, INTENT(IN) :: STF !< Size of TF
       INTEGER, INTENT(IN) :: SANIN !< Size of ANIM
       INTEGER, INTENT(IN) :: IRESP !< Single Precision flag
@@ -99,6 +102,7 @@ C-----------------------------------------------
      .        IGEO(NPROPGI,*),JFT,JLT,NELTST ,ITYPTST,OFFSET,
      .        NEL,MTN,GRTH(*),IGRTH(*),FLG_KJ2,IPM(NPROPMI,*),FLAG_SLIPRING_UPDATE,
      .        FLAG_RETRACTOR_UPDATE
+      INTEGER, INTENT(INOUT) :: FLG_SPR_DT
       my_real DT2T ,
      .   GEO(NPROPG,*),X(*),F(*),TF(STF),SKEW(LSKEW,*),FSKY(*),
      .   VR(*), V(*), AR(*), STIFN(*),STIFR(*),MS(*), IN(*),
@@ -274,14 +278,16 @@ C
              GBUF%OFF(I) = OFF(I)
           ENDIF
         ENDDO
-C
+C  
         CALL R2LEN3(
      1   JFT,      JLT,      GBUF%OFF, DT2T,
      2   NELTST,   ITYPTST,  STI,      STIR,
      3   MS,       IN,       MSRT,     DMELRT,
      4   GBUF%G_DT,GBUF%DT,  NGL,      XCR,
      5   XIN,      XM,       XKM,      XCM,
-     6   XKR,      NC1,      NC2,      JSMS)
+     6   XKR,      NC1,      NC2,      JSMS,
+     7   NEL,      GBUF%RBODY_NODE,    FLG_SPR_DT)
+C
         CALL R23BILAN(
      1   GBUF%EINT,PARTSAV,  IXR,      GEO,
      2   V,        IPARTR,   GBUF%MASS,GRESAV,
@@ -292,6 +298,7 @@ C
      1   GBUF%FOR(II(1)),GBUF%FOR(II(2)),GBUF%FOR(II(3)),GBUF%MOM(II(1)),
      2   GBUF%MOM(II(2)),GBUF%MOM(II(3)),TANI,           AL,
      3   H3D_DATA,       NEL)
+
         IF (IPARIT == 0) THEN
           CALL R4CUM3(
      1   F,              GBUF%FOR(II(1)),GBUF%FOR(II(2)),GBUF%FOR(II(3)),

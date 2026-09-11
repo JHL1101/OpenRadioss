@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i24mainf                    ../engine/source/interfaces/int24/i24main.F
 !||--- called by ------------------------------------------------------
@@ -50,6 +51,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod               ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    interfaces_mod              ../common_source/modules/interfaces/interfaces_mod.F90
 !||    message_mod                 ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                  ../common_source/modules/output/output_mod.F90
 !||    timer_mod                   ../engine/source/system/timer_mod.F90
 !||====================================================================
@@ -89,6 +92,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -116,7 +121,7 @@ C-----------------------------------------------
       INTEGER NISUBMAX                        ! Max number of SUB INTerfaces
       INTEGER NELTST,ITYPTST,NIN,NEWFRONT,
      .        NSTRF(*),
-     .        NRTMDIM, IAD17, IPARSENS
+     .        NRTMDIM, IAD17
       INTEGER IPARI(NPARI,NINTER), ICODT(*),ICONTACT(*),
      .        ITAB(*), ISKY(*), KINET(*), 
      .        IPARG(NPARG,*),INOD_PXFEM(*),NPC(*),TAGNCONT(NLOADP_HYD_INTER,NUMNOD)
@@ -150,12 +155,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER JD(50),KD(50), JFI, KFI,IEDGE,
-     .        I, J, H, I_STOK, JLT_NEW, JLT , NFT, IVIS2,
-     .        IBC, NOINT, NSEG, ISECIN, IBAG, IADM,
+      INTEGER IEDGE,
+     .        I, I_STOK, JLT_NEW, JLT , NFT, IVIS2,
+     .        IBC, NOINT, ISECIN, IBAG, IADM,
      .        IGAP, INACTI, IFQ, MFROT, IGSTI, NISUB,
      .        NB_LOC, I_STOK_LOC,DEBUT, I_STOK_GLO,
-     .        ILAGM, LENR, LENT, MAXCC,INTTH,IFORM,INTPLY,INTFRIC,
+     .        INTTH,IFORM,INTPLY,INTFRIC,
      .        NSETPRTS ,NPARTFRIC, IERROR, INTNITSCHE, IORTHFRIC,
      .        NFORTH ,NFISOT ,JJ ,ISTIF_MSDT, INTCAREA
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ),
@@ -164,8 +169,7 @@ C-----------------------------------------------
      .        KINI(MVSIZ),IKNON(MVSIZ),
      .        SUBTRIA_OLD(MVSIZ),
 c     .        INDEX2(LINDMAX),SUBTRIA_OLD(MVSIZ),
-     .        ISDSIZ(NSPMD+1),IRCSIZ(NSPMD+1),
-     .        IELECI(MVSIZ), NSMS(MVSIZ),IXX(MVSIZ,13),ITRIV(4,MVSIZ),
+     .        NSMS(MVSIZ),IXX(MVSIZ,13),ITRIV(4,MVSIZ),
      .        IPLY(4,MVSIZ),ISPT2_LOC(MVSIZ),
      .        IPARTFRICSI(MVSIZ),IPARTFRICMI(MVSIZ),INDEXISOT(MVSIZ),
      .        INDEXORTH(MVSIZ),IREP_FRICMI(MVSIZ),IXX3(MVSIZ),IXX4(MVSIZ)
@@ -174,14 +178,11 @@ C     REAL
       my_real
      .   STARTT, FRIC, GAP, STOPT,PMAX_GAP,PENREF(MVSIZ),
      .   VISC,VISCF,STIGLO,GAPMIN,
-     .   KMIN, KMAX, GAPMAX,RSTIF,FHEAT,TINT,RHOH,EPS
+     .   KMIN, KMAX, GAPMAX,RSTIF,FHEAT,TINT,EPS
       INTEGER :: IFRIC
 C-----------------------------------------------
 C     REAL
       my_real
-     .     NX1(MVSIZ), NX2(MVSIZ), NX3(MVSIZ), NX4(MVSIZ),
-     .     NY1(MVSIZ), NY2(MVSIZ), NY3(MVSIZ), NY4(MVSIZ),
-     .     NZ1(MVSIZ), NZ2(MVSIZ), NZ3(MVSIZ), NZ4(MVSIZ),
      .   X1(MVSIZ), X2(MVSIZ), X3(MVSIZ), X4(MVSIZ),
      .   Y1(MVSIZ), Y2(MVSIZ), Y3(MVSIZ), Y4(MVSIZ),
      .   Z1(MVSIZ), Z2(MVSIZ), Z3(MVSIZ), Z4(MVSIZ),
@@ -194,24 +195,19 @@ C     REAL
      .   H1(MVSIZ), H2(MVSIZ), H3(MVSIZ), H4(MVSIZ),
      .   GAPV(MVSIZ),MSI(MVSIZ),
      .   NM1(MVSIZ), NM2(MVSIZ), NM3(MVSIZ), 
-     .   TEMPI(MVSIZ),PHI(MVSIZ),AREASI(MVSIZ),
+     .   TEMPI(MVSIZ),PHI(MVSIZ),
      .   XX0(MVSIZ,17),YY0(MVSIZ,17),ZZ0(MVSIZ,17),
      .   VX(MVSIZ,17),VY(MVSIZ,17),VZ(MVSIZ,17),
      .   GAPS(MVSIZ),FORNEQSI(MVSIZ,3),DIST(MVSIZ)
       INTEGER ::   SUBTRIA(MVSIZ)
 
       my_real
-     .     , DIMENSION(:,:),ALLOCATABLE :: SURF
-      my_real
-     .     , DIMENSION(:), ALLOCATABLE ::  PRES
-      my_real
      .     , DIMENSION(:,:,:), ALLOCATABLE :: FSAVPARIT
-      SAVE SURF,PRES
       my_real
      .     RCURVI(MVSIZ), ANGLMI(MVSIZ), ANGLT, PADM,PENMIN,MARGE
-      INTEGER NRTMFT, NRTMLT, NMNFT, NMNLT, NRADM,NCY_PFIT
+      INTEGER NRADM,NCY_PFIT
       my_real
-     .     T_PFIT,FA,FB,F_PFIT,TNCY,FINC,DTSTIF
+     .     T_PFIT,F_PFIT,TNCY,FINC,DTSTIF
       INTEGER ICURV,ILEV,NREBOU,NPT ,NRTSE,IEDG4,SFSAVPARIT,NINLOADP
       my_real
      .    XFILTR_FRIC,FRIC_COEFS(MVSIZ,10),VISCFFRIC(MVSIZ),FRICC(MVSIZ),
@@ -353,7 +349,7 @@ C-----T_FIT .OR. NCY_PFIT
           TNCY = (NCYCLE+1)*FINC
           END IF
        END IF
-      ALLOCATE(INDEX2(LINDMAX))
+      call my_alloc(INDEX2, LINDMAX, "INDEX2")
 
 C ------ Move to another place ----
 CCC        IF (IEDG4 >0) THEN
@@ -419,7 +415,7 @@ C
           ENDIF
         ENDDO
         IF (SFSAVPARIT /= 0) THEN
-          ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK),STAT=IERROR)
+          call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .           C1='(/INTER/TYPE7)')
@@ -427,7 +423,7 @@ C
           ENDIF
           FSAVPARIT(1:NISUB+1,1:11,1:I_STOK) = ZERO
         ELSE
-          ALLOCATE(FSAVPARIT(0,0,0),STAT=IERROR)
+          call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .           C1='(/INTER/TYPE24)')
@@ -633,7 +629,7 @@ c
             CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK,
      .                            FBSAV6, 12, 6, DIMFB, ISENSINT )
         ENDIF
-        IF (ALLOCATED(FSAVPARIT)) DEALLOCATE (FSAVPARIT)
+        IF (ALLOCATED(FSAVPARIT)) call my_dealloc(FSAVPARIT)
 c
 #include "lockon.inc"
       INTBUF_TAB%VARIABLES(23) = MAX(PMAX_GAP,INTBUF_TAB%VARIABLES(23))
@@ -649,7 +645,7 @@ C
 C
 
 ccc      IF(NSNE > 0) CALL MY_BARRIER()
-      DEALLOCATE(INDEX2)
+      call my_dealloc(INDEX2)
       RETURN
       END
 !||====================================================================
@@ -688,7 +684,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,NS,NE,ITQ,NEG,J
+      INTEGER I,NS,NE,ITQ
 C----------------------------------------------------
             DO I = 1 ,JLT
              IF(PENE(I)/=ZERO.AND.STIF(I)/=ZERO)THEN             
@@ -739,7 +735,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,NS,NE,ITQ
+      INTEGER I,NS
 C----------------------------------------------------
             DO I = 1 ,JLT
               NS=CAND_N(I)
@@ -815,7 +811,7 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER JLT,II_STOK,NIN   ,NSN
-      INTEGER NUM_IMP,NS_IMP(*),NE_IMP(*),IND_IMP(*),
+      INTEGER NS_IMP(*),NE_IMP(*),IND_IMP(*),
      .        CAND_E(*),CAND_N(*),SUBTRIA(*),IRTLM(2,*)
 C     REAL
       my_real
@@ -824,7 +820,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,NS,NE,ITQ,NEG,J,K_STOK,J_STOK,IC(4,4)
+      INTEGER I,NS,NE,ITQ,K_STOK,J_STOK,IC(4,4)
       DATA IC / 
      1    3, 4, 1, 2, 
      2    4, 1, 2, 3,

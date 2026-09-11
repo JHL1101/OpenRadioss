@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cbasumg3     ../engine/source/elements/shell/coqueba/cbasumg3.F
 !||--- called by ------------------------------------------------------
@@ -924,15 +925,18 @@ C
       RETURN
       END
 !||====================================================================
-!||    setprojkba    ../engine/source/elements/shell/coqueba/cbasumg3.F
+!||    setprojkba       ../engine/source/elements/shell/coqueba/cbasumg3.F
 !||--- called by ------------------------------------------------------
-!||    cbaprojk      ../engine/source/elements/shell/coqueba/cbasumg3.F
+!||    cbaprojk         ../engine/source/elements/shell/coqueba/cbasumg3.F
 !||--- calls      -----------------------------------------------------
-!||    trankl1       ../engine/source/elements/shell/coquez/czsumg3.F
-!||    tranklq       ../engine/source/elements/shell/coquez/czsumg3.F
-!||    tranqikqj     ../engine/source/elements/shell/coquez/czsumg3.F
-!||    tranqikqj33   ../engine/source/elements/shell/coqueba/cbasumg3.F
-!||    tranqnkq      ../engine/source/elements/shell/coqueba/cbasumg3.F
+!||    trankl1          ../engine/source/elements/shell/coquez/czsumg3.F
+!||    tranklq          ../engine/source/elements/shell/coquez/czsumg3.F
+!||    tranqikqj        ../engine/source/elements/shell/coquez/czsumg3.F
+!||    tranqikqj33      ../engine/source/elements/shell/coqueba/cbasumg3.F
+!||    tranqnkq         ../engine/source/elements/shell/coqueba/cbasumg3.F
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE SETPROJKBA(DR    ,R1     ,R2     ,R3     ,R4    ,
      3                     K11,K12,K13,K14,K22,K23,K24,K33,K34,K44,
@@ -941,6 +945,8 @@ C
      6                     MF34,MF44,FM12,FM13,FM14,FM23,FM24,FM34, 
      .                     VQ  ,VQN ,JFT  ,JLT   ) 
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----8
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "mvsiz_p.inc"
 C-----------------------------------------------
@@ -971,8 +977,8 @@ C-----------------------------------------------
       my_real,
      .  DIMENSION(:,:,:), ALLOCATABLE:: P,KE
 C-------------------------------------------------------------
-        ALLOCATE(P(24,24,MVSIZ))
-        ALLOCATE(KE(24,24,MVSIZ))
+        call my_alloc(P, 24, 24, MVSIZ, "P")
+        call my_alloc(KE, 24, 24, MVSIZ, "KE")
 C
         DO I=1,3 
         DO J=1,3 
@@ -1410,8 +1416,8 @@ C-----------K34
         ENDDO
         ENDDO
 C-----------
-        DEALLOCATE(P)
-        DEALLOCATE(KE)
+        call my_dealloc(P)
+        call my_dealloc(KE)
       RETURN
       END
 !||====================================================================

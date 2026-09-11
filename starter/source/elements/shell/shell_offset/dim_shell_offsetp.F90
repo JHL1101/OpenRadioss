@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dim_shell_offsetp_mod   ../starter/source/elements/shell/shell_offset/dim_shell_offsetp.F90
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@
 ! ======================================================================================================================
 !
 !=======================================================================================================================
-!!\brief This subroutine do the dimensioning of shell offset projection
+!!\brief This subroutine performs the dimensioning of shell offset projection
 !=======================================================================================================================
 !||====================================================================
 !||    dim_shell_offsetp   ../starter/source/elements/shell/shell_offset/dim_shell_offsetp.F90
@@ -59,13 +60,13 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                         :: ngroup           !< number of elem group
-          integer, intent (in   )                         :: nparg            !< 1er dim of iparg
-          integer, intent (in   )                         :: npropg           !< 1er dim of geo
+          integer, intent (in   )                         :: nparg            !< first dimension of iparg
+          integer, intent (in   )                         :: npropg           !< first dimension of geo
           integer, intent (in   )                         :: numgeo           !< number of prop
           integer, intent (in   )                         :: numelc           !< number shell 4n element
-          integer, intent (in   )                         :: nixc             !< 1er dim of ixc
+          integer, intent (in   )                         :: nixc             !< first dimension of ixc
           integer, intent (in   )                         :: numeltg          !< number shell 3n element
-          integer, intent (in   )                         :: nixtg            !< 1er dim of ixtg
+          integer, intent (in   )                         :: nixtg            !< first dimension of ixtg
           integer, intent (in   )                         :: numnod           !< number node
           integer, intent (in   ) ,dimension(nparg,ngroup):: iparg            !< elem group array
           integer, intent (in   ) ,dimension(nixc,numelc) :: ixc              !< shell 4n connectivity
@@ -82,7 +83,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-! 1er pass to fill intag
+! First pass to fill intag
           intag = 0
           do  ng=1,ngroup
             ity=iparg(5,ng)
@@ -118,7 +119,7 @@
               end do
             end if
           end do
-! 2nd pass for dim w/ connected 0 offset shell
+! 2nd pass for dim with connected 0 offset shell
           nshel=0
           do  ng=1,ngroup
             ity=iparg(5,ng)

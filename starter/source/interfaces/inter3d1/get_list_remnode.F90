@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    get_list_remnode_mod   ../starter/source/interfaces/inter3d1/get_list_remnode.F90
 !||--- called by ------------------------------------------------------
@@ -34,11 +35,11 @@
 !! \brief here is a small description of the routine, [after the header]
 !! \details if needed, more details can be added here
 !||====================================================================
-!||    get_list_remnode   ../starter/source/interfaces/inter3d1/get_list_remnode.F90
+!||    get_list_remnode    ../starter/source/interfaces/inter3d1/get_list_remnode.F90
 !||--- called by ------------------------------------------------------
-!||    i7remnode          ../starter/source/interfaces/inter3d1/i7remnode.F
+!||    i7remnode           ../starter/source/interfaces/inter3d1/i7remnode.F
 !||--- calls      -----------------------------------------------------
-!||    upgrade_remnode    ../starter/source/interfaces/interf1/upgrade_remnode.F
+!||    upgrade_remnode     ../starter/source/interfaces/interf1/upgrade_remnode.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine get_list_remnode(nrtm,igap ,numnod,npari,irect,kremnode, &
@@ -54,9 +55,12 @@
           use intbufdef_mod , only : intbuf_struct_
           use constant_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_move_alloc_mod, only : my_move_alloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   arguments
@@ -109,13 +113,16 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 ! ----------------------------------------------------------------------------------------------------------------------
           my_seg_number = 0
-          allocate(noddel(numnod),nod2expand(numnod) )
-          allocate(listseg(nrtm),listsegtmp(nrtm),listsegtotal(nrtm))
-          allocate( id_nod(numnod) )
-          allocate( tagnod(numnod) )
-          allocate( dist1(numnod) )
-          allocate( gapv(numnod) )
-          allocate(itagseg(nrtm) )
+          call my_alloc(noddel, numnod, "noddel")
+          call my_alloc(nod2expand, numnod, "nod2expand")
+          call my_alloc(listseg, nrtm, "listseg")
+          call my_alloc(listsegtmp, nrtm, "listsegtmp")
+          call my_alloc(listsegtotal, nrtm, "listsegtotal")
+          call my_alloc(id_nod, numnod, "id_nod")
+          call my_alloc(tagnod, numnod, "tagnod")
+          call my_alloc(dist1, numnod, "dist1")
+          call my_alloc(gapv, numnod, "gapv")
+          call my_alloc(itagseg, nrtm, "itagseg")
           id_nod(1:numnod) = 0
           nod2expand(1:numnod) = 0
           tagnod(1:numnod) = 0
@@ -124,8 +131,8 @@
           gapv(1:numnod) = zero
 
           local_remnode_size = 4*nrtm
-          allocate( local_remnode(local_remnode_size) )
-          allocate( local_kremnode(nrtm+1,2) )
+          call my_alloc(local_remnode, local_remnode_size, "local_remnode")
+          call my_alloc(local_kremnode, nrtm+1, 2, "local_kremnode")
           local_kremnode(1,1:2) = 0
 !$omp do schedule(guided)
           do i=1,nrtm
@@ -283,10 +290,10 @@
               local_kremnode(my_seg_number,2) = i
               if(cpt1+local_kremnode(my_seg_number+1,1)>local_remnode_size) then
                 my_new_size = local_remnode_size + max( local_remnode_size/10, 10*cpt1)
-                allocate( tmp_array(my_new_size) )
+                call my_alloc(tmp_array, my_new_size, "tmp_array")
                 tmp_array(1:local_remnode_size) = local_remnode(1:local_remnode_size)
-                deallocate( local_remnode )
-                call move_alloc( tmp_array,local_remnode )
+                call my_dealloc(local_remnode)
+                call my_move_alloc(tmp_array, local_remnode, "local_remnode")
                 local_remnode_size = my_new_size
               end if
               do l=1,cpt1
@@ -328,12 +335,15 @@
           end do
 
 
-          deallocate(noddel,nod2expand )
-          deallocate(listseg,listsegtmp,listsegtotal)
-          deallocate( local_remnode )
-          deallocate( local_kremnode )
-          deallocate( itagseg )
-          deallocate( gapv )
+          call my_dealloc(noddel)
+          call my_dealloc(nod2expand)
+          call my_dealloc(listseg)
+          call my_dealloc(listsegtmp)
+          call my_dealloc(listsegtotal)
+          call my_dealloc(local_remnode)
+          call my_dealloc(local_kremnode)
+          call my_dealloc(itagseg)
+          call my_dealloc(gapv)
 
 
 

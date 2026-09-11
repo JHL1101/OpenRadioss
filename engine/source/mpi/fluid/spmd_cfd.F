@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 #include "macro.inc"
 !||====================================================================
 !||    spmd_xvois     ../engine/source/mpi/fluid/spmd_cfd.F
@@ -29,8 +30,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    alew1          ../engine/source/ale/grid/alew1.F
 !||    alew5          ../engine/source/ale/grid/alew5.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -105,7 +104,7 @@ C
 C
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB2 = IAD_RECV(I)
         IDEB = (IDEB2-1)/3
@@ -131,8 +130,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    alew           ../engine/source/ale/grid/alew.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -214,7 +211,7 @@ C
 C
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB2 = IAD_RECV(I)
         IDEB = (IDEB2-1)/9
@@ -250,8 +247,6 @@ C
 !||    akturb         ../engine/source/ale/turbulence/akturb.F
 !||    atherm         ../engine/source/ale/atherm.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -328,7 +323,7 @@ C
 C
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB2 = IAD_RECV(I)
         IDEB = (IDEB2-1)/2
@@ -360,8 +355,6 @@ C
 !||    prelecflow                       ../engine/source/elements/solid/solide/prelecflow.F
 !||    schlieren_buffer_gathering       ../engine/source/output/anim/generate/schlieren_buffer_gathering.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait                        ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany                     ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod                         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -434,7 +427,7 @@ C
       ENDDO
 C
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -457,8 +450,6 @@ C
 !||====================================================================
 !||    spmd_e6vois    ../engine/source/mpi/fluid/spmd_cfd.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -539,7 +530,7 @@ C
       ENDDO
 C
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -567,8 +558,6 @@ C
 !||====================================================================
 !||    spmd_e4vois    ../engine/source/mpi/fluid/spmd_cfd.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -647,7 +636,7 @@ C
       ENDDO
 C
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -676,8 +665,6 @@ C
 !||    alew6                 ../engine/source/ale/grid/alew6.F
 !||    multi_timeevolution   ../engine/source/multifluid/multi_timeevolution.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait             ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany          ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -754,7 +741,7 @@ C
       ENDDO
 C
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -780,8 +767,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    init_ale_spmd   ../engine/source/ale/init_ale_spmd.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait       ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany    ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -868,7 +853,7 @@ C
 C
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -900,8 +885,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    init_ale_spmd   ../engine/source/ale/init_ale_spmd.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait       ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany    ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -983,7 +966,7 @@ C
 C
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB = IAD_RECV(I)-1
         DO N = 1, NERCVOIS(I)
@@ -1010,8 +993,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    alemain        ../engine/source/ale/alemain.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait      ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod    ../common_source/modules/elements/element_mod.F90
@@ -1165,7 +1146,7 @@ C
 
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         IDEB2 = IAD_RECV(I)
         IDEB = (IDEB2-1)/6
@@ -1196,7 +1177,6 @@ C
 !||    alew2         ../engine/source/ale/grid/alew2.F
 !||    alew4         ../engine/source/ale/grid/alew4.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait     ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod      ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -1325,8 +1305,6 @@ C
 !||    alew2             ../engine/source/ale/grid/alew2.F
 !||    alew4             ../engine/source/ale/grid/alew4.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait         ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany      ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -1432,7 +1410,7 @@ C
 C decompaction
 C
       DO II=1,NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         L = IAD_RECV(I)
         DO J=IAD_ELEM(1,I),IAD_ELEM(1,I+1)-1
@@ -1531,7 +1509,6 @@ C
 !||    rgwat2       ../engine/source/interfaces/int09/rgwat2.F
 !||    rgwat3       ../engine/source/interfaces/int09/rgwat3.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait    ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    spmd_mod     ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
@@ -1648,7 +1625,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    alemain        ../engine/source/ale/alemain.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_waitany   ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    ale_mod        ../common_source/modules/ale/ale_mod.F
 !||    segvar_mod     ../engine/share/modules/segvar_mod.F
@@ -1751,7 +1727,7 @@ C
 C
           IDEB = 0
           DO II = 1, NBIRECV
-            CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+            CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
             I = IRINDEX(INDEX)
             IDEB2 = IAD_RECV(I)-1
             IDEB = IDEB2 / ALE%GLOBAL%NVCONV
@@ -1995,8 +1971,6 @@ C
 !||--- called by ------------------------------------------------------
 !||    alemain              ../engine/source/ale/alemain.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait            ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany         ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod         ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
@@ -2193,7 +2167,7 @@ C-----------------------------------------------
       ENDDO
       IDEB = 0
       DO II = 1, NBIRECV
-        CALL SPMD_WAITANY(NBIRECV,REQ_R,INDEX)
+        CALL SPMD_WAITANY(REQ_R,NBIRECV,INDEX)
         I                 = IRINDEX(INDEX)
         IDEB2             = IAD_RECV(I)
         IDEB              = (IDEB2-1)/M51_IFLG6_SIZE

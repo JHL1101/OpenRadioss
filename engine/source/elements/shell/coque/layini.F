@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    layini             ../engine/source/elements/shell/coque/layini.F
 !||--- called by ------------------------------------------------------
@@ -33,9 +34,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    stat_c_strafg      ../engine/source/output/sta/stat_c_strafg.F
 !||    stat_c_strsfg      ../engine/source/output/sta/stat_c_strsfg.F
 !||    tensorc            ../engine/source/output/anim/generate/tensorc.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    drape_mod          ../engine/share/modules/drape_mod.F
 !||    elbufdef_mod       ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    stack_mod          ../engine/share/modules/stack_mod.F
 !||====================================================================
       SUBROUTINE LAYINI(
@@ -53,6 +57,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -161,9 +167,9 @@ C=======================================================================
         ENDDO  
       ENDIF
       IF(MAX_NPTT > 0 ) THEN
-        ALLOCATE(THK_IT(MAX_NPTT,MVSIZ))
+        call my_alloc(THK_IT, MAX_NPTT, MVSIZ, "THK_IT")
       ELSE 
-          ALLOCATE(THK_IT(0,0))
+          call my_alloc(THK_IT, 0, 0, "THK_IT")
       ENDIF 
 c
 c---------------------------------------------------------
@@ -358,7 +364,7 @@ c
           IINT = IGEO(47,PID(1))
           THICKT   = STACK%GEO(1,ISUBSTACK)
           ZSHIFT = GEO(199, PID(1))
-          IF (IPOS == 2 ) ZSHIFT =  ZSHIFT /MAX(THICKT,EM20)     
+          IF (IPOS == 2 ) ZSHIFT = ZSHIFT /MAX(THICKT,EM20)     
           IF(IDRAPE == 0) THEN
               IPT_ALL = 0
               IF(IPOS == 1) THEN
@@ -507,8 +513,7 @@ cc                  IPID_LY = STACK%IGEO(IPPID + ILAY,ISUBSTACK)  ! layer PID (i
                                  IPT = IPT_ALL + IT                                                                  
                                  J = (IPT-1)*JLT + I 
                                  THINNING = DRAPE_PLY%RDRAPE(IT,1) 
-                                 THK_IT0 = THK_LY(I)/NPTT
-                                 THK_IT(IPT,I) = THINNING*THK_IT0
+                                 THK_IT(IPT,I) = THINNING*THK_LY(I)
                                  THK_IT(IPT,I) =  THK_IT(IPT,I)/THICKT_DRAPE ! uniform distribution of NPTT through layer
                                  THKPLY_DRAPE = THKPLY_DRAPE + THK_IT(IPT,I)
                                  IF (IPT  == 1)  THEN                                                                
@@ -629,7 +634,7 @@ c----
         END SELECT
 c-----------
       END IF   ! IXFEM
-       DEALLOCATE(THK_IT)
+       call my_dealloc(THK_IT)
 c-----------
       RETURN
       END SUBROUTINE LAYINI

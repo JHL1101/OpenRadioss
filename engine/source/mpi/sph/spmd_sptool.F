@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,25 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_inisph   ../engine/source/mpi/sph/spmd_sptool.F
+!||    spmd_inisph    ../engine/source/mpi/sph/spmd_sptool.F
 !||--- called by ------------------------------------------------------
-!||    rdresb        ../engine/source/output/restart/rdresb.F
+!||    rdresb         ../engine/source/output/restart/rdresb.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../engine/source/output/message/message.F
-!||    arret         ../engine/source/system/arret.F
-!||    read_db       ../common_source/tools/input_output/read_db.F
-!||    read_i_c      ../common_source/tools/input_output/write_routines.c
+!||    ancmsg         ../engine/source/output/message/message.F
+!||    arret          ../engine/source/system/arret.F
+!||    read_db        ../common_source/tools/input_output/read_db.F
+!||    read_i_c       ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
-!||    message_mod   ../engine/share/message_module/message_mod.F
-!||    sphbox        ../engine/share/modules/sphbox.F
+!||    message_mod    ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
+!||    sphbox         ../engine/share/modules/sphbox.F
 !||====================================================================
       SUBROUTINE SPMD_INISPH(IFLG)
 C-----------------------------------------------
@@ -42,6 +44,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -62,8 +65,8 @@ C-----------------------------------------------
        NSPHR = 0
        NSPHS = 0
        IF(NUMSPHG>0.AND.NSPMD>1)THEN
-        ALLOCATE(PSPHR(NSPMD),STAT=IERROR)
-        ALLOCATE(PSPHS(NSPMD),STAT=IERROR1)
+        call my_alloc(PSPHR, NSPMD, "PSPHR", stat=IERROR)
+        call my_alloc(PSPHS, NSPMD, "PSPHS", stat=IERROR1)
         IERROR = IERROR + IERROR1
         IF(IERROR/=0) THEN
           CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
@@ -81,9 +84,9 @@ C-----------------------------------------------
         IERROR1 = 0
         IF(NSPHR/=0)ALLOCATE(ISPHR(NSPHR),STAT=IERROR)
         IF(NSPHS/=0)THEN
-          ALLOCATE(ISPHS(NSPHS),STAT=IERROR1)
+          call my_alloc(ISPHS, NSPHS, "ISPHS", stat=IERROR1)
           IERROR = IERROR + IERROR1
-          ALLOCATE(LSPHS(NSPHS),STAT=IERROR1)
+          call my_alloc(LSPHS, NSPHS, "LSPHS", stat=IERROR1)
           IERROR = IERROR + IERROR1
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
@@ -92,7 +95,7 @@ C-----------------------------------------------
           CALL READ_I_C(LSPHS,NSPHS)
         END IF
         IF(NSPCOND>0)THEN
-          ALLOCATE(ISPSYMR(NSPCOND,NSPHR),STAT=IERROR)
+          call my_alloc(ISPSYMR, NSPCOND, NSPHR, "ISPSYMR", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -103,8 +106,8 @@ C-----------------------------------------------
 C
       ELSEIF(IFLG==2.AND.NSPMD>1)THEN
         IF(NSPHR/=0)THEN
-          ALLOCATE(XSPHR(SIZSPC,NSPHR),STAT=IERROR)
-          ALLOCATE(WACOMPR(SIZSPW,NSPHR),STAT=IERROR1)
+          call my_alloc(XSPHR, SIZSPC, NSPHR, "XSPHR", stat=IERROR)
+          call my_alloc(WACOMPR, SIZSPW, NSPHR, "WACOMPR", stat=IERROR1)
           IERROR = IERROR + IERROR1
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)

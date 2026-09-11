@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps55c   ../engine/source/materials/mat/mat055/sigeps55c.F
 !||--- called by ------------------------------------------------------
@@ -152,43 +153,29 @@ C        NPF,TF  : FUNCTION PARAMETER
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NRATE(MVSIZ),J1,J2,N,NINDX,NMAX,IADBUF,NFUNC,
+      INTEGER I,J,NRATE(MVSIZ),J1,J2,IADBUF,NFUNC,
      .        IAD1(MVSIZ),IPOS1(MVSIZ),ILEN1(MVSIZ),
-     .        IAD2(MVSIZ),IPOS2(MVSIZ),ILEN2(MVSIZ),
-     .        JJ(MVSIZ),INDEX(MVSIZ),IFUNC(MVSIZ,100),NRATEM,
-     .        NRATE1,IFUNC1(100),IADBUFV(MVSIZ),NFUNCV(MVSIZ),
-     .        NFUNCM, NRATEP(MVSIZ), NRATEN(MVSIZ),I1, I2,
+     .        JJ(MVSIZ),IFUNC(MVSIZ,100),
+     .        NRATEP(MVSIZ), NRATEN(MVSIZ),I1, I2,
      .        IAD1P(MVSIZ),IPOS1P(MVSIZ),ILEN1P(MVSIZ),
      .        IAD2P(MVSIZ),IPOS2P(MVSIZ),ILEN2P(MVSIZ),
      .        IAD1N(MVSIZ),IPOS1N(MVSIZ),ILEN1N(MVSIZ),
-     .        IAD2N(MVSIZ),IPOS2N(MVSIZ),ILEN2N(MVSIZ),II(MVSIZ),
-     .         NRATEN1, NRATEP1                  
+     .        IAD2N(MVSIZ),IPOS2N(MVSIZ),ILEN2N(MVSIZ),II(MVSIZ)
       my_real
      .        E(MVSIZ),A1(MVSIZ),A2(MVSIZ),G(MVSIZ),G3(MVSIZ),
-     .        DYDX1(MVSIZ),DYDX2(MVSIZ),RATE(MVSIZ,2),SVM(MVSIZ),
-     .        Y1(MVSIZ),Y2(MVSIZ),DR(MVSIZ),EPSMAX(MVSIZ),
-     .        YFAC(MVSIZ,2),NNU1(MVSIZ),NU1(MVSIZ),
-     .        NU2(MVSIZ),NU3(MVSIZ),NU4(MVSIZ),NU5(MVSIZ),NU6(MVSIZ),
-     .        AA(MVSIZ),BB(MVSIZ),DPLA_I(MVSIZ),DPLA_J(MVSIZ),
-     .        PP(MVSIZ),QQ(MVSIZ),FAIL(MVSIZ),SVMO(MVSIZ),H(MVSIZ),
-     .        EPSR1(MVSIZ),EPSR2(MVSIZ),FISOKIN(MVSIZ),
+     .        DYDX1(MVSIZ),DYDX2(MVSIZ),SVM(MVSIZ),
+     .        Y1(MVSIZ),EPSMAX(MVSIZ),
      .        SIGEXX(MVSIZ),SIGEYY(MVSIZ),SIGEXY(MVSIZ),SIGEZX(MVSIZ),
      .        SIGEYZ(MVSIZ),YN1(MVSIZ),YN2(MVSIZ),YP1(MVSIZ),YP2(MVSIZ),
-     .        HK(MVSIZ),NU(MVSIZ), VISC(MVSIZ), VISCV(MVSIZ),C1(MVSIZ),
+     .        NU(MVSIZ), VISC(MVSIZ), VISCV(MVSIZ),C1(MVSIZ),
      .        C2(MVSIZ),RATEP(MVSIZ,2),RATEN(MVSIZ,2), YLDMAX(MVSIZ),
      .        YLDMIN(MVSIZ), EPST(MVSIZ), YLDELAS(MVSIZ),NNU(MVSIZ)
       my_real
-     .        R,UMR,A,B,C,AMU,S11,S22,S12,P,P2,FAC,DEZZ,
-     .        SIGZ,S1,S2,S3,DPLA,VM2,NNU2,
-     .        ERR,F,DF,PLA_I,Q2,YLD_I,SIGPXX,SIGPYY,SIGPXY,
-     .        ALPHA,
-     .        E1,A11,A21,G1,G31,NNU11,NU11,NU21,NU31,NU41,NU51,NU61,
-     .        VISC1, VISCV1
-     .        DSXX,DSYY,DSXY,DEXX,DEYY,DEXY,NUX,C11, C21  
+     .        R,FAC,DEZZ,
+     .        C11
       my_real
-     .        Y11(MVSIZ),Y21(MVSIZ), ME, MA1, MA2, MG, MNU,SVM_OLD,
-     .        DEV, DTINV, LAMDA, DEPS33, SVM1
-      INTEGER JST(MVSIZ+1), IC, MNRATE, ITER, MX
+     .        DEV, DTINV, LAMDA
+      INTEGER ITER, MX
 
 C-----------------------------------------------
 C------------------------------------------------------------------------------

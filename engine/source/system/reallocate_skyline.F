@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    reallocate_i_skyline   ../engine/source/system/reallocate_skyline.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    heat_mod               ../engine/share/modules/heat_mod.F
 !||    message_mod            ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    parith_on_mod          ../common_source/modules/parith_on_mod.F90
 !||    plyxfem_mod            ../engine/share/modules/plyxfem_mod.F
 !||====================================================================
@@ -46,6 +49,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -89,43 +94,43 @@ C SFSKYI : FSKYI size (LSKYI*NFSKYI)
 C
 C Allocate Tempo FSKYI for copy
 C
-         ALLOCATE(TEMP_FSKYI(LSKYI,NFSKYI),STAT=IERROR)
+         call my_alloc(TEMP_FSKYI, LSKYI, NFSKYI, "TEMP_FSKYI", stat=IERROR)
          IF(IERROR/=0) THEN
            CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1=MSG)
            CALL ARRET(2)
          ENDIF
          TEMP_FSKYI(1:NISKY,1:NFSKYI)=PON%FSKYI(1:NISKY,1:NFSKYI)
-         DEALLOCATE(PON%FSKYI)
+         call my_dealloc(PON%FSKYI)
 
 C
 C Allocate Tempo ISKY for copy
 C
-         ALLOCATE(TEMP_ISKY(SISKY),STAT=IERROR)
+         call my_alloc(TEMP_ISKY, SISKY, "TEMP_ISKY", stat=IERROR)
          IF(IERROR/=0) THEN
            CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1=MSG)
            CALL ARRET(2)
          ENDIF
          TEMP_ISKY(1:NISKY)=PON%ISKY(1:NISKY)
-         DEALLOCATE(PON%ISKY)
+         call my_dealloc(PON%ISKY)
           
 C
 C Allocate Tempo INTHEAT & FTHESKYI for copy
 C
          IF(INTHEAT > 0  ) THEN
-            ALLOCATE(TEMP_FTHESKYI(LSKYI),STAT=IERROR)
+            call my_alloc(TEMP_FTHESKYI, LSKYI, "TEMP_FTHESKYI", stat=IERROR)
             IF(IERROR/=0) THEN
               CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .            C1=MSG)
               CALL ARRET(2)
             ENDIF
             TEMP_FTHESKYI(1:NISKY)=FTHESKYI(1:NISKY)
-            DEALLOCATE(FTHESKYI)
+            call my_dealloc(FTHESKYI)
             IF(NODADT_THERM ==1) THEN
-              ALLOCATE(TEMP_CONDNSKYI(LSKYI))
+              call my_alloc(TEMP_CONDNSKYI, LSKYI, "TEMP_CONDNSKYI")
               TEMP_CONDNSKYI(1:LSKYI)=CONDNSKYI(1:LSKYI)
-              DEALLOCATE(CONDNSKYI)
+              call my_dealloc(CONDNSKYI)
             ENDIF
          ENDIF
 
@@ -136,41 +141,41 @@ C (LSKYI+NEW_COUNT)*1.2 can up to double the initial size.
          SFSKYI = LSKYI*NFSKYI
 
 C FSKYI
-         ALLOCATE(PON%FSKYI(LSKYI,NFSKYI),STAT=IERROR)
+         call my_alloc(PON%FSKYI, LSKYI, NFSKYI, "PON%FSKYI", stat=IERROR)
          IF(IERROR/=0) THEN
            CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1=MSG)
            CALL ARRET(2)
          ENDIF
          PON%FSKYI(1:LSKYI_OLD,1:NFSKYI)=TEMP_FSKYI(1:LSKYI_OLD,1:NFSKYI)
-         DEALLOCATE(TEMP_FSKYI)
+         call my_dealloc(TEMP_FSKYI)
          
 C Reallocate & copy back stored stuff
 C ISKY
-         ALLOCATE(PON%ISKY(SISKY),STAT=IERROR)
+         call my_alloc(PON%ISKY, SISKY, "PON%ISKY", stat=IERROR)
          IF(IERROR/=0) THEN
            CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1=MSG)
            CALL ARRET(2)
          ENDIF
          PON%ISKY(1:SISKY_OLD) = TEMP_ISKY(1:SISKY_OLD)
-         DEALLOCATE(TEMP_ISKY)
+         call my_dealloc(TEMP_ISKY)
 
 C INTHEAT
          IF(INTHEAT > 0 ) THEN
-           ALLOCATE(FTHESKYI(LSKYI),STAT=IERROR)
+           call my_alloc(FTHESKYI, LSKYI, "FTHESKYI", stat=IERROR)
            IF(IERROR/=0) THEN
              CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .           C1=MSG)
              CALL ARRET(2)
            ENDIF
            FTHESKYI(1:LSKYI_OLD)=TEMP_FTHESKYI(1:LSKYI_OLD)
-           DEALLOCATE (TEMP_FTHESKYI)
+           call my_dealloc(TEMP_FTHESKYI)
 
            IF(NODADT_THERM ==1) THEN
-               ALLOCATE(CONDNSKYI(LSKYI))
+               call my_alloc(CONDNSKYI, LSKYI, "CONDNSKYI")
                CONDNSKYI(1:LSKYI_OLD)=TEMP_CONDNSKYI(1:LSKYI_OLD)
-               DEALLOCATE (TEMP_CONDNSKYI)
+               call my_dealloc(TEMP_CONDNSKYI)
 
            ENDIF
          ENDIF
@@ -179,14 +184,14 @@ C for ply xfem
 C
           IF(INTPLYXFEM > 0) THEN
 C PLYSKYI%FSKYI
-             ALLOCATE(TEMP_FSKYI_PLY(LSKYI_OLD,5))
+             call my_alloc(TEMP_FSKYI_PLY, LSKYI_OLD, 5, "TEMP_FSKYI_PLY")
              TEMP_FSKYI_PLY(1:LSKYI_OLD,1:5) = PLYSKYI%FSKYI(1:LSKYI_OLD,1:5)
-             DEALLOCATE(PLYSKYI%FSKYI)
+             call my_dealloc(PLYSKYI%FSKYI)
 
-             ALLOCATE(PLYSKYI%FSKYI(LSKYI,5))
+             call my_alloc(PLYSKYI%FSKYI, LSKYI, 5, "PLYSKYI%FSKYI")
              PLYSKYI%FSKYI = ZERO
              PLYSKYI%FSKYI(1:LSKYI_OLD,1:5)=TEMP_FSKYI_PLY(1:LSKYI_OLD,1:5)
-             DEALLOCATE(TEMP_FSKYI)
+             call my_dealloc(TEMP_FSKYI)
           ENDIF
 C
 

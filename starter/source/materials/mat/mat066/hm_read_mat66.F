@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat66                  ../starter/source/materials/mat/mat066/hm_read_mat66.F
 !||--- called by ------------------------------------------------------
@@ -95,8 +96,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: NBMAT, MAT_ID  ! Number of declared materials
-      INTEGER :: I,J,IU,NC,NT,VP,ILAW,ISRATE,IRATE
+      INTEGER :: I,J,NC,NT,VP,ILAW,ISRATE,IRATE
       my_real :: E,EC,NU,G,CP,EPSP0,SIGY,RHO0,RHOR,
      .           FISOKIN,YFAC_UNIT,FCUT,PC,PT,C1,RPCT
       my_real :: RATE(MAXFUNC+1),YFAC(MAXFUNC+1)
@@ -141,7 +141,7 @@ C-----------------------------------------------
 C!!
       IF(IRATE == 0) IRATE = 1      
 Card3 
-      IF(IRATE < = 3) THEN
+      IF(IRATE <= 3) THEN
          CALL HM_GET_INTV  ('FUN_A1'       ,IFUNC(1)   ,IS_AVAILABLE,LSUBMODEL)
          CALL HM_GET_INTV  ('FUN_A2'       ,IFUNC(2)   ,IS_AVAILABLE,LSUBMODEL)
          CALL HM_GET_FLOATV('FScale11'     ,YFAC(1)    ,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -156,7 +156,7 @@ C unit
          RATE(2) = ZERO          
       ENDIF  
 C        
-      IF(IRATE < = 2) THEN   
+      IF(IRATE <= 2) THEN   
          CALL HM_GET_FLOATV('Epsilon_0'    ,EPSP0      ,IS_AVAILABLE, LSUBMODEL, UNITAB)
          CALL HM_GET_FLOATV('MAT_C0'       ,CP         ,IS_AVAILABLE, LSUBMODEL, UNITAB)
          CALL HM_GET_FLOATV('SIGMA_r'      ,SIGY       ,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -324,6 +324,7 @@ C-----------------------
       MTAG%L_PLA  = 1
 C-----------------------      
       ! Properties compatibility  
+      CALL INIT_MAT_KEYWORD(MATPARAM,"ELASTO_PLASTIC")
       CALL INIT_MAT_KEYWORD(MATPARAM,"SHELL_ISOTROPIC") 
       CALL INIT_MAT_KEYWORD(MATPARAM,"SOLID_ISOTROPIC")
       CALL INIT_MAT_KEYWORD(MATPARAM,"SPH") 

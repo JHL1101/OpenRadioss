@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    xyznod_ply             ../engine/source/output/anim/generate/xyznod_ply.F
 !||--- called by ------------------------------------------------------
@@ -28,6 +29,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_anim_ply_xyznod   ../engine/source/mpi/anim/spmd_anim_ply_xyznod.F
 !||    write_r_c              ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    plyxfem_mod            ../engine/share/modules/plyxfem_mod.F
 !||====================================================================
       SUBROUTINE XYZNOD_PLY(IPLY,IDPLY,NOD_PXFEM,X,ZI_PLY,NODGLOB,
@@ -37,6 +40,8 @@ C
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -60,7 +65,7 @@ C
        II = IDPLY
       IF (NSPMD == 1) THEN
         ARSZ = PLYNOD(IPLY)%PLYNUMNODS
-        ALLOCATE (XNODARRAY(3,ARSZ))
+        call my_alloc(XNODARRAY, 3, ARSZ, "XNODARRAY")
 
         DO ND=1,PLYNOD(IPLY)%PLYNUMNODS
              I = PLYNOD(IPLY)%NODES(ND)
@@ -76,7 +81,7 @@ C
              XNODARRAY(3,EMPL)=X(3,I)+ZI_PLY(N,IPLY)*VN+PLY(IPLY)%U(3,N)
         END DO
         CALL WRITE_R_C(XNODARRAY,3*ARSZ)
-        DEALLOCATE(XNODARRAY)
+        call my_dealloc(XNODARRAY)
         EMPSIZPL = EMPSIZPL + PLYNOD(IPLY)%PLYNUMNODS
       ELSE
         CALL SPMD_ANIM_PLY_XYZNOD( NODGLOB,IPLY, IDPLY,

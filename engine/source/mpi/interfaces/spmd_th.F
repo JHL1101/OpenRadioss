@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_all_dmin         ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_all_dmin    ../engine/source/mpi/interfaces/spmd_th.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_ALL_DMIN(V,LEN)
 C min table V of size LEN of type my_real
@@ -32,7 +33,7 @@ C result in VTMP of size LEN
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -52,15 +53,14 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR
+      INTEGER I
       my_real
      .        VTMP(LEN)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_ALLREDUCE(V,VTMP,LEN,REAL,MPI_MIN,
-     .                     SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_ALLREDUCE(V,VTMP,LEN,SPMD_MIN)
         IF(ISPMD==0)THEN
           DO I = 1, LEN
             V(I) = VTMP(I)
@@ -73,22 +73,22 @@ C
       END
 
 !||====================================================================
-!||    spmd_glob_dsum        ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_dsum   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- called by ------------------------------------------------------
-!||    get_u_nod_a           ../engine/source/user_interface/uaccess.F
-!||    get_u_nod_d           ../engine/source/user_interface/uaccess.F
-!||    get_u_nod_v           ../engine/source/user_interface/uaccess.F
-!||    get_u_nod_x           ../engine/source/user_interface/uaccess.F
+!||    get_u_nod_a      ../engine/source/user_interface/uaccess.F
+!||    get_u_nod_d      ../engine/source/user_interface/uaccess.F
+!||    get_u_nod_v      ../engine/source/user_interface/uaccess.F
+!||    get_u_nod_x      ../engine/source/user_interface/uaccess.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_DSUM(V,LEN,VTMP)
 C gather table V of size LEN of type my_real
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -128,17 +128,17 @@ C
       END
 C
 !||====================================================================
-!||    spmd_glob_dpsum       ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_dpsum   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_DPSUM(V,LEN,VTMP)
 C gather table V of size LEN of type my_dp
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 
 C-----------------------------------------------------------------
@@ -179,17 +179,17 @@ C
       END
 C
 !||====================================================================
-!||    spmd_glob_fsum        ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_fsum   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_FSUM(V,LEN,VTMP)
 C gather tableau V de taille LEN de type REAL*4
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -229,12 +229,12 @@ C
       END
 C
 !||====================================================================
-!||    spmd_part_com         ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_part_com   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- called by ------------------------------------------------------
-!||    rbypid                ../engine/source/constraints/general/rbody/rbypid.F
+!||    rbypid          ../engine/source/constraints/general/rbody/rbypid.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_PART_COM(TAG,MAIN,ICOMV)
 C fills on pmain the table ICOMV according to the value of local TAG
@@ -242,7 +242,7 @@ C ie on main : ICOMV(P) = "TAG on p"
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -263,22 +263,20 @@ C-----------------------------------------------
 #ifdef MPI
       INTEGER MSGOFF,MSGTYP,K,LOC_PROC
       DATA MSGOFF/8001/
-      INTEGER STATUS(MPI_STATUS_SIZE),IERROR
+      INTEGER STATUS(MPI_STATUS_SIZE)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       LOC_PROC = ISPMD+1
       IF (LOC_PROC/=MAIN) THEN
         MSGTYP=MSGOFF
-            CALL MPI_SEND(TAG,1,MPI_INTEGER,IT_SPMD(MAIN),
-     .                    MSGTYP,SPMD_COMM_WORLD,IERROR)
+            CALL SPMD_SEND(TAG,1,IT_SPMD(MAIN),MSGTYP)
       ELSE
         ICOMV(MAIN) = TAG
         DO K=1,NSPMD
           IF(K/=MAIN) THEN
             MSGTYP=MSGOFF
-            CALL MPI_RECV(TAG,1,MPI_INTEGER,IT_SPMD(K),
-     .                    MSGTYP,SPMD_COMM_WORLD,STATUS,IERROR)
+            CALL SPMD_RECV(TAG,1,IT_SPMD(K),MSGTYP,STATUS)
             ICOMV(K) = TAG
           END IF
         END DO
@@ -290,13 +288,13 @@ C
 C
 
 !||====================================================================
-!||    spmd_glob_fsum9       ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_fsum9   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- called by ------------------------------------------------------
-!||    velvecc               ../engine/source/output/anim/generate/velvec.F
+!||    velvecc           ../engine/source/output/anim/generate/velvec.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_FSUM9(V,LEN)
 C gather table V of size LEN of type real
@@ -304,7 +302,7 @@ C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
       USE MY_ALLOC_MOD
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -324,16 +322,14 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR
+      INTEGER I
       REAL, DIMENSION(:),ALLOCATABLE :: VTMP
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       CALL MY_ALLOC(VTMP,LEN)
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  MPI_REAL,MPI_SUM,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_SUM,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN
@@ -347,40 +343,40 @@ C
       END
 C
 !||====================================================================
-!||    spmd_glob_dsum9       ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_dsum9   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- called by ------------------------------------------------------
-!||    alelin                ../engine/source/ale/grid/alelin.F
-!||    ani_pcont21           ../engine/source/output/anim/generate/ani_pcont.F
-!||    ecrit                 ../engine/source/output/ecrit.F
-!||    hist2                 ../engine/source/output/th/hist2.F
-!||    i9wal2                ../engine/source/interfaces/int09/i9wal2.F
-!||    i9wal3                ../engine/source/interfaces/int09/i9wal3.F
-!||    intstamp_ass          ../engine/source/interfaces/int21/intstamp_ass.F
-!||    noise                 ../engine/source/general_controls/computation/noise.F
-!||    outp_mt               ../engine/source/output/sty/outp_mt.F
-!||    outp_n_v2             ../engine/source/output/sty/outp_n_v.F
-!||    outp_n_vc             ../engine/source/output/sty/outp_n_v.F
-!||    pnoise                ../engine/source/general_controls/computation/pnoise.F
-!||    section_io            ../engine/source/tools/sect/section_io.F
-!||    sensor_spmd           ../engine/source/tools/sensor/sensor_spmd.F
-!||    sms_pcg               ../engine/source/ams/sms_pcg.F
-!||    sms_produt3           ../engine/source/ams/sms_proj.F
-!||    sortie_error          ../engine/source/output/sortie_error.F
-!||    thcluster             ../engine/source/output/th/thcluster.F
-!||    velvec2               ../engine/source/output/anim/generate/velvec.F
-!||    velvecc21             ../engine/source/output/anim/generate/velvec.F
-!||    wrrestp               ../engine/source/output/restart/wrrestp.F
-!||    wrtdes0               ../engine/source/output/th/wrtdes0.F
+!||    alelin            ../engine/source/ale/grid/alelin.F
+!||    ani_pcont21       ../engine/source/output/anim/generate/ani_pcont.F
+!||    ecrit             ../engine/source/output/ecrit.F
+!||    hist2             ../engine/source/output/th/hist2.F
+!||    i9wal2            ../engine/source/interfaces/int09/i9wal2.F
+!||    i9wal3            ../engine/source/interfaces/int09/i9wal3.F
+!||    intstamp_ass      ../engine/source/interfaces/int21/intstamp_ass.F
+!||    noise             ../engine/source/general_controls/computation/noise.F
+!||    outp_mt           ../engine/source/output/sty/outp_mt.F
+!||    outp_n_v2         ../engine/source/output/sty/outp_n_v.F
+!||    outp_n_vc         ../engine/source/output/sty/outp_n_v.F
+!||    pnoise            ../engine/source/general_controls/computation/pnoise.F
+!||    section_io        ../engine/source/tools/sect/section_io.F
+!||    sensor_spmd       ../engine/source/tools/sensor/sensor_spmd.F
+!||    sms_pcg           ../engine/source/ams/sms_pcg.F
+!||    sms_produt3       ../engine/source/ams/sms_proj.F
+!||    sortie_error      ../engine/source/output/sortie_error.F
+!||    thcluster         ../engine/source/output/th/thcluster.F
+!||    velvec2           ../engine/source/output/anim/generate/velvec.F
+!||    velvecc21         ../engine/source/output/anim/generate/velvec.F
+!||    wrrestp           ../engine/source/output/restart/wrrestp.F
+!||    wrtdes0           ../engine/source/output/th/wrtdes0.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_DSUM9(V,LEN)
 C gather table V of size LEN of type my_real
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -400,16 +396,14 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR
+      INTEGER I
       my_real
      .        VTMP(LEN)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  REAL,MPI_SUM,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_SUM,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN
@@ -421,22 +415,22 @@ C
       RETURN
       END
 !||====================================================================
-!||    spmd_glob_dpsum9      ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_dpsum9   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- called by ------------------------------------------------------
-!||    intstamp_ass          ../engine/source/interfaces/int21/intstamp_ass.F
-!||    sms_pcg               ../engine/source/ams/sms_pcg.F
-!||    sms_produt3           ../engine/source/ams/sms_proj.F
-!||    sms_produt_h          ../engine/source/ams/sms_proj.F
+!||    intstamp_ass       ../engine/source/interfaces/int21/intstamp_ass.F
+!||    sms_pcg            ../engine/source/ams/sms_pcg.F
+!||    sms_produt3        ../engine/source/ams/sms_proj.F
+!||    sms_produt_h       ../engine/source/ams/sms_proj.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod           ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_DPSUM9(V,LEN)
 C Gather Table V of Double precision type size
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -456,16 +450,14 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR
+      INTEGER I
       DOUBLE PRECISION
      .        VTMP(LEN)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  MPI_DOUBLE_PRECISION,MPI_SUM,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_SUM,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN
@@ -514,14 +506,14 @@ C
 !||    sz_print                          ../engine/source/output/restart/arralloc.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod               ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod                          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_ISUM9(V,LEN)
 C gather table V of size LEN of type integer
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -539,15 +531,13 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR, 
+      INTEGER I,
      . VTMP(LEN)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  MPI_INTEGER,MPI_SUM,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_SUM,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN
@@ -560,17 +550,17 @@ C
       END
 C
 !||====================================================================
-!||    spmd_glob_min         ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_min   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_MIN(V,LEN)
 C gather table V of size LEN of type reel
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -590,14 +580,12 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, IERROR
+      INTEGER I
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  REAL,MPI_MIN,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_MIN,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN
@@ -609,17 +597,17 @@ C
       RETURN
       END
 !||====================================================================
-!||    spmd_glob_max         ../engine/source/mpi/interfaces/spmd_th.F
+!||    spmd_glob_max   ../engine/source/mpi/interfaces/spmd_th.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_GLOB_MAX(V,LEN)
 C gather table V of size LEN of type reel
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -640,14 +628,12 @@ C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
 
-      INTEGER I, IERROR
+      INTEGER I
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
       IF (LEN > 0) THEN
-        CALL MPI_REDUCE(V,VTMP,LEN,
-     .                  REAL,MPI_MAX,IT_SPMD(1),
-     .                  SPMD_COMM_WORLD,IERROR)
+        CALL SPMD_REDUCE(V,VTMP,LEN,SPMD_MAX,IT_SPMD(1))
       ENDIF
       IF (ISPMD==0) THEN
         DO I=1,LEN

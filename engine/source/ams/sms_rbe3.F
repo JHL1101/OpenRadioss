@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    sms_rbe3_nodxi         ../engine/source/ams/sms_rbe3.F
@@ -241,19 +242,24 @@ C---
       END
 
 !||====================================================================
-!||    sms_rbe3t2   ../engine/source/ams/sms_rbe3.F
+!||    sms_rbe3t2       ../engine/source/ams/sms_rbe3.F
 !||--- called by ------------------------------------------------------
-!||    sms_pcg      ../engine/source/ams/sms_pcg.F
+!||    sms_pcg          ../engine/source/ams/sms_pcg.F
 !||--- calls      -----------------------------------------------------
-!||    prerbe3      ../engine/source/constraints/general/rbe3/rbe3f.F
-!||    prerbe3p     ../engine/source/constraints/general/rbe3/rbe3f.F
-!||    rbe3cl       ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    prerbe3          ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    prerbe3p         ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    rbe3cl           ../engine/source/constraints/general/rbe3/rbe3f.F
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE SMS_RBE3T2(IRBE3 ,LRBE3 ,X    ,A     ,FRBE3 ,
      2                      SKEW  ,R     ,PREC_SMS3)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -283,7 +289,7 @@ C     REAL
 C======================================================================|
       IADS = SLRBE3/2
       CALL PRERBE3(IRBE3 ,MAX_M , IROTG,JT  ,JR   )
-      ALLOCATE(FDSTNB(3,6,MAX_M))
+      call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
       IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
 C
       NMT0 = SLRBE3/2
@@ -322,8 +328,8 @@ C
           ENDDO
       ENDDO
 C      
-      DEALLOCATE(FDSTNB)
-      IF (IROTG>0) DEALLOCATE(MDSTNB)
+      call my_dealloc(FDSTNB)
+      IF (IROTG>0) call my_dealloc(MDSTNB)
 C---
       RETURN
       END
@@ -448,13 +454,16 @@ C---
       END
 
 !||====================================================================
-!||    sms_rbe3_1      ../engine/source/ams/sms_rbe3.F
+!||    sms_rbe3_1       ../engine/source/ams/sms_rbe3.F
 !||--- called by ------------------------------------------------------
-!||    sms_rbe3_prec   ../engine/source/ams/sms_rbe3.F
-!||    sms_rbe3t1      ../engine/source/ams/sms_rbe3.F
+!||    sms_rbe3_prec    ../engine/source/ams/sms_rbe3.F
+!||    sms_rbe3t1       ../engine/source/ams/sms_rbe3.F
 !||--- calls      -----------------------------------------------------
-!||    mfac_rbe3       ../engine/source/constraints/general/rbe3/rbe3f.F
-!||    rbe3cl          ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    mfac_rbe3        ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    rbe3cl           ../engine/source/constraints/general/rbe3/rbe3f.F
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE SMS_RBE3_1(
      1                 IRBE3 ,LRBE3 ,X     ,A     ,FRBE3 ,
@@ -463,6 +472,8 @@ C---
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -489,7 +500,7 @@ C     REAL
      .         DIMENSION(:,:,:),ALLOCATABLE :: FDSTNB ,MDSTNB
 C-----------------------------------------------
       IADS = NMT0
-      ALLOCATE(FDSTNB(3,6,MAX_M))
+      call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
       IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
 C---
       DO N=1,NRBE3
@@ -520,8 +531,8 @@ C---
        END IF ! IF (NS>0) THEN
       ENDDO
 C
-      DEALLOCATE(FDSTNB)
-      IF (IROTG>0) DEALLOCATE(MDSTNB)
+      call my_dealloc(FDSTNB)
+      IF (IROTG>0) call my_dealloc(MDSTNB)
 C
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C  |         I10MAIN_TRI                       /intsort/i10main_tri.F
 C  |         I11MAIN_TRI                       /intsort/i11main_tri.F
 C  |         I24MAIN_TRI                       /intsort/i24main_tri.F
@@ -28,7 +29,6 @@ C  |         I24MAIN_TRI                       /intsort/i24main_tri.F
 !||--- called by ------------------------------------------------------
 !||    i23main_tri   ../engine/source/interfaces/intsort/i23main_tri.F
 !||    i24main_tri   ../engine/source/interfaces/intsort/i24main_tri.F
-!||    i25main_tri   ../engine/source/interfaces/intsort/i25main_tri.F
 !||    i7main_tri    ../engine/source/interfaces/intsort/i7main_tri.F
 !||====================================================================
       SUBROUTINE I7XSAVE(
@@ -36,7 +36,7 @@ C  |         I24MAIN_TRI                       /intsort/i24main_tri.F
      2       ITASK ,XSAV ,XMIN  ,YMIN  ,ZMIN    ,
      3       XMAX  ,YMAX ,ZMAX  ,C_MAX ,CURV_MAX,
      4       ICURV ,IRECT,NRTM_T,SX    ,SY      ,
-     5       SZ    ,SX2  ,SY2   ,SZ2   ,NMN_L)
+     5       SZ    ,SX2  ,SY2   ,SZ2   ,NMN_L   )
 C save XSAV and calculate domain bounds
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -127,6 +127,7 @@ C msr < 0 <=> shooting nodes
             NMN_L= NMN_L + 1
           ENDIF
         END DO
+
       ELSE
 C
         IF(INCONV_L == 1) THEN
@@ -188,6 +189,7 @@ C
           CURV_MAX(I)=ZERO
         ENDDO
       ENDIF
+C
 C
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sort_surf      ../starter/source/groups/sort_surf.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE GROUPDEF_MOD
       use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -64,14 +66,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-      ALLOCATE (IWORK(80000))
+      call my_alloc(IWORK, 80000, "IWORK")
         
       DO K=1,NSURF
         NN  = IGRSURF(K)%NSEG
 
-        ALLOCATE (IBUFSSG_TRI(NISX*NN))
-        ALLOCATE (ITRI(2,NN))
-        ALLOCATE (INDEX(3*NN))
+        call my_alloc(IBUFSSG_TRI, NISX*NN, "IBUFSSG_TRI")
+        call my_alloc(ITRI, 2, NN, "ITRI")
+        call my_alloc(INDEX, 3*NN, "INDEX")
 
         DO I=1,NN
           IBUFSSG_TRI(6*(I-1)+1) = IGRSURF(K)%NODES(I,1)
@@ -134,9 +136,9 @@ C-----------------------------------------------
            IGRSURF(K)%ELEM(I)  = IBUFSSG_TRI(6*(IT-1)+6)
          ENDDO
 
-         DEALLOCATE(IBUFSSG_TRI)
-         DEALLOCATE(ITRI)
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(IBUFSSG_TRI)
+         CALL MY_DEALLOC(ITRI)
+         CALL MY_DEALLOC(INDEX)
 
       ENDDO ! DO K=1,NSURF
 !---

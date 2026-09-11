@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    csigini4               ../starter/source/elements/shell/coqueba/scigini4.F
 !||--- called by ------------------------------------------------------
@@ -82,8 +83,8 @@ C------------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       CHARACTER(LEN=NCHARTITLE)::TITR
-      INTEGER I,II,J,JJ,KK(8),N,NPTI,I1,I2,PT,PID1,IPID1,L_PLA,NLAY,
-     .   ILAY,LAYNPT_MAX,LAY_MAX,NPTT,NPTMX,IP,PTS,LENS,IPT_ALL,
+      INTEGER I,II,J,JJ,KK(8),N,NPTI,PT,PID1,IPID1,L_PLA,NLAY,
+     .   ILAY,LAYNPT_MAX,LAY_MAX,NPTT,NPTMX,IP,IPT_ALL,
      .   IPT,PTN,JDIR,ILAW
       INTEGER LI(MVSIZ)
       PARAMETER (LAYNPT_MAX = 10)
@@ -93,7 +94,7 @@ C-----------------------------------------------
      . S4(LAYNPT_MAX*LAY_MAX),SM(LAYNPT_MAX*LAY_MAX),PG2I,PG,FM,S6(6),
      . POSI(MVSIZ,NPT)
       my_real 
-     .    E1(6),E2(6),Z1,Z2,Z0,AA,E1G(6,4),E2G(6,4),Z1G(4),Z2G(4),UNG,
+     .    E1(6),E2(6),Z1,Z2,Z0,AA,E1G(6,4),E2G(6,4),Z1G(4),Z2G(4),
      .    FORJ(5,4),MOMJ(3,4),TJ,UNPT,F2MJ(4),F2M
 C--------------------------------------------------------------
       TYPE(G_BUFEL_) ,POINTER :: GBUF     
@@ -803,9 +804,8 @@ C-----------------------------------------------
 C------------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real 
-     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UZZ,UXY,UYZ,UZX,A,B,C
+     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UXY,UYZ,UZX,A,B,C
 C-------- Out EPS: Exx, Eyy, 2exy, 2eyz, 2ezx, 0
              TXX = EPS(1)
              TYY = EPS(2)
@@ -854,9 +854,8 @@ C-----------------------------------------------
 C------------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real 
-     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UZZ,UXY,UYZ,UZX,A,B,C
+     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UXY,UYZ,UZX,A,B,C
 C--------- Out EPS: Exx, Eyy, Exy, Eyz, Ezx, 0
              TXX = SIG(1)
              TYY = SIG(2)
@@ -907,11 +906,6 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J
-C     REAL
-      my_real
-     .   R1,R2,R3,S1,S2,S3,R12A,R22A,S12B,S22B,RS1,RS2,RS3,
-     .   T1,T2,T3,PHI,SUM1,SUM2,FACT,R3R3,S3S3 
 c------------------------------------------------
           IF (IGTYP /= 1) THEN                                                     
 c------------------------------------------------
@@ -945,7 +939,6 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real
      .   S1, S2, S3, S4, S5
 C-----------------------------------------------

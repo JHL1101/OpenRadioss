@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    read_cluster   ../engine/source/output/cluster/read_cluster.F
+!||    read_cluster     ../engine/source/output/cluster/read_cluster.F
 !||--- called by ------------------------------------------------------
-!||    rdresb         ../engine/source/output/restart/rdresb.F
+!||    rdresb           ../engine/source/output/restart/rdresb.F
 !||--- calls      -----------------------------------------------------
-!||    read_db        ../common_source/tools/input_output/read_db.F
-!||    read_i_c       ../common_source/tools/input_output/write_routines.c
+!||    read_db          ../common_source/tools/input_output/read_db.F
+!||    read_i_c         ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
-!||    cluster_mod    ../engine/share/modules/cluster_mod.F
+!||    cluster_mod      ../engine/share/modules/cluster_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE READ_CLUSTER(CLUSTER)
 C-----------------------------------------------
@@ -38,6 +41,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -71,8 +76,8 @@ C=======================================================================
         ENDIF 
       ENDDO
 
-      ALLOCATE (ICLTAB(ILCLUSTER_MAX)) ! Integer CLuster TABle
-      ALLOCATE (RCLTAB(RLCLUSTER_MAX)) ! Real CLuster TABle
+      call my_alloc(ICLTAB, ILCLUSTER_MAX, "ICLTAB") ! Integer CLuster TABle
+      call my_alloc(RCLTAB, RLCLUSTER_MAX, "RCLTAB") ! Real CLuster TABle
 
       DO I = 1, NCLUSTER
         RCLTAB = ZERO
@@ -140,8 +145,8 @@ C=======================================================================
         ENDIF
       ENDDO  !  I = 1, NCLUSTER_L
 
-      DEALLOCATE (RCLTAB)
-      DEALLOCATE (ICLTAB)
+      call my_dealloc(RCLTAB)
+      call my_dealloc(ICLTAB)
 
 C-----------
       RETURN

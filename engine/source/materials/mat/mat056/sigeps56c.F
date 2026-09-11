@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps56c   ../engine/source/materials/mat/mat056/sigeps56c.F
 !||--- called by ------------------------------------------------------
@@ -170,8 +171,6 @@ C-----------------------------------------------
      .        NFUNCM,IPERF
       INTEGER JST(MVSIZ+1), IC
       my_real
-     . MX234
-      my_real
      .        DYDX1(MVSIZ),DYDX2(MVSIZ),RATE(MVSIZ,2),SVM(MVSIZ),
      .        Y1(MVSIZ),Y2(MVSIZ),DR(MVSIZ),
      .        YFAC(MVSIZ,2),
@@ -189,7 +188,6 @@ C-----------------------------------------------
 C
 C -- Added variables for NEC grouping
       my_real
-     . NG_NU3,
      .     NG_NRATES(MVSIZ,100)
  
       INTEGER

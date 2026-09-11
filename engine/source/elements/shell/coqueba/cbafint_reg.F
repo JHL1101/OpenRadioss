@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,21 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cbafint_reg      ../engine/source/elements/shell/coqueba/cbafint_reg.F
 !||--- called by ------------------------------------------------------
 !||    cbaforc3         ../engine/source/elements/shell/coqueba/cbaforc3.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod   ../common_source/modules/nlocal_reg_mod.F
 !||====================================================================
       SUBROUTINE CBAFINT_REG(
@@ -44,6 +48,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -107,18 +113,30 @@ C=======================================================================
       L_NLOC = NLOC_DMG%L_NLOC       ! Length of non-local tables
       LE_MAX = NLOC_DMG%LE_MAX(IMAT) ! Maximal length of convergence
       ! Allocation of elementary forces vectors
-      ALLOCATE(F1(NEL,NDDL),F2(NEL,NDDL),F3(NEL,NDDL),F4(NEL,NDDL))
+      call my_alloc(F1, NEL, NDDL, "F1")
+      call my_alloc(F2, NEL, NDDL, "F2")
+      call my_alloc(F3, NEL, NDDL, "F3")
+      call my_alloc(F4, NEL, NDDL, "F4")
       ! Only for nodal timestep
       IF (NODADT > 0) THEN
         ! Nodal stiffness
-        ALLOCATE(STI1(NEL,NDDL),STI2(NEL,NDDL),STI3(NEL,NDDL),STI4(NEL,NDDL))
+        call my_alloc(STI1, NEL, NDDL, "STI1")
+        call my_alloc(STI2, NEL, NDDL, "STI2")
+        call my_alloc(STI3, NEL, NDDL, "STI3")
+        call my_alloc(STI4, NEL, NDDL, "STI4")
         ! Non-local mass
         MASS  => NLOC_DMG%MASS(1:L_NLOC)
         ! Initial non-local mass
         MASS0 => NLOC_DMG%MASS0(1:L_NLOC)
       ENDIF
-      ALLOCATE(VOL(NEL),BTB11(NEL),BTB12(NEL),BTB22(NEL),
-     .         POS1(NEL),POS2(NEL),POS3(NEL),POS4(NEL))
+      call my_alloc(VOL, NEL, "VOL")
+      call my_alloc(BTB11, NEL, "BTB11")
+      call my_alloc(BTB12, NEL, "BTB12")
+      call my_alloc(BTB22, NEL, "BTB22")
+      call my_alloc(POS1, NEL, "POS1")
+      call my_alloc(POS2, NEL, "POS2")
+      call my_alloc(POS3, NEL, "POS3")
+      call my_alloc(POS4, NEL, "POS4")
       ! Recovering non-local data
       VNL  => NLOC_DMG%VNL(1:L_NLOC)     ! Non-local variable velocities
       VNL0 => NLOC_DMG%VNL_OLD(1:L_NLOC) ! Non-local variable velocities
@@ -164,14 +182,14 @@ c
         ! Allocation of the velocities predictor
         IF (NDDL > 2) THEN 
           IF (NODADT > 0) THEN 
-            ALLOCATE(STIFNLTH(NEL,NDDL+1))
-            ALLOCATE(DTN(NEL,NDDL+1))
+            call my_alloc(STIFNLTH, NEL, NDDL+1, "STIFNLTH")
+            call my_alloc(DTN, NEL, NDDL+1, "DTN")
           ENDIF
           NDNOD = NDDL+1
         ELSE
           IF (NODADT > 0) THEN 
-            ALLOCATE(STIFNLTH(NEL,NDDL))
-            ALLOCATE(DTN(NEL,NDDL))
+            call my_alloc(STIFNLTH, NEL, NDDL, "STIFNLTH")
+            call my_alloc(DTN, NEL, NDDL, "DTN")
           ENDIF
           NDNOD = NDDL
         ENDIF
@@ -300,7 +318,11 @@ c
         DO K = 1,NDNOD
           DO I = 1,NEL
             ! Computing the non-local in-thickness cumulated values
-            UNLTH(I,K) = UNLTH(I,K) + VNLTH(I,K)*DT1
+            ! Guard: broken elements (OFF=0) have FNLTH=0, so VNLTH is frozen.
+            ! Skip the UNLTH update to prevent phantom linear drift in dead elements.
+            IF (OFF(I) /= ZERO) THEN
+              UNLTH(I,K) = UNLTH(I,K) + VNLTH(I,K)*DT1
+            ENDIF
           ENDDO
         ENDDO
 c
@@ -538,21 +560,21 @@ c
 c
       ENDIF
       ! Deallocation of tables
-      IF (ALLOCATED(F1))       DEALLOCATE(F1)
-      IF (ALLOCATED(F2))       DEALLOCATE(F2)
-      IF (ALLOCATED(F3))       DEALLOCATE(F3)
-      IF (ALLOCATED(F4))       DEALLOCATE(F4)
-      IF (ALLOCATED(STIFNLTH)) DEALLOCATE(STIFNLTH)
-      IF (ALLOCATED(BTB11))    DEALLOCATE(BTB11)
-      IF (ALLOCATED(BTB12))    DEALLOCATE(BTB12)
-      IF (ALLOCATED(BTB22))    DEALLOCATE(BTB22)
-      IF (ALLOCATED(POS1))     DEALLOCATE(POS1)
-      IF (ALLOCATED(POS2))     DEALLOCATE(POS2) 
-      IF (ALLOCATED(POS3))     DEALLOCATE(POS3)
-      IF (ALLOCATED(POS4))     DEALLOCATE(POS4)     
-      IF (ALLOCATED(STI1))     DEALLOCATE(STI1)
-      IF (ALLOCATED(STI2))     DEALLOCATE(STI2) 
-      IF (ALLOCATED(STI3))     DEALLOCATE(STI3)
-      IF (ALLOCATED(STI4))     DEALLOCATE(STI4) 
+      IF (ALLOCATED(F1)) call my_dealloc(F1)
+      IF (ALLOCATED(F2)) call my_dealloc(F2)
+      IF (ALLOCATED(F3)) call my_dealloc(F3)
+      IF (ALLOCATED(F4)) call my_dealloc(F4)
+      IF (ALLOCATED(STIFNLTH)) call my_dealloc(STIFNLTH)
+      IF (ALLOCATED(BTB11)) call my_dealloc(BTB11)
+      IF (ALLOCATED(BTB12)) call my_dealloc(BTB12)
+      IF (ALLOCATED(BTB22)) call my_dealloc(BTB22)
+      IF (ALLOCATED(POS1)) call my_dealloc(POS1)
+      IF (ALLOCATED(POS2)) call my_dealloc(POS2)
+      IF (ALLOCATED(POS3)) call my_dealloc(POS3)
+      IF (ALLOCATED(POS4)) call my_dealloc(POS4)
+      IF (ALLOCATED(STI1)) call my_dealloc(STI1)
+      IF (ALLOCATED(STI2)) call my_dealloc(STI2)
+      IF (ALLOCATED(STI3)) call my_dealloc(STI3)
+      IF (ALLOCATED(STI4)) call my_dealloc(STI4)
 c
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps36g   ../engine/source/materials/mat/mat036/sigeps36g.F
 !||--- called by ------------------------------------------------------
@@ -114,11 +115,11 @@ C        NPF,TF  : FUNCTION PARAMETER
 C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
-      INTEGER I,J,NRATE1,J1,J2,N,NINDX,NMAX,NFUNC,NFUNCE,
+      INTEGER I,J,NRATE1,J1,J2,N,NINDX,NMAX,NFUNCE,
      .        IAD1(MVSIZ),IPOS1(MVSIZ),ILEN1(MVSIZ),
      .        IAD2(MVSIZ),IPOS2(MVSIZ),ILEN2(MVSIZ),
-     .        JJ(MVSIZ),INDEX(MVSIZ),IFUNC(100),NFUNCV(MVSIZ),
-     .        NFUNCM, NRATEM,IADBUFV1,OPTE1,IDESCALE1
+     .        JJ(MVSIZ),INDEX(MVSIZ),
+     .        NRATEM,IADBUFV1,OPTE1,IDESCALE1
       my_real
      .        E(MVSIZ),E11,NU,A,B,FAC,DEZZ,S1(MVSIZ),S2(MVSIZ),
      .        DPLA,EPST(MVSIZ),A1(MVSIZ),A2(MVSIZ),G(MVSIZ),G3(MVSIZ),
@@ -128,9 +129,9 @@ C-----------------------------------------------
      .        YFAC(MVSIZ,2),NNU11,NU11,
      .        NU21,NU31,DPLA_I,DPLA_J(MVSIZ),H(MVSIZ),
      .        FAIL(MVSIZ),EPSMAX1,EPSR11,EPSR21,
-     .        ERR,F,DF,YLD_I,TOL,
+     .        F,DF,YLD_I,TOL,
      .        C1,CP1,CQ1,CP2,CQ2,SM1(MVSIZ),SM2(MVSIZ),SM3,FN,FM,FNM,
-     .        PN2,QN2,PM2,QM2,DFN,DFM,DFNM,DA,DB,A_I,B_I,
+     .        DFN,DFM,DFNM,DA,DB,A_I,B_I,
      .        DFNP,DFNQ,DFMP,DFMQ,DFNMP,DFNMQ,XP,XQ,XPG,XQG,
      .        GM(MVSIZ),CM(MVSIZ),P_M,QM,PNM1,PNM2,QTIER(MVSIZ),
      .        CNM(MVSIZ),AM(MVSIZ),BM(MVSIZ),ANM(MVSIZ),BNM(MVSIZ),

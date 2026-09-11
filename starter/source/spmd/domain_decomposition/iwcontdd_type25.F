@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    iwcontdd_type25   ../starter/source/spmd/domain_decomposition/iwcontdd_type25.F
 !||--- called by ------------------------------------------------------
 !||    inint3            ../starter/source/interfaces/inter3d1/inint3.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         SUBROUTINE IWCONTDD_TYPE25(NLEDGE,NUMNOD,NSN,NMN,IEDGE,NRTM,NEDGE,NSV,MSR,IRECT,IWCONT,NSNT,NMNT,INTBUF_TAB)
@@ -43,6 +45,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !            * add the weight to the 2 S nodes (e2e)
 !$ENDCOMMENT
         USE INTBUFDEF_MOD 
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -95,7 +98,7 @@ C-----------------------------------------------
         ! ---------------------------
         ! special treatment for edge to edge
         IF(IEDGE/=0) THEN
-          ALLOCATE(TAG_NODE(NUMNOD))
+          call my_alloc(TAG_NODE, NUMNOD, "TAG_NODE")
           TAG_NODE(1:NUMNOD) = 0
           ! ------------
           ! S node for e2e & e2s
@@ -166,7 +169,7 @@ C-----------------------------------------------
             ENDIF
           ENDDO
           ! ------------    
-          DEALLOCATE(TAG_NODE)
+          CALL MY_DEALLOC(TAG_NODE)
         ENDIF
         ! ---------------------------
 

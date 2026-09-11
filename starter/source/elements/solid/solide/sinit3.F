@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sinit3                 ../starter/source/elements/solid/solide/sinit3.F
 !||--- called by ------------------------------------------------------
@@ -134,7 +135,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J, NF1, NCC, IBID, JHBE, IREP,IGTYP, NUVAR,NUVARR,IDEF,
+      INTEGER I, NF1, NCC, IBID, JHBE, IREP,IGTYP, NUVAR,IDEF,
      .        IR,IS,IT,IPT,LVLOC,IPID1,NPTR,NPTS,NPTT,NLAY,NDDIM, 
      .        NSPHDIR, NCELF, NCELL,L_PLA,L_SIGB,IBOLTP
       INTEGER MAT(MVSIZ), PID(MVSIZ), NGL(MVSIZ),
@@ -177,7 +178,6 @@ C-----------------------------------------------
       TYPE(BUF_MAT_) ,POINTER :: MBUF
       TYPE(BUF_LAY_) ,POINTER :: BUFLY
       TYPE(BUF_FAIL_) ,POINTER:: FBUF
-      my_real, DIMENSION(:), POINTER  :: UVARF    
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------

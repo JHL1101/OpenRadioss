@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,16 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    sini43         ../starter/source/elements/solid/sconnect/sini43.F
+!||    sini43             ../starter/source/elements/solid/sconnect/sini43.F
 !||--- called by ------------------------------------------------------
-!||    suinit3        ../starter/source/elements/elbuf_init/suinit3.F
+!||    suinit3            ../starter/source/elements/elbuf_init/suinit3.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE SINI43(ELBUF_STR,
@@ -33,11 +34,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      4           MAS6  ,MAS7  ,MAS8  ,INN1  ,INN2  ,
      5           INN3  ,INN4  ,INN5  ,INN6  ,INN7  ,
      6           INN8  ,PM    ,MAT   ,OFFG  ,EINTG ,
-     7           PTSOL ,SIGSP ,NSIGI ,NUVAR )
+     7           PTSOL ,SIGSP ,NSIGI ,NUVAR ,MAT_PARAM)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
-      USE ELBUFDEF_MOD            
+      USE ELBUFDEF_MOD           
+      USE MATPARAM_DEF_MOD
 C-------------------------------------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -59,13 +61,13 @@ C----------------------------------------------------------
      . INN1(*),INN2(*),INN3(*),INN4(*),INN5(*),INN6(*),INN7(*),INN8(*),
      . UPARAM(*),OFFG(*),EINTG(*),PM(NPROPM,*),SIGSP(NSIGI,NEL)
       TYPE(ELBUF_STRUCT_), TARGET :: ELBUF_STR
+      TYPE (MATPARAM_STRUCT_),INTENT(INOUT) :: MAT_PARAM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,II,JJ,KK(6),IP,IPP,IPSU,IUS,MA,MFLAG,L_PLA,JPS,JPS1,
      .   IFLAGINI,NVAR_TMP,J
       my_real MASS,INER
-      my_real GAMA(6)
       TYPE(L_BUFEL_) ,POINTER :: LBUF     
       TYPE(BUF_MAT_) ,POINTER :: MBUF
       my_real, DIMENSION(:)  , POINTER  :: UVAR,PLA,EPS,SIG  
@@ -79,7 +81,7 @@ C=======================================================================
       ELSEIF (MLW == 116) THEN
         MFLAG = NINT(UPARAM(3))
       ELSEIF (MLW == 117) THEN
-        MFLAG = NINT(UPARAM(12))
+        MFLAG = MAT_PARAM%IPARAM(6)
       ELSE
         MFLAG = 0
       ENDIF

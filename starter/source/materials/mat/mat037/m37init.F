@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    m37init        ../starter/source/materials/mat/mat037/m37init.F
 !||--- called by ------------------------------------------------------
@@ -66,12 +67,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  :: I,J,NUVAR, GG1, GG2, GG3, ISFLUID,NL
-      INTEGER  :: NPH,IFLG,IE,IADBUF,NUPARAM, M_UID,M_IID,IGRAV
-      my_real  :: MFRAC, A, MU1P1, MU1P2, RHO1, RHO2, RHO10, RHO20, C1, GAM, PMIN, P0, MU2P1, RHO,P,A1,PSH,DEPTH,Z(3)
-      my_real  :: UPARAM(*),XBAS,YBAS,ZBAS,NX,NY,NZ,GRAV, BZ(3),DOTPROD, DELTA_P, RHO0_LIQ,RHO0_GAS, RHO_LIQ,RHO_GAS
-      my_real  :: POLD,HEIGHT
-      my_real  :: N(3,8)
+      INTEGER  :: I,NUVAR
+      INTEGER  :: IE
+      my_real  :: A, MU1P1, RHO1, RHO2, RHO10, RHO20, C1, GAM, PMIN, P0, MU2P1, RHO,P,A1
+      my_real  :: UPARAM(*)
 C-----------------------------------------------
 
       !---------------------------------!

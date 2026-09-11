@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    outri          ../starter/source/materials/time_step/outri.F
 !||--- called by ------------------------------------------------------
@@ -30,7 +31,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||====================================================================
       SUBROUTINE OUTRI(DTELEM,IXS   ,IXQ   ,IXC   ,IXT   ,
      .                 IXP   ,IXR   ,IXTG  ,KXX   ,
-     .                 KXSP  ,KXIG3D,IGEO  ,NUMEL)
+     .                 KXSP  ,KXIG3D,IGEO  ,NUMEL ,IKINE,
+     .                 SPRING_CON_RBODY)
 C
 C     SORTING OF DTEL (FOR EACH TYPE OF ELEMENT) AND PRINTING
 C
@@ -53,6 +55,7 @@ C-----------------------------------------------
 #include      "scr23_c.inc"
 #include      "param_c.inc"
 #include      "units_c.inc"
+#include      "kincod_c.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
@@ -63,10 +66,12 @@ C-----------------------------------------------
       my_real
      .   DTELEM(2*NUMEL)
       INTEGER,INTENT(IN) :: NUMEL
+      INTEGER,INTENT(IN) :: IKINE(NUMNOD)
+      INTEGER,INTENT(IN) :: SPRING_CON_RBODY
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NUM2, I, NUMIMP, NUMELO, NUM1, IS_PROP45     
+      INTEGER NUM2, I, NUMIMP, NUMELO, NUM1, IS_PROP45   
       REAL*4 VINGTR4, TEMPO
       INTEGER :: IERROR
       INTEGER, DIMENSION(:), ALLOCATABLE :: PERM
@@ -74,7 +79,7 @@ C-----------------------------------------------
 C=======================================================================
 C     INITIALIZATION OF INTERNAL NUMBERS OF ELEMENTS BEFORE SORTING
 C
-      CALL MY_ALLOC(PERM,NUMEL)
+      CALL MY_ALLOC(PERM,NUMEL,"PERM")
       ! --------------------
       ! solid and quad
       NUM2 = 0
@@ -255,15 +260,17 @@ c        CALL ANCHECK(94)
         WRITE(IOUT,1001)
 c        CALL ANCHECK(95)
         DO I=1,NUMIMP
-           NUMELO=NINT(DTELEM(NUM2+I))
-           IF( IGEO(11,IXR(1,NUMELO)) == 45) THEN
-             IS_PROP45 = 1
-           ELSE
-             WRITE(IOUT,1002)DTELEM(NUM1+I),IXR(6,NUMELO)
-           ENDIF
+          NUMELO=NINT(DTELEM(NUM2+I))
+          IF( IGEO(11,IXR(1,NUMELO)) == 45) THEN
+C           Kjoint2            
+            IS_PROP45 = 1
+          ELSEIF ((IRB(IKINE(IXR(2,NUMELO)))/=1).AND.(IRB(IKINE(IXR(3,NUMELO)))/= 1)) THEN
+C           Spring connected to rigid body not printout            
+            WRITE(IOUT,1002)DTELEM(NUM1+I),IXR(6,NUMELO)
+          ENDIF
         END DO
-        IF (IS_PROP45 == 1)
-     .       WRITE(IOUT,5001)
+        IF (IS_PROP45 == 1) WRITE(IOUT,5001)
+        IF (SPRING_CON_RBODY == 1) WRITE(IOUT,5002)
       ENDIF
 
       IF(NUMELTG>0 .AND. N2D == 0) THEN
@@ -333,7 +340,7 @@ c        CALL ANCHECK(93)
            WRITE(IOUT,1002)DTELEM(NUM1+I),KXIG3D(5,NUMELO)
         END DO
       ENDIF
-      DEALLOCATE( PERM )
+      CALL MY_DEALLOC(PERM)
 C--------------------------------------------------------
  1000 FORMAT(//,'         SOLID ELEMENTS TIME STEP')
  1001 FORMAT(  '         ------------------------',//,
@@ -344,8 +351,8 @@ C--------------------------------------------------------
  4000 FORMAT(/,'         BEAM  ELEMENTS TIME STEP')
  5000 FORMAT(/,'         SPRING ELEMENTS TIME STEP')
  5001 FORMAT(/,'   Info : spring TYPE45 (KJOINT2) time step is evaluated at the beginning of the engine')
+ 5002 FORMAT(/,'   Info : spring connected to rigid body - time step is evaluated at the beginning of the engine')
  6000 FORMAT(/,'         TRIANGULAR SHELL ELEMENTS TIME STEP')
-50000 FORMAT(/,'         USER RNUR ELEMENTS TIME STEP')
  7000 FORMAT(/,'         MULTI-PURPOSE ELEMENTS TIME STEP')
  8000 FORMAT(/,'         SMOOTH PARTICLES TIME STEP')
  9000 FORMAT(/,'         ISO GEOMETRIC ELEMENTS TIME STEP')
@@ -401,8 +408,8 @@ C-----------------------------------------------
       INTEGER :: IERROR
       INTEGER, DIMENSION(:), ALLOCATABLE :: PERM
 C=======================================================================
-      CALL MY_ALLOC(PERM,NUMNOD)
-      CALL MY_ALLOC(DT,NUMNOD)
+      CALL MY_ALLOC(PERM,NUMNOD,"PERM")
+      CALL MY_ALLOC(DT,NUMNOD,"DT")
       DTNODA = EP30
 C 
       DO I=1,NUMNOD
@@ -511,8 +518,8 @@ C
      .                  INPUT_TXT_X="NODAL TIME STEP",INPUT_TXT_Y="% OF NODES")
 C
 
-      DEALLOCATE( PERM )
-      DEALLOCATE( DT )
+      CALL MY_DEALLOC(PERM)
+      CALL MY_DEALLOC(DT)
 
 C-----------
  1000 FORMAT(//,'         NODAL TIME STEP (estimation)')

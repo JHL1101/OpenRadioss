@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,27 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    connectivity_mod              ../common_source/modules/connectivity.F90
 !||--- called by ------------------------------------------------------
+!||    apply_crack                   ../engine/source/engine/node_spliting/apply_crack.F90
 !||    asspar4                       ../engine/source/assembly/asspar4.F
+!||    build_contrib_order           ../engine/source/engine/node_spliting/apply_crack.F90
+!||    check_pon_consistency         ../engine/source/engine/node_spliting/check_pon_consistency.F90
 !||    detach_node                   ../engine/source/engine/node_spliting/detach_node.F90
 !||    detach_node_from_interfaces   ../engine/source/engine/node_spliting/detach_node.F90
 !||    detach_node_from_shells       ../engine/source/engine/node_spliting/detach_node.F90
+!||    detach_node_nloc              ../engine/source/engine/node_spliting/detach_node_nloc.F90
 !||    find_segment_in_list          ../engine/source/engine/node_spliting/detach_node.F90
 !||    init_ghost_shells             ../engine/source/engine/node_spliting/ghost_shells.F90
+!||    mirror_node_split             ../engine/source/engine/node_spliting/detach_node.F90
+!||    nloc_shell_detach             ../engine/source/engine/node_spliting/nloc_shell_detach.F90
 !||    radioss2                      ../engine/source/engine/radioss2.F
 !||    rdresb                        ../engine/source/output/restart/rdresb.F
 !||    resol                         ../engine/source/engine/resol.F
@@ -38,8 +45,8 @@
 !||    resol_head                    ../engine/source/engine/resol_head.F
 !||    restalloc                     ../engine/source/output/restart/arralloc.F
 !||    set_new_node_values           ../engine/source/engine/node_spliting/detach_node.F90
+!||    split_mass_fraction           ../engine/source/engine/node_spliting/apply_crack.F90
 !||    spmd_exchange_ghost_shells    ../engine/source/engine/node_spliting/ghost_shells.F90
-!||    test_jc_shell_detach          ../engine/source/engine/node_spliting/detach_node.F90
 !||    update_pon_shells             ../engine/source/engine/node_spliting/update_pon.F90
 !||    viper_coupling_initialize     ../engine/source/coupling/viper/viper_interface_mod.F90
 !||    wrrestp                       ../engine/source/output/restart/wrrestp.F
@@ -75,7 +82,7 @@
           real, dimension(:), allocatable :: dist_to_center !< maximum distance of a node to the center of the element
           integer, dimension(:), allocatable :: permutation !< permutation of the shell element in order to have the shells sorted by user_id
           integer :: offset
-          type(C_PTR) :: loc2glob
+          type(C_PTR) :: loc2glob = C_NULL_PTR
         end type shell_
 
         type list_of_shells_
@@ -88,6 +95,8 @@
           integer, dimension(:), allocatable :: offset !< offset of the shell element to receive from the other process
           integer, dimension(:), allocatable :: addcnel !< address for the node to elemenent (shell) connectivity
           integer, dimension(:), allocatable :: cnel ! element index in nodes arrays
+          integer, dimension(:), allocatable :: uid !< user id of the shell element
+          type(C_PTR) :: glob2loc = C_NULL_PTR !< map global id to local id
         end type ghost_shell_
 
 
@@ -102,7 +111,7 @@
           integer, dimension(:), allocatable :: pid !< pid(i) :  PID of the i-th solid element
           integer, dimension(:), allocatable :: matid !< matid(i) :  Material ID of the i-th solid element
           integer, dimension(:), allocatable :: user_id !< user_id(i) :  user id of the solid element
-          type(C_PTR) :: loc2glob
+          type(C_PTR) :: loc2glob = C_NULL_PTR
         end type solid_
 
         type connectivity_

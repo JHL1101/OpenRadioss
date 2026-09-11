@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    chkslv3     ../engine/source/interfaces/interf/chkstfn3.F
 !||--- called by ------------------------------------------------------
@@ -94,7 +95,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, NSNF, NSNL,ND,SE
 C     REAL
-      INTEGER IK1(4),IK2(4),IE1,IE2,IED,NS1,NS2
+      INTEGER IK1(4),IK2(4),IED,NS1,NS2
       DATA IK1 /1,2,3,4/
       DATA IK2 /2,3,4,1/
 C-----------------------------------------------
@@ -253,6 +254,7 @@ C
 !||====================================================================
 !||    chkinit       ../engine/source/interfaces/interf/chkstfn3.F
 !||--- called by ------------------------------------------------------
+!||    resol         ../engine/source/engine/resol.F
 !||    resol_init    ../engine/source/engine/resol_init.F
 !||--- uses       -----------------------------------------------------
 !||    element_mod   ../common_source/modules/elements/element_mod.F90
@@ -560,6 +562,8 @@ C
 !||    elbufdef_mod         ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
 !||    groupdef_mod         ../common_source/modules/groupdef_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod     ../common_source/modules/nodal_arrays.F90
 !||    rad2r_mod            ../engine/share/modules/rad2r.F
 !||    remesh_mod           ../engine/share/modules/remesh_mod.F
@@ -587,6 +591,8 @@ C-----------------------------------------------
 C----6---------------------------------------------------------------7---------8
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -605,7 +611,6 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       TYPE(nodal_arrays_) :: NODES
       INTEGER 
-     .   LINDIDEL, LBUFIDEL,
      .   IXS(NIXS,*),IXS10(6,*),IXS20(12,*),IXS16(8,*),
      .   IXQ(NIXQ,*),IXC(NIXC,*), IXT(NIXT,*), IXP(NIXP,*),
      .   IXR(NIXR,*), IXTG(NIXTG,*),IXTG1(4,*),ITAG(*),
@@ -622,28 +627,30 @@ C-----------------------------------------------
 !
       TYPE (GROUP_)  , DIMENSION(NGRNOD)  :: IGRNOD
       INTEGER, INTENT(in) :: S_ELEM_STATE   ! size of ELEM_STATE
-      LOGICAL, DIMENSION(S_ELEM_STATE), INTENT(inout) :: ELEM_STATE ! boolean : true if element is ON, false if element is OFF
+      LOGICAL, DIMENSION(S_ELEM_STATE), INTENT(inout) :: ELEM_STATE
+! boolean : true if element is ON, false if element is OFF
       INTEGER, DIMENSION(NTHREAD), INTENT(inout) :: GLOBAL_NB_ELEM_OFF
       TYPE(shooting_node_type), INTENT(inout) :: SHOOT_STRUCT ! structure for shooting node algo
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, NG, K, ITY, MLW, NEL, NFT, ISOLNOD, LFT, LLT,
-     .        KAD, NPT, IHBE, JD(50), KD(50), JFI, KFI, NRTM, NRTS,
-     .        NTY, NSN, ISTRA, N, IDEL, NMN,ILEV,
-     .        N1, N2, N3, N4, SIZE, LENR, IDB, IDBS, INC, IDELKEEP,
-     .        IDEB, OFQ, OFC, OFT, OFP, OFR, OFTG, OFUR, ICNOD, IE,
-     .        NLINSA, NLINMA, NSNE, NMNE, IEXPAN, IRSIZE,
-     .        IRECV(NSPMD),SIZ,J,R2R_NUMEL,TAGEL_R2R_ISPMD(NSPMD+1),
+     .        KAD, NPT, IHBE,
+     .        ISTRA, N,
+     .        N1, SIZE, LENR, INC,
+     .        OFQ, OFC, OFT, OFP, OFR, OFTG, OFUR, ICNOD, IE,
+     .        IEXPAN,
+     .        J,R2R_NUMEL,TAGEL_R2R_ISPMD(NSPMD+1),
      .        IPARTR2R,NTAGEL_R2R_RECV,NTAGEL_R2R_SEND,NTAGEL_R2R_SENDG,
-     .        TAGEL_SIZE,LEVEL
+     .        TAGEL_SIZE
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAGEL_R2R_RECV,TAGEL_R2R_SENDG
       TYPE(G_BUFEL_) ,POINTER :: GBUF
       INTEGER, DIMENSION(:), ALLOCATABLE :: LOCAL_ELEM_INDEX
       INTEGER :: SHIFT
+      INTEGER :: NTAGEL_WRAP(1)
 C-----------------------------------------------
       ! allocation of local list of deactivated element
-      ALLOCATE( LOCAL_ELEM_INDEX(S_ELEM_STATE) )
+      call my_alloc(LOCAL_ELEM_INDEX, S_ELEM_STATE, "LOCAL_ELEM_INDEX")
       GLOBAL_NB_ELEM_OFF(ITASK+1) = 0
       LFT = NODFT
       LLT = NODLT
@@ -1095,14 +1102,14 @@ C
 !$OMP END DO
 
         IF(ITASK==0) THEN            
-            IF(ALLOCATED( SHOOT_STRUCT%GLOBAL_ELEM_INDEX ) ) DEALLOCATE( SHOOT_STRUCT%GLOBAL_ELEM_INDEX )
+            IF(ALLOCATED( SHOOT_STRUCT%GLOBAL_ELEM_INDEX ) ) call my_dealloc(SHOOT_STRUCT%GLOBAL_ELEM_INDEX)
             ! compute the total number of new deactivated element
             SHOOT_STRUCT%S_GLOBAL_ELEM_INDEX = 0
             DO I=1,NTHREAD
                 SHOOT_STRUCT%S_GLOBAL_ELEM_INDEX = SHOOT_STRUCT%S_GLOBAL_ELEM_INDEX + GLOBAL_NB_ELEM_OFF(I)
             ENDDO
             ! allocate the array "list of new deactivated element"
-            ALLOCATE( SHOOT_STRUCT%GLOBAL_ELEM_INDEX(SHOOT_STRUCT%S_GLOBAL_ELEM_INDEX) ) 
+      call my_alloc(SHOOT_STRUCT%GLOBAL_ELEM_INDEX, SHOOT_STRUCT%S_GLOBAL_ELEM_INDEX, "SHOOT_STRUCT%GLOBAL_ELEM_INDEX")
         ENDIF
         CALL MY_BARRIER( )
 
@@ -1148,18 +1155,19 @@ C       communication partie nodale ITAGq
           CALL SEND_SHMBUF_C(IDEL7NOK,1)
           CALL R2R_EXCH_ITAG(IEXLNK,IGRNOD,ITAG,0)
 C       Tagel Element Party Communication
-          NTAGEL_R2R_SENDG = NTAGEL_R2R_SEND
-          CALL SPMD_ALLGLOB_ISUM9(NTAGEL_R2R_SENDG,1)
+          NTAGEL_WRAP(1) = NTAGEL_R2R_SEND
+          CALL SPMD_ALLGLOB_ISUM9(NTAGEL_WRAP,1)
+          NTAGEL_R2R_SENDG = NTAGEL_WRAP(1)
           IF (NTAGEL_R2R_SENDG > 0) THEN
             IF (NSPMD > 1) THEN
               TAGEL_R2R_ISPMD(:)=0
               TAGEL_R2R_ISPMD(ISPMD+1) = 3*NTAGEL_R2R_SEND 
               CALL SPMD_ALLGLOB_ISUM9(TAGEL_R2R_ISPMD,NSPMD)
-              ALLOCATE(TAGEL_R2R_SENDG(3*NTAGEL_R2R_SENDG))
+              call my_alloc(TAGEL_R2R_SENDG, 3*NTAGEL_R2R_SENDG, "TAGEL_R2R_SENDG")
               CALL SPMD_R2R_TAGEL(TAGEL_R2R_SENDG,TAGEL_R2R_SEND,TAGEL_R2R_ISPMD)
               CALL SPMD_IBCAST(TAGEL_R2R_SENDG,TAGEL_R2R_SENDG,3*NTAGEL_R2R_SENDG,1,0,2)
               CALL EXCH_TAGEL_C(NTAGEL_R2R_SENDG,TAGEL_R2R_SENDG,0)
-              DEALLOCATE(TAGEL_R2R_SENDG)
+              call my_dealloc(TAGEL_R2R_SENDG)
             ELSE
               CALL EXCH_TAGEL_C(NTAGEL_R2R_SENDG,TAGEL_R2R_SEND,0)
             ENDIF
@@ -1188,7 +1196,7 @@ C-----------------------------------------------------------------
           CALL GET_SHMBUF_C(NTAGEL_R2R_RECV,4)
           NTAGEL_R2R_RECV = NTAGEL_R2R_RECV / 3     
           IF (NTAGEL_R2R_RECV > 0) THEN
-            ALLOCATE(TAGEL_R2R_RECV(3*NTAGEL_R2R_RECV))
+            call my_alloc(TAGEL_R2R_RECV, 3*NTAGEL_R2R_RECV, "TAGEL_R2R_RECV")
             CALL EXCH_TAGEL_C(NTAGEL_R2R_RECV,TAGEL_R2R_RECV,1)
           ENDIF
           DO I=1,NTAGEL_R2R_RECV
@@ -1226,14 +1234,14 @@ C       reset of idel7nok_r2r and ntagel_r2r_recv
           NTAGEL_R2R_RECV = 0
           CALL SEND_SHMBUF_C(IDEL7NOK_R2R,2)
           CALL SEND_SHMBUF_C(NTAGEL_R2R_RECV,4)
-          IF(ALLOCATED(TAGEL_R2R_RECV)) DEALLOCATE(TAGEL_R2R_RECV)
+          IF(ALLOCATED(TAGEL_R2R_RECV)) call my_dealloc(TAGEL_R2R_RECV)
         ENDIF
 C--------------------------------------------------------
       ENDIF
 C Fin Partie non parallele
 !$OMP END SINGLE
       ! deallocation of local list of deactivated element
-      DEALLOCATE( LOCAL_ELEM_INDEX )
+      call my_dealloc(LOCAL_ELEM_INDEX)
 C
       RETURN
       END
@@ -1269,6 +1277,8 @@ C
 !||    elbufdef_mod        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    intbufdef_mod       ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod    ../common_source/modules/nodal_arrays.F90
 !||====================================================================
       SUBROUTINE CHKSTFN3N(NODES,
@@ -1288,6 +1298,8 @@ C-----------------------------------------------
 C----6---------------------------------------------------------------7---------8
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -1302,7 +1314,7 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       TYPE(nodal_arrays_), intent(inout) :: NODES
       INTEGER 
-     .   IPARI(NPARI,*), LINDIDEL, LBUFIDEL,
+     .   IPARI(NPARI,*),
      .   IXS(NIXS,*),IXQ(NIXQ,*),IXC(NIXC,*), IXT(NIXT,*), IXP(NIXP,*),
      .   IXR(NIXR,*), IXTG(NIXTG,*),ITAG(*),
      .   IPARG(NPARG,*), ITASK, NEWFRONT(*),ITAGL (*),
@@ -1318,17 +1330,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, NG, K, ITY, MLW, NEL, NFT, ISOLNOD,
-     .        KAD, NPT, IHBE, JD(50), KD(50), JFI, KFI, NRTM, NRTS,
-     .        NTY, NSN, ISTRA, N, IDEL, NMN,ILEV,
-     .        N1, N2, N3, N4, SIZE, LENR, IDB, IDBS, INC, IDELKEEP,
-     .        IDEB, OFQ, OFC, OFT, OFP, OFR, OFTG, OFUR, ICNOD, IE,
-     .        NLINSA, NLINMA, NSNE, NMNE, IEXPAN, IRSIZE,
-     .        IRECV(NSPMD),SIZ,J,R2R_NUMEL,TAGEL_R2R_ISPMD(NSPMD+1),
-     .        IPARTR2R,NTAGEL_R2R_RECV,NTAGEL_R2R_SEND,NTAGEL_R2R_SENDG,
-     .        TAGEL_SIZE,LEVEL
+      INTEGER I, NG,
+     .        NRTM, NRTS,
+     .        NTY, NSN, IDEL, NMN,ILEV,
+     .        N1, IDB, IDBS, INC, IDELKEEP,
+     .        OFQ, OFC, OFT, OFP, OFR, OFTG, OFUR,
+     .        NLINSA, NLINMA, NSNE, NMNE, IRSIZE,
+     .        IRECV(NSPMD),SIZ
       INTEGER, DIMENSION(:),ALLOCATABLE ::IBUFSEGLO_SAV,INDSEGLO_sav
-      TYPE(G_BUFEL_) ,POINTER :: GBUF
 C
       OFQ=NUMELS
       OFC=OFQ+NUMELQ
@@ -1742,8 +1751,8 @@ C
      2      INTBUF_TAB(NG)%IRTLM,ITAG(NUMNOD+1),IXS  ,IXC  ,IXTG      ,
      3      IXQ    ,IPARG       ,ITAGL,MS      ,
      4      IN    ,INTBUF_TAB(NG)%SMAS ,INTBUF_TAB(NG)%SINER,ADM,CNEL      ,
-     5      ADDCNEL  ,OFC         ,OFT  ,OFTG ,OFUR      ,
-     6     TAGEL   ,ILEV     )
+     5      ADDCNEL  ,OFC       ,OFT  ,OFTG ,OFUR      ,
+     6      TAGEL    ,ILEV      ,IRODDL)
          ELSEIF (IDEL == 1) THEN 
            CALL CHK2MSR3NB(
      1      NSN    ,INTBUF_TAB(NG)%NSV ,ITAG  ,ITASK,INTBUF_TAB(NG)%IRECTM,
@@ -1751,9 +1760,8 @@ C
      3      IXQ    ,IPARG       ,ITAGL,MS      ,
      4      IN    ,INTBUF_TAB(NG)%SMAS ,INTBUF_TAB(NG)%SINER,ADM,CNEL      ,
      5      ADDCNEL  ,OFC         ,OFT  ,OFTG ,OFUR      ,
-     6     NINDEX1(NG)  ,IBUFS(IDBS+4) ,IND(IDB),TAGEL,ITAB         ,
-     7     ILEV      )
-
+     6      NINDEX1(NG)  ,IBUFS(IDBS+4) ,IND(IDB),TAGEL,ITAB         ,
+     7      ILEV)
          ENDIF
 C
          IF (NSPMD > 1 .AND. IDEL == 2) THEN
@@ -1809,9 +1817,9 @@ C
 C finalization of the update stif part
 C
        IF(INT24USE==1.OR.NINTER25/=0)THEN
-         ALLOCATE(INDSEGLO_SAV(NINTER+1))
+         call my_alloc(INDSEGLO_SAV, NINTER+1, "INDSEGLO_SAV")
          SIZ=INDSEGLO(NINTER+1)-INDSEGLO(1)
-         ALLOCATE(IBUFSEGLO_SAV(SIZ))
+         call my_alloc(IBUFSEGLO_SAV, SIZ, "IBUFSEGLO_SAV")
 
          INDSEGLO_SAV(1:NINTER+1)=INDSEGLO(1:NINTER+1)
          IBUFSEGLO_SAV(1:SIZ)=IBUFSEGLO(1:SIZ)
@@ -1873,7 +1881,7 @@ C cote main
         ELSEIF(NTY == 2.AND.IDEL/=0)THEN
          CALL SETMSR2(
      1          NINDEX1(NG)  ,IBUFS(IDB),IND(IDB)     ,INTBUF_TAB(NG)%NSV,MS,
-     2         INTBUF_TAB(NG)%SMAS,IN   ,INTBUF_TAB(NG)%SINER,IDEL)
+     2          INTBUF_TAB(NG)%SMAS,IN   ,INTBUF_TAB(NG)%SINER,IDEL,IRODDL)
          IDB = IDB+NINDEX1(NG)
 C
         ENDIF
@@ -1898,8 +1906,8 @@ Cote secnd
 
 
       IF(INT24USE > 0.OR.NINTER25/=0)THEN
-        DEALLOCATE(INDSEGLO_SAV)
-        DEALLOCATE(IBUFSEGLO_SAV)
+        call my_dealloc(INDSEGLO_SAV)
+        call my_dealloc(IBUFSEGLO_SAV)
       ENDIF
 
 C Fin Partie non parallele
@@ -1923,6 +1931,7 @@ C
 !||--- uses       -----------------------------------------------------
 !||    element_mod                 ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE CHKMSR3N(
      1    NMN  ,MSR   ,ITAG  ,ITASK,IRECT   ,
@@ -1939,6 +1948,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -1965,13 +1975,13 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, N, NIND2, MA_SURF,NIND_SEGLO
+     .        II, IX, K, NIND, N, NIND2, MA_SURF,NIND_SEGLO
       INTEGER,DIMENSION(:),ALLOCATABLE :: NINDL
       INTEGER,DIMENSION(:),ALLOCATABLE :: IND_SEGLO
 C     REAL
 C-----------------------------------------------
-      CALL MY_ALLOC(NINDL,NRTM*2)
-      CALL MY_ALLOC(IND_SEGLO,NRTM*2)
+      call my_alloc(NINDL, NRTM*2, "NINDL")
+      call my_alloc(IND_SEGLO, NRTM*2, "IND_SEGLO")
 
       NMNF = 1 + ITASK*NMN / NTHREAD
       NMNL = (ITASK+1)*NMN / NTHREAD
@@ -2110,8 +2120,8 @@ C
 C
       CALL MY_BARRIER()
 
-      DEALLOCATE(NINDL)
-      DEALLOCATE(IND_SEGLO)
+      call my_dealloc(NINDL)
+      call my_dealloc(IND_SEGLO)
 C
       RETURN
       END
@@ -2165,7 +2175,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, NIND2, N, NINDL(NRTM),IND_SEGLO(NRTM*2),NIND_SEGLO
+     .        II, IX, K, NIND, NIND2, N, NINDL(NRTM),IND_SEGLO(NRTM*2),NIND_SEGLO
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -2346,7 +2356,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, N, NIND2, N1L, N2L, N3L, N4L,
+     .        II, IX, K, NIND, N, NIND2, N1L, N2L, N3L, N4L,
      .        NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
@@ -2506,7 +2516,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, NIND2, N, N1L, N2L, N3L, N4L,
+     .        II, IX, K, NIND, NIND2, N, N1L, N2L, N3L, N4L,
      .        NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
@@ -2669,8 +2679,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, N, NIND2, NINDL(NRTM)
+      INTEGER I, NMNF, NMNL, NRTF, NRTL,
+     .        NIND
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -2743,8 +2753,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, NIND2, N, NINDL(NRTM)
+      INTEGER I, NMNF, NMNL, NRTF, NRTL,
+     .        NIND, NIND2
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -2822,7 +2832,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N1L, N2L, 
-     .        NN, II, IX, K, NIND, N, NIND2, NINDL(NRTM)
+     .        II, IX, K, NIND, N, NIND2, NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -3003,7 +3013,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N1L, N2L, 
-     .        NN, II, IX, K, NIND, NIND2, N, NINDL(NRTM)
+     .        II, IX, K, NIND, NIND2, N, NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -3151,7 +3161,7 @@ C
      3    IXQ    ,IPARG,ITAGL,MS   ,
      4    IN     ,SMAS ,SINER,ADM  ,CNEL ,
      5    ADDCNEL,OFC  ,OFT  ,OFTG ,OFUR ,
-     6    TAGEL  ,ILEV )
+     6    TAGEL  ,ILEV ,IRODDL)
       use element_mod , only : nixs,nixq,nixc,nixtg
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -3169,6 +3179,7 @@ C-----------------------------------------------
      .        ITAG2(*), IXS(NIXS,*), IXQ(NIXQ,*), IXC(NIXC,*),
      .        IXTG(NIXTG,*), IPARG(NPARG,*), ITAGL(*), TAGEL(*),
      .        CNEL(0:*), ADDCNEL(0:*), OFC, OFT, OFTG, OFUR,ILEV
+      INTEGER,INTENT(IN) :: IRODDL
 C     REAL
       my_real
      .        MS(*),IN(*),SMAS(*),SINER(*),ADM(*)
@@ -3200,7 +3211,7 @@ C
             NSV(I) = -NSV(I)
             IF (ILEV /= 25 .and. ILEV /= 26) THEN
               MS(IS) = SMAS(I)
-              IN(IS) = SINER(I)
+              IF (IRODDL/=0) IN(IS) = SINER(I)
             ENDIF
 C         CAUTION> = 1 because cumulative node front of tags at 1
           ELSEIF(ITAG2(N1)>=1.AND.ITAG2(N2)>=1.AND.
@@ -3250,7 +3261,7 @@ C
               NSV(I) = -NSV(I)
               IF (ILEV /= 25 .and. ILEV /= 26) THEN
                 MS(IS)  = SMAS(I)
-                IN(IS)  = SINER(I)
+                IF (IRODDL/=0) IN(IS)  = SINER(I)
               ENDIF
               GOTO 400
             END IF
@@ -3333,7 +3344,7 @@ C
             NSV(I) = -NSV(I)
             IF (ILEV /= 25 .and. ILEV /= 26) THEN
               MS(IS) = SMAS(I)
-              IN(IS) = SINER(I)
+              IF(IRODDL/=0) IN(IS) = SINER(I)
             ENDIF
 C         CAUTION> = 1 because cumulative node front of tags at 1
           ELSEIF(ITAG2(N1)>=1.AND.ITAG2(N2)>=1.AND.
@@ -3388,7 +3399,7 @@ C If no active element: Stif A 0 in SMP or Mono
            NSV(I) = -NSV(I)
            IF (ILEV /= 25 .and. ILEV /= 26) THEN
              MS(IS) = SMAS(I)
-             IN(IS) = SINER(I)
+             IF(IRODDL/=0) IN(IS) = SINER(I)
            ENDIF
 C If no active element: COMM in SPMD
         ELSE
@@ -3460,7 +3471,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, NSNF, NSNL, IS, L, N1, N2, N3, N4, 
-     .        NN, II, NINDEX, J
+     .        NINDEX
 C     REAL
 C-----------------------------------------------
       ICOMP = 0
@@ -3563,7 +3574,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, N, NIND2, NINDL(NRTM)
+     .        II, IX, K, NIND, N, NIND2, NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -3713,7 +3724,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, NMNF, NMNL, NRTF, NRTL, N1, N2, N3, N4, 
-     .        NN, II, IX, K, NIND, NIND2, N, NINDL(NRTM)
+     .        II, IX, K, NIND, NIND2, N, NINDL(NRTM)
 C     REAL
 C-----------------------------------------------
       NMNF = 1 + ITASK*NMN / NTHREAD
@@ -3948,7 +3959,7 @@ C
 !||    chkstfn3n   ../engine/source/interfaces/interf/chkstfn3.F
 !||====================================================================
       SUBROUTINE SETMSR2(NINDG, BUFS, NINDEX, NSV, MS,
-     2                   SMAS , IN  , SINER ,IDEL)
+     2                   SMAS , IN  , SINER ,IDEL,IRODDL)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -3963,6 +3974,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, IS, NN
+      INTEGER,INTENT(IN) :: IRODDL
 C-----------------------------------------------
       IF(IDEL == 2)THEN
 #include "vectorize.inc"
@@ -3974,7 +3986,7 @@ C-----------------------------------------------
             IF(IS > 0)THEN
               NSV(I)  = -NSV(I)
               MS(IS)  = SMAS(I)
-              IN(IS)  = SINER(I)
+              IF (IRODDL/=0) IN(IS)  = SINER(I)
             ENDIF
           ENDIF
         ENDDO
@@ -3988,7 +4000,7 @@ C-----------------------------------------------
             IF(IS > 0)THEN
               NSV(I)  = -NSV(I)
               MS(IS)  = SMAS(I)
-              IN(IS)  = SINER(I)
+              IF (IRODDL/=0) IN(IS)  = SINER(I)
             ENDIF
           ENDIF
         ENDDO

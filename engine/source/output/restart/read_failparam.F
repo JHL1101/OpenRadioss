@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_failparam         ../engine/source/output/restart/read_failparam.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    read_mat_table         ../engine/source/materials/tools/read_mat_table.F
 !||--- uses       -----------------------------------------------------
 !||    fail_param_mod         ../common_source/modules/mat_elem/fail_param_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||====================================================================
       SUBROUTINE READ_FAILPARAM(FAIL)
@@ -42,6 +45,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -55,8 +60,8 @@ C-----------------------------------------------
       INTEGER ,DIMENSION(:) ,ALLOCATABLE :: IBUF
       my_real ,DIMENSION(:) ,ALLOCATABLE :: RBUF
 C=======================================================================
-      LENI = 10
-      ALLOCATE (IBUF(LENI))
+      LENI = 11
+      call my_alloc(IBUF, LENI, "IBUF")
       CALL READ_I_C(IBUF,LENI)
 c
       FAIL%IRUPT   = IBUF(1)
@@ -64,19 +69,20 @@ c
       FAIL%NUPARAM = IBUF(3)
       FAIL%NIPARAM = IBUF(4)
       FAIL%NUVAR   = IBUF(5)
-      FAIL%NFUNC   = IBUF(6)
-      FAIL%NTABLE  = IBUF(7)
-      FAIL%NTABLE4D= IBUF(8)
-      FAIL%NMOD    = IBUF(9)
-      FAIL%FAIL_IP = IBUF(10)
+      FAIL%NVARTMP = IBUF(6)
+      FAIL%NFUNC   = IBUF(7)
+      FAIL%NTABLE  = IBUF(8)
+      FAIL%NTABLE4D= IBUF(9)
+      FAIL%NMOD    = IBUF(10)
+      FAIL%FAIL_IP = IBUF(11)
 c
-      DEALLOCATE(IBUF)
+      call my_dealloc(IBUF)
 c
       LENR = 1
-      ALLOCATE (RBUF(LENR))
+      call my_alloc(RBUF, LENR, "RBUF")
       CALL READ_DB(RBUF,LENR)
       FAIL%PTHK = RBUF(1)
-      DEALLOCATE(RBUF)
+      call my_dealloc(RBUF)
 c
       NUPARAM = FAIL%NUPARAM
       NIPARAM = FAIL%NIPARAM
@@ -91,7 +97,7 @@ c     read law keyword and keywords of failure modes
         FAIL%KEYWORD(I:I) = CHAR(NAME(I))
       END DO
 c           
-      ALLOCATE (FAIL%MODE(NMOD))
+      ALLOCATE(FAIL%MODE(NMOD))
       IF (NMOD > 0) THEN
         DO J = 1,NMOD
           CALL READ_C_C(NAME,NCHARTITLE)
@@ -103,25 +109,25 @@ c
 c
 c     read model parameters
 c
-      ALLOCATE (FAIL%UPARAM(NUPARAM))
+      call my_alloc(FAIL%UPARAM, NUPARAM, "FAIL%UPARAM")
       IF (NUPARAM > 0) THEN
         CALL READ_DB (FAIL%UPARAM ,NUPARAM)
       END IF
-      ALLOCATE (FAIL%IPARAM(NIPARAM))
+      call my_alloc(FAIL%IPARAM, NIPARAM, "FAIL%IPARAM")
       IF (NIPARAM > 0) THEN
         CALL READ_I_C(FAIL%IPARAM ,NIPARAM)
       END IF
 c      
 c     read functions
 c
-      ALLOCATE (FAIL%IFUNC(NFUNC))
+      call my_alloc(FAIL%IFUNC, NFUNC, "FAIL%IFUNC")
       IF (NFUNC > 0) THEN
         CALL READ_I_C(FAIL%IFUNC,NFUNC)
       END IF
 c      
 c     read function tables
 c
-      ALLOCATE (FAIL%TABLE(NUMTABL))
+      call my_alloc(FAIL%TABLE, NUMTABL, "FAIL%TABLE")
       IF (NUMTABL > 0) THEN
         CALL READ_I_C(FAIL%TABLE,NUMTABL)
       END IF

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_sms          ../starter/source/general_controls/computation/hm_read_sms.F
 !||--- called by ------------------------------------------------------
@@ -168,7 +169,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER IO_ERR1
-      CHARACTER FILNAM*109, KEYA*80, KEYA2*80
+      CHARACTER FILNAM*109, KEYA*80
       my_real
      .   DTSCA,DTMINI
       INTEGER :: LEN_TMP_NAME
@@ -232,6 +233,8 @@ C-------------------------------------------
 !||    inisms         ../starter/source/general_controls/computation/hm_read_sms.F
 !||--- called by ------------------------------------------------------
 !||    lectur         ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
+!||    ancmsg         ../starter/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
 !||    message_mod    ../starter/share/message_module/message_mod.F
 !||====================================================================
@@ -264,8 +267,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER KK, N, I, IAD, IP, 
-     .        NG, J, ITY, NEL, NFT
+      INTEGER KK, N, I, IP
 C--------------------------------------------------
        IF(IDTGRS/=0)THEN
 C------
@@ -280,7 +282,7 @@ C------
               GO TO 100
             END IF
           END DO
- 200      CALL ANCMSG(MSGID=738,
+           CALL ANCMSG(MSGID=738,
      .                MSGTYPE=MSGERROR,
      .                ANMODE=ANINFO,
      .                I1=IDTGRS)

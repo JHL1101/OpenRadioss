@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    select_s2s_mod   ../starter/source/interfaces/inter3d1/select_s2s.F90
 !||--- called by ------------------------------------------------------
@@ -27,19 +28,19 @@
 !||    i2_surfi_dim     ../starter/source/interfaces/inter3d1/i2_surfi_dim.F90
 !||====================================================================
       module select_s2s_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
 ! ======================================================================================================================
-!! \brief this subroutine doing preparation to remove useless surf of the interface type2 w/ input surf/surf
+!! \brief This subroutine performs preparation to remove redundant surfaces of the interface type2 with input surf/surf
 !||====================================================================
-!||    select_s2s      ../starter/source/interfaces/inter3d1/select_s2s.F90
+!||    select_s2s       ../starter/source/interfaces/inter3d1/select_s2s.F90
 !||--- called by ------------------------------------------------------
-!||    i2_surfi        ../starter/source/interfaces/inter3d1/i2_surfi.F90
-!||    i2_surfi_dim    ../starter/source/interfaces/inter3d1/i2_surfi_dim.F90
+!||    i2_surfi         ../starter/source/interfaces/inter3d1/i2_surfi.F90
+!||    i2_surfi_dim     ../starter/source/interfaces/inter3d1/i2_surfi_dim.F90
 !||--- calls      -----------------------------------------------------
-!||    norma4n         ../starter/source/interfaces/inter3d1/norma1.F
+!||    norma4n          ../starter/source/interfaces/inter3d1/norma1.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine select_s2s(nsu1,nsu2,nodes1,nodes2,itag1,itag2,x,numnod,dsearch)
@@ -48,6 +49,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           use constant_mod, only : zero,half,third,fourth,ep20,em01
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -88,9 +91,13 @@
           marge_1 = zero !mean value
           marge_max = zero
           n_buck = 100
-          allocate(xs1(3,nsu1),n1(3,nsu1),dim1(3,nsu1))
-          allocate(xs2(3,nsu2),n2(3,nsu2),dim2(3,nsu2))
-!  1er surf
+          call my_alloc(xs1,3,nsu1,"xs1")
+          call my_alloc(n1,3,nsu1,"n1")
+          call my_alloc(dim1,3,nsu1,"dim1")
+          call my_alloc(xs2,3,nsu2,"xs2")
+          call my_alloc(n2,3,nsu2,"n2")
+          call my_alloc(dim2,3,nsu2,"dim2")
+!  first surface
           do i=1,nsu1
             nj(1:4) = nodes1(i,1:4)
             call norma4n(n1(1,i),n1(2,i),n1(3,i),area1,nj,x)
@@ -168,8 +175,8 @@
            case (3)
             ihuge = 1
           end select
-          allocate(ind_1(nsu1))
-          allocate(ind_2(nsu2))
+          call my_alloc(ind_1,nsu1,"ind_1")
+          call my_alloc(ind_2,nsu2,"ind_2")
           if (ihuge > 0) then !have to do bucket sorting
             sz_g(1:3) = xmaxg(1:3)-xming(1:3)
             sz_max=max(sz_g(1),sz_g(2),sz_g(3))
@@ -235,7 +242,7 @@
                       itag2(i) = 0
                     end do
                   end do
-!  tag usful surf1 by 2nd nodes found, remove 2nd surf by distance and angle
+!  tag useful surf1 by 2nd nodes found, remove 2nd surf by distance and angle
                   do k=1,nsu_1
                     i = ind_1(k)
                     if (itag1(i)==0) cycle
@@ -287,7 +294,7 @@
                     end do
                     if (ifound==0) itag1(i) = 0
                   end do
-!  tag usful surf2 by nodes in surf1 found, remove surf1 by distance and angle
+!  tag useful surf2 by nodes in surf1 found, remove surf1 by distance and angle
                   do k=1,nsu_2
                     i = ind_2(k)
                     if (itag2(i)==0) cycle
@@ -352,14 +359,14 @@
               end do
             end do
           end do
-          deallocate(ind_1)
-          deallocate(ind_2)
-          deallocate(xs1)
-          deallocate(n1)
-          deallocate(dim1)
-          deallocate(xs2)
-          deallocate(n2)
-          deallocate(dim2)
+          call my_dealloc(ind_1)
+          call my_dealloc(ind_2)
+          call my_dealloc(xs1)
+          call my_dealloc(n1)
+          call my_dealloc(dim1)
+          call my_dealloc(xs2)
+          call my_dealloc(n2)
+          call my_dealloc(dim2)
         end subroutine select_s2s
       end module select_s2s_mod
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    multi_nrf_ebcs        ../engine/source/multifluid/multi_nrf_ebcs.F
 !||--- called by ------------------------------------------------------
@@ -104,7 +105,7 @@ C-----------------------------------------------
      .           P_JJ, NORMAL_VELJJ, VXJJ, VYJJ, VZJJ, VELII2, ALPHAII, SUB_RHOII, SUB_RHOEINTII, SUB_VIISTAR(3),
      .           SUB_FIISTAR(3), ALPHASTAR, SUB_RHOSTAR, SUB_PII, VELJJ2, SUB_ESTAR, EINTJJ
       INTEGER :: IELEM_START, IELEM_END, ID_SURF
-      my_real :: TCAR_P, TCAR_VF,ALPHA,BETA,DP0,Vnew,Vold,Pvois,POld,MACH,RHOC2,ROC,PSURF
+      my_real :: TCAR_P, TCAR_VF,ALPHA,BETA,DP0,Vnew,Vold,Pvois,POld,MACH,RHOC2,ROC,PSURF,Pref
       INTEGER :: VARTMP_EOS(1,128) !nel=1
       INTEGER :: NVARTMP_EOS !upper bound
       my_real :: ABURN(1)
@@ -127,9 +128,10 @@ C-----------------------------------------------
 
       ALPHA = TIMESTEP/TCAR_P
       BETA = TIMESTEP/MAX(TIMESTEP,TCAR_VF)
-      IF(TCAR_VF>=EP20)BETA=ZERO
+      IF(TCAR_P >= EP20) ALPHA = ZERO
+      IF(TCAR_VF >= EP20) BETA = ZERO
       IF(TIMESTEP == ZERO)THEN
-        ALPHA = ONE !zero
+        ALPHA = ONE
         BETA = ONE
       ENDIF
 
@@ -193,12 +195,23 @@ C     Current element
          NORMAL_VELII = VXII * NX + VYII * NY + VZII * NZ
          
 C     Boundary "GHOST" element
+         !-- capture the initial phase volume fractions once (relaxation target alpha0)
+         IF(NCYCLE == 1 .AND. EBCS%has_phase_alpha_ref)THEN
+            DO IMAT = 1, NBMAT
+               EBCS%phase_alpha_ref(IMAT, IELEM) = PHASE_ALPHAII(IMAT)
+            ENDDO
+         ENDIF
          RHOJJ = ZERO
          DO IMAT = 1, NBMAT
             PHASE_RHOJJ(IMAT) = FVM_INLET_DATA%VAL_RHO(IMAT)
                PHASE_RHOJJ(IMAT) = PHASE_RHOII(IMAT)
             PHASE_ALPHAJJ(IMAT) = FVM_INLET_DATA%VAL_ALPHA(IMAT)
                PHASE_ALPHAJJ(IMAT) = PHASE_ALPHAII(IMAT)
+            !-- returning flow (inflow, NORMAL_VELII < 0): relax the ghost volume fractions back
+            IF(NORMAL_VELII < ZERO .AND. BETA > ZERO .AND. EBCS%has_phase_alpha_ref)THEN
+               PHASE_ALPHAJJ(IMAT) = (ONE - BETA) * PHASE_ALPHAII(IMAT)
+     .                             + BETA * EBCS%phase_alpha_ref(IMAT, IELEM)
+            ENDIF
             RHOJJ = RHOJJ + PHASE_RHOJJ(IMAT) * PHASE_ALPHAJJ(IMAT)
          ENDDO
 
@@ -225,27 +238,46 @@ C     VE formulation
                ENDIF
             ENDDO           
 
-            Vnew = NORMAL_VELII
+            !-- velocity relative to the (moving) grid, consistent with ebcs10_nrf.F (V0 = V - W).
+            Vnew = NORMAL_VELII - NORMALW
             Pvois = P_JJ
-            MACH = ABS(NORMAL_VELII / SSPII)
+            MACH = ZERO
+            IF (SSPII  /=  ZERO) MACH = ABS(Vnew / SSPII)
             Pold = EBCS%pold(IELEM)
             DP0 = EBCS%DP0(IELEM)
             IF(NCYCLE == 1)Pold=Pvois+DP0 
             Vold = EBCS%vold(IELEM)
-            IF(NCYCLE == 1) Vold=NORMAL_VELII
-            EBCS%vold(IELEM) = Vnew
-            
-            IF(MACH >= ONE .AND. Vnew > ZERO)THEN
-              !outgoing supersonic velocity: State = Neighboring State
-              PP = Pvois
+            IF(NCYCLE == 1) Vold=Vnew
+            !-- IMPORTANT: EBCS%vold/pold are the persistent "previous cycle" characteristic memory
+            !   It must be update only ONCE per full cycle (during the corrector, .NOT.PRED),
+             IF (.NOT. PRED) EBCS%vold(IELEM) = Vnew
+
+            !-- fixed far-field reference pressure used as the relaxation target.
+            IF(EBCS%has_pref .AND. ALLOCATED(EBCS%pref))THEN
+              IF(NCYCLE == 1)EBCS%pref(IELEM) = Pvois + DP0
+              Pref = EBCS%pref(IELEM)
             ELSE
-              RHOC2 = RHOJJ*SSPII*SSPII 
-              ROC   = SQRT(RHOJJ*RHOC2)
-              P_JJ  = ONE/(ONE+ALPHA)*(Pold+ROC*(Vnew-Vold))+ALPHA*(Pvois+DP0)/(ALPHA + ONE)
+              ! fallback (e.g. legacy restart without pref): keep previous behaviour
+              Pref = Pvois + DP0
             ENDIF
 
-            EBCS%pold(IELEM) = P_JJ
-            
+            IF(MACH >= ONE .AND. Vnew > ZERO)THEN
+              !outgoing supersonic velocity: state fully determined by the interior (neighbour) state
+              P_JJ = Pvois
+            ELSEIF(MACH >= ONE .AND. Vnew < ZERO)THEN
+              !incoming supersonic velocity: all characteristics enter, state fully imposed by the
+              !exterior far-field reference (no impedance relation, otherwise spurious reflection)
+              P_JJ = Pref
+            ELSE
+              !subsonic: characteristic (impedance) relation relaxed towards the fixed far-field Pref
+              RHOC2 = RHOII*SSPII*SSPII
+              ROC   = SQRT(RHOII*RHOC2)
+              P_JJ  = ONE/(ONE+ALPHA)*(Pold+ROC*(Vnew-Vold))+ALPHA*Pref/(ALPHA + ONE)
+            ENDIF
+
+            !-- see comment above: commit the relaxed pressure to memory only once per cycle
+            IF (.NOT. PRED) EBCS%pold(IELEM) = P_JJ
+
             IF (SSPJJ / RHOJJ  >  ZERO) THEN
                SSPJJ = SQRT(SSPJJ / RHOJJ)
             ELSE

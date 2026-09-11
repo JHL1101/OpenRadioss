@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25mainf                    ../engine/source/interfaces/int25/i25mainf.F
 !||--- called by ------------------------------------------------------
@@ -55,6 +56,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod               ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    interfaces_mod              ../common_source/modules/interfaces/interfaces_mod.F90
 !||    message_mod                 ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                  ../common_source/modules/output/output_mod.F90
 !||    timer_mod                   ../engine/source/system/timer_mod.F90
 !||    tri25ebox                   ../engine/share/modules/tri25ebox.F
@@ -97,6 +100,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -157,25 +162,24 @@ C     REAL
       TYPE(INTBUF_STRUCT_) INTBUF_TAB
       TYPE(H3D_DATABASE) :: H3D_DATA
       TYPE(INTBUF_FRIC_STRUCT_), TARGET, DIMENSION(NINTERFRIC) ::  INTBUF_FRIC_TAB
-      TYPE (INTERFACES_) ,INTENT(IN):: INTERFACES
+C     I25COR3_3 declares PARAMETERS as INTENT(INOUT).
+      TYPE (INTERFACES_) ,INTENT(INOUT):: INTERFACES
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER JD(50),KD(50), JFI, KFI, IEDGE, ISHARP, NEDGE, 
-     .        I, J, L, H, I_STOK, JLT_NEW, JLT , NFT, IVIS2,
-     .        IBC, NOINT, NSEG, ISECIN, IBAG, IADM,
+      INTEGER IEDGE, ISHARP, NEDGE, 
+     .        I, J, H, I_STOK, JLT_NEW, JLT , NFT, IVIS2,
+     .        IBC, NOINT, ISECIN, IBAG, IADM,
      .        IGAP, INACTI, IFQ, MFROT, IGSTI, NISUB, IGAP0,
      .        NB_LOC, I_STOK_LOC,DEBUT,
-     .        ILAGM, LENR, INTTH,IFORM,INTPLY,
-     .        NADMSR, I_STOK_GLO, MGLOB, MG, N, NSNR, NN, IERROR,
-     .        IE, I1, I2, IORTHFRIC ,NFORTH ,NFISOT ,JJ,FCOND,IKTHE,IFRIC,
+     .        INTTH,IFORM,INTPLY,
+     .        NADMSR, I_STOK_GLO, N, NSNR, IERROR,
+     .        IORTHFRIC ,NFORTH ,NFISOT ,JJ,FCOND,IKTHE,IFRIC,
      .        INTCAREA
-      INTEGER  LENT, MAXCC
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ),
      .        NSVG(MVSIZ), CN_LOC(MVSIZ),CE_LOC(MVSIZ),
      .        CAND_N_N(MVSIZ),CAND_E_N(MVSIZ),
      .        KINI(MVSIZ),
-     .        ISDSIZ(NSPMD+1),IRCSIZ(NSPMD+1),
      .        IELESI(MVSIZ), NSMS(MVSIZ), SUBTRIA(MVSIZ),
      .        NSNFT, NSNLT, NSNRFT, NSNRLT, INTFRIC,NSETPRTS ,NPARTFRIC,
      .        IPARTFRICSI(MVSIZ), IPARTFRICMI(MVSIZ), IFADHI(MVSIZ),
@@ -190,18 +194,16 @@ C-----------------------------------------------
      .        NSMSE(4*MVSIZ), CS_LOC4(4*MVSIZ), CM_LOC4(4*MVSIZ),
      .        TYPEDGS(MVSIZ),
      .        IAM(MVSIZ),JAM(MVSIZ),IBM(MVSIZ),JBM(MVSIZ),     
-     .        IAS(MVSIZ),JAS(MVSIZ),IBS(MVSIZ),JBS(MVSIZ)
-
+     .        IAS(MVSIZ),JAS(MVSIZ),IBS(MVSIZ),JBS(MVSIZ),
+     .        ETYP(MVSIZ)
       INTEGER, ALLOCATABLE, DIMENSION(:) :: INDEX2
 C     REAL
       my_real
      .   STARTT, FRIC, GAP, STOPT, PMAX_GAP,
      .   VISC,VISCF,STIGLO,GAPMIN,
-     .   KMIN, KMAX, GAPMAX,KTHE,TINT,RHOH,EPS,
+     .   KMIN, KMAX, GAPMAX,KTHE,TINT,EPS,
      .   VISCFLUID, SIGMAXADH, VISCADHFACT,
      .   FHEATS,FHEATM,XTHE,FRAD,DRAD,DCOND
-C debug
-      integer :: eidm,eids
 C 
 C-----------------------------------------------
 C     REAL
@@ -248,8 +250,8 @@ C     REAL
      .     , DIMENSION(:,:,:), ALLOCATABLE :: FSAVPARIT
       my_real
      .     RCURVI(MVSIZ), ANGLMI(MVSIZ), ANGLT, PADM,PENMIN,MARGE
-      INTEGER NRTMFT, NRTMLT, NMNFT, NMNLT, NRADM, IS, IM, ISTIF_MSDT,IKNON(MVSIZ)
-      INTEGER ICURV,ILEV,NREBOU,NPT ,NRTSE,IEDG4,SFSAVPARIT,NCY_PFIT,NINLOADP
+      INTEGER NRADM, ISTIF_MSDT,IKNON(MVSIZ)
+      INTEGER ICURV,ILEV,NRTSE,SFSAVPARIT,NCY_PFIT,NINLOADP
       my_real
      .    XFILTR_FRIC,FRIC_COEFS(MVSIZ,10),VISCFFRIC(MVSIZ),FRICC(MVSIZ),
      .    FRIC_COEFS2(MVSIZ,10),VISCFFRIC2(MVSIZ),FRICC2(MVSIZ),
@@ -355,7 +357,7 @@ C
 C
       INTCAREA = IPARI(99,NIN)
 C
-      ALLOCATE(INDEX2(LINDMAX))
+      call my_alloc(INDEX2, LINDMAX, "INDEX2")
 C--- Corresponding Friction model  
       INTFRIC=IPARI(72,NIN)
       IORTHFRIC = 0
@@ -423,7 +425,7 @@ C----------------------------------------------------------------------
 
       IF(IVIS2/=-1) THEN
 C
-        DO N=NSNFT, NSNLT
+        DO N=NSNFT, NSNLT         
           IF(INTBUF_TAB%IRTLM(4*(N-1)+1) > 0 .AND. (INTBUF_TAB%TIME_S(2*(N-1)+1) == EP20 .OR.
      .                                           (INTBUF_TAB%IRTLM(4*(N-1)+2) < 0.AND.MOD(-INTBUF_TAB%IRTLM(4*(N-1)+2),5)==0)) )THEN
 C           No more contact (Reset Irtlm & PENE_OLD)
@@ -459,8 +461,6 @@ C
         END DO
       ELSE ! IVIS2 == -1
         DO N=NSNFT, NSNLT
-c          if(itab(intbuf_tab%NSV(n))==27324)
-c     .     print *,'natif',ispmd+1,INTBUF_TAB%IRTLM(N),INTBUF_TAB%TIME_S(N)
           IF(INTBUF_TAB%IRTLM(4*(N-1)+1) > 0 .AND. (INTBUF_TAB%TIME_S(2*(N-1)+1) == EP20 .OR.
      .                                           (INTBUF_TAB%IRTLM(4*(N-1)+2) < 0.AND.MOD(-INTBUF_TAB%IRTLM(4*(N-1)+2),5)==0)) )THEN
 C
@@ -479,8 +479,6 @@ C
         END DO
 
         DO N=NSNRFT, NSNRLT
-c          if(itafi(nin)%p(n)==29482)
-c     .     print *,'remote',ispmd+1,IRTLM_FI(NIN)%P(1,N),TIME_SFI(NIN)%P(N)
           IF(IRTLM_FI(NIN)%P(1,N) > 0 .AND. (TIME_SFI(NIN)%P(2*(N-1)+1) == EP20 .OR.
      .                                    (IRTLM_FI(NIN)%P(2,N) < 0.AND.MOD(-IRTLM_FI(NIN)%P(2,N),5)==0)) )THEN
 C
@@ -570,7 +568,7 @@ C-----------------------------------------------------------------------
         ENDIF
       ENDDO
       IF (SFSAVPARIT /= 0) THEN
-        ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK),STAT=IERROR)
+        call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT", stat=IERROR)
         IF(IERROR/=0) THEN
           CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1='(/INTER/TYPE25)')
@@ -578,7 +576,7 @@ C-----------------------------------------------------------------------
         ENDIF
         FSAVPARIT(1:NISUB+1,1:11,1:I_STOK) = ZERO
       ELSE
-        ALLOCATE(FSAVPARIT(0,0,0),STAT=IERROR)
+        call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT", stat=IERROR)
         IF(IERROR/=0) THEN
           CALL ANCMSG(MSGID=19,ANMODE=ANINFO,
      .         C1='(/INTER/TYPE25)')
@@ -621,7 +619,8 @@ C         Extraction of global data to local arrays
      K  Y3         ,Z3       ,X4          ,Y4          ,Z4      ,
      L  INTTH      ,TEMP     ,TEMPI       ,INTBUF_TAB%IELES     ,IELESI      ,
      M  INTBUF_TAB%IELEM,IELEMI,ISTIF_MSDT,DTSTIF      ,INTBUF_TAB%STIFMSDT_S,
-     N  INTBUF_TAB%STIFMSDT_M,NRTM        ,INTERFACES%PARAMETERS)
+     N  INTBUF_TAB%STIFMSDT_M,NRTM  ,INTERFACES%PARAMETERS,NCYCLE      ,ETYP,
+     M   INTBUF_TAB%MSEGTYP24)
           IKNON(1:JLT) = 0
           CALL I_CORPFIT3(
      1               JLT      ,INTBUF_TAB%STFM  ,INTBUF_TAB%STFNS,STIF      ,NSN    ,
@@ -641,7 +640,8 @@ C
      7 INACTI      ,KINI        ,ITAB        ,LB          ,LC          ,
      8 PENMIN      ,EPS         ,PENE        ,INTBUF_TAB%PENE_OLD,SUBTRIA,
      9 GAPV        ,IVIS2       ,INTBUF_TAB%IF_ADH,IFADHI ,BASE_ADH      ,
-     A MVOISN      ,IBOUND      ,INTBUF_TAB%VTX_BISECTOR  ,DIST,    TT )
+     A MVOISN      ,IBOUND      ,INTBUF_TAB%VTX_BISECTOR  ,DIST,    TT  ,
+     B ETYP       )
 C
           DO I = 1 ,JLT
 C
@@ -775,7 +775,7 @@ C-----------------------------------------------------------------------
           CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK,
      .                          FBSAV6, 12, 6, DIMFB, ISENSINT )
       ENDIF
-      DEALLOCATE (FSAVPARIT)
+      call my_dealloc(FSAVPARIT)
 C-----------------------------------------------------------------------
       CALL MY_BARRIER
 C-----------------------------------------------------------------------
@@ -850,7 +850,7 @@ C
           ENDIF
         ENDDO
         IF (SFSAVPARIT /= 0) THEN
-          ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK))
+          call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT")
           DO J=1,I_STOK
             DO I=1,11
               DO H=1,NISUB+1
@@ -859,7 +859,7 @@ C
             ENDDO
           ENDDO
         ELSE
-          ALLOCATE(FSAVPARIT(0,0,0))
+          call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT")
         ENDIF
 C
         DO NFT = 0 , I_STOK - 1 , NVSIZ
@@ -886,7 +886,8 @@ C         preparation CANDIDATES retenus
      G JAS          ,IBS          ,JBS          ,ITAB         ,EDGE_ID ,
      H INTFRIC      ,INTBUF_TAB%IPARTFRIC_E     ,IPARTFRICSI  ,IPARTFRICMI,
      I IGAP         ,INTBUF_TAB%GAP_E_L,IGSTI   ,KMIN         ,KMAX    ,
-     J ISTIF_MSDT   ,DTSTIF        ,INTBUF_TAB%STIFMSDT_EDG,INTERFACES%PARAMETERS)
+     J ISTIF_MSDT   ,DTSTIF        ,INTBUF_TAB%STIFMSDT_EDG,INTERFACES%PARAMETERS,
+     K TYPEDGS)
           CALL I_COR_EPFIT3(
      1               JLT      ,INTBUF_TAB%STFE,STIF    ,CS_LOC ,CM_LOC ,
      2               NEDGE    ,NIN     ,INACTI  ,IPARI(40,NIN),TNCY) 
@@ -908,7 +909,8 @@ C         preparation CANDIDATES retenus
      .                                      INTBUF_TAB%CAND_P,
      E      IAM   ,JAM    ,IBM    ,JBM   ,IAS   ,
      F      JAS   ,IBS    ,JBS    ,ITAB  ,EDGE_ID,
-     G      DGAPLOADPMAX,INTBUF_TAB%PENE_OLD_E,INTBUF_TAB%STIF_OLD_E,INTBUF_TAB%S_PENE_OLD_E)
+     G      DGAPLOADPMAX,INTBUF_TAB%PENE_OLD_E,INTBUF_TAB%STIF_OLD_E,
+     .                     INTBUF_TAB%S_PENE_OLD_E,TYPEDGS  )
 
 C
           IF (IMONM > 0 .AND. JTASK == 1) CALL STARTIME(TIMERS,20)
@@ -975,7 +977,7 @@ C-------------------------------------------------------------------------------
             CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK,
      .                            FBSAV6, 12, 6, DIMFB, ISENSINT )
         ENDIF
-        DEALLOCATE (FSAVPARIT)
+        call my_dealloc(FSAVPARIT)
 C
 C-----------------------------------------------------------------------
 C
@@ -1035,7 +1037,7 @@ C
           ENDIF
         ENDDO
         IF (SFSAVPARIT /= 0) THEN
-          ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK))
+          call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT")
           DO J=1,I_STOK
             DO I=1,11
               DO H=1,NISUB+1
@@ -1044,7 +1046,7 @@ C
             ENDDO
           ENDDO
         ELSE
-          ALLOCATE(FSAVPARIT(0,0,0))
+          call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT")
         ENDIF
 C
         DO NFT = 0 , I_STOK - 1 , NVSIZ
@@ -1156,13 +1158,13 @@ C-------------------------------------------------------------------------------
             CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK,
      .                            FBSAV6, 12, 6, DIMFB, ISENSINT )
         ENDIF
-        DEALLOCATE (FSAVPARIT)
+        call my_dealloc(FSAVPARIT)
 C
       CALL MY_BARRIER
 C
 C-----------------------------------------------------------------------
  500  CONTINUE
-      DEALLOCATE(INDEX2)
+      call my_dealloc(INDEX2)
       RETURN
       END
 !||====================================================================

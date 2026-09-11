@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    w_elbuf_str    ../starter/source/restart/ddsplit/w_elbuf_str.F
+!||    w_elbuf_str      ../starter/source/restart/ddsplit/w_elbuf_str.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit          ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
-      SUBROUTINE W_ELBUF_STR(PROC,IPARG,ELBUF_TAB,LEN_AM,FLAG_XFEM)
+      SUBROUTINE W_ELBUF_STR(PROC,IPARG,ELBUF_TAB,LEN_AM,FLAG_XFEM,NUMNOD,NODLOCAL)
 C-----------------------------------------------
 C   M o d u l e s
 C----------------------------------------------- 
       USE ELBUFDEF_MOD      
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -45,6 +48,8 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER PROC,LEN_AM, IPARG(NPARG,*),FLAG_XFEM
+      INTEGER, INTENT(IN) :: NUMNOD      
+      INTEGER, INTENT(IN) :: NODLOCAL(NUMNOD)
       TYPE(ELBUF_STRUCT_), TARGET, DIMENSION(NGROUP)  :: ELBUF_TAB
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -52,7 +57,7 @@ C-----------------------------------------------
       INTEGER I,J,K,IL,IR,IS,IT,NG,NEL,NPT,P,L_REL,BUFLEN,NUVAR,
      .   ITY,IGTYP,ERR,IFAIL,IDFAIL,DEBUG_PRINT,IAD,
      .   NFAIL,IXFEM,NPG,NPTT,NPTTOT,INLOC,NONL,
-     .   IDAMP_FREQ_RANGE
+     .   IDAMP_FREQ_RANGE,NVARTMP
       INTEGER ! global variables
      .   G_GAMA,G_SIG,G_OFF,G_NOFF,G_EINT,G_EINS,G_TEMP,
      .   G_RHO,G_PLA,G_VOL,G_EPSD,G_QVIS,G_DELTAX,G_TB,G_RK,G_RE,G_WPLA,
@@ -70,7 +75,8 @@ C-----------------------------------------------
      .   G_SKEW_ID,G_GAMA_R,G_SLIPRING_ID,G_SLIPRING_STRAND,G_RETRACTOR_ID,G_RINGSLIP,
      .   G_ADD_NODE,G_UPDATE,G_INTVAR,G_BETAORTH,G_AMU,G_SLIPRING_FRAM_ID,G_FRAM_FACTOR,
      .   G_TM_YIELD,G_TM_SEQ,G_TM_EINT,G_TM_DMG,G_TM_SIG,G_TM_STRA,G_TSAIWU,G_DMGSCL,
-     .   G_SH_IOFFSET,G_EINT_DISTOR,G_FOR_G,G_FORPG_G,G_YIELD_IN_COMP,G_XXOLD_IN_COMP
+     .   G_SH_IOFFSET,G_EINT_DISTOR,G_FOR_G,G_FORPG_G,G_YIELD_IN_COMP,G_XXOLD_IN_COMP,
+     .   G_RBODY_NODE
 
       INTEGER  ! layer variables
      .   LY_DMG,LY_GAMA,LY_DIRA,LY_DIRB,LY_CRKDIR,LY_PLAPT,LY_SIGPT,
@@ -154,7 +160,7 @@ c---------------------------------------------------
 c         allocate and fill the transfer table for restart
 c---------------------------------------------------          
           BUFLEN = IPARG(66,NG) 
-          ALLOCATE (RBUF_L(BUFLEN), STAT=ERR)
+          call my_alloc(RBUF_L, BUFLEN, "RBUF_L", stat=ERR)
 c                                                      
 c---------------------------------------------------          
 C         IF (DEBUG_PRINT == 1) THEN
@@ -184,7 +190,7 @@ C-- add VOL0DP
           ENDDO 
           SDP_RBUF = SDP_RBUF + GBUF%G_SMSTR *NEL
           IF(SDP_RBUF > 0)THEN
-            ALLOCATE(DP_RBUF(SDP_RBUF))
+            call my_alloc(DP_RBUF, SDP_RBUF, "DP_RBUF")
           ENDIF
           L_DPREL = 0
 C
@@ -1176,6 +1182,7 @@ c---
           G_IDT_TSH     = GBUF%G_IDT_TSH
           G_YIELD_IN_COMP = GBUF%G_YIELD_IN_COMP
           G_XXOLD_IN_COMP = GBUF%G_XXOLD_IN_COMP
+          G_RBODY_NODE  = GBUF%G_RBODY_NODE
 c---
 c seatbelts elements
 c---
@@ -1428,6 +1435,8 @@ c---
            RBUF_L(L_REL+1) =  G_YIELD_IN_COMP
              L_REL = L_REL + 1
            RBUF_L(L_REL+1) =  G_XXOLD_IN_COMP
+             L_REL = L_REL + 1
+           RBUF_L(L_REL+1) =  G_RBODY_NODE
              L_REL = L_REL + 1
 c---
 c seatbelts elements
@@ -1718,6 +1727,15 @@ c---
           RBUF_L(L_REL+1:L_REL+NEL*G_XXOLD_IN_COMP) = GBUF%XXOLD_IN_COMP(1:NEL*G_XXOLD_IN_COMP)
             L_REL = L_REL +NEL*G_XXOLD_IN_COMP
 c            
+          DO K = 1, NEL*G_RBODY_NODE
+            IF (GBUF%RBODY_NODE(K) > 0) THEN
+              RBUF_L(L_REL+K) = NODLOCAL(NINT(GBUF%RBODY_NODE(K)))
+            ELSE
+              RBUF_L(L_REL+K) = 0
+            END IF
+          END DO
+            L_REL = L_REL +NEL*G_RBODY_NODE
+c            
 c         failure model for beams type 3
           IF (IGTYP == 3 .and. G_NOFF == 1) THEN
              IFAIL    = ELBUF_TAB(NG)%GBUF%FAIL(1)%ILAWF
@@ -1763,6 +1781,9 @@ c
                L_REL = L_REL + NEL*LF_INDX
              RBUF_L(L_REL+1:L_REL+NEL*LF_OFF) = ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF(1:NEL*LF_OFF)
                L_REL = L_REL + NEL*LF_OFF
+             NVARTMP = SIZE(ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP) / NEL
+             RBUF_L(L_REL+1:L_REL+NEL*NVARTMP) = ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP(1:NEL*NVARTMP)
+               L_REL = L_REL + NEL*NVARTMP
           END IF            
 c---
 c seatbelts elements
@@ -1821,10 +1842,10 @@ C---------
           CALL WRITE_DB (RBUF_L,L_REL)
           IF( SDP_RBUF >0)THEN 
             CALL WRITE_DPDB(DP_RBUF,SDP_RBUF)
-            DEALLOCATE(DP_RBUF)
+            call my_dealloc(DP_RBUF)
           ENDIF
 C---------
-          DEALLOCATE (RBUF_L)
+          CALL my_dealloc(RBUF_L)
 c---------
           LEN_AM = LEN_AM + L_REL
          ENDIF   ! ity

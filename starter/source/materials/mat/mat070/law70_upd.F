@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    law70_upd              ../starter/source/materials/mat/mat070/law70_upd.F
 !||--- called by ------------------------------------------------------
@@ -41,6 +42,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD      
       USE MATPARAM_DEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -67,16 +69,15 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER :: I,J,K,NDIM,NLOAD,NULOAD,NCURV,IPT,NPT,LMAX,FUNC_N,
-     .           IC1,IC2,IZERO,IERROR,NTABLE,IS_ENCRYPTED,IFLAG0,IFLAG,ICHK
+     .           IC1,IC2,IZERO,NTABLE,IS_ENCRYPTED,IFLAG0,IFLAG
       INTEGER ,PARAMETER :: LOAD   = 1
       INTEGER ,PARAMETER :: UNLOAD = 2
       INTEGER ,PARAMETER :: NPTMAX = 100   ! max number of function input points
       my_real :: E0,EMAX,EPSMAX,STIFFMIN,STIFFMAX,STIFFINI,C1,G,NU,XMAX,
-     .   S1,S2,T1,T2,X1,X2,Y1,Y2,DERI,YY,EPS0,EPST
-      INTEGER ,DIMENSION(NFUNC) :: FUNC,PERM,LEN
+     .   S1,S2,T1,T2,X1,X2,Y1,Y2,DERI,EPS0,EPST
+      INTEGER ,DIMENSION(NFUNC) :: FUNC,LEN
       my_real ,DIMENSION(NFUNC*2) :: RATE,YFAC
-      my_real ,DIMENSION(:)   ,ALLOCATABLE :: XF
-      my_real ,DIMENSION(:,:) ,ALLOCATABLE :: XI,YI,YF
+      my_real ,DIMENSION(:,:) ,ALLOCATABLE :: XI,YI
 C=======================================================================
       S2 = -HUGE(S2)
       T2 = -HUGE(T2)
@@ -96,7 +97,7 @@ C=======================================================================
         NTABLE = 1
       END IF
       MAT_PARAM%NTABLE = NTABLE
-      ALLOCATE (MAT_PARAM%TABLE(NTABLE))
+      allocate(MAT_PARAM%TABLE(NTABLE))
       MAT_PARAM%TABLE(LOAD)%NOTABLE = LOAD
       IF (NTABLE == 2) MAT_PARAM%TABLE(UNLOAD)%NOTABLE = UNLOAD
 c
@@ -111,8 +112,8 @@ c------------------------------------------------------
         LEN(I)  = (NPC(FUNC_N+1) - NPC(FUNC_N)) / 2
         LMAX    = MAX(LMAX,LEN(I))
       END DO
-      ALLOCATE (XI(LMAX,NLOAD))
-      ALLOCATE (YI(LMAX,NLOAD))
+      call my_alloc(XI, LMAX, NLOAD, "XI")
+      call my_alloc(YI, LMAX, NLOAD, "YI")
 c     build X,Y vectors from loading functions
 c     skip negative function values (only positive part is taken into account and symmetrized)
 c     check and enforce passing through (0,0)
@@ -175,8 +176,8 @@ c
      .     MAT_PARAM%TABLE(LOAD)  ,NLOAD  ,LEN     ,LMAX   ,RATE  ,
      .     XI    ,YI     )      
       
-      DEALLOCATE (YI)
-      DEALLOCATE (XI)
+      CALL MY_DEALLOC(YI)
+      CALL MY_DEALLOC(XI)
 c------------------------------------------------------      
 c     Unloading functions -> tables
 c------------------------------------------------------
@@ -191,8 +192,8 @@ c
           LEN(I)  = (NPC(FUNC(I)+1) - NPC(FUNC(I))) / 2
           LMAX    = MAX(LMAX,LEN(I))
         END DO
-        ALLOCATE (XI(LMAX,NULOAD))
-        ALLOCATE (YI(LMAX,NULOAD))
+        call my_alloc(XI, LMAX, NULOAD, "XI")
+        call my_alloc(YI, LMAX, NULOAD, "YI")
 c
         DO I = 1,NULOAD
           FUNC_N = FUNC(I)
@@ -252,8 +253,8 @@ c--------------------------------------------------------
      .       MAT_PARAM%TABLE(UNLOAD)  ,NULOAD  ,LEN     ,LMAX   ,RATE(NLOAD+1)  ,
      .       XI    , YI     )      
       
-        DEALLOCATE (YI)
-        DEALLOCATE (XI)
+        CALL MY_DEALLOC(YI)
+        CALL MY_DEALLOC(XI)
 
       END IF
 c--------------------------------------------------------

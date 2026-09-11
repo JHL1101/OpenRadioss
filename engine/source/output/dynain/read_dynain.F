@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,28 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    read_dynain        ../engine/source/output/dynain/read_dynain.F
+!||    read_dynain      ../engine/source/output/dynain/read_dynain.F
 !||--- called by ------------------------------------------------------
-!||    lectur             ../engine/source/input/lectur.F
+!||    lectur           ../engine/source/input/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg             ../engine/source/output/message/message.F
-!||    arret              ../engine/source/system/arret.F
-!||    my_orders          ../common_source/tools/sort/my_orders.c
-!||    spmd_gather_int    ../engine/source/mpi/generic/spmd_gather_int.F
-!||    spmd_gatherv_int   ../engine/source/mpi/generic/spmd_gatherv_int.F
+!||    ancmsg           ../engine/source/output/message/message.F
+!||    arret            ../engine/source/system/arret.F
+!||    my_orders        ../common_source/tools/sort/my_orders.c
+!||    spmd_gatherv     ../engine/source/mpi/generic/spmd_gatherv.F
 !||--- uses       -----------------------------------------------------
-!||    element_mod        ../common_source/modules/elements/element_mod.F90
-!||    message_mod        ../engine/share/message_module/message_mod.F
-!||    state_mod          ../common_source/modules/state_mod.F
+!||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
+!||    state_mod        ../common_source/modules/state_mod.F
 !||====================================================================
       SUBROUTINE READ_DYNAIN(IPART,DYNAIN_DATA,IPARTC,IPARTTG,IXC,IXTG)
 C-----------------------------------------------
@@ -41,10 +44,13 @@ C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
       USE STATE_MOD
+      USE SPMD_MOD
       use element_mod , only : nixc,nixtg
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -63,7 +69,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,IDPRT,K_STAT,J,IP
+      INTEGER I,IDPRT,J,IP
       INTEGER N ,NELC , NELTG , NELCG , NELTGG , 
      .   FLG_CHK , IS_CHECK , JWARN, NELMIN , NELMAX,
      .   MY_SIZEC ,MY_SIZETG ,IERR ,
@@ -74,10 +80,8 @@ C
       INTEGER ,  DIMENSION(:),ALLOCATABLE :: NELIDC ,NELIDTG,
      .        CLEFC ,CLEFTG ,INDXC ,INDXTG ,IDWARN ,NELIDCG ,
      .        NELIDTGG 
-      my_real
-     .   T0,DT0
 C-----------------------------------------------
-      ALLOCATE( DYNAIN_DATA%IPART_DYNAIN(NPART))
+      call my_alloc(DYNAIN_DATA%IPART_DYNAIN, NPART, "DYNAIN_DATA%IPART_DYNAIN")
       DYNAIN_DATA%IPART_DYNAIN(1:NPART) = 0 
       IF (DYNAIN_DATA%NDYNAINPRT /= 0) THEN
             DO I=1,DYNAIN_DATA%NDYNAINPRT
@@ -157,14 +161,14 @@ C-------------------------------------------------------------------------------
       !   send the local size of index to PROC0
           MY_SIZEC = NELC
 
-          CALL SPMD_GATHER_INT(MY_SIZEC,SIZEC_P0,0,1,NSPMD)
+          CALL SPMD_GATHER(MY_SIZEC,SIZEC_P0,1,1,0)
 
           SIZETG_P0(1:NSPMD) = 0
           ADRTG(1:NSPMD) = 0
 
           MY_SIZETG = NELTG
 
-          CALL SPMD_GATHER_INT(MY_SIZETG,SIZETG_P0,0,1,NSPMD)
+          CALL SPMD_GATHER(MY_SIZETG,SIZETG_P0,1,1,0)
 
           NELCG = 0
           IF(ISPMD==0) THEN
@@ -186,26 +190,26 @@ C-------------------------------------------------------------------------------
             NELTGG = NELTGG + SIZETG_P0(NSPMD)
           ENDIF
 
-           ALLOCATE(NELIDCG(NELCG),STAT=IERR)
-           ALLOCATE(NELIDTGG(NELTGG),STAT=IERR)
+           call my_alloc(NELIDCG, NELCG, "NELIDCG", stat=IERR)
+           call my_alloc(NELIDTGG, NELTGG, "NELIDTGG", stat=IERR)
 
           !   send the local NUMELC to PROC0
 
-          CALL SPMD_GATHERV_INT(NELIDC,NELIDCG,0,MY_SIZEC,NELCG,
-     .                          SIZEC_P0,ADRC)
+          CALL SPMD_GATHERV(NELIDC,MY_SIZEC,NELIDCG,
+     .                          SIZEC_P0,ADRC,0)
           !   send the local NUMELTG to PROC0
-          CALL SPMD_GATHERV_INT(NELIDTG,NELIDTGG,0,MY_SIZETG,NELTGG,
-     .                          SIZETG_P0,ADRTG)
+          CALL SPMD_GATHERV(NELIDTG,MY_SIZETG,NELIDTGG,
+     .                          SIZETG_P0,ADRTG,0)
 
         ELSE
           NELCG = NELC
           NELTGG = NELTG
           IF(NELCG/=0) THEN
-            ALLOCATE(NELIDCG(NELCG),STAT=IERR)
+            call my_alloc(NELIDCG, NELCG, "NELIDCG", stat=IERR)
             NELIDCG(1:NELCG) = NELIDC(1:NELC)
           ENDIF
           IF(NELTGG/=0) THEN     
-            ALLOCATE(NELIDTGG(NELTGG),STAT=IERR)     
+            call my_alloc(NELIDTGG, NELTGG, "NELIDTGG", stat=IERR)
             NELIDTGG(1:NELTGG) = NELIDTG(1:NELTG)  
           ENDIF  
 
@@ -222,8 +226,8 @@ C-------------------------------------------------------------------------------
 
               IS_CHECK = 0
    
-              ALLOCATE(CLEFC(NELCG),STAT=IERR)
-              ALLOCATE(INDXC(2*NELCG),STAT=IERR)
+              call my_alloc(CLEFC, NELCG, "CLEFC", stat=IERR)
+              call my_alloc(INDXC, 2*NELCG, "INDXC", stat=IERR)
 
               DO N=1,NELCG
                 INDXC(N)=N
@@ -231,8 +235,8 @@ C-------------------------------------------------------------------------------
               END DO
               CALL MY_ORDERS(0,WORK,CLEFC,INDXC,NELCG,1)     
 
-              ALLOCATE(CLEFTG(NELTGG),STAT=IERR)
-              ALLOCATE(INDXTG(2*NELTGG),STAT=IERR)
+              call my_alloc(CLEFTG, NELTGG, "CLEFTG", stat=IERR)
+              call my_alloc(INDXTG, 2*NELTGG, "INDXTG", stat=IERR)
 
               DO N=1,NELTGG
                 INDXTG(N)=N
@@ -261,7 +265,7 @@ C-------------------------------------------------------------------------------
                  NELMIN = MAX(NELIDCG(INDXC(1)),NELIDTGG(INDXTG(1)))
                  NELMAX = MIN(NELIDCG(INDXC(NELCG)),NELIDTGG(INDXTG(NELTGG)))
 
-                 ALLOCATE(IDWARN(MIN(NELCG,NELTGG)),STAT=IERR)
+                 call my_alloc(IDWARN, MIN(NELCG,NELTGG), "IDWARN", stat=IERR)
 
                  JWARN = 0
                  DO I=1,NELCG
@@ -290,18 +294,22 @@ C-------------------------------------------------------------------------------
                   CALL ARRET(0)
                  ENDIF
 
-                DEALLOCATE(IDWARN)
+                call my_dealloc(IDWARN)
 
               ENDIF
 C
-              DEALLOCATE(CLEFC,CLEFTG,INDXC,INDXTG)
+              call my_dealloc(CLEFC)
+              call my_dealloc(CLEFTG)
+              call my_dealloc(INDXC)
+              call my_dealloc(INDXTG)
 C
           ENDIF
         ENDIF
 
         IF(NUMELC/=0) DEALLOCATE(NELIDC,STAT=IERR)
         IF(NUMELTG/=0) DEALLOCATE(NELIDTG,STAT=IERR)
-        DEALLOCATE(NELIDCG,NELIDTGG)
+        call my_dealloc(NELIDCG)
+        call my_dealloc(NELIDTGG)
 
       ENDIF
 

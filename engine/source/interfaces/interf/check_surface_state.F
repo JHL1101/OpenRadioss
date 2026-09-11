@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    check_surface_state             ../engine/source/interfaces/interf/check_surface_state.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    element_mod                     ../common_source/modules/elements/element_mod.F90
 !||    intbufdef_mod                   ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod                    ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                  ../common_source/tools/memory/my_dealloc.F90
 !||    shooting_node_mod               ../engine/share/modules/shooting_node_mod.F90
 !||====================================================================
         SUBROUTINE CHECK_SURFACE_STATE( ITASK,SURFARCE_NB,SURFACE_ID,SHIFT_INTERFACE,INTBUF_TAB,
@@ -53,6 +56,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -119,8 +124,8 @@ C-----------------------------------------------
           MY_REAL_TASK_ID = ITASK+1
         ENDIF
         IF(MY_REAL_TASK_ID==1) THEN
-          ALLOCATE( NUMBER_SAVED_SURFACE_TYP24_25(NTHREAD) )
-          ALLOCATE( NUMBER_NEW_SURFACE(NTHREAD) )
+          call my_alloc(NUMBER_SAVED_SURFACE_TYP24_25, NTHREAD, "NUMBER_SAVED_SURFACE_TYP24_25")
+          call my_alloc(NUMBER_NEW_SURFACE, NTHREAD, "NUMBER_NEW_SURFACE")
         ENDIF
         IF(ITASK/=-1) CALL MY_BARRIER( )
         NUMBER_INTER = SHIFT_INTERFACE(NINTER+1,2)
@@ -229,13 +234,13 @@ c              DEACTIVATION=.TRUE.
         IF(TOTAL_NUMBER_SURFACE>0) THEN
           IF(MY_REAL_TASK_ID==1) THEN
             IF( TOTAL_NUMBER_SURFACE+SHOOT_STRUCT%NUMBER_REMOTE_SURF > SHOOT_STRUCT%SIZE_REMOTE_SURF) THEN
-              ALLOCATE( SAVED_SURFACE(SHOOT_STRUCT%NUMBER_REMOTE_SURF) )
+              call my_alloc(SAVED_SURFACE, SHOOT_STRUCT%NUMBER_REMOTE_SURF, "SAVED_SURFACE")
               SAVED_SURFACE(1:SHOOT_STRUCT%NUMBER_REMOTE_SURF) = SHOOT_STRUCT%REMOTE_SURF(1:SHOOT_STRUCT%NUMBER_REMOTE_SURF)
-              DEALLOCATE( SHOOT_STRUCT%REMOTE_SURF )
+              call my_dealloc(SHOOT_STRUCT%REMOTE_SURF)
               SHOOT_STRUCT%SIZE_REMOTE_SURF = TOTAL_NUMBER_SURFACE+SHOOT_STRUCT%NUMBER_REMOTE_SURF
-              ALLOCATE( SHOOT_STRUCT%REMOTE_SURF(SHOOT_STRUCT%SIZE_REMOTE_SURF) )
+              call my_alloc(SHOOT_STRUCT%REMOTE_SURF, SHOOT_STRUCT%SIZE_REMOTE_SURF, "SHOOT_STRUCT%REMOTE_SURF")
               SHOOT_STRUCT%REMOTE_SURF(1:SHOOT_STRUCT%NUMBER_REMOTE_SURF) = SAVED_SURFACE(1:SHOOT_STRUCT%NUMBER_REMOTE_SURF)
-              DEALLOCATE( SAVED_SURFACE )
+              call my_dealloc(SAVED_SURFACE)
             ENDIF
           ENDIF
 
@@ -270,13 +275,13 @@ c              DEACTIVATION=.TRUE.
         IF(TOTAL_NUMBER_NEW_SURFACE>0) THEN
           IF(MY_REAL_TASK_ID==1) THEN
             IF( TOTAL_NUMBER_NEW_SURFACE+SHOOT_STRUCT%NUMBER_NEW_SURF > SHOOT_STRUCT%SIZE_NEW_SURF) THEN
-              ALLOCATE( SAVED_SURFACE(SHOOT_STRUCT%NUMBER_NEW_SURF) )
+              call my_alloc(SAVED_SURFACE, SHOOT_STRUCT%NUMBER_NEW_SURF, "SAVED_SURFACE")
               SAVED_SURFACE(1:SHOOT_STRUCT%NUMBER_NEW_SURF) = SHOOT_STRUCT%NEW_SURF(1:SHOOT_STRUCT%NUMBER_NEW_SURF)
-              DEALLOCATE( SHOOT_STRUCT%NEW_SURF )
+              call my_dealloc(SHOOT_STRUCT%NEW_SURF)
               SHOOT_STRUCT%SIZE_NEW_SURF = TOTAL_NUMBER_NEW_SURFACE+SHOOT_STRUCT%NUMBER_NEW_SURF
-              ALLOCATE( SHOOT_STRUCT%NEW_SURF(SHOOT_STRUCT%SIZE_NEW_SURF) )
+              call my_alloc(SHOOT_STRUCT%NEW_SURF, SHOOT_STRUCT%SIZE_NEW_SURF, "SHOOT_STRUCT%NEW_SURF")
               SHOOT_STRUCT%NEW_SURF(1:SHOOT_STRUCT%NUMBER_NEW_SURF) = SAVED_SURFACE(1:SHOOT_STRUCT%NUMBER_NEW_SURF)
-              DEALLOCATE( SAVED_SURFACE )
+              call my_dealloc(SAVED_SURFACE)
             ENDIF
           ENDIF
           IF(ITASK/=-1) CALL MY_BARRIER()
@@ -292,8 +297,8 @@ c              DEACTIVATION=.TRUE.
         IF(ITASK/=-1) CALL MY_BARRIER( )
 
         IF(MY_REAL_TASK_ID==1) THEN
-          DEALLOCATE( NUMBER_SAVED_SURFACE_TYP24_25 )
-          DEALLOCATE( NUMBER_NEW_SURFACE )
+          call my_dealloc(NUMBER_SAVED_SURFACE_TYP24_25)
+          call my_dealloc(NUMBER_NEW_SURFACE)
         ENDIF
 
         RETURN

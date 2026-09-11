@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,22 +15,24 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    admordr        ../engine/source/model/remesh/admordr.F
+!||    admordr          ../engine/source/model/remesh/admordr.F
 !||--- called by ------------------------------------------------------
-!||    resol          ../engine/source/engine/resol.F
-!||    resol_init     ../engine/source/engine/resol_init.F
+!||    resol            ../engine/source/engine/resol.F
+!||    resol_init       ../engine/source/engine/resol_init.F
 !||--- calls      -----------------------------------------------------
-!||    my_orders      ../common_source/tools/sort/my_orders.c
+!||    my_orders        ../common_source/tools/sort/my_orders.c
 !||--- uses       -----------------------------------------------------
-!||    element_mod    ../common_source/modules/elements/element_mod.F90
-!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
-!||    remesh_mod     ../engine/share/modules/remesh_mod.F
+!||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    remesh_mod       ../engine/share/modules/remesh_mod.F
 !||====================================================================
       SUBROUTINE ADMORDR(SH4TREE,SH3TREE,IXC,IXTG)
 C-----------------------------------------------
@@ -42,6 +44,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -66,10 +69,10 @@ C-----------------------------------------------
       INTEGER,DIMENSION(:),ALLOCATABLE :: SORT_INDEX
       INTEGER WORK(70000)
 C-----------------------------------------------
-      CALL MY_ALLOC(LTMP4,NSH4ACT)
-      CALL MY_ALLOC(LTMP3,NSH3ACT)
-      CALL MY_ALLOC(ITRI,MAX(NSH4ACT,NSH3ACT))
-      CALL MY_ALLOC(SORT_INDEX,2*MAX(NSH4ACT,NSH3ACT))
+      call my_alloc(LTMP4, NSH4ACT, "LTMP4")
+      call my_alloc(LTMP3, NSH3ACT, "LTMP3")
+      call my_alloc(ITRI, MAX(NSH4ACT,NSH3ACT), "ITRI")
+      call my_alloc(SORT_INDEX, 2*MAX(NSH4ACT,NSH3ACT), "SORT_INDEX")
 C-----------------------------------------------
       IF(IPARIT/=0)THEN
 
@@ -206,10 +209,10 @@ C
       END DO
       PSH3KIN(LEVELMAX+1)=PTR
 C--------------------------------------------
-      DEALLOCATE(LTMP4)
-      DEALLOCATE(LTMP3)
-      DEALLOCATE(ITRI)
-      DEALLOCATE(SORT_INDEX)
+      call my_dealloc(LTMP4)
+      call my_dealloc(LTMP3)
+      call my_dealloc(ITRI)
+      call my_dealloc(SORT_INDEX)
 
       RETURN
       END     

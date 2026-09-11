@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    reorder_ig3d   ../starter/source/elements/ige3d/reorder_ig3d.F
 !||--- called by ------------------------------------------------------
 !||    prerafig3d     ../starter/source/elements/ige3d/prerafig3d.F
 !||--- calls      -----------------------------------------------------
 !||    myqsort3d      ../starter/source/elements/ige3d/searchigeo3d.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE REORDER_IG3D(IXIG3D, KXIG3D,KNOTLOCPC,KNOTLOCEL,
      .                        X_TMP,D_TMP,V_TMP,MS_TMP,WIGE_TMP,
@@ -43,6 +45,7 @@ C----------------------------------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -79,26 +82,26 @@ c ------------------------------------------------------------------------------
 Csort the remove and newfct arrays in ascending order
 c ------------------------------------------------------------------------------------------
 c
-      ALLOCATE(TAB_REMOVE_TRI(L_TAB_REMOVE)) 
+      call my_alloc(TAB_REMOVE_TRI, L_TAB_REMOVE, "TAB_REMOVE_TRI")
       TAB_REMOVE_TRI(:) = 0
-      ALLOCATE(INDEX(2*L_TAB_REMOVE))
+      call my_alloc(INDEX, 2*L_TAB_REMOVE, "INDEX")
       CALL MY_ORDERS(0, WORK, TAB_REMOVE, INDEX, L_TAB_REMOVE , 1)
       DO I=1,L_TAB_REMOVE
         TAB_REMOVE_TRI(I)=TAB_REMOVE(INDEX(I))
       ENDDO
-      DEALLOCATE(INDEX)
+      CALL MY_DEALLOC(INDEX)
       DO I=1,L_TAB_REMOVE
         TAB_REMOVE(I) = 0
       ENDDO
 C
-      ALLOCATE(TAB_NEWFCT_TRI(L_TAB_NEWFCT)) 
+      call my_alloc(TAB_NEWFCT_TRI, L_TAB_NEWFCT, "TAB_NEWFCT_TRI")
       TAB_NEWFCT_TRI(:) = 0
-      ALLOCATE(INDEX(2*L_TAB_NEWFCT))
+      call my_alloc(INDEX, 2*L_TAB_NEWFCT, "INDEX")
       CALL MY_ORDERS(0, WORK, TAB_NEWFCT, INDEX, L_TAB_NEWFCT , 1)
       DO I=1,L_TAB_NEWFCT
         TAB_NEWFCT_TRI(I)=TAB_NEWFCT(INDEX(I))
       ENDDO
-      DEALLOCATE(INDEX)
+      CALL MY_DEALLOC(INDEX)
       DO I=1,L_TAB_NEWFCT
         TAB_NEWFCT(I) = 0
       ENDDO
@@ -263,8 +266,8 @@ C  note2: do not delete duplicates from the model: they are only deactivated
 c ------------------------------------------------------------------------------------------
 c
         IF(NBPART_IG3D>1) THEN ! and if points have been kept (condition coming from rafig3d.f)
-          ALLOCATE(PERMIGE(NUMNOD))
-          ALLOCATE(X_TRIE(3,NUMNOD))
+          call my_alloc(PERMIGE, NUMNOD, "PERMIGE")
+          call my_alloc(X_TRIE, 3, NUMNOD, "X_TRIE")
           DO I=1,NUMNOD
             X_TRIE(:,I) = X_TMP(:,I)
           ENDDO      
@@ -342,14 +345,14 @@ C  change to not write in ascending order but simply eliminate duplicate points
 c
 c        IF(NDOUBLONIGE>0) print*, 'J AI TROUVE ET SUPPRIME DES CONNECTIVITES :',NDOUBLONIGE,' DOUBLONS !'
 c
-        DEALLOCATE(PERMIGE)
-        DEALLOCATE(X_TRIE)
+        CALL MY_DEALLOC(PERMIGE)
+        CALL MY_DEALLOC(X_TRIE)
       ENDIF
 c ------------------------------------------------------------------------------------------
       ENDIF
 c
-      DEALLOCATE(TAB_REMOVE_TRI)
-      DEALLOCATE(TAB_NEWFCT_TRI)
+      CALL MY_DEALLOC(TAB_REMOVE_TRI)
+      CALL MY_DEALLOC(TAB_NEWFCT_TRI)
 c
       IF(FLAG_PRE==1) THEN   
 c

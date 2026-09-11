@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    thermexpc      ../engine/source/materials/mat_share/thermexpc.F
 !||--- called by ------------------------------------------------------
@@ -56,35 +57,35 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER JFT, JLT,NPT,MTN,NSG,IR,IS,NLAY,
+      INTEGER JFT, JLT,NPT,MTN,IR,IS,NLAY,
      .     MAT(MVSIZ),NEL,MATLY(*),IPM(NPROPMI,*),IGTYP,
      .     NPF(*)
 C     REAL
       my_real
      .   FOR(NEL,5), FORTH(NEL,2), EINT(JLT,2), EINTTH(*),
-     .   OFF(*),EINTT(MVSIZ),DIR(NEL,2),THK(*), PM(NPROPM,*),
+     .   OFF(*),DIR(NEL,2),THK(*), PM(NPROPM,*),
      .   THKLY(*),DTEMP(*),TEMPEL(*),TF(*),POSLY(MVSIZ,*),
      .   MOM(NEL,3)
       my_real
      .   EXX(MVSIZ), EYY(MVSIZ), ETH(MVSIZ),THK0(MVSIZ) ,
-     .   AREA(MVSIZ),PLA(MVSIZ),A1(MVSIZ), A2(MVSIZ)
+     .   AREA(MVSIZ),A1(MVSIZ), A2(MVSIZ)
       TYPE(ELBUF_STRUCT_), TARGET :: ELBUF_STR
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  I, MX, J,IORTH,IPT,ILAY,II(5),NPTT,IT,
+      INTEGER  I, MX, IORTH,IPT,ILAY,II(5),NPTT,IT,
      .         IORTH_LAY,IFUNC_ALPHA,J1,J2,J3,JJ,IPT_ALL
 C     REAL
       my_real
-     .   DTINV, AMU, FACT, VISC,M12,ANU12,ANU21,S1,S2,
-     .   FSCAL_ALPHA,ALPHA,DEINTTH,DF,WMC,AA,THKLAY,KXX,KYY
+     .   ANU12,ANU21,S1,S2,
+     .   FSCAL_ALPHA,ALPHA,DF,WMC,AA,THKLAY
       my_real
      .   NU(MVSIZ),E(MVSIZ),A12(MVSIZ),
      .   E11(MVSIZ), E22(MVSIZ),
-     .   B3(MVSIZ), DEGMB(MVSIZ), DEGFX(MVSIZ),DEGMBTH(MVSIZ),
-     .   EZZ(MVSIZ),EINF(MVSIZ),P(MVSIZ),DEGFXTH(MVSIZ),
+     .   DEGMBTH(MVSIZ),
+     .   P(MVSIZ),
      .   P1(MVSIZ),P2(MVSIZ),ETHKE(MVSIZ),ZI2(MVSIZ),SUMALZ(MVSIZ)
-      TYPE(BUF_LAY_) ,POINTER :: BUFLY
+C      TYPE(BUF_LAY_) ,POINTER :: BUFLY
       TYPE(L_BUFEL_) ,POINTER :: LBUF
 C-----------------------------------------------    
       my_real FINTER 

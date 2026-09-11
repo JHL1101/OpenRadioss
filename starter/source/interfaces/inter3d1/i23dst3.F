@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i23dst3   ../starter/source/interfaces/inter3d1/i23dst3.F
 !||--- called by ------------------------------------------------------
@@ -90,28 +91,16 @@ C-----------------------------------------------
      .     N13(MVSIZ), N23(MVSIZ), N33(MVSIZ),
      .     N14(MVSIZ), N24(MVSIZ), N34(MVSIZ),
      .     NX(MVSIZ),  NY(MVSIZ),  NZ(MVSIZ),
-     .     XG(MVSIZ),  YG(MVSIZ),  ZG(MVSIZ),
      .     H1(MVSIZ), H2(MVSIZ), H3(MVSIZ), H4(MVSIZ),
      .     NVERS(4,MVSIZ), FIRSTIMP(4,MVSIZ),
-     .     XN1(MVSIZ),YN1(MVSIZ),ZN1(MVSIZ),
-     .     XN2(MVSIZ),YN2(MVSIZ),ZN2(MVSIZ),
-     .     XN3(MVSIZ),YN3(MVSIZ),ZN3(MVSIZ),
-     .     XN4(MVSIZ),YN4(MVSIZ),ZN4(MVSIZ),
-     .     SSC(MVSIZ),TTC(MVSIZ),
-     .     A12(MVSIZ),A23(MVSIZ),A34(MVSIZ),A41(MVSIZ),
-     .     B12(MVSIZ),B23(MVSIZ),B34(MVSIZ),B41(MVSIZ),
-     .     AB1(MVSIZ),AB2(MVSIZ),
      .     N1(MVSIZ),N2(MVSIZ),N3(MVSIZ),
-     .     XX1(MVSIZ),XX2(MVSIZ),XX3(MVSIZ),XX4(MVSIZ),
-     .     YY1(MVSIZ),YY2(MVSIZ),YY3(MVSIZ),YY4(MVSIZ),
-     .     ZZ1(MVSIZ),ZZ2(MVSIZ),ZZ3(MVSIZ),ZZ4(MVSIZ),
-     .     AREA(MVSIZ),ALP(MVSIZ),VAR
+     .     AREA(MVSIZ)
       my_real
-     .     S2,NN,PS,
+     .     S2,NN,
      .     X12,X23,X34,X41,SX1,SX2,SX3,SX4,SX0,
      .     Y12,Y23,Y34,Y41,SY1,SY2,SY3,SY4,SY0,
      .     Z12,Z23,Z34,Z41,SZ1,SZ2,SZ3,SZ4,SZ0,
-     .     GAP2(MVSIZ), AAA, SIDE, DIST,
+     .     GAP2(MVSIZ), AAA, SIDE,
      .     LL, H
 C--------------------------------------------------------
       IF(IGAP==0)THEN

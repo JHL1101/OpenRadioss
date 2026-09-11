@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_count      ../starter/source/coupling/rad2rad/r2r_count.F
 !||--- called by ------------------------------------------------------
@@ -43,6 +44,7 @@ C-----------------------------------------------
         USE NOD2EL_MOD
         USE R2R_MOD
         USE GROUPDEF_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -104,7 +106,7 @@ C------Precounting of internal and external surfaces of the domain---C
 C--------------------------------------------------------------------C
 
         IF (PASSE==0) THEN
-          ALLOCATE(ISURF_R2R(5,NSURF))
+          call my_alloc(ISURF_R2R, 5, NSURF, "ISURF_R2R")
           DO I=1,NSURF
             COMPT = 0
             DO J=1,IGRSURF(I)%NSEG
@@ -194,7 +196,7 @@ C------Precounting of internal and external lines of the domain------C
 C--------------------------------------------------------------------C
 
         IF (PASSE==0) THEN
-          ALLOCATE(ISLIN_R2R(2,NSLIN))
+          call my_alloc(ISLIN_R2R, 2, NSLIN, "ISLIN_R2R")
         ENDIF
 
 C-------At each pass - number of added lined is counted--------------C
@@ -223,7 +225,7 @@ C------Precounting of grbric and external lines of the domain--------C
 C--------------------------------------------------------------------C
 
         IF (PASSE==0) THEN
-          ALLOCATE(IGRBRIC_R2R(5,NGRBRIC))
+          call my_alloc(IGRBRIC_R2R, 5, NGRBRIC, "IGRBRIC_R2R")
           DO I=1,NGRBRIC
             COMPT = 0
             DO J=1,IGRBRIC(I)%NENTITY

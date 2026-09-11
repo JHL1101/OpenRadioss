@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_thgrou                ../starter/source/output/th/hm_read_thgrou.F
 !||--- called by ------------------------------------------------------
@@ -44,8 +45,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    thprin                        ../starter/source/output/th/thprin.F
 !||    thprin_sub                    ../starter/source/output/th/thprin.F
 !||    udouble                       ../starter/source/system/sysfus.F
-!||    ulist2s                       ../starter/source/system/sysfus.F
-!||    usr2sys                       ../starter/source/system/sysfus.F
 !||    write_thnms1                  ../starter/source/output/th/write_thnms1.F90
 !||--- uses       -----------------------------------------------------
 !||    checksum_starter_option_mod   ../starter/source/output/checksum/checksum_option.F90
@@ -130,7 +129,7 @@ C-----------------------------------------------
       INTEGER NOM_OPT(LNOPT1,*),PTR_NOPT_FXBY,PTR_NOPT_INTER,
      .        PTR_NOPT_RWALL,PTR_NOPT_SECT,PTR_NOPT_JOINT,
      .        PTR_NOPT_MONV,PTR_NOPT_ACC,PTR_NOPT_SKW,PTR_NOPT_GAU,
-     .        PTR_NOPT_CLUS,PTR_NOPT_SPHIO,PTR_NOPT_SURF,PTR_NOPT_RETRACTOR,
+     .        PTR_NOPT_CLUS,PTR_NOPT_SPHIO,PTR_NOPT_RETRACTOR,
      .        PTR_NOPT_SLIPRING
       INTEGER NPBY(*)
       INTEGER, TARGET :: IPARTS(NUMELS),IPARTQ(NUMELQ),IPARTC(NUMELC),
@@ -150,13 +149,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,JJ,II, I,ISU,ID,NOSYS,J10(10),NTOT,KK,IER,
-     .        OK,IGS,IGRS,NSU,K,L,CONT,IAD0,IADV,NTRI,NL,
-     .        IFITMP,IADFIN,NUMEL,NV,NVAR,M,N,IAD2,IAD,NSNE,NNE,ISK,
-     .        NVALL,TAGP,TAGS,IFIX_TMP,IBID,NIN
+      INTEGER J,JJ,II, I,ID,KK,
+     .        OK,IGS,K,L,
+     .        NVAR,N,IAD2,IAD,NSNE,NNE,ISK,
+     .        NVALL,TAGP,TAGS,IBID,NIN
       CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
       CHARACTER MESS*40
-      CHARACTER(LEN=NCHARLINE) :: KEY,COPT
+      CHARACTER(LEN=NCHARLINE) :: KEY
       INTEGER NVARN,NVARN1,NVARN1A,NVARN2,NVARNPINCH,NVARS,NVARC,NVART,NVARP,NVARR,NVARUR
       INTEGER NVARS1,NVARS2,NVARS3,NVARS4,NVARS5,NVARS6,NVARS7,NVARS8,NVARS9,NVARS10,NVARSNLOC
       INTEGER NVARNS,NVARSPH
@@ -181,7 +180,7 @@ C-----------------------------------------------
       PARAMETER (NVARS =239555 ,NVARC = 37856,NVART = 6)
       PARAMETER (NVARP = 337,NVARR = 66,NVARUR = 12)
       PARAMETER (NVARNS = 4,NVARSPH = 41)
-      PARAMETER (NVARIN = 29,NVARRW = 6,NVARRB =15,NVARFX =4)
+      PARAMETER (NVARIN = 29,NVARRW = 6,NVARRB =41,NVARFX =4)
       PARAMETER (NVARFXM = 3)
       PARAMETER (NVARAC = 6,NVARSE =39,NVARJO = 6)
       PARAMETER (NVARAB = 7,NVARMV4= 9,NVARMV = 19,NVARMVENT = 150)
@@ -221,7 +220,7 @@ C-----------------------------------------------
       PARAMETER (NVARNG = 8,NVARSG = 39767,NVARCG = 675,NVARTG = 1)
       PARAMETER (NVARPG = 1,NVARRG = 1,NVARURG = 1)
       PARAMETER (NVARNSG = 1,NVARSPG = 2)
-      PARAMETER (NVARING = 6,NVARRWG = 3,NVARRBG = 6,NVARFXG = 1)
+      PARAMETER (NVARING = 6,NVARRWG = 3,NVARRBG = 10,NVARFXG = 1)
       PARAMETER (NVARFXMG =1)
       PARAMETER (NVARACG = 2,NVARSEG = 7,NVARJOG = 3)
       PARAMETER (NVARABG = 1,NVARMG4 = 1,NVARMVG = 62,NVARMVENTG=62)
@@ -262,12 +261,11 @@ C-----------------------------------------------
      .        IVARFLOWG(18,NVARFLOWG),IVARSURFG(18,NVARSURFG),
      .        IVARSLIPG(18,NVARSLIPG),IVARRETG(18,NVARRETG),
      .        IVARCHECKSUMG(18,NVARCHECKSUMG)
-      INTEGER NSMA
-      INTEGER IUN,INODACC,INODFRA
+
+      INTEGER IUN
       INTEGER NNOD, NSHEL, NTRUS, NBEAM, NSPRG, NCHTG, NCHINT, NCHJNT,
-     .     CHNOD, CHELT, CNT1, CNT2, IVSG, IREC_0, OUT_VENT, NG, NEL, 
-     .     NFT, NUMPART, I15ATH, I15A, I15B, I15C, I15D, I15E, I15F, 
-     .     I15G, I15H, I15I, I15J, I15K, I15L, ITY
+     .     CHNOD, CHELT, CNT1, IVSG, NG, NEL, 
+     .     NFT, NUMPART, ITY
       my_real
      .   BID
        INTEGER IVCG
@@ -276,7 +274,7 @@ C-----------------------------------------------
        CHARACTER*10 VARC2(574),VARC1(208),VARCG1(167),VARCG2(407), VAR ,
      .              VAR_TMP,VARC3(500),VARCG3(100),
      .              VARCGPINCH(1),VARCPINCH(7),VARCNLOC(2)
-       CHARACTER*80 STR, MES
+
        LOGICAL :: IS_AVAILABLE
       INTEGER, DIMENSION(:), POINTER :: IPARTEL_P
       CHARACTER THFILE*4
@@ -296,14 +294,13 @@ C-----------------------------------------------
      .                              VARCLUS_TITLE,VARFLOW_TITLE,
      .                              VARSURF_TITLE,VARSENS_TITLE
      
-        INTEGER :: LEN_TITLE
-        INTEGER :: LEN_CHECKSUM
+
         CHARACTER(LEN=NCHARLINE):: CHECKSUM_TITLE
         CHARACTER(LEN=64):: DECK_CHECKSUM
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER USR2SYS,ULIST2S,LISTCNT
+
 C-----------------------------------------------
 C   D a t a
 C-----------------------------------------------
@@ -316,23 +313,48 @@ C   DON T MISS TO ADD TH TITLES FOR NEW TH OPTIONS
 C-----------------------------------------------
 
       NVARN = NVARN1 + NVARN1A + NVARN2 + NVARNPINCH
-      ALLOCATE(VARN(NVARN))
+      allocate(VARN(NVARN))
 
 
-      ALLOCATE(VARN1_TITLE(NVARN1),VARN1A_TITLE(NVARN1A),VARN2_TITLE(NVARN2),VARNPINCH_TITLE(NVARNPINCH),
-     .         VARP_TITLE(NVARP),VARR_TITLE(NVARR),VART_TITLE(NVART),
-     .         VARS1_TITLE(NVARS1),VARS2_TITLE(NVARS2),VARS3_TITLE(NVARS3),VARS4_TITLE(NVARS4),
-     .         VARS5_TITLE(NVARS5),VARS6_TITLE(NVARS6),VARS7_TITLE(NVARS7),VARS8_TITLE(NVARS8),VARS9_TITLE(NVARS9),
-     .         VARC_TITLE(NVARC),VARS10_TITLE(NVARS10),
-     .         VARSNLOC_TITLE(NVARSNLOC),VARNS_TITLE(NVARNS),VARSPH_TITLE(NVARSPH),
-     .         VARIN_TITLE(NVARIN),VARRW_TITLE(NVARRW),VARRB_TITLE(NVARRB),
-     .         VARMV_TITLE(NVARMV),VARSE_TITLE(NVARSE),VARAC_TITLE(NVARAC),
-     .         VARJO_TITLE(NVARJO),VARMVENT_TITLE(NVARMVENT),
-     .         VARPA_TITLE(NVARPA),VARFX_TITLE(NVARFX),
-     .         VARGAU_TITLE(NVARGAU),VARFR_TITLE(NVARFR),
-     .         VARSLIP_TITLE(NVARSLIP),VARRET_TITLE(NVARRET),
-     .         VARCLUS_TITLE(NVARCLUS),VARFLOW_TITLE(NVARFLOW),
-     .         VARSURF_TITLE(NVARSURF),VARSENS_TITLE(1))
+      allocate(VARN1_TITLE(NVARN1))
+      allocate(VARN1A_TITLE(NVARN1A))
+      allocate(VARN2_TITLE(NVARN2))
+      allocate(VARNPINCH_TITLE(NVARNPINCH))
+      allocate(VARP_TITLE(NVARP))
+      allocate(VARR_TITLE(NVARR))
+      allocate(VART_TITLE(NVART))
+      allocate(VARS1_TITLE(NVARS1))
+      allocate(VARS2_TITLE(NVARS2))
+      allocate(VARS3_TITLE(NVARS3))
+      allocate(VARS4_TITLE(NVARS4))
+      allocate(VARS5_TITLE(NVARS5))
+      allocate(VARS6_TITLE(NVARS6))
+      allocate(VARS7_TITLE(NVARS7))
+      allocate(VARS8_TITLE(NVARS8))
+      allocate(VARS9_TITLE(NVARS9))
+      allocate(VARC_TITLE(NVARC))
+      allocate(VARS10_TITLE(NVARS10))
+      allocate(VARSNLOC_TITLE(NVARSNLOC))
+      allocate(VARNS_TITLE(NVARNS))
+      allocate(VARSPH_TITLE(NVARSPH))
+      allocate(VARIN_TITLE(NVARIN))
+      allocate(VARRW_TITLE(NVARRW))
+      allocate(VARRB_TITLE(NVARRB))
+      allocate(VARMV_TITLE(NVARMV))
+      allocate(VARSE_TITLE(NVARSE))
+      allocate(VARAC_TITLE(NVARAC))
+      allocate(VARJO_TITLE(NVARJO))
+      allocate(VARMVENT_TITLE(NVARMVENT))
+      allocate(VARPA_TITLE(NVARPA))
+      allocate(VARFX_TITLE(NVARFX))
+      allocate(VARGAU_TITLE(NVARGAU))
+      allocate(VARFR_TITLE(NVARFR))
+      allocate(VARSLIP_TITLE(NVARSLIP))
+      allocate(VARRET_TITLE(NVARRET))
+      allocate(VARCLUS_TITLE(NVARCLUS))
+      allocate(VARFLOW_TITLE(NVARFLOW))
+      allocate(VARSURF_TITLE(NVARSURF))
+      allocate(VARSENS_TITLE(1))
 
     
       CALL TH_TITLES(
@@ -360,23 +382,23 @@ C   TH VARIABLES
 C-----------------------------------------------
       ! Allocate temporary Arrays
       ! Character Arrays - ue ALLOCATEkm
-      ALLOCATE(VARS6(97200))
+      allocate(VARS6(97200))
       VARS6(1:97200) = ' '
-      ALLOCATE(VARS7(97200))
+      allocate(VARS7(97200))
       VARS7(1:97200) = ' '
-      ALLOCATE(VARSG2(19782))
+      allocate(VARSG2(19782))
       VARSG2(1:19782) = ' '
-      ALLOCATE(VARSG3(19782))
+      allocate(VARSG3(19782))
       VARSG3(1:19782) = ' '
-      ALLOCATE(VARS(NVARS))
+      allocate(VARS(NVARS))
       VARS(1:NVARS) = ' '
-      ALLOCATE(VARC(NVARC))
+      allocate(VARC(NVARC))
       VARC(1:NVARC) = ' '
-      ALLOCATE(VARSG(NVARSG))
+      allocate(VARSG(NVARSG))
       VARSG(1:NVARSG) = ' '
 
       ! INTEGER Arrays - use MY_ALLOC
-      CALL MY_ALLOC(IVARSG,18,NVARSG)
+      CALL MY_ALLOC(IVARSG,18,NVARSG,"IVARSG")
 C   nodes
       DATA VARN1/'DX      ','DY      ','DZ      ',
      .           'VX      ','VY      ','VZ      ',
@@ -1147,9 +1169,14 @@ C   rigid wall
 C   rigid body
       DATA VARRB/
      . 'FX      ','FY      ','FZ      ','MX      ','MY      ',
-     . 'MZ      ','RX      ','RY      ','RZ      ',
-     . 'FXI     ','FYI     ','FZI     ',
-     . 'MXI     ','MYI     ','MZI     '/
+     . 'MZ      ','RX      ','RY      ','RZ      ','FXI     ',
+     . 'FYI     ','FZI     ','MXI     ','MYI     ','MZI     ',
+     . 'X       ','Y       ','Z       ','DX      ','DY      ',
+     . 'DZ      ','VX      ','VY      ','VZ      ','AX      ',
+     . 'AY      ','AZ      ','VRX     ','VRY     ','VRZ     ',
+     . 'ARX     ','ARY     ','ARZ     ','MASS    ','IXX     ',
+     . 'IYY     ','IZZ     ','IXY     ','IYZ     ','IZX     ',
+     . 'STATUS  '/
 C   flexible body
       DATA VARFX/
      . 'IE      ','KE      ','EFW     ','DE      '/
@@ -1550,15 +1577,19 @@ C
      .         / 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .           1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .           4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0/
-      DATA VARRBG/'DEF     ','F       ','M       ','R       ',
-     .            'FI      ','MI      '/
+      DATA VARRBG/'DEF     ','F       ','M       ','R       ','FI      ',
+     .            'MI      ','D       ','V       ','A       ','XYZ     '/
       DATA IVARRBG
      .         / 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .           1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .           4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .           7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
      .          10,11,12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-     .          13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0/
+     .          13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     .          19,20,21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     .          22,23,24,28,29,30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     .          25,26,27,31,32,33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     .          16,17,18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0/
       DATA VARFXG/'DEF     '/
       DATA IVARFXG
      .         / 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0/
@@ -3139,7 +3170,7 @@ c
       ! /TH/CHECKSUM ( activated automaticaly if /CHECKSUM is used )
       !-------------------------------------------
       HM_NTHCHECKSUM=CHECKSUM%checksum_count
-      IF (HM_NTHCHECKSUM > 0) THEN 
+      IF (HM_NTHCHECKSUM > 0) THEN
         HM_NTHGRP = HM_NTHGRP + 1
         IGS = IGS+1
         CHECKSUM_TITLE = ''
@@ -3298,7 +3329,7 @@ C-------------------------------------
       DEALLOCATE(VARS)
       DEALLOCATE(VARC)
       DEALLOCATE(VARSG)
-      DEALLOCATE(IVARSG)
+      CALL MY_DEALLOC(IVARSG)
       
       DEALLOCATE(VARN1_TITLE,VARN1A_TITLE,VARN2_TITLE,VARNPINCH_TITLE,
      .           VARP_TITLE,VARR_TITLE,VART_TITLE,

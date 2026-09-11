@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_tab_old_c   ../engine/source/materials/fail/tabulated/fail_tab_old_c.F
 !||--- called by ------------------------------------------------------
@@ -76,14 +77,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  :: I,J,J1,J2,K,IP_THICK,NINDX,NINDXF,IFAIL_SH,NRATE,
+      INTEGER  :: I,J,J1,J2,K,NINDX,NINDXF,IFAIL_SH,NRATE,
      .  IFUN_EL,IFUN_TEMP
       INTEGER, DIMENSION(NEL) :: INDX,INDXF,IPOSV,IADP,ILENP
-      INTEGER IPOST(NEL,2)
       INTEGER ,DIMENSION(NFUNC) :: IFUN_STR
 C
-      my_real  :: P,SVM,DF,FAC,LAMBDA,DCRIT,EL_REF,SC_EL,SC_TEMP,P_THICK,
-     .   DP,DD,DN,YY,YY_N,EF1,EF2
+      my_real  :: P,SVM,DF,FAC,DCRIT,EL_REF,SC_EL,SC_TEMP,P_THICK,
+     .   DP,DD,DN,EF1,EF2
       my_real, DIMENSION(NFUNC) :: YFAC,RATE
       my_real, DIMENSION(NEL)   :: EPSF,EPSF_N,SIGM,YYV,DXDYV,LAMBDAV
 C-----------------------------------------------

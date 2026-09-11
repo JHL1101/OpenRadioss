@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,22 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_sh_offset_ini_mod   ../engine/source/interfaces/shell_offset/inter_offset_ini.F90
 !||--- called by ------------------------------------------------------
 !||    resol_init                ../engine/source/engine/resol_init.F
 !||====================================================================
       module inter_sh_offset_ini_mod
-      implicit none
+        implicit none
       contains
 !=======================================================================================================================
-!!\brief This subroutine do the initialization for offset treatment
+!!\brief This subroutine performs the initialization for offset treatment
 !=======================================================================================================================
 !||====================================================================
 !||    inter_sh_offset_ini       ../engine/source/interfaces/shell_offset/inter_offset_ini.F90
@@ -46,8 +47,11 @@
 !||    elbufdef_mod              ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    inter_sh_offset_dim_mod   ../engine/source/interfaces/shell_offset/inter_offset_dim.F90
 !||    inter_sh_offset_mod       ../engine/source/modules/interfaces/sh_offset_mod.F90
+!||    my_alloc_mod              ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod            ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod             ../common_source/modules/precision_mod.F90
 !||    spmd_exch_vnpon_mod       ../engine/source/mpi/nodes/spmd_exch_vnpon.F90
+!||    spmd_mod                  ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         subroutine inter_sh_offset_ini(                                        &
           ngroup,    nparg,      iparg,        npropg,            &
@@ -63,9 +67,12 @@
           use constant_mod,             only: zero,half
           use inter_sh_offset_mod ,     only: sh_offset_
           use inter_sh_offset_dim_mod , only: inter_sh_offset_dim
+          use spmd_mod,                 only: spmd_allreduce, SPMD_MAX
           use spmd_exch_vnpon_mod ,     only: spmd_exch_vnpon
           use precision_mod, only : WP
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -74,13 +81,13 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: ngroup           !< number of elem group
-          integer, intent (in   )                          :: nparg            !< 1er dim of iparg
-          integer, intent (in   )                          :: npropg           !< 1er dim of geo
+          integer, intent (in   )                          :: nparg            !< first dimension of iparg
+          integer, intent (in   )                          :: npropg           !< first dimension of geo
           integer, intent (in   )                          :: numgeo           !< number of prop
           integer, intent (in   )                          :: numelc           !< number shell 4n element
-          integer, intent (in   )                          :: nixc             !< 1er dim of ixc
+          integer, intent (in   )                          :: nixc             !< first dimension of ixc
           integer, intent (in   )                          :: numeltg          !< number shell 3n element
-          integer, intent (in   )                          :: nixtg            !< 1er dim of ixtg
+          integer, intent (in   )                          :: nixtg            !< first dimension of ixtg
           integer, intent (in   )                          :: numnod           !< number node
           integer, intent (in   )                          :: nspmd            !< number of domains
           integer, intent (in   )                          :: sfr_elem         !< number of comm nodes
@@ -98,7 +105,7 @@
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
           integer :: i,j,k,n,nel,nft,nn,ie,ii,igtyp,ity,nnode,pid,nshel,ng,stat,lenr,nsh_oset,nnoset
-          integer :: ibid(1),ndim1,ndim2,nfr
+          integer :: ibid(1),ndim1,ndim2,nfr,has_offset_local
           real(kind=WP) :: shelloff
           real(kind=WP), dimension(:)  ,  allocatable :: thkoset,thkoset_n
           double precision, dimension(:,:),  allocatable :: thkoset6,thkoset_n6
@@ -114,10 +121,10 @@
           sh_offset_tab%nsh_oset = nsh_oset
           nshel=0
           if (nsh_oset >0) then
-            allocate(sh_offset_tab%ix_offset(4,nsh_oset),STAT=stat)
-            allocate(sh_offset_tab%offset_n(numnod),STAT=stat)
-            allocate(sh_offset_tab%norm_n(3,numnod),STAT=stat)
-            allocate(thkoset(nsh_oset),STAT=stat)
+            call my_alloc(sh_offset_tab%ix_offset, 4, nsh_oset, "sh_offset_tab%ix_offset", stat=stat)
+            call my_alloc(sh_offset_tab%offset_n, numnod, "sh_offset_tab%offset_n", stat=stat)
+            call my_alloc(sh_offset_tab%norm_n, 3, numnod, "sh_offset_tab%norm_n", stat=stat)
+            call my_alloc(thkoset, nsh_oset, "thkoset", stat=stat)
             sh_offset_tab%offset_n = zero
             thkoset = zero
             do  ng=1,ngroup
@@ -159,12 +166,12 @@
               end if
             end do
           else
-            allocate(sh_offset_tab%ix_offset(4,0) )
-            allocate(sh_offset_tab%offset_n(0) )
-            allocate(sh_offset_tab%norm_n(3,0) )
-            allocate(thkoset(0) )
+            call my_alloc(sh_offset_tab%ix_offset, 4, 0, "sh_offset_tab%ix_offset")
+            call my_alloc(sh_offset_tab%offset_n, 0, "sh_offset_tab%offset_n")
+            call my_alloc(sh_offset_tab%norm_n, 3, 0, "sh_offset_tab%norm_n")
+            call my_alloc(thkoset, 0, "thkoset")
           end if !(nsh_oset>0) then
-          allocate(sh_offset_tab%intag(numnod),STAT=stat)
+          call my_alloc(sh_offset_tab%intag, numnod, "sh_offset_tab%intag", stat=stat)
 ! initialize comm
           if (nspmd>1) then
             sh_offset_tab%intag = 0
@@ -183,9 +190,10 @@
                 if (sh_offset_tab%intag(n)>0) nn = nn + 1
               end do
             end do
-            allocate(sh_offset_tab%iad_offset(2,nspmd+1),STAT=stat) ! dim (2,*) to use existing spmd_exch routines
+            call my_alloc(sh_offset_tab%iad_offset, 2, nspmd+1, "sh_offset_tab%iad_offset", stat=stat)
+            ! dim (2,*) to use existing spmd_exch routines
             sh_offset_tab%iad_offset= 0
-            allocate(sh_offset_tab%fr_offset(nn),STAT=stat)
+            call my_alloc(sh_offset_tab%fr_offset, nn, "sh_offset_tab%fr_offset", stat=stat)
             sh_offset_tab%iad_offset(1,1) = 1
             k = 0
             do i = 1, nspmd
@@ -201,11 +209,11 @@
           end if !(nspmd>1)
 !  compute offset_n
           sh_offset_tab%intag = 0
-          allocate(thkoset_n(numnod),STAT=stat)
+          call my_alloc(thkoset_n, numnod, "thkoset_n", stat=stat)
           thkoset_n = zero
           if (iparit >0) then !P/ON
-            allocate(thkoset6(6,nshel),STAT=stat)
-            allocate(thkoset_n6(6,numnod),STAT=stat)
+            call my_alloc(thkoset6, 6, nshel, "thkoset6", stat=stat)
+            call my_alloc(thkoset_n6, 6, numnod, "thkoset_n6", stat=stat)
             thkoset6 = zero
             thkoset_n6 = zero
             call foat_to_6_float(1  ,nshel  ,thkoset ,thkoset6 )
@@ -238,8 +246,8 @@
                 thkoset_n(n) = thkoset_n(n) + thkoset_n6(k,n)
               end do
             end do
-            deallocate(thkoset6)
-            deallocate(thkoset_n6)
+            call my_dealloc(thkoset6)
+            call my_dealloc(thkoset_n6)
           else
             do i = 1, nshel
 !------each node
@@ -269,16 +277,22 @@
             thkoset_n(n) = thkoset_n(n)/sh_offset_tab%intag(n)
             if (thkoset_n(n)==zero) sh_offset_tab%intag(n)=0
           end do
-          if (nsh_oset >0) deallocate(thkoset)
+          if (nsh_oset >0) call my_dealloc(thkoset)
 ! reducing nodal dim
           nnoset=0
           do n = 1, numnod
             if (sh_offset_tab%intag(n)>0) nnoset = nnoset + 1
           end do
           sh_offset_tab%nnsh_oset = nnoset
-          allocate(sh_offset_tab%indexg(nnoset),STAT=stat)
-          allocate(sh_offset_tab%offset_n(nnoset),STAT=stat)
-          allocate(sh_offset_tab%norm_n(3,nnoset),STAT=stat)
+          has_offset_local = 0
+          if (nnoset > 0) has_offset_local = 1
+          sh_offset_tab%has_offset_global = has_offset_local
+          if (nspmd > 1) then
+            call spmd_allreduce(has_offset_local, sh_offset_tab%has_offset_global, 1, SPMD_MAX)
+          end if
+          call my_alloc(sh_offset_tab%indexg, nnoset, "sh_offset_tab%indexg", stat=stat)
+          call my_alloc(sh_offset_tab%offset_n, nnoset, "sh_offset_tab%offset_n", stat=stat)
+          call my_alloc(sh_offset_tab%norm_n, 3, nnoset, "sh_offset_tab%norm_n", stat=stat)
           if (iparit >0) allocate(sh_offset_tab%norm_n6(6,3,nnoset),STAT=stat)
           nnoset=0
           do n = 1, numnod
@@ -298,8 +312,8 @@
                 if (sh_offset_tab%intag(n)>0) nfr = nfr + 1
               end do
             end do
-            deallocate(sh_offset_tab%fr_offset)
-            allocate(sh_offset_tab%fr_offset(nfr),STAT=stat)
+            call my_dealloc(sh_offset_tab%fr_offset)
+            call my_alloc(sh_offset_tab%fr_offset, nfr, "sh_offset_tab%fr_offset", stat=stat)
             sh_offset_tab%iad_offset(1,1) = 1
             k = 0
             do i = 1, nspmd
@@ -314,6 +328,6 @@
               sh_offset_tab%iad_offset(1,i+1) = k+1
             end do
           end if !(nspmd>1)
-          deallocate(thkoset_n)
+          call my_dealloc(thkoset_n)
         end subroutine inter_sh_offset_ini
       end module inter_sh_offset_ini_mod

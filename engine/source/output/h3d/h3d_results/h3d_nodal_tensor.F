@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_nodal_tensor       ../engine/source/output/h3d/h3d_results/h3d_nodal_tensor.F
 !||--- called by ------------------------------------------------------
@@ -36,6 +37,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod           ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod            ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||    outmax_mod             ../common_source/modules/outmax_mod.F
 !||====================================================================
@@ -62,6 +65,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -101,12 +106,12 @@ C-----------------------------------------------
      .       , DIMENSION(:), ALLOCATABLE :: VGPS
 C-----------------------------------------------
 C
-      ALLOCATE(AFLU(3,NUMNOD))
-      ALLOCATE(VFLU(3,NUMNOD))
-      ALLOCATE(ITAGPS(NUMNOD))
-      ALLOCATE(VGPS(NUMNOD))
-      ALLOCATE(VALUES(6,NUMNOD))
-      ALLOCATE(IOK_PART(NUMNOD))
+      call my_alloc(AFLU, 3, NUMNOD, "AFLU")
+      call my_alloc(VFLU, 3, NUMNOD, "VFLU")
+      call my_alloc(ITAGPS, NUMNOD, "ITAGPS")
+      call my_alloc(VGPS, NUMNOD, "VGPS")
+      call my_alloc(VALUES, 6, NUMNOD, "VALUES")
+      call my_alloc(IOK_PART, NUMNOD, "IOK_PART")
 
 
       VALUES(1:6,1:NUMNOD) = ZERO
@@ -352,12 +357,12 @@ C
       CALL H3D_WRITE_TENSOR(IOK_PART,IS_WRITTEN_NODE,NODAL_TENSOR,NUMNOD,0,0,
      .                                    VALUES,IOK_PART)
 
-      DEALLOCATE(AFLU)
-      DEALLOCATE(VFLU)
-      DEALLOCATE(VGPS)
-      DEALLOCATE(ITAGPS)
-      DEALLOCATE(VALUES)
-      DEALLOCATE(IOK_PART)
+      call my_dealloc(AFLU)
+      call my_dealloc(VFLU)
+      call my_dealloc(VGPS)
+      call my_dealloc(ITAGPS)
+      call my_dealloc(VALUES)
+      call my_dealloc(IOK_PART)
 
       RETURN
       END
@@ -383,8 +388,6 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
-      my_real
-     .   S(3),NORM2
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     

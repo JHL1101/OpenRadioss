@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
 !||    spmd_i7fcom_pon        ../engine/source/mpi/forces/spmd_i7fcom_pon.F
@@ -58,8 +59,10 @@ C
 !||    interfaces_mod         ../common_source/modules/interfaces/interfaces_mod.F90
 !||    message_mod            ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod          ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod             ../common_source/modules/output/output_mod.F90
-!||    spmd_comm_world_mod    ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod               ../engine/source/mpi/spmd_mod.F90
 !||    tri25ebox              ../engine/share/modules/tri25ebox.F
 !||    tri7box                ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -84,10 +87,13 @@ C-----------------------------------------------
       USE INTERFACES_MOD
       USE GLOB_THERM_MOD
       use output_mod
-      USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+      USE SPMD_MOD, ONLY : spmd_irecv, spmd_isend, spmd_recv,
+     .                     spmd_wait
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "macro.inc"
 #include      "assert.inc"
@@ -123,7 +129,8 @@ C-----------------------------------------------
       TYPE(INTBUF_STRUCT_) INTBUF_TAB(*)
       TYPE(H3D_DATABASE) :: H3D_DATA
       TYPE(MULTI_FVM_STRUCT) :: MULTI_FVM
-      TYPE (INTERFACES_)    ,INTENT(IN) :: INTERFACES
+C     REALLOCATE_I_SKYLINE declares PON as INTENT(INOUT).
+      TYPE (INTERFACES_)    ,INTENT(INOUT) :: INTERFACES
       TYPE (GLOB_THERM_)    ,INTENT(IN) :: GLOB_THERM
 C-----------------------------------------------
       TYPE (GROUP_)  , DIMENSION(NGRBRIC) :: IGRBRIC
@@ -137,7 +144,6 @@ C-----------------------------------------------
      . IALLOCS, IALLOCR, LEN17, JJ, IGN, IGE, NMES, NME,
      .        IADM, IES,INTTH,LEN7T,LEN20, LEN20E, INC,LEN11T,
      .        MSGOFF, MSGOFF2,J,K,INTCAREA,
-     . STATUS(MPI_STATUS_SIZE),
      .        DEBUT(NINTER), DEBUTI(NINTER),
      .        DEBUTE(NINTER), DEBUTIE(NINTER),
 C parasiz car variable en save
@@ -216,9 +222,9 @@ C Add Part EGDE for type 20
             IF(SIZ>0)THEN
               NSNSITOT(P) = SIZ
               MSGTYP = MSGOFF 
-              CALL MPI_IRECV(
-     .          ISIZRCV(1,P),2,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_R(P),IERROR   )
+              CALL spmd_irecv(
+     .          ISIZRCV(1,P),2,IT_SPMD(P),MSGTYP,
+     .          REQ_R(P))
             ENDIF
           ENDIF
         ENDDO
@@ -235,16 +241,16 @@ C
             IF(NTY==7.OR.NTY==10.OR.NTY==22.OR.NTY==23.OR.
      .         NTY==24.OR.NTY==25) THEN
      
-              ALLOCATE(INDEX(NI),STAT=IERROR)
+              call my_alloc(INDEX, NI, "INDEX", stat=IERROR)
               IF(IERROR/=0) THEN
                 CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
                 CALL ARRET(2)
               END IF
               
               IF(INTTH > 0)THEN
-                 ALLOCATE( TEMPO(LEN7T,NI),STAT=IERROR)
+                 call my_alloc(TEMPO, LEN7T, NI, "TEMPO", stat=IERROR)
               ELSE
-                 ALLOCATE( TEMPO(LEN,NI),STAT=IERROR)
+                 call my_alloc(TEMPO, LEN, NI, "TEMPO", stat=IERROR)
               ENDIF
               
               IF(IERROR/=0) THEN
@@ -389,7 +395,8 @@ C
           IF(NTY==7.OR.NTY==10.OR.NTY==22.OR.NTY==23.OR.
      .       NTY==24.OR.NTY==25) THEN
              IF (NI > 0 ) THEN
-               DEALLOCATE(TEMPO,INDEX)
+               call my_dealloc(TEMPO)
+               call my_dealloc(INDEX)
              ENDIF
           ENDIF
 
@@ -399,9 +406,9 @@ C
         DO P = 1, NSPMD
           IF(P/=LOC_PROC.AND.NSNFITOT(P)>0) THEN
             MSGTYP = MSGOFF
-             CALL MPI_ISEND(
-     .        ISIZENV(1,P),2,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     .        SPMD_COMM_WORLD,REQ_S(P),IERROR    )
+             CALL spmd_isend(
+     .        ISIZENV(1,P),2,IT_SPMD(P),MSGTYP,
+     .        REQ_S(P))
             IALLOCS = IALLOCS + ISIZENV(1,P)
           ENDIF
         END DO
@@ -1097,9 +1104,9 @@ C Node generating the force
             END DO
             SIZ = L+1-ADD
             MSGTYP = MSGOFF2
-            CALL MPI_ISEND(
-     .        BBUFS(ADD),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .        SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+            CALL spmd_isend(
+     .        BBUFS(ADD),SIZ,IT_SPMD(P),MSGTYP,
+     .        REQ_SI(P))
           ELSEIF(P/=LOC_PROC)THEN
             DO II = 1, NBINTC
               NIN = INTLIST(II)
@@ -1137,7 +1144,7 @@ C
         IALLOCR = 0
         DO P = 1, NSPMD
           IF(NSNSITOT(P)>0)THEN
-            CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_R(P))
             IALLOCR = MAX(IALLOCR,ISIZRCV(1,P))   ! for blocking communications
 C           Iallocr = Iallocr + Isizrcv (P)!For non -blocking comm
           END IF
@@ -1172,9 +1179,8 @@ C        The = 1!To be reactivated if not blocking
           IF(ISIZRCV(1,P)>0) THEN
             MSGTYP = MSGOFF2
             L = 1           ! blocking send + memory allocation optimization on max communications
-            CALL MPI_RECV(
-     .        BBUFR(L),ISIZRCV(1,P)+NBINTC*2,REAL  ,IT_SPMD(P),MSGTYP,
-     .        SPMD_COMM_WORLD            ,STATUS,IERROR    )
+            CALL spmd_recv(
+     .        BBUFR(L),ISIZRCV(1,P)+NBINTC*2,IT_SPMD(P),MSGTYP)
              
 C
             DO II = 1, NBINTC
@@ -1347,21 +1353,21 @@ C Fin type 20 edge
             ENDDO
           ENDIF
         ENDDO
-        IF(IALLOCR>0) DEALLOCATE(BBUFR)
+        IF(IALLOCR>0) call my_dealloc(BBUFR)
 C
 C Attente ISEND
 C
         DO P = 1, NSPMD
           IF(P/=LOC_PROC)THEN
             IF(NSNFITOT(P)>0) THEN
-              CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
+              CALL spmd_wait(REQ_S(P))
             END IF
             IF(ISIZENV(1,P)>0)THEN
-              CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+              CALL spmd_wait(REQ_SI(P))
             END IF
           END IF
         END DO
-        IF(IALLOCS>0) DEALLOCATE(BBUFS)
+        IF(IALLOCS>0) call my_dealloc(BBUFS)
       ENDIF
 C
 #endif

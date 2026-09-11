@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 ! ==================================================================================================
 !                                                   PROCEDURES
 ! ==================================================================================================
@@ -31,7 +32,7 @@
 !||    write_matparam         ../engine/source/output/restart/write_matparam.F
 !||====================================================================
       module write_therpmaram_mod
-      implicit none
+        implicit none
       contains
 
 !||====================================================================
@@ -42,6 +43,8 @@
 !||    write_db           ../common_source/tools/input_output/write_db.F
 !||    write_i_c          ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod      ../common_source/modules/precision_mod.F90
 !||    therm_param_mod    ../common_source/modules/mat_elem/therm_param_mod.F90
 !||====================================================================
@@ -54,6 +57,8 @@
 ! --------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! --------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! --------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -73,17 +78,17 @@
 ! --------------------------------------------------------------------------------------------------
           ! write integer parameters
           ifix = 2
-          allocate (ibuf(ifix))
+          call my_alloc(ibuf, ifix, "ibuf")
 !
           ibuf(1) = therm%iform
           ibuf(2) = therm%func_thexp
 !
           call write_i_c(ibuf,ifix)
-          deallocate(ibuf)
+          call my_dealloc(ibuf)
 
           ! write real value parameters
           rfix = 10
-          allocate (rbuf(rfix))
+          call my_alloc(rbuf, rfix, "rbuf")
 !
           rbuf(1)  = therm%tini
           rbuf(2)  = therm%tref
@@ -97,7 +102,7 @@
           rbuf(10) = therm%scale_thexp
 !
           call write_db(rbuf,rfix)
-          deallocate(rbuf)
+          call my_dealloc(rbuf)
 !-----------
           return
         end subroutine write_thermparam

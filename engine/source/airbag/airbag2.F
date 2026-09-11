@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    airbagb         ../engine/source/airbag/airbag2.F
 !||--- called by ------------------------------------------------------
@@ -70,20 +71,20 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,II, NAV, K, IDEF, KK, IPVENT, NNC, IAD,
+      INTEGER I,II, NAV, K, IDEF, KK, IPVENT, NNC,
      .   IPORT,IPORP,IPORA,IPORT1,IPORP1,IPORA1,IVDP,
      .   IJ ,IV, RADVOIS,PMAIN,
-     .   IN1,IN2,IN3,IN4,ITTF,IDTPDEF
+     .   ITTF,IDTPDEF
 C     REAL
       my_real
      .   GAMA, CV, CP, PEXT, PDEF, DTPDEFI, DTPDEFC, TVENT, TSTOPE,
      .   APVENT, AVENT, BVENT, 
      .   AMTOT, P, RO, VOL, HSPEC, 
      .   GMTOT, CPA, CPB, CPC, GMI, CPAI, CPBI, CPCI, TBAG,
-     .   U, DEOUT, DMOUT, AREA, PCRIT, PVOIS, TVOIS, AA, VEPS,
+     .   U, DMOUT, AREA, PCRIT, PVOIS, AA, VEPS,
      .   AOUT, AOUT1, AOUTOT, FLOUT, DE, VVOIS, 
      .   DGEOUT, DGMOUT, RNM, RMWI, RNMI, RMWG, RNMG, 
-     .   DERI, TEMP(4),AISENT,ACHEMK,FCHEMK,VMAX,
+     .   DERI, AISENT,ACHEMK,FCHEMK,VMAX,
      .   FPORT,FPORP,FPORA,FPORT1,FPORP1,FPORA1,SCALT,SCALP,SCALS,
      .   FVDP, ROEX, UISENT,TT1,
      .   F1(NN), F2(NN),TTF

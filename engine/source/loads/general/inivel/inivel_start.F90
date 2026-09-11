@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inivel_start_mod   ../engine/source/loads/general/inivel/inivel_start.F90
 !||--- called by ------------------------------------------------------
@@ -27,36 +28,38 @@
 !||====================================================================
       module inivel_start_mod
 !
-      implicit none
+        implicit none
       contains
-        !! \brief apply inivel w/ T_start
+        !! \brief apply inivel with T_start
 !||====================================================================
-!||    inivel_start    ../engine/source/loads/general/inivel/inivel_start.F90
+!||    inivel_start     ../engine/source/loads/general/inivel/inivel_start.F90
 !||--- called by ------------------------------------------------------
-!||    resol           ../engine/source/engine/resol.F
+!||    resol            ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg          ../engine/source/output/message/message.F
+!||    ancmsg           ../engine/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
-!||    constant_mod    ../common_source/modules/constant_mod.F
-!||    elbufdef_mod    ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    groupdef_mod    ../common_source/modules/groupdef_mod.F
-!||    inivel_mod      ../common_source/modules/inivel_mod.F90
-!||    message_mod     ../engine/share/message_module/message_mod.F
-!||    multi_fvm_mod   ../common_source/modules/ale/multi_fvm_mod.F90
-!||    precision_mod   ../common_source/modules/precision_mod.F90
-!||    sensor_mod      ../common_source/modules/sensor_mod.F90
+!||    constant_mod     ../common_source/modules/constant_mod.F
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    groupdef_mod     ../common_source/modules/groupdef_mod.F
+!||    inivel_mod       ../common_source/modules/inivel_mod.F90
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    multi_fvm_mod    ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    precision_mod    ../common_source/modules/precision_mod.F90
+!||    sensor_mod       ../common_source/modules/sensor_mod.F90
 !||====================================================================
         subroutine inivel_start(                                              &
           ngrnod,  ngrbric,    ngrquad,       ngrsh3n,           &
           igrnod,  igrbric,    igrquad,       igrsh3n,           &
           numskw,    lskew,    numfram,       sensors,           &
-          xframe,      skew,          x,             v,           &
-          vr,    numnod,      vflow,         wflow,           &
-          w, multi_fvm,       iale,       ialelag,           &
+          xframe,     skew,          x,             v,           &
+          vr,       numnod,      vflow,         wflow,           &
+          w,     multi_fvm,       iale,       ialelag,           &
           time ,    iroddl,   ninivelt,      inivel_t,           &
           nparg,    ngroup,       lens,         iparg,           &
-          elbuf_tab,         ms,         in,        weight,           &
-          nxframe,      t_kin)
+          elbuf_tab,    ms,         in,        weight,           &
+          nxframe,   t_kin,      ns10e,       icnds10)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -71,6 +74,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -81,10 +86,10 @@
           integer , intent(inout)                          :: ninivelt  !< dimension of inivel_t
           integer , intent(in   )                          :: numskw    !< number of skew
           integer , intent(in   )                          :: numfram   !< number of frame
-          integer , intent(in   )                          :: lskew     !< 1er dimension of skew
-          integer , intent(in   )                          :: nxframe   !< 1er dimension of frame
+          integer , intent(in   )                          :: lskew     !< first dimension of skew
+          integer , intent(in   )                          :: nxframe   !< first dimension of frame
           integer , intent(in   )                          :: numnod    !< number of node
-          integer , intent(in   )                          :: nparg     !< 1er dimension of iparg
+          integer , intent(in   )                          :: nparg     !< first dimension of iparg
           integer , intent(in   )                          :: ngroup    !< number of element group
           integer , intent(in   )                          :: iroddl    !< rotational dof flag
           integer , intent(in   )                          :: iale      !< ale flag
@@ -94,6 +99,8 @@
           integer , intent(in   )                          :: ngrquad   !< number quad element group
           integer , intent(in   )                          :: ngrsh3n   !< number tria element group
           integer , intent(in   )                          :: lens      !< dimension of work array itagvel
+          integer , intent(in   )                          :: ns10e     !< number of tetra10 edges
+          integer , intent(in   ) ,dimension(3,ns10e)      :: icnds10   !< tetra10 edge connectivity
           integer , intent(in   ) ,dimension(numnod)       :: weight    !< nodal mass weight array (spmd)
           integer , dimension(nparg,ngroup), intent(in   ) :: iparg     !< element group data array
           type(inivel_), dimension(ninivelt),intent(inout) :: inivel_t  !< inivel_struc
@@ -120,9 +127,9 @@
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
           integer  :: i,j,id,n,ng,itype,nosys,sens_id,iremain,iupdate
-          integer  :: igrs,igbric,igqd,igtria,isk,ifra,idir,ifm,k1,k2,k3
+          integer  :: igrs,igbric,igqd,igtria,isk,ifra,idir,ifm,k1,k2,k3,n1,n2,nd
           integer  :: mtn,nel,nft,ii,n_ini
-          integer , dimension(:) , allocatable :: itagvel
+          integer , dimension(:) , allocatable :: itagvel,itag_n
           real(kind=WP)  :: tstart,tstart_s,tstart1,vx,vy,vz,vl(3), nixj(6),vlt(3),mas
           real(kind=WP) :: vra, ox, oy, oz
           type(g_bufel_), pointer :: gbuf
@@ -161,8 +168,10 @@
             if (tstart1<=time) iupdate = 1
           end do
           if (iupdate>0) then
-            allocate(itagvel(lens))
+            call my_alloc(itagvel, lens, "itagvel")
             itagvel = 0
+            call my_alloc(itag_n, numnod, "itag_n")
+            itag_n = 0            
           end if
           iremain = 0
           do n =1,ninivelt
@@ -242,6 +251,7 @@
                 do j=1,igrnod(igrs)%nentity
                   nosys=igrnod(igrs)%entity(j)
                   v(1:3,nosys)=vl(1:3)
+                  itag_n(nosys) = 2
                   if(ialelag > 0) then
                     vflow(1:3,nosys) = vl(1:3)
                     wflow(1:3,nosys) = vl(1:3)
@@ -262,6 +272,7 @@
                 do j=1,igrnod(igrs)%nentity
                   nosys=igrnod(igrs)%entity(j)
                   v(1:3,nosys)=vl(1:3)
+                  itag_n(nosys) = 2
                   if(ialelag > 0) then
                     vflow(1:3,nosys) = vl(1:3)
                     wflow(1:3,nosys) = vl(1:3)
@@ -331,6 +342,7 @@
                   v(1,nosys)= vl(1)+vra*(nixj(3)-nixj(4))
                   v(2,nosys)= vl(2)+vra*(nixj(5)-nixj(6))
                   v(3,nosys)= vl(3)+vra*(nixj(1)-nixj(2))
+                  itag_n(nosys) = 2
                   if(ialelag > 0) then
                     vflow(1:3,nosys) = v(1:3,nosys)
                     wflow(1:3,nosys) = v(1:3,nosys)
@@ -435,7 +447,18 @@
                 end do
               end if !(mtn == 151) then
             end do
-            deallocate(itagvel)
+            do n = 1, ns10e
+              nd = iabs(icnds10(1,n))
+              if (itag_n(nd)==2) cycle
+              n1 = icnds10(2,n)
+              n2 = icnds10(3,n)
+              if (itag_n(n1)==2 .and. itag_n(n2)==2) then 
+                v(1:3,nd) = half*(v(1:3,n1)+v(1:3,n2))
+              end if
+            end do
+!             
+            call my_dealloc(itagvel)
+            call my_dealloc(itag_n)
           end if
 
 ! 1000   FORMAT(3X,'BY SENSOR ON, ACTIVATING INIVEL OF ID =',I10)

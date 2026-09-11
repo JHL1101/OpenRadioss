@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    initwg_solid       ../starter/source/spmd/domain_decomposition/initwg_solid.F
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .            NUMMAT,NUMGEO,
      .            POIN_PART_SOL,MID_PID_SOL,IPARTS,BUFMAT,
      .            MID_OLD,PID_OLD,MLN_OLD,RECHERCHE,ISOL_OLD,
-     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM)
+     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM,elm_group)
 C-----------------------------------------------
 C            M o d u l e s
 C-----------------------------------------------
@@ -74,6 +75,7 @@ C     REAL OR REAL*8
       INTEGER, DIMENSION(*), INTENT(IN) :: IPARTS
       TYPE(MID_PID_TYPE), DIMENSION(NUMMAT,*), INTENT(INOUT) :: MID_PID_SOL
       TYPE(MATPARAM_STRUCT_) ,DIMENSION(NUMMAT), INTENT(IN) :: MAT_PARAM
+      integer, dimension(numels,2), intent(in) :: elm_group !< group id & number of element in the group for each element
 C-----------------------------------------------
       INTEGER OFF, NPN, MID, PID, JHBE, IGT, MLN,
      .    ISTRAIN, ITHK, IHBE, IPLA, ISSN, MTN, I, J, K,L,
@@ -790,44 +792,48 @@ C
            ENDIF
         ENDIF      
 C
-          POIDS = TELT * INVTREF
-          ! --------------------
-          IF(RECHERCHE==0) THEN
-           IF (WD_LOCAL==0..AND.MLN/=0)THEN
-             WD(I) = POIDS
-             POIN_PART = IPARTS(I)
-             IF (ISOL==4.AND. (JSROT /= 1)) THEN
+        ! --------------------
+        IF(RECHERCHE==0) THEN
+          IF (WD_LOCAL==0..AND.MLN/=0)THEN
+            if(elm_group(i,2)>0.and.elm_group(i,2)<80) then
+              telt = telt * (18.248*(elm_group(i,2))**(-0.625))
+            endif
+
+            POIDS = TELT * INVTREF            
+            WD(I) = POIDS
+            POIN_PART = IPARTS(I)
+            IF (ISOL==4.AND. (JSROT /= 1)) THEN
+              POIN_ELM_TYP = 6
+            ELSEIF( (ISOL==10).OR.(ISOL==4.AND. JSROT==1) ) THEN
+              IF(ISOL==10) THEN
+                POIN_ELM_TYP = 2
+              ELSE
                 POIN_ELM_TYP = 6
-             ELSEIF( (ISOL==10).OR.(ISOL==4.AND. JSROT==1) ) THEN
-                IF(ISOL==10) THEN
-                        POIN_ELM_TYP = 2
-                ELSE
-                        POIN_ELM_TYP = 6
-                ENDIF
-             ELSE
-                IF(ISOL==6) THEN
-                        POIN_ELM_TYP = 5
-                ELSEIF(ISOL==8) THEN
-                        POIN_ELM_TYP = 7
-                ELSEIF(ISOL==16) THEN
-                        POIN_ELM_TYP = 3
-                ELSEIF(ISOL==20) THEN
-                        POIN_ELM_TYP = 4
-                ELSE
-                        POIN_ELM_TYP = 1
-                ENDIF
-             ENDIF
-             POIN_PART = IPARTS(I)
-             POIN_MID = POIN_PART_SOL(1,POIN_PART,POIN_ELM_TYP)
-             POIN_PID = POIN_PART_SOL(2,POIN_PART,POIN_ELM_TYP)
-             IF(POIN_MID/=0.AND.POIN_PID/=0) MID_PID_SOL(POIN_MID,POIN_ELM_TYP)%COST1D(POIN_PID) = TELT
-           ELSEIF(MLN==0)THEN
-             WD(I) = 0.0001
-           END IF
-          ELSE
-           TELT_PRO = TELT
-          ENDIF
-          ! --------------------               
+              ENDIF
+            ELSE
+              IF(ISOL==6) THEN
+                POIN_ELM_TYP = 5
+              ELSEIF(ISOL==8) THEN
+                POIN_ELM_TYP = 7
+              ELSEIF(ISOL==16) THEN
+                POIN_ELM_TYP = 3
+              ELSEIF(ISOL==20) THEN
+                POIN_ELM_TYP = 4
+              ELSE
+                POIN_ELM_TYP = 1
+              ENDIF
+            ENDIF
+            POIN_PART = IPARTS(I)
+            POIN_MID = POIN_PART_SOL(1,POIN_PART,POIN_ELM_TYP)
+            POIN_PID = POIN_PART_SOL(2,POIN_PART,POIN_ELM_TYP)
+            IF(POIN_MID/=0.AND.POIN_PID/=0) MID_PID_SOL(POIN_MID,POIN_ELM_TYP)%COST1D(POIN_PID) = TELT
+          ELSEIF(MLN==0)THEN
+            WD(I) = 0.0001
+          END IF
+        ELSE
+          TELT_PRO = TELT
+        ENDIF
+        ! --------------------               
       ENDDO
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25pen3_edg   ../engine/source/interfaces/intsort/i25pen3_edg.F
 !||--- called by ------------------------------------------------------
@@ -31,7 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .                    NEDGE  ,LEDGE  ,MARGE   ,GAPE  ,GAP_E_L ,
      .                    IGAP   ,X      ,IRECT   ,PENE  ,ADMSR   ,
      .                    EDG_BISECTOR,VTX_BISECTOR,ITAB,
-     .                    XREM_EDGE,S1_XREM,S2_XREM,DGAPLOAD)
+     .                    XREM_EDGE,S1_XREM,S2_XREM,DGAPLOAD,
+     .                    IREM_EDGE,S1_IREM)
 
 C-----------------------------------------------
 C   M o d u l e s
@@ -55,8 +57,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER, INTENT(IN) :: S1_XREM,S2_XREM
+      INTEGER, INTENT(IN) :: S1_XREM,S2_XREM,S1_IREM
       my_real, INTENT(IN) :: XREM_EDGE(S1_XREM,S2_XREM)
+      INTEGER, INTENT(IN) :: IREM_EDGE(S1_IREM,S2_XREM)
       INTEGER JLT, IGAP0, NEDGE, IGAP
       INTEGER IRECT(4,*), CAND_S(*), CAND_M(*), LEDGE(NLEDGE,NEDGE), ADMSR(4,*), ITAB(NUMNOD)
       my_real , INTENT(IN) :: DGAPLOAD ,DRAD
@@ -67,18 +70,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, IG,N1,N2,M1,M2,NI,L,J, IE, JE, IL, JL
+      INTEGER I, N1,N2,M1,M2,NI, IE, JE, TYPE_EDGS
       my_real
      .     XXS1(MVSIZ) ,XXS2(MVSIZ) ,XYS1(MVSIZ) ,XYS2(MVSIZ) ,XZS1(MVSIZ) ,XZS2(MVSIZ) ,
      .     XXM1(MVSIZ) ,XXM2(MVSIZ) ,XYM1(MVSIZ) ,XYM2(MVSIZ) ,XZM1(MVSIZ) ,XZM2(MVSIZ) ,
      .     XS12,YS12,ZS12,XM12,YM12,ZM12,XA,XB,
-     .     XS2,XM2,XSM,XS2M2,YS2,YM2,YSM,YS2M2,ZS2,ZM2,ZSM,ZS2M2,
+     .     XS2,XM2,XSM,XS2M2,YS2M2,ZS2M2,
      .     XX,YY,ZZ,ALS,ALM,DET,GAP2, 
      .     XMAX1,YMAX1,ZMAX1,XMAX2,YMAX2,ZMAX2,
-     .     XMIN1,YMIN1,ZMIN1,XMIN2,YMIN2,ZMIN2,GAPV(MVSIZ),PENE_L(MVSIZ),VDT(MVSIZ),
-     .     AAA, DX, DY, DZ, DD, EX, EY ,EZ, NNI, NI2, INVCOS
-      my_real 
-     .     MAXGAPV
+     .     XMIN1,YMIN1,ZMIN1,XMIN2,YMIN2,ZMIN2,GAPV(MVSIZ),
+     .     DD
 C-----------------------------------------------
 CDIR$ NOFUSION        
       DO I=1,JLT
@@ -87,18 +88,43 @@ CDIR$ NOFUSION
         IF(CAND_S(I) <= NEDGE) THEN
           JE = CAND_S(I)
           IF(IGAP0 == 0) THEN
-            GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
+            IF(IABS(LEDGE(7,IE))==3) THEN
+              GAPV(I)=GAPE(IE)+GAPE(JE)
+            ELSE
+              GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
+            ENDIF
           ELSE
-            GAPV(I)=TWO*(GAPE(IE)+GAPE(JE))
+            IF(IABS(LEDGE(7,IE))==3.AND.IABS(LEDGE(7,JE))==3) THEN
+              GAPV(I)=GAPE(IE)+GAPE(JE)
+            ELSEIF(IABS(LEDGE(7,IE))==3) THEN
+              GAPV(I)=GAPE(IE)+TWO*GAPE(JE)
+            ELSEIF(IABS(LEDGE(7,JE))==3) THEN
+              GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
+            ELSE
+              GAPV(I)=TWO*(GAPE(IE)+GAPE(JE))
+            ENDIF
           END IF
           IF(IGAP == 3)
      .       GAPV(I)=MIN(GAP_E_L(IE)+GAP_E_L(JE),GAPV(I)) ! under-estimated ...
           GAPV(I)=MAX(DRAD,GAPV(I)+DGAPLOAD)+MARGE
         ELSE
+          TYPE_EDGS = IREM_EDGE(E_TYPE,CAND_S(I)-NEDGE)
           IF(IGAP0 == 0) THEN
-            GAPV(I)=TWO*GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            IF(IABS(LEDGE(7,IE))==3) THEN
+              GAPV(I)=GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            ELSE
+              GAPV(I)=TWO*GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            ENDIF
           ELSE
-            GAPV(I)=TWO*(GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE ))
+            IF(IABS(LEDGE(7,IE))==3.AND.TYPE_EDGS==3) THEN
+              GAPV(I)=GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            ELSEIF(IABS(LEDGE(7,IE))==3) THEN
+              GAPV(I)=GAPE(IE)+TWO*XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            ELSEIF(TYPE_EDGS==3) THEN
+              GAPV(I)=TWO*GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE )
+            ELSE
+              GAPV(I)=TWO*(GAPE(IE)+XREM_EDGE(E_GAP,CAND_S(I)-NEDGE ))
+            ENDIF
           END IF
           IF(IGAP == 3) 
      .      GAPV(I)=MIN(GAP_E_L(IE)+XREM_EDGE(E_GAPL,CAND_S(I)-NEDGE),GAPV(I))

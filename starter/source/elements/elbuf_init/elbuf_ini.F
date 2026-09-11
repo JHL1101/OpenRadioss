@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    elbuf_ini         ../starter/source/elements/elbuf_init/elbuf_ini.F
+!||    elbuf_ini          ../starter/source/elements/elbuf_init/elbuf_ini.F
 !||--- called by ------------------------------------------------------
-!||    lectur            ../starter/source/starter/lectur.F
+!||    lectur             ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    allocbuf_auto     ../starter/source/elements/elbuf_init/allocbuf_auto.F
-!||    ini_outmax_auto   ../starter/source/elements/elbuf_init/ini_outmax_auto.F
-!||    initvars_auto     ../starter/source/elements/elbuf_init/initvars_auto.F
-!||    zerovars_auto     ../starter/source/elements/elbuf_init/zerovars_auto.F
+!||    allocbuf_auto      ../starter/source/elements/elbuf_init/allocbuf_auto.F
+!||    ini_outmax_auto    ../starter/source/elements/elbuf_init/ini_outmax_auto.F
+!||    initvars_auto      ../starter/source/elements/elbuf_init/initvars_auto.F
+!||    zerovars_auto      ../starter/source/elements/elbuf_init/zerovars_auto.F
 !||--- uses       -----------------------------------------------------
-!||    defaults_mod      ../starter/source/modules/defaults_mod.F90
-!||    elbuftag_mod      ../starter/share/modules1/elbuftag_mod.F
-!||    message_mod       ../starter/share/message_module/message_mod.F
-!||    stack_mod         ../starter/share/modules1/stack_mod.F
+!||    defaults_mod       ../starter/source/modules/defaults_mod.F90
+!||    elbuftag_mod       ../starter/share/modules1/elbuftag_mod.F
+!||    message_mod        ../starter/share/message_module/message_mod.F
+!||    stack_mod          ../starter/share/modules1/stack_mod.F
 !||====================================================================
       SUBROUTINE ELBUF_INI(ELBUF_TAB ,MAT_PARAM,
      .           MLAW_TAG  ,PROP_TAG ,FAIL_TAG ,
@@ -52,6 +53,7 @@ C-----------------------------------------------
       USE STACK_MOD
       USE DEFAULTS_MOD
       use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg
+      USE Q1NP_RESTART_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -86,7 +88,7 @@ C-----------------------------------------------
       TYPE(MLAW_TAG_)    ,TARGET ,DIMENSION(NUMMAT)     :: MLAW_TAG
       TYPE(EOS_TAG_)     ,TARGET ,DIMENSION(0:MAXEOS)   :: EOS_TAG
       TYPE(PROP_TAG_)    ,TARGET ,DIMENSION(0:MAXPROP)  :: PROP_TAG
-      TYPE(FAIL_TAG_)    ,TARGET ,DIMENSION(0:MAXFAIL ) :: FAIL_TAG
+      TYPE(FAIL_TAG_)    ,TARGET ,DIMENSION(NUMMAT,MAXFAIL) :: FAIL_TAG
       TYPE (STACK_PLY) :: STACK
       TYPE(DEFAULTS_), INTENT(INOUT) :: DEFAULTS
 C-----------------------------------------------
@@ -102,11 +104,14 @@ C-----------------------------------------------
      .   NUVAR,NUVARM,NVARTMP,NVARTMP_EOS,NUVARV,IGTYP,TSHELL,TSH_ORT,
      .   NPAR_LAY,NPAR_TAB,NPAR_LBUF,NIP_LAY,NINTLAY,LIMAT,
      .   LIFAIL,LGLOB,LLAY,LLOC,LFAIL,GFAIL,LVISC,LMAT,LPORO,LEOS,NCTRL,
-     .   ISUBSTACK,IPPID,IPIDL,NPT_LAY,LEN_PLAPT,LEN_SIGPT,
+     .   IEL_Q1NP,II,ISUBSTACK,IPPID,IPIDL,NPT_LAY,LEN_PLAPT,LEN_SIGPT,
      .   IPMAT,IPMAT_IPLY,NPTTOT,NUVARN,NX,IBOLTP,CRKDIR,INLOC,LNLOC,
      .   NONL, DEBUG_PRINT,IPINCH,NVAR_EOS,IEOS_TYPE,IDRAPE,LLOC_SLICE,
      .   IPNPT_LAY,IDFAIL,LNLOCTS,ICONTROL,IDAMP_FREQ_RANGE,
-     .   LDAMP_FREQ_RANGE,NVAR_DAMP_FREQ_RANGE,NPT0,L_EPS  ,L_SIG ,LY_EINT, LY_COUNT 
+     .   LDAMP_FREQ_RANGE,NVAR_DAMP_FREQ_RANGE,NPT0,L_EPS  ,L_SIG ,LY_EINT, LY_COUNT,
+     .   IEL, LQ1NP, I_Q1NP_GROUP
+      LOGICAL :: IS_ELEMENT_Q1NP, IS_Q1NP_CHECK
+      my_real :: XI_GP, ETA_GP, ZETA_GP, GP_WEIGHT, GP_WT_CHECK
       INTEGER, ALLOCATABLE, DIMENSION(:,:) :: TFAIL,FAILID
       INTEGER, ALLOCATABLE, DIMENSION(:)   :: IMAT,ILAW
       TYPE(BUF_LAY_)     , POINTER :: BUFLY
@@ -203,6 +208,8 @@ c
         ELSE  
           NVAR_DAMP_FREQ_RANGE = 21*MIN(1,IDAMP_FREQ_RANGE)
         ENDIF  
+        I_Q1NP_GROUP = IPARG(94,NG)
+c        
         NINTLAY = 0
         NPT0 = NPT
 cc        NXEL    = 0
@@ -253,6 +260,19 @@ c=======================================================================
 c
 c---------ELEMENT PROPERTY
           IF (ITY == 101) THEN
+            NLAY = 1
+          ELSEIF (I_Q1NP_GROUP == 1) THEN
+c           Set Q1NP Gauss scheme parameters for Q1NP elements
+            IF (Q1NP_NP_U_G > 0 .AND. Q1NP_NP_V_G > 0 .AND. Q1NP_NP_T_G > 0) THEN
+              NPTR = Q1NP_NP_U_G
+              NPTS = Q1NP_NP_V_G
+              NPTT = Q1NP_NP_T_G
+            ELSE
+C             Error: Gauss scheme not properly initialized
+              NPTR = 3
+              NPTS = 3
+              NPTT = 2
+            ENDIF
             NLAY = 1
           ELSEIF (NPT == 1) THEN
             NPTR  = 1                           
@@ -353,10 +373,10 @@ c
           IPARG(6,NG)  = NPT
         
           MAXFLAY = 7          ! max Nb of failure models per mat
-          CALL MY_ALLOC(TFAIL,NLAY,MAXFLAY)
-          CALL MY_ALLOC(FAILID,NLAY,MAXFLAY)
-          CALL MY_ALLOC(IMAT,NLAY)
-          CALL MY_ALLOC(ILAW,NLAY)
+          CALL MY_ALLOC(TFAIL,NLAY,MAXFLAY,"TFAIL")
+          CALL MY_ALLOC(FAILID,NLAY,MAXFLAY,"FAILID")
+          CALL MY_ALLOC(IMAT,NLAY,"IMAT")
+          CALL MY_ALLOC(ILAW,NLAY,"ILAW")
           TFAIL(:,:) = 0
           FAILID(:,:) = 0
           ILAW(:)  = 0
@@ -379,18 +399,26 @@ c
 c----------------------------------------------------
 c       allocation of element buffer sub-structures 
 c----------------------------------------------------
-          ALLOCATE(ELBUF_TAB(NG)%INTLAY(NINTLAY))
-          ALLOCATE(ELBUF_TAB(NG)%BUFLY(NLAY))
+          call my_alloc(ELBUF_TAB(NG)%INTLAY, NINTLAY, "ELBUF_TAB(NG)%INTLAY")
+          call my_alloc(ELBUF_TAB(NG)%BUFLY, NLAY, "ELBUF_TAB(NG)%BUFLY")
           DO IL = 1, NLAY
             BUFLY => ELBUF_TAB(NG)%BUFLY(IL)
             BUFLY%NPTT = NPTT
-            ALLOCATE(BUFLY%LBUF(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%MAT (NPTR,NPTS,NPTT))      
-            ALLOCATE(BUFLY%FAIL(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%PROP(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%EOS (NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%VISC(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%PORO(NPTR,NPTS,NPTT))  
+            ALLOCATE(BUFLY%LBUF(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%MAT(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%FAIL(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%PROP(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%EOS(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%VISC(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%PORO(NPTR, NPTS, NPTT))
+            
+C           Q1NP buffer allocation (only for Q1NP groups)
+            IF (I_Q1NP_GROUP==1) THEN
+              ALLOCATE(BUFLY%Q1NP(NPTR,NPTS,NPTT))
+            ELSE
+              ALLOCATE(BUFLY%Q1NP(0,0,0))  ! Empty allocation for non-Q1NP groups
+            ENDIF
+            
           ENDDO
 c          ALLOCATE (ELBUF_TAB(NG)%XFEM(NPTR,NPTS,NPTT) ,STAT=Stat)   
           ELBUF_TAB(NG)%IGTYP = IGTYP                       
@@ -409,7 +437,7 @@ c--------------------------------------------------------
 c       no non-local structure allocation if not needed
 c--------------------------------------------------------
           IF (INLOC == 0) THEN 
-            ALLOCATE(ELBUF_TAB(NG)%NLOCTS(0,0))
+            ALLOCATE(ELBUF_TAB(NG)%NLOCTS(0, 0))
           ENDIF                  
 c-------------------------------------------------
           CALL ZEROVARS_AUTO(ELBUF_TAB(NG))
@@ -565,7 +593,7 @@ C---
             ! Non-local regularization in the shell thickness
             IF (INLOC > 0) THEN 
               ! Allocation of the non-local in thickness structural data
-              ALLOCATE(ELBUF_TAB(NG)%NLOCTS(NPTR,NPTS))
+              ALLOCATE(ELBUF_TAB(NG)%NLOCTS(NPTR, NPTS))
               ! Number of non-local nodes in the thickness
               NONL = NLAY+1
               ! Loop over Gauss points in the plane of the shell
@@ -574,19 +602,19 @@ C---
                   ! Non-local buffer
                   BUFNLTS => ELBUF_TAB(NG)%NLOCTS(IR,IS)
                   ! Non-local in-thickness masses
-                  CALL MY_ALLOC(BUFNLTS%MASSTH,NEL,NONL) 
+                  CALL MY_ALLOC(BUFNLTS%MASSTH,NEL,NONL,"BUFNLTS%MASSTH")
                   BUFNLTS%MASSTH = ZERO
                   LNLOCTS = LNLOCTS + NEL*NONL
                   ! Non-local in-thickness cumulated variables
-                  CALL MY_ALLOC(BUFNLTS%UNLTH,NEL,NONL)  
+                  CALL MY_ALLOC(BUFNLTS%UNLTH,NEL,NONL,"BUFNLTS%UNLTH")
                   BUFNLTS%UNLTH = ZERO
                   LNLOCTS = LNLOCTS + NEL*NONL
                   ! Non-local in-thickness velocities
-                  CALL MY_ALLOC(BUFNLTS%VNLTH,NEL,NONL)    
+                  CALL MY_ALLOC(BUFNLTS%VNLTH,NEL,NONL,"BUFNLTS%VNLTH")
                   BUFNLTS%VNLTH = ZERO
                   LNLOCTS = LNLOCTS + NEL*NONL
                   ! Non-local in-thickness forces
-                  CALL MY_ALLOC(BUFNLTS%FNLTH,NEL,NONL)
+                  CALL MY_ALLOC(BUFNLTS%FNLTH,NEL,NONL,"BUFNLTS%FNLTH")
                   BUFNLTS%FNLTH = ZERO
                   LNLOCTS = LNLOCTS + NEL*NONL
                 ENDDO
@@ -600,7 +628,7 @@ c---
             NVARTMP_EOS = 0
             IEOS_TYPE = IPM(4,IMID)
             IF (IEOS_TYPE > 0) NVAR_EOS = EOS_TAG(IEOS_TYPE)%NVAR
-            IF (IEOS_TYPE > 0) NVARTMP_EOS = EOS_TAG(IEOS_TYPE)%NVAR
+            IF (IEOS_TYPE > 0) NVARTMP_EOS = EOS_TAG(IEOS_TYPE)%NVARTMP
             NFAIL = MAT_PARAM(IMID)%NFAIL
             ELBUF_TAB(NG)%BUFLY(1)%ILAW = MLW                                          
             ELBUF_TAB(NG)%BUFLY(1)%IMAT = IMID                                        
@@ -636,11 +664,11 @@ c---      User Mat Buffer, Fail buffer, Visc buffer :  alloc + init
               DO IT = 1,NPTT
                 ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%MLAW = ELBUF_TAB(NG)%BUFLY(IL)%ILAW
                 ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%LawID = MX
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL)                
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL)                
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR,NUVARV*NEL)                
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL)
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL)
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL,"BUFLY%MAT%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL,"BUFLY%MAT%VARTMP")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR,NUVARV*NEL,"BUFLY%VISC%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL,"BUFLY%EOS%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL,"BUFLY%EOS%VARTMP")
 c
                 ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR(1:NUVARM*NEL) = ZERO
                 ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR(1:NUVARV*NEL) = ZERO
@@ -651,8 +679,44 @@ c
                 LMAT  = LMAT  + NUVARM*NEL
                 LVISC = LVISC + NUVARV*NEL
                 LEOS  = LEOS  + NVAR_EOS*NEL
+C
+C               Q1NP buffer allocation and initialization (only for Q1NP groups)
+                IF (I_Q1NP_GROUP==1) THEN
+C                 Allocate: 3*NEL for GP_COORD (ξ, η, ζ per element), NEL for GP_WEIGHT
+                  CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD, 3*NEL)
+                  CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_WEIGHT, NEL)
+C
+C                 Compute and store Gauss point coordinates and weights
+C                 Reference coordinates: ξ = Q1NP_GP_U_G(IR), η = Q1NP_GP_V_G(IS), ζ = Q1NP_GP_T_G(IT)
+C                 Weight: w = Q1NP_GW_U_G(IR) * Q1NP_GW_V_G(IS) * Q1NP_GW_T_G(IT)
+                  IF (Q1NP_NP_U_G > 0 .AND. Q1NP_NP_V_G > 0 .AND. Q1NP_NP_T_G > 0) THEN
+                    IF (IR <= Q1NP_NP_U_G .AND. IS <= Q1NP_NP_V_G .AND. IT <= Q1NP_NP_T_G) THEN
+                      XI_GP = Q1NP_GP_U_G(IR)
+                      ETA_GP = Q1NP_GP_V_G(IS)
+                      ZETA_GP = Q1NP_GP_T_G(IT)
+                      GP_WEIGHT = Q1NP_GW_U_G(IR) * Q1NP_GW_V_G(IS) * Q1NP_GW_T_G(IT)
+C
+C                     Store for all elements in the group
+                      DO IEL = 1, NEL
+                        ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD(3*(IEL-1)+1) = XI_GP
+                        ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD(3*(IEL-1)+2) = ETA_GP
+                        ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD(3*(IEL-1)+3) = ZETA_GP
+                        ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_WEIGHT(IEL) = GP_WEIGHT
+                      ENDDO
+C
+                    ELSE
+C                     Invalid indices: initialize to zero
+                      ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD(1:3*NEL) = ZERO
+                      ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_WEIGHT(1:NEL) = ZERO
+                    ENDIF
+                  ELSE
+C                   Gauss scheme not initialized: initialize to zero
+                    ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_COORD(1:3*NEL) = ZERO
+                    ELBUF_TAB(NG)%BUFLY(IL)%Q1NP(IR,IS,IT)%GP_WEIGHT(1:NEL) = ZERO
+                  ENDIF
+                ENDIF
                 
-                ALLOCATE(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC(NFAIL))
+      call my_alloc(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC, NFAIL, "ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC")
                 MX = ELBUF_TAB(NG)%BUFLY(IL)%IMAT
 
                 DO J = 1,NFAIL
@@ -666,37 +730,41 @@ c
                   LFAIL = LFAIL + 1
 c
                   FLOC%NVAR  = MAT_PARAM(MX)%FAIL(J)%NUVAR                          
-                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL)
+                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL,"FLOC%VAR")
                   FLOC%VAR = ZERO     
                   LFAIL = LFAIL + FLOC%NVAR*NEL + 1 
 c
-                  FLOC%LF_DAM  = FAIL_TAG(IRUPT)%LF_DAM                        
-                  CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL)
+                  NVARTMP = MAT_PARAM(MX)%FAIL(J)%NVARTMP                          
+                  CALL MY_ALLOC(FLOC%VARTMP,NVARTMP*NEL,"FLOC%VARTMP")
+                  FLOC%VARTMP = 0     
+c
+                  FLOC%LF_DAM  = FAIL_TAG(MX,J)%LF_DAM                        
+                  CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL,"FLOC%DAM")
                   FLOC%DAM = ZERO   
                   LFAIL = LFAIL + FLOC%LF_DAM*NEL + 1 
 c
-                  FLOC%LF_DAMMX  = FAIL_TAG(IRUPT)%LF_DAMMX                        
-                  CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL) 
+                  FLOC%LF_DAMMX  = FAIL_TAG(MX,J)%LF_DAMMX                        
+                  CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL,"FLOC%DAMMX")
                   FLOC%DAMMX = ZERO
                   LFAIL = LFAIL + FLOC%LF_DAMMX*NEL + 1 
 c
-                  FLOC%LF_DAMINI = FAIL_TAG(IRUPT)%LF_DAMINI                        
-                  CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL) 
+                  FLOC%LF_DAMINI = FAIL_TAG(MX,J)%LF_DAMINI                        
+                  CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL,"FLOC%DAMINI")
                   FLOC%DAMINI = ZERO
                   LFAIL = LFAIL + FLOC%LF_DAMINI*NEL + 1 
 c
-                  FLOC%LF_TDEL  = FAIL_TAG(IRUPT)%LF_TDEL                        
-                  CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL)
+                  FLOC%LF_TDEL  = FAIL_TAG(MX,J)%LF_TDEL                        
+                  CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL,"FLOC%TDEL")
                   FLOC%TDEL = ZERO                                                               
                   LFAIL = LFAIL + FLOC%LF_TDEL*NEL + 1 
 c
-                  FLOC%LF_INDX = FAIL_TAG(IRUPT)%LF_INDX                       
-                  CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL)
+                  FLOC%LF_INDX = FAIL_TAG(MX,J)%LF_INDX                       
+                  CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL,"FLOC%INDX")
                   FLOC%INDX = 0                                                               
                   LFAIL = LFAIL + FLOC%LF_INDX*NEL + 1 
 c
-                  FLOC%LF_OFF = FAIL_TAG(IRUPT)%LF_OFF                       
-                  CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL)
+                  FLOC%LF_OFF = FAIL_TAG(MX,J)%LF_OFF                       
+                  CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL,"FLOC%OFF")
                   FLOC%OFF = 1                                                               
                   LFAIL = LFAIL + FLOC%LF_OFF*NEL + 1 
 c
@@ -711,6 +779,14 @@ c----------------------------------------------------
             ELBUF_TAB(NG)%BUFLY(1)%L_EPSA = 3
             ELBUF_TAB(NG)%BUFLY(1)%L_EPE  = 3
           ENDIF                                                        
+C
+C         Q1NP starter mass and GP-volume reconstruction always need
+C         the local volume field, independent of the small/large strain
+C         branch below.
+          IF (I_Q1NP_GROUP == 1) THEN
+            ELBUF_TAB(NG)%BUFLY(1)%L_VOL = 1
+          ENDIF
+
           IF (ISMSTR /= 4 .OR. JLAG >0)THEN
            IF (IGTYP == 43) THEN       
              ELBUF_TAB(NG)%BUFLY(1)%L_VOL = 1
@@ -790,7 +866,8 @@ c
      .                 BUFLY%L_STRA = 6                      
             IF (GBUF%G_GAMA > 0 .AND. NLAY > 1) BUFLY%L_GAMA = GBUF%G_GAMA
             IF (JTHE /= 0) BUFLY%L_TEMP = 1
-            IF (ISVIS > 0 ..OR. BUFLY%IVISC == 1 .OR. BUFLY%IVISC == 3 ) BUFLY%L_SIGV = 6 ! for th outp of viscous stress                      
+            IF (ISVIS > 0 ..OR. BUFLY%IVISC == 1 .OR. BUFLY%IVISC == 3 ) BUFLY%L_SIGV = 6
+! for th outp of viscous stress
             IF ((IVISC > 0).OR.(IDAMP_FREQ_RANGE > 0)) BUFLY%L_VISC = 6
 c           Allocate thermal stress and Thermal internal energy
             IF(IEXPAN > 0) THEN
@@ -1073,10 +1150,10 @@ c-------------------------------------------------
      .                   NINTLAY,NEL,NPT,NG,NGROUP,ITY,
      .                   IGTYP,NUMMAT,MAT_PARAM)
 c-------------------------------------------------
-          DEALLOCATE(TFAIL)
-          DEALLOCATE(FAILID)
-          DEALLOCATE(IMAT)
-          DEALLOCATE(ILAW)
+          CALL MY_DEALLOC(TFAIL)
+          CALL MY_DEALLOC(FAILID)
+          CALL MY_DEALLOC(IMAT)
+          CALL MY_DEALLOC(ILAW)
 c
 c=======================================================================
 c
@@ -1151,15 +1228,15 @@ c          print*,'   npt_iparg, nel=',iparg(6,ng), nel
 c          print*,'nel,ISTRA, ISMSTR=',nel,ISTRA, ISMSTR
 c
           MAXFLAY = 7          ! max Nb of failure models per mat
-          CALL MY_ALLOC(TFAIL,NLAY,MAXFLAY)
-          CALL MY_ALLOC(FAILID,NLAY,MAXFLAY)
-          CALL MY_ALLOC(IMAT,NLAY)
-          CALL MY_ALLOC(ILAW,NLAY)
+          CALL MY_ALLOC(TFAIL,NLAY,MAXFLAY,"TFAIL")
+          CALL MY_ALLOC(FAILID,NLAY,MAXFLAY,"FAILID")
+          CALL MY_ALLOC(IMAT,NLAY,"IMAT")
+          CALL MY_ALLOC(ILAW,NLAY,"ILAW")
 c---------------------------------------------------------
 c       no non-local structure allocation if not needed
 c---------------------------------------------------------
           IF (INLOC == 0) THEN 
-            ALLOCATE(ELBUF_TAB(NG)%NLOC(0,0))
+            ALLOCATE(ELBUF_TAB(NG)%NLOC(0, 0))
           ENDIF  
 c
           TFAIL(:,:) = 0
@@ -1169,7 +1246,7 @@ c
 c------------------------------------------------------
 c         allocation of element buffer sub-structures 
 c------------------------------------------------------
-          ALLOCATE(ELBUF_TAB(NG)%BUFLY(NLAY))
+          call my_alloc(ELBUF_TAB(NG)%BUFLY, NLAY, "ELBUF_TAB(NG)%BUFLY")
 C---
           IF(IDRAPE > 0) THEN
             IF (IGTYP == 51 .OR. IGTYP == 52 ) THEN
@@ -1216,21 +1293,22 @@ C---
           DO IL = 1, NLAY
             BUFLY => ELBUF_TAB(NG)%BUFLY(IL)
             NPTT = BUFLY%NPTT
-            ALLOCATE(BUFLY%LBUF(NPTR,NPTS,NPTT)) 
-            ALLOCATE(BUFLY%MAT (NPTR,NPTS,NPTT))      
-            ALLOCATE(BUFLY%FAIL(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%PROP(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%EOS (NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%VISC(NPTR,NPTS,NPTT))  
-            ALLOCATE(BUFLY%PORO(NPTR,NPTS,NPTT))
-            IF(IDRAPE > 0 .AND. (IGTYP == 51 .OR. IGTYP == 52)) 
-     .         ALLOCATE(ELBUF_TAB(NG)%BUFLY(IL)%LBUF_DIR(NPTT))
+            ALLOCATE(BUFLY%LBUF(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%MAT(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%FAIL(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%PROP(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%EOS(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%VISC(NPTR, NPTS, NPTT))
+            ALLOCATE(BUFLY%PORO(NPTR, NPTS, NPTT))
+            IF(IDRAPE > 0 .AND. (IGTYP == 51 .OR. IGTYP == 52))
+     .        call my_alloc(ELBUF_TAB(NG)%BUFLY(IL)%LBUF_DIR, NPTT, 
+     .                      "ELBUF_TAB(NG)%BUFLY(IL)%LBUF_DIR")
           ENDDO
 C---
           ! Non-local regularization in the shell thickness
           IF ((INLOC > 0).AND.(NPTT>1)) THEN 
             ! Allocation of the non-local in thickness structural data
-            ALLOCATE(ELBUF_TAB(NG)%NLOC(NPTR,NPTS))
+            ALLOCATE(ELBUF_TAB(NG)%NLOC(NPTR, NPTS))
             ! Number of non-local nodes in the thickness
             IF (NPTT>2) THEN
               NONL = NPTT+1
@@ -1243,19 +1321,19 @@ C---
                 ! Non-local buffer
                 BUFNL => ELBUF_TAB(NG)%NLOC(IR,IS)
                 ! Non-local in-thickness masses
-                CALL MY_ALLOC(BUFNL%MASSTH,NEL,NONL) 
+                CALL MY_ALLOC(BUFNL%MASSTH,NEL,NONL,"BUFNL%MASSTH")
                 BUFNL%MASSTH = ZERO
                 LNLOC = LNLOC + NEL*NONL
                 ! Non-local in-thickness cumulated variables
-                CALL MY_ALLOC(BUFNL%UNLTH,NEL,NONL)  
+                CALL MY_ALLOC(BUFNL%UNLTH,NEL,NONL,"BUFNL%UNLTH")
                 BUFNL%UNLTH = ZERO
                 LNLOC = LNLOC + NEL*NONL
                 ! Non-local in-thickness velocities
-                CALL MY_ALLOC(BUFNL%VNLTH,NEL,NONL)    
+                CALL MY_ALLOC(BUFNL%VNLTH,NEL,NONL,"BUFNL%VNLTH")
                 BUFNL%VNLTH = ZERO
                 LNLOC = LNLOC + NEL*NONL
                 ! Non-local in-thickness forces
-                CALL MY_ALLOC(BUFNL%FNLTH,NEL,NONL)
+                CALL MY_ALLOC(BUFNL%FNLTH,NEL,NONL,"BUFNL%FNLTH")
                 BUFNL%FNLTH = ZERO
                 LNLOC = LNLOC + NEL*NONL
               ENDDO
@@ -1263,12 +1341,12 @@ C---
           ENDIF
 !-------------------------------------------------
 C---
-          ALLOCATE(ELBUF_TAB(NG)%INTLAY(NINTLAY))
+          call my_alloc(ELBUF_TAB(NG)%INTLAY, NINTLAY, "ELBUF_TAB(NG)%INTLAY")
           DO I = 1, NINTLAY                                      
             INTLAY => ELBUF_TAB(NG)%INTLAY(I)                  
-            ALLOCATE(INTLAY%ILBUF(NPTR,NPTS))       
-            ALLOCATE(INTLAY%MAT  (NPTR,NPTS)) 
-            ALLOCATE(INTLAY%FAIL (NPTR,NPTS))
+            ALLOCATE(INTLAY%ILBUF(NPTR, NPTS))
+            ALLOCATE(INTLAY%MAT(NPTR, NPTS))
+            ALLOCATE(INTLAY%FAIL(NPTR, NPTS))
           ENDDO                                                  
 c-------------------------------------------------
           CALL ZEROVARS_AUTO(ELBUF_TAB(NG))
@@ -1367,11 +1445,11 @@ c---      User Mat Buffer, Fail buffer, Visc buffer :  alloc + init
               DO IT = 1,NPTT
                 ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%MLAW = ELBUF_TAB(NG)%BUFLY(IL)%ILAW
                 ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%LawID = ELBUF_TAB(NG)%BUFLY(IL)%IMAT
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL)
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL)
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR,NUVARV*NEL)
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL)
-                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL)
+      CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL,"ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL,"BUFLY%MAT%VARTMP")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR,NUVARV*NEL,"BUFLY%VISC%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL,"BUFLY%EOS%VAR")
+                CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL,"BUFLY%EOS%VARTMP")
                 ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR = ZERO
                 ELBUF_TAB(NG)%BUFLY(IL)%VISC(IR,IS,IT)%VAR = ZERO
                 ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR = ZERO
@@ -1382,7 +1460,7 @@ c
                 LVISC = LVISC + NUVARV*NEL
                 LEOS = LEOS + NVAR_EOS*NEL
 
-                ALLOCATE(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC(NFAIL))
+      call my_alloc(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC, NFAIL, "ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC")
                 MX = ELBUF_TAB(NG)%BUFLY(IL)%IMAT
                 DO J = 1,NFAIL
                   FLOC=>ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC(J)         
@@ -1395,37 +1473,41 @@ c
                   LFAIL = LFAIL + 1 
 c
                   FLOC%NVAR  = MAT_PARAM(MX)%FAIL(J)%NUVAR                       
-                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL)
+                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL,"FLOC%VAR")
                   FLOC%VAR = ZERO     
                   LFAIL = LFAIL + FLOC%NVAR*NEL + 1 
 c
-                  FLOC%LF_DAM  = FAIL_TAG(IRUPT)%LF_DAM                        
-                  CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL)
+                  NVARTMP  = MAT_PARAM(MX)%FAIL(J)%NVARTMP                       
+                  CALL MY_ALLOC(FLOC%VARTMP,NVARTMP*NEL,"FLOC%VARTMP")
+                  FLOC%VARTMP = 0     
+c
+                  FLOC%LF_DAM  = FAIL_TAG(MX,J)%LF_DAM                        
+                  CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL,"FLOC%DAM")
                   FLOC%DAM = ZERO   
                   LFAIL = LFAIL + FLOC%LF_DAM*NEL + 1 
 c
-                  FLOC%LF_DAMMX  = FAIL_TAG(IRUPT)%LF_DAMMX                        
-                  CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL) 
+                  FLOC%LF_DAMMX  = FAIL_TAG(MX,J)%LF_DAMMX                        
+                  CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL,"FLOC%DAMMX")
                   FLOC%DAMMX = ZERO
                   LFAIL = LFAIL + FLOC%LF_DAMMX*NEL + 1 
 c
-                  FLOC%LF_DAMINI = FAIL_TAG(IRUPT)%LF_DAMINI                      
-                  CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL) 
+                  FLOC%LF_DAMINI = FAIL_TAG(MX,J)%LF_DAMINI                      
+                  CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL,"FLOC%DAMINI")
                   FLOC%DAMINI = ZERO
                   LFAIL = LFAIL + FLOC%LF_DAMINI*NEL + 1 
 c
-                  FLOC%LF_TDEL  = FAIL_TAG(IRUPT)%LF_TDEL                        
-                  CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL)
+                  FLOC%LF_TDEL  = FAIL_TAG(MX,J)%LF_TDEL                        
+                  CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL,"FLOC%TDEL")
                   FLOC%TDEL = ZERO                                                               
                   LFAIL = LFAIL + FLOC%LF_TDEL*NEL + 1 
 c
-                  FLOC%LF_INDX = FAIL_TAG(IRUPT)%LF_INDX                       
-                  CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL)
+                  FLOC%LF_INDX = FAIL_TAG(MX,J)%LF_INDX                       
+                  CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL,"FLOC%INDX")
                   FLOC%INDX = 0
                   LFAIL = LFAIL + FLOC%LF_INDX*NEL + 1 
 c
-                  FLOC%LF_OFF = FAIL_TAG(IRUPT)%LF_OFF                       
-                  CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL)
+                  FLOC%LF_OFF = FAIL_TAG(MX,J)%LF_OFF                       
+                  CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL,"FLOC%OFF")
                   FLOC%OFF = 1                                                               
                   LFAIL = LFAIL + FLOC%LF_OFF*NEL + 1 
 c
@@ -1476,8 +1558,8 @@ C old stack IGEO(500+IL,IPID)
              DO I = 1,NPTR                                          
                 DO J = 1,NPTS                                          
                    ILBUF => ELBUF_TAB(NG)%INTLAY(IL)%ILBUF(I,J)  
-                   CALL MY_ALLOC(INTLAY%ILBUF(I,J)%EPS,L_EPS*NEL)
-                   CALL MY_ALLOC(INTLAY%ILBUF(I,J)%SIG,L_SIG*NEL)  
+                   CALL MY_ALLOC(INTLAY%ILBUF(I,J)%EPS,L_EPS*NEL,"INTLAY%ILBUF(I,J)%EPS")
+                   CALL MY_ALLOC(INTLAY%ILBUF(I,J)%SIG,L_SIG*NEL,"INTLAY%ILBUF(I,J)%SIG")
                    INTLAY%ILBUF(I,J)%EPS = ZERO      
                    INTLAY%ILBUF(I,J)%SIG = ZERO      
                    LIMAT = LIMAT + NEL*L_EPS  
@@ -1492,23 +1574,26 @@ c
             NFAIL = ELBUF_TAB(NG)%INTLAY(IL)%NFAIL                                
             DO IR = 1,NPTR                                                         
               DO IS = 1,NPTS        
-                CALL MY_ALLOC(ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VAR,NUVARM*NEL)                                                 
-                CALL MY_ALLOC(ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VARTMP,NVARTMP*NEL)
+      CALL MY_ALLOC(ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VAR,NUVARM*NEL,"ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VAR")
+      CALL MY_ALLOC(ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VARTMP,NVARTMP*NEL,"ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VARTMP")
                 ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VAR = ZERO                 
                 ELBUF_TAB(NG)%INTLAY(IL)%MAT(IR,IS)%VARTMP = 0
                  LIMAT  = LIMAT  + NUVARM*NEL    ! Not need in restart file +    NVARTMP*NEL       
 c                ALLOCATE(ELBUF_TAB(NG)%INTLAY(IL)%VISC(IR,IS)%                 
 c     .                   VAR(NUVARV*NEL) ,STAT=Stat)                               
 c
-                ALLOCATE(ELBUF_TAB(NG)%INTLAY(IL)%FAIL(IR,IS)%FLOC(NFAIL))
+      call my_alloc(ELBUF_TAB(NG)%INTLAY(IL)%FAIL(IR,IS)%FLOC, NFAIL, "ELBUF_TAB(NG)%INTLAY(IL)%FAIL(IR,IS)%FLOC")
 c                LVISC = LVISC + NUVARV*NEL                                         
                 DO J = 1,NFAIL                                                     
                   FLOC=>ELBUF_TAB(NG)%INTLAY(IL)%FAIL(IR,IS)%FLOC(J)           
-                  FLOC%ILAWF = MAT_PARAM(IMAT(IL))%FAIL(J)%IRUPT 
-                  FLOC%IDFAIL = MAT_PARAM(IMAT(IL))%FAIL(J)%FAIL_ID                                              
-                  FLOC%NVAR  = MAT_PARAM(IMAT(IL))%FAIL(J)%NUVAR                             
-                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL)
+                  FLOC%ILAWF   = MAT_PARAM(IMAT(IL))%FAIL(J)%IRUPT 
+                  FLOC%IDFAIL  = MAT_PARAM(IMAT(IL))%FAIL(J)%FAIL_ID                                              
+                  FLOC%NVAR    = MAT_PARAM(IMAT(IL))%FAIL(J)%NUVAR                             
+                  NVARTMP      = MAT_PARAM(IMAT(IL))%FAIL(J)%NVARTMP                             
+                  CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL,"FLOC%VAR")
+                  CALL MY_ALLOC(FLOC%VARTMP,NVARTMP*NEL,"FLOC%VARTMP")
                   FLOC%VAR = ZERO                                                   
+                  FLOC%VARTMP = 0                                                   
                   LIFAIL = LIFAIL + FLOC%NVAR*NEL + 3                               
                 ENDDO                                                              
               ENDDO                                                                  
@@ -1673,8 +1758,8 @@ c-------------------------------------------------
               NFAIL = BUFLY%NFAIL
               DO J=1,NFAIL
                 IRUPT = TFAIL(IL,J)
-                BUFLY%LY_CRKDIR = MAX(FAIL_TAG(IRUPT)%LF_DIR,BUFLY%LY_CRKDIR)
-                BUFLY%LY_DMG  = MAX(FAIL_TAG(IRUPT)%LF_DAM,BUFLY%LY_DMG)
+                BUFLY%LY_CRKDIR = MAX(FAIL_TAG(IMID,J)%LF_DIR,BUFLY%LY_CRKDIR)
+                BUFLY%LY_DMG  = MAX(FAIL_TAG(IMID,J)%LF_DAM,BUFLY%LY_DMG)
               ENDDO
             ENDDO
           ENDIF
@@ -1963,10 +2048,10 @@ c-------------------------------------------------
      .                       NINTLAY,NEL,NPT,NG,NGROUP,ITY,
      .                       IGTYP,NUMMAT,MAT_PARAM)
 c-------------------------------------------------
-          DEALLOCATE(TFAIL)
-          DEALLOCATE(FAILID)
-          DEALLOCATE(IMAT)
-          DEALLOCATE(ILAW)
+          CALL MY_DEALLOC(TFAIL)
+          CALL MY_DEALLOC(FAILID)
+          CALL MY_DEALLOC(IMAT)
+          CALL MY_DEALLOC(ILAW)
 c
 c=======================================================================
 c
@@ -2023,8 +2108,8 @@ c-------------------------------------------------
           ELBUF_TAB(NG)%NXEL   = 0
           ELBUF_TAB(NG)%IDRAPE = 0
 c-------------------------------------------------
-          CALL MY_ALLOC(IMAT,NLAY)
-          CALL MY_ALLOC(ILAW,NLAY)
+          CALL MY_ALLOC(IMAT,NLAY,"IMAT")
+          CALL MY_ALLOC(ILAW,NLAY,"ILAW")
           ILAW(:) = 0
           IMAT(:) = 0
 C
@@ -2032,15 +2117,15 @@ C
           LEOS = 0
 C
           IF (NLAY > 0) THEN  ! integrated beam (NLAY = 1)
-            ALLOCATE(ELBUF_TAB(NG)%BUFLY(NLAY))
+            call my_alloc(ELBUF_TAB(NG)%BUFLY, NLAY, "ELBUF_TAB(NG)%BUFLY")
 C---
             DO IL = 1,NLAY
               BUFLY => ELBUF_TAB(NG)%BUFLY(IL)
               BUFLY%NPTT = NPTT
-              ALLOCATE(BUFLY%LBUF(NPTR,NPTS,NPTT))  
-              ALLOCATE(BUFLY%MAT (NPTR,NPTS,NPTT))
-              ALLOCATE(BUFLY%EOS (NPTR,NPTS,NPTT))
-              ALLOCATE(BUFLY%FAIL(NPTR,NPTS,NPTT))         
+              ALLOCATE(BUFLY%LBUF(NPTR, NPTS, NPTT))
+              ALLOCATE(BUFLY%MAT(NPTR, NPTS, NPTT))
+              ALLOCATE(BUFLY%EOS(NPTR, NPTS, NPTT))
+              ALLOCATE(BUFLY%FAIL(NPTR, NPTS, NPTT))
             ENDDO
 C---
 c
@@ -2083,10 +2168,10 @@ c
                   DO IT = 1,NPTT
                     ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%MLAW = ELBUF_TAB(NG)%BUFLY(IL)%ILAW
                     ELBUF_TAB(NG)%BUFLY(IL)%LBUF(IR,IS,IT)%LawID =  ELBUF_TAB(NG)%BUFLY(IL)%IMAT
-                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL)
-                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL)
-                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL)
-                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL)
+                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR,NUVARM*NEL,"BUFLY%MAT%VAR")
+                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP,NVARTMP*NEL,"BUFLY%MAT%VARTMP")
+                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR,NVAR_EOS*NEL,"BUFLY%EOS%VAR")
+                    CALL MY_ALLOC(ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VARTMP,NVARTMP_EOS*NEL,"BUFLY%EOS%VARTMP")
                     ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VAR = ZERO
                     ELBUF_TAB(NG)%BUFLY(IL)%MAT(IR,IS,IT)%VARTMP = 0
                     ELBUF_TAB(NG)%BUFLY(IL)%EOS(IR,IS,IT)%VAR = ZERO
@@ -2095,7 +2180,7 @@ c
 
                     IF (NFAIL == 1) THEN
                       IRUPT   = MAT_PARAM(IMAT(IL))%FAIL(1)%IRUPT   ! Failure model type    
-                      ALLOCATE(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC(NFAIL))
+      call my_alloc(ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC, NFAIL, "ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC")
                       FLOC   => ELBUF_TAB(NG)%BUFLY(IL)%FAIL(IR,IS,IT)%FLOC(1)         
 c
                       FLOC%ILAWF = IRUPT                                            
@@ -2105,37 +2190,41 @@ c
                       LFAIL = LFAIL + 1
 c
                       FLOC%NVAR  = MAT_PARAM(IMAT(IL))%FAIL(1)%NUVAR                              
-                      CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL)
+                      CALL MY_ALLOC(FLOC%VAR,FLOC%NVAR*NEL,"FLOC%VAR")
                       FLOC%VAR = ZERO     
                       LFAIL = LFAIL + FLOC%NVAR*NEL + 1 
 c
-                      FLOC%LF_DAM  = FAIL_TAG(IRUPT)%LF_DAM                        
-                      CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL)
+                      NVARTMP  = MAT_PARAM(IMAT(IL))%FAIL(1)%NVARTMP                              
+                      CALL MY_ALLOC(FLOC%VARTMP,NVARTMP*NEL,"FLOC%VARTMP")
+                      FLOC%VARTMP = 0     
+c
+                      FLOC%LF_DAM  = FAIL_TAG(IMAT(IL),1)%LF_DAM                        
+                      CALL MY_ALLOC(FLOC%DAM,FLOC%LF_DAM*NEL,"FLOC%DAM")
                       FLOC%DAM = ZERO   
                       LFAIL = LFAIL + FLOC%LF_DAM*NEL + 1 
 c
-                      FLOC%LF_DAMMX  = FAIL_TAG(IRUPT)%LF_DAMMX                       
-                      CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL) 
+                      FLOC%LF_DAMMX  = FAIL_TAG(IMAT(IL),1)%LF_DAMMX                       
+                      CALL MY_ALLOC(FLOC%DAMMX,FLOC%LF_DAMMX*NEL,"FLOC%DAMMX")
                       FLOC%DAMMX = ZERO
                       LFAIL = LFAIL + FLOC%LF_DAMMX*NEL + 1 
 c
-                      FLOC%LF_DAMINI = FAIL_TAG(IRUPT)%LF_DAMINI                      
-                      CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL) 
+                      FLOC%LF_DAMINI = FAIL_TAG(IMAT(IL),1)%LF_DAMINI                      
+                      CALL MY_ALLOC(FLOC%DAMINI,FLOC%LF_DAMINI*NEL,"FLOC%DAMINI")
                       FLOC%DAMINI = ZERO
                       LFAIL = LFAIL + FLOC%LF_DAMINI*NEL + 1 
 c
-                      FLOC%LF_TDEL  = FAIL_TAG(IRUPT)%LF_TDEL                        
-                      CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL)
+                      FLOC%LF_TDEL  = FAIL_TAG(IMAT(IL),1)%LF_TDEL                        
+                      CALL MY_ALLOC(FLOC%TDEL,FLOC%LF_TDEL*NEL,"FLOC%TDEL")
                       FLOC%TDEL = ZERO                                                           
                       LFAIL = LFAIL + FLOC%LF_TDEL*NEL + 1 
 c
-                      FLOC%LF_INDX = FAIL_TAG(IRUPT)%LF_INDX                       
-                      CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL)
+                      FLOC%LF_INDX = FAIL_TAG(IMAT(IL),1)%LF_INDX                       
+                      CALL MY_ALLOC(FLOC%INDX,FLOC%LF_INDX*NEL,"FLOC%INDX")
                       FLOC%INDX = 0                                                           
                       LFAIL = LFAIL + FLOC%LF_INDX*NEL + 1 
 c
-                      FLOC%LF_OFF = FAIL_TAG(IRUPT)%LF_OFF                       
-                      CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL)
+                      FLOC%LF_OFF = FAIL_TAG(IMAT(IL),1)%LF_OFF                       
+                      CALL MY_ALLOC(FLOC%OFF,FLOC%LF_OFF*NEL,"FLOC%OFF")
                       FLOC%OFF = 1                                                           
                       LFAIL = LFAIL + FLOC%LF_OFF*NEL + 1 
                     END IF
@@ -2147,7 +2236,7 @@ c
 c
 C---
           ELSE  ! NLAY = 0  (spring std)
-            ALLOCATE(ELBUF_TAB(NG)%BUFLY(0))
+            call my_alloc(ELBUF_TAB(NG)%BUFLY, 0, "ELBUF_TAB(NG)%BUFLY")
           ENDIF ! IF (NLAY > 0)
 C
           BUFLEN = NPAR_TAB + LMAT  + LFAIL + LVISC + LPORO + LEOS + LIMAT + LIFAIL
@@ -2287,6 +2376,7 @@ C
           LGLOB = LGLOB + GBUF%G_SKEW_ID
           LGLOB = LGLOB + GBUF%G_YIELD_IN_COMP
           LGLOB = LGLOB + GBUF%G_XXOLD_IN_COMP
+          LGLOB = LGLOB + GBUF%G_RBODY_NODE
 C
           LGLOB = LGLOB + GBUF%G_SLIPRING_ID
           LGLOB = LGLOB + GBUF%G_SLIPRING_FRAM_ID
@@ -2302,7 +2392,7 @@ c         failure struct for beams type 3 stored in global buffer
 c
           GFAIL = 0
           IF (IGTYP == 3 .and. IFAIL > 0) THEN
-             ALLOCATE(ELBUF_TAB(NG)%GBUF%FAIL(1))
+             call my_alloc(ELBUF_TAB(NG)%GBUF%FAIL, 1, "ELBUF_TAB(NG)%GBUF%FAIL")
 c
              IRUPT = MAT_PARAM(IMID)%FAIL(1)%IRUPT
              ELBUF_TAB(NG)%GBUF%FAIL(1)%ILAWF = IRUPT                                           
@@ -2312,39 +2402,49 @@ c
              GFAIL = GFAIL + 1
 c
              ELBUF_TAB(NG)%GBUF%FAIL(1)%NVAR  = MAT_PARAM(IMID)%FAIL(1)%NUVAR                             
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%VAR,ELBUF_TAB(NG)%GBUF%FAIL(1)%NVAR*NEL)
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%VAR,ELBUF_TAB(NG)%GBUF%FAIL(1)%NVAR*NEL,"ELBUF_TAB(NG)%GBUF%FAIL(1)%VAR")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%VAR = ZERO     
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%NVAR*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAM  = FAIL_TAG(IRUPT)%LF_DAM                        
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAM,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAM*NEL)
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAM  = FAIL_TAG(IMID,1)%LF_DAM                        
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAM,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAM*NEL,
+     &"ELBUF_TAB(NG)%GBUF%FAIL(1)%DAM")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%DAM = ZERO   
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAM*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMMX  = FAIL_TAG(IRUPT)%LF_DAMMX                       
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMMX,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMMX*NEL) 
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMMX  = FAIL_TAG(IMID,1)%LF_DAMMX                       
+             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMMX,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMMX*NEL,"GBUF%FAIL%DAMMX")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMMX = ZERO
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMMX*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMINI = FAIL_TAG(IRUPT)%LF_DAMINI                      
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMINI,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMINI*NEL) 
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMINI = FAIL_TAG(IMID,1)%LF_DAMINI                      
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMINI,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMINI*NEL,"GBUF%FAIL%DAMINI")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%DAMINI = ZERO
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_DAMINI*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_TDEL  = FAIL_TAG(IRUPT)%LF_TDEL                        
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%TDEL,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_TDEL*NEL)
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_TDEL  = FAIL_TAG(IMID,1)%LF_TDEL                        
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%TDEL,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_TDEL*NEL,
+     &"ELBUF_TAB(NG)%GBUF%FAIL(1)%TDEL")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%TDEL = ZERO                                                           
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_TDEL*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_INDX = FAIL_TAG(IRUPT)%LF_INDX                       
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%INDX,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_INDX*NEL)
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_INDX = FAIL_TAG(IMID,1)%LF_INDX                       
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%INDX,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_INDX*NEL,
+     &"ELBUF_TAB(NG)%GBUF%FAIL(1)%INDX")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%INDX = 0                                                           
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_INDX*NEL + 1
 c
-             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_OFF = FAIL_TAG(IRUPT)%LF_OFF                       
-             CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_OFF*NEL)
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_OFF = FAIL_TAG(IMID,1)%LF_OFF                       
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF,ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_OFF*NEL,
+     &"ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF")
              ELBUF_TAB(NG)%GBUF%FAIL(1)%OFF = 1                                                           
              GFAIL = GFAIL + ELBUF_TAB(NG)%GBUF%FAIL(1)%LF_OFF*NEL + 1
+c
+             NVARTMP = MAT_PARAM(IMID)%FAIL(1)%NVARTMP
+      CALL MY_ALLOC(ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP, NVARTMP*NEL,"ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP")
+             ELBUF_TAB(NG)%GBUF%FAIL(1)%VARTMP = 0
+             GFAIL = GFAIL + NVARTMP*NEL
+c
           END IF
 c
           BUFLEN = BUFLEN + GBUF%NVAR_GLOB + 1 + LGLOB*NEL + GFAIL
@@ -2456,11 +2556,11 @@ c-------------------------------------------------
      .                       NINTLAY,NEL,NPT,NG,NGROUP,ITY,
      .                       IGTYP,NUMMAT,MAT_PARAM)
 C
-          IF (ALLOCATED(IMAT)) DEALLOCATE(IMAT)
-          IF (ALLOCATED(ILAW)) DEALLOCATE(ILAW)
+          IF (ALLOCATED(IMAT)) CALL MY_DEALLOC(IMAT)
+          IF (ALLOCATED(ILAW)) CALL MY_DEALLOC(ILAW)
 c------------------------------------------------------
         ELSE    
-          ALLOCATE(ELBUF_TAB(NG)%BUFLY(0))
+          call my_alloc(ELBUF_TAB(NG)%BUFLY, 0, "ELBUF_TAB(NG)%BUFLY")
 c------------------------------------------------------
         ENDIF   ! ITY = 1,2,51,101 (solid group)
 
@@ -2468,8 +2568,8 @@ c--------------------------------------------------------
 c       damping structure for damping frequency range
 c--------------------------------------------------------
         IF (IDAMP_FREQ_RANGE > 0) THEN
-          ALLOCATE(ELBUF_TAB(NG)%DAMP_RANGE%ALPHA(3))
-          ALLOCATE(ELBUF_TAB(NG)%DAMP_RANGE%TAU(3))
+          call my_alloc(ELBUF_TAB(NG)%DAMP_RANGE%ALPHA, 3, "ELBUF_TAB(NG)%DAMP_RANGE%ALPHA")
+          call my_alloc(ELBUF_TAB(NG)%DAMP_RANGE%TAU, 3, "ELBUF_TAB(NG)%DAMP_RANGE%TAU")
           BUFLEN = IPARG(66,NG) + LDAMP_FREQ_RANGE
           IPARG(66,NG) = BUFLEN 
 c        ELSE  

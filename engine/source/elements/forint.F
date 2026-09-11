@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    forint                  ../engine/source/elements/forint.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    pforc3                  ../engine/source/elements/beam/pforc3.F
 !||    prelecflow              ../engine/source/elements/solid/solide/prelecflow.F
 !||    preload_solid_ini       ../engine/source/elements/solid/solide/preload_solid_ini.F90
+!||    q1np_forc3              ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2                 ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    qforc2                  ../engine/source/elements/solid_2d/quad/qforc2.F
 !||    r23forc3                ../engine/source/elements/spring/r23forc3.F
@@ -76,11 +78,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    initbuf_mod             ../engine/share/resol/initbuf.F
 !||    mat_elem_mod            ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    message_mod             ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod            ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod          ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod          ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod              ../common_source/modules/output/output_mod.F90
 !||    preload_axial_mod       ../engine/source/elements/spring/preload_axial.F90
 !||    preload_solid_ini_mod   ../engine/source/elements/solid/solide/preload_solid_ini.F90
 !||    python_funct_mod        ../common_source/modules/python_mod.F90
+!||    q1np_restart_mod        ../common_source/modules/q1np_restart_mod.F90
 !||    s6zforc3_mod            ../engine/source/elements/solid/solide6z/s6zforc3.F90
 !||    sensor_mod              ../common_source/modules/sensor_mod.F90
 !||    sfem_mod                ../common_source/modules/elements/sfem_mod.F90
@@ -123,7 +128,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      Z    SBUFMAT   ,SNPC      ,STF        ,NODADT    ,DTFAC1,
      .    DTMIN1    ,IDTMIN    ,IOUT       ,ISTDO     ,IDTMINS,DTFACS,NSVOIS,
      *    IRESP     ,MAXFUNC   ,USERL_AVAIL,GLOB_THERM,IMON_MAT,DTMINS,SANIN,
-     *    NGRTH     ,NELEM     ,SFEM )
+     *    NGRTH     ,NELEM     ,SFEM      ,FLG_SPR_DT )
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -147,10 +152,13 @@ C-----------------------------------------------
       USE PRELOAD_SOLID_INI_MOD
       USE S6ZFORC3_MOD
       use element_mod , only : nixs,nixq,nixt,nixr,nixp
+      USE Q1NP_RESTART_MOD
       use sfem_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -210,6 +218,7 @@ C-----------------------------------------------
       INTEGER, INTENT(IN) :: IDTMINS
       INTEGER, INTENT(IN) :: NGRTH
       INTEGER, INTENT(IN) :: NELEM
+      INTEGER, INTENT(INOUT) :: FLG_SPR_DT
       my_real, INTENT(IN) :: DTMINS
       my_real, INTENT(IN) :: DTFACS
       my_real
@@ -243,7 +252,7 @@ C-----------------------------------------------
       my_real, INTENT(IN) :: DTFAC1(102),DTMIN1(102)
       TYPE(t_ale_connectivity), INTENT(IN) :: ALE_CONNECT
       type (glob_therm_) ,intent(inout)    :: glob_therm
-      TYPE(SFEM_) ,INTENT(INOUT) :: SFEM  
+      TYPE(global_sfem_) ,INTENT(INOUT) :: SFEM  
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -257,6 +266,7 @@ C-----------------------------------------------
      .   L17,L18,L19,L20,L21,L22,L23,L24,L25,L26,L27,L28,L29,L30,
      .   ICP,ICS,IMATVIS,IEXPAN,NPT0,IG,OFF_IGRTH,
      .   NCTRL,IPARSENS,ISECT,GAMA(6),PX,PY,PZ,ISENS_ENERGY
+      LOGICAL IS_Q1NP_GROUP, lFOUND
       my_real BID,QMVBID,PRELOAD1,STF_F
       my_real SBID
       my_real VOLN(MVSIZ)
@@ -265,9 +275,13 @@ C-----------------------------------------------
       TYPE(G_BUFEL_) ,POINTER :: GBUF
       integer :: fake_size = 0
 C======================================================================|
-       ALLOCATE(FX(MVSIZ,64),FY(MVSIZ,64),FZ(MVSIZ,64),STAT=IERROR)
-       ALLOCATE(MX(MVSIZ,4),MY(MVSIZ,4),MZ(MVSIZ,4),STAT=IERROR)
-       ALLOCATE(JFAC(MVSIZ,729)) ! for solid 8z
+       call my_alloc(FX, MVSIZ, 64, "FX", stat=IERROR)
+       call my_alloc(FY, MVSIZ, 64, "FY", stat=IERROR)
+       call my_alloc(FZ, MVSIZ, 64, "FZ", stat=IERROR)
+       call my_alloc(MX, MVSIZ, 4, "MX", stat=IERROR)
+       call my_alloc(MY, MVSIZ, 4, "MY", stat=IERROR)
+       call my_alloc(MZ, MVSIZ, 4, "MZ", stat=IERROR)
+       call my_alloc(JFAC, MVSIZ, 729, "JFAC") ! for solid 8z
        SBID=1
 !
        IF(IERROR/=0)THEN
@@ -366,6 +380,10 @@ C
         IPREID   = IPARG(72,NG)  
         IFORMDT  = IPARG(73,NG)  
 C
+C       Group of enriched elements for contact
+        IS_Q1NP_GROUP = .FALSE.  
+        IF (IPARG(94,NG) == 1) IS_Q1NP_GROUP = .TRUE.
+C
         IF (ITY==1) ICP = NSG                                       
         IF (ITY==1 .OR. ITY==2) JPLASOL=IPLA
 C---------------------------------
@@ -398,7 +416,25 @@ C----6---------------------------------------------------------------7---------8
      3           GBUF%BPRELD   ,GBUF%G_BPRELD ,NEL          )
           END IF
 C---------
-          IF(ISOLNOD==4.AND.(ISROT==0.OR.ISROT==3))THEN                            
+          IF(IS_Q1NP_GROUP)THEN
+C-------------------------
+C             Q1NP replacement for tagged HEX8 solids.
+C-------------------------
+            CALL Q1NP_FORC3(TIMERS, OUTPUT,
+     1                      ELBUF_TAB(NG), PM, GEO, IXS, IGEO, X, A, V, W,
+     2                      FV, ALE_CONNECT, IPARG, TF, NPC, BUFMAT, PARTSAV, NPART,
+     3                      NLOC_DMG, STIFN, OFFSET, IPARTS(NF1), NEL, DT2T,
+     4                      NELTST, ITYPTST, IPM, ITASK, GRESAV, GRTH,
+     5                      IGRTH(NF1), MSSA(NF1), DMELS(NF1), TABLE, IPRI,
+     6                      MAT_ELEM, NG, H3D_DATA%STRAIN, SVIS, GLOB_THERM,
+     7                      SNPC, NUMGEO, NUMNOD, NUMELS, NUMELQ, NGROUP,
+     8                      SBUFMAT, STF, NUMMAT, NTABLE, NSVOIS, IRESP,
+     9                      IDEL7NOK, MAXFUNC, USERL_AVAIL, IMON_MAT, impl_s,
+     A                      idyna, IDTMIN, DT, SENSORS,
+     B                      MTN, ISMSTR, JLAG, JEUL, JALE, JCVT, JSPH, JPLASOL,
+     C                      NPARG, NPROPG, NPROPGI, NPROPM, NPROPMI, NPSAV, TT, DT1)    
+C            
+          ELSEIF(ISOLNOD==4.AND.(ISROT==0.OR.ISROT==3))THEN
 C---------
             CALL S4FORC3(TIMERS, OUTPUT,
      1   ELBUF_TAB,  NG,              PM,         GEO,
@@ -416,12 +452,12 @@ C---------
      D   ISTRA,      ITASK,           TEMP,       FTHE,
      E   FTHESKY,    IEXPAN,          GRESAV,     GRTH,
      F   IGRTH(NF1), MSSA(NF1),       DMELS(NF1), TABLE,
-     G   XDP,      sfem%SFEM_NODVAR,  VOLN,       CONDN,
+     G   XDP,      sfem%lag%nodvar,  VOLN,       CONDN,
      H   CONDNSKY,   D,               SENSORS,    IPRI,
      I   MAT_ELEM,   IBID,            DT,         IDEL7NOK,NSVOIS,IBID,
      *   SNPC,       STF,             SBUFMAT,    SVIS,IDTMINS,IRESP,
      *   IDEL7NG,    MAXFUNC,         USERL_AVAIL, GLOB_THERM,
-     V   impl_s,     idyna,           sfem%S_SFEM_NODVAR,fake_size,nv46,  sfem%itag_nsfem )
+     V   impl_s,     idyna,           sfem%S_SFEM_NODVAR,fake_size,nv46,sfem%lag%need_it(nf1:nf1+nel-1) )
 C
             IF (NSECT > 0) THEN 
               K0=NSTRF(25)                                             
@@ -467,12 +503,12 @@ c---------
      D   D,                   GRESAV,              GRTH,                IGRTH(OFF_IGRTH+NF1),
      E   TABLE,               MSSA(NF1),           DMELS(NF1),          IGEO,
      F   XDP,                 VOLN,                CONDN,               CONDNSKY,
-     G   sfem%SFEM_NODVAR,    ITAGND,              SENSORS,             IPRI,
+     G   sfem%lag%nodvar,    ITAGND,              SENSORS,             IPRI,
      H   MAT_ELEM,            IBID,                DT,                  IDEL7NOK,
      I   SNPC,                STF,                 SBUFMAT,             SVIS,
      J   NSVOIS,              IDTMINS,             IDEL7NG,             MAXFUNC ,     
      V   USERL_AVAIL,         GLOB_THERM,          impl_s,              idyna ,
-     W   sfem%S_SFEM_NODVAR,  sfem%itag_nsfem )
+     W   sfem%S_SFEM_NODVAR,  sfem%lag%need_it(nf1:nf1+nel-1))
 c
             IF(NSECT>0)THEN 
               K0=NSTRF(25)                                             
@@ -1431,7 +1467,8 @@ c
      F   DMELRT(NF1),          FLAG_SLIPRING_UPDATE, FLAG_RETRACTOR_UPDATE,H3D_DATA,
      G   JSMS,                 IGRE,                 NFT,                  PRELOAD1   ,
      H   STF_F,                STF,                  SANIN,                IRESP,
-     I   SNPC )
+     I   SNPC ,                mat_elem,             NGRTH,                NELEM,
+     J   FLG_SPR_DT)
          ELSE
           CALL RFORC3(PYTHON,
      1   ELBUF_TAB(NG),       JFT,                 JLT,                 NEL,
@@ -1451,7 +1488,7 @@ c
      F   ITASK,               H3D_DATA,            JSMS,                NFT,
      G   IAD,                 IGRE,                PRELOAD1 ,           STF_F ,
      H   STF,                 SANIN,               IRESP,               IMPL_S,
-     I   IDYNA,               SNPC)
+     I   IDYNA,               SNPC,                FLG_SPR_DT)
              
          ENDIF
 C
@@ -1570,7 +1607,13 @@ C             ROTATION IF COROTA SYSTEM
   250   CONTINUE
       END DO
 C
-      DEALLOCATE(FX,FY,FZ,MX,MY,MZ,JFAC)
+      call my_dealloc(FX)
+      call my_dealloc(FY)
+      call my_dealloc(FZ)
+      call my_dealloc(MX)
+      call my_dealloc(MY)
+      call my_dealloc(MZ)
+      call my_dealloc(JFAC)
 
 C-----------
       RETURN

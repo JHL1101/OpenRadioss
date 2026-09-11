@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    czforc3             ../engine/source/elements/shell/coquez/czforc3.F
 !||--- called by ------------------------------------------------------
@@ -75,6 +76,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    failwave_mod        ../common_source/modules/failwave_mod.F
 !||    glob_therm_mod      ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    mat_elem_mod        ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod      ../common_source/modules/nlocal_reg_mod.F
 !||    sensor_mod          ../common_source/modules/sensor_mod.F90
 !||    stack_mod           ../engine/share/modules/stack_mod.F
@@ -133,6 +136,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I M P L I C I T   T Y P E S
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G L O B A L   P A R A M E T E R S
@@ -320,7 +325,7 @@ C
 !-------------------------------------------      
 ! array for the non-local variable
       NDDL = NPTTOT
-      ALLOCATE(VAR_REG(NEL,NDDL)) 
+      call my_alloc(VAR_REG, NEL, NDDL, "VAR_REG")
 !-------------------------------------------
       IF (NPT == 0) NPTTOT = NPT  !  compatibility with global integration
 c-------------------------------------
@@ -328,8 +333,8 @@ c-------------------------------------
       L_DIRB = ELBUF_STR%BUFLY(1)%LY_DIRB
       IGTYP = IGEO(11,IXC(6,1))
       IF(IDRAPE > 0 .AND. (IGTYP == 51 .OR. IGTYP == 52)) THEN
-        ALLOCATE(DIRA(NPTTOT*NEL*L_DIRA))
-        ALLOCATE(DIRB(NPTTOT*NEL*L_DIRB))
+        call my_alloc(DIRA, NPTTOT*NEL*L_DIRA, "DIRA")
+        call my_alloc(DIRB, NPTTOT*NEL*L_DIRB, "DIRB")
         IF (L_DIRA == 0) THEN
             CONTINUE
         ELSEIF (IREP == 0) THEN
@@ -353,8 +358,8 @@ c-------------------------------------
       ELSE ! idrape
         SDIR_A=NLAY*NEL*L_DIRA
         SDIR_B=NLAY*NEL*L_DIRB
-        ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-        ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+        call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+        call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
         DIRA=ZERO
         DIRB=ZERO
         IF (L_DIRA == 0) THEN
@@ -417,9 +422,9 @@ c-------------------------------------
       IXFEM2 = 0
       NXLAY  = NLAY
       IF (IXFEM > 0) THEN
-        ALLOCATE(ELCRKINI(NXLAYMAX*MVSIZ))
-        ALLOCATE(DIR1_CRK(NXLAYMAX*MVSIZ))
-        ALLOCATE(DIR2_CRK(NXLAYMAX*MVSIZ))
+        call my_alloc(ELCRKINI, NXLAYMAX*MVSIZ, "ELCRKINI")
+        call my_alloc(DIR1_CRK, NXLAYMAX*MVSIZ, "DIR1_CRK")
+        call my_alloc(DIR2_CRK, NXLAYMAX*MVSIZ, "DIR2_CRK")
         DIR1_CRK = ZERO
         DIR2_CRK = ZERO
         ELCRKINI = 0
@@ -428,9 +433,9 @@ c-------------------------------------
      .                   IEL_CRK,INOD_CRK,NODENR  ,CRKEDGE,XEDGE4N )
         ENDIF
       ELSE
-        ALLOCATE(ELCRKINI(0))
-        ALLOCATE(DIR1_CRK(0))
-        ALLOCATE(DIR2_CRK(0))
+        call my_alloc(ELCRKINI, 0, "ELCRKINI")
+        call my_alloc(DIR1_CRK, 0, "DIR1_CRK")
+        call my_alloc(DIR2_CRK, 0, "DIR2_CRK")
       ENDIF  ! IXFEM
 C--------------------
       CALL CZCORC1(NUMNOD,NUMELC    ,ELBUF_STR,
@@ -441,7 +446,7 @@ C--------------------
      5             X13     ,X24     ,Y13     ,Y24     ,MX13    ,
      6             MX23    ,MX34    ,MY13    ,MY23    ,MY34    ,
      7             Z1      ,LXYZ    ,DD      ,DB    ,GBUF%SMSTR,
-     9             IREP    ,NPT     ,NLAY    ,ISMSTR  ,
+     9             IREP    ,NPTTOT  ,NLAY    ,ISMSTR  ,
      A             DIR_A   ,DIR_B   ,GBUF%OFF,RLXYZ   ,LXYZ    ,
      B             FACN    ,PY1     ,PX2     ,PY2     ,R11     ,
      C             R12     ,R13     ,R21     ,R22     ,R23     ,
@@ -866,12 +871,12 @@ c
      .       YL3      ,YL4      )
       ENDIF
 C-----------
-      IF (ALLOCATED(DIR2_CRK)) DEALLOCATE(DIR2_CRK)
-      IF (ALLOCATED(DIR1_CRK)) DEALLOCATE(DIR1_CRK)
-      IF (ALLOCATED(ELCRKINI)) DEALLOCATE(ELCRKINI)
-      IF (ALLOCATED(DIRB))     DEALLOCATE(DIRB)
-      IF (ALLOCATED(DIRA))     DEALLOCATE(DIRA)
-      IF (ALLOCATED(VAR_REG))  DEALLOCATE(VAR_REG)
+      IF (ALLOCATED(DIR2_CRK)) call my_dealloc(DIR2_CRK)
+      IF (ALLOCATED(DIR1_CRK)) call my_dealloc(DIR1_CRK)
+      IF (ALLOCATED(ELCRKINI)) call my_dealloc(ELCRKINI)
+      IF (ALLOCATED(DIRB)) call my_dealloc(DIRB)
+      IF (ALLOCATED(DIRA)) call my_dealloc(DIRA)
+      IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
 C-----------
       RETURN
       END

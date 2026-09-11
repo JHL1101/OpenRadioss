@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !Chd|====================================================================
 !Chd|  fractal_elem_renum          source/materials/fail/fractal/fractal_elem_renum.F
 !Chd|-- called by -----------
@@ -31,7 +32,7 @@
 !||    lectur                   ../starter/source/starter/lectur.F
 !||====================================================================
       module fractal_elem_renum_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 ! \brief renumber local element numbers in damaged element list after domain decomposition
@@ -41,6 +42,7 @@
 !||    fractal_elem_renum    ../starter/source/materials/fail/fractal/fractal_elem_spmd_renum.F90
 !||--- called by ------------------------------------------------------
 !||    lectur                ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    reorder_mod           ../starter/share/modules1/reorder_mod.F
 !||====================================================================
@@ -53,6 +55,8 @@
           use constant_mod ,only : zero,one
           use reorder_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -78,10 +82,10 @@
 ! ======================================================================================================================
           do ifract = 1,fail_fractal%nfail
             nelem = fail_fractal%fractal(ifract)%nelem
-            allocate(tag_elem(nelem))
-            allocate(tag_nix(nelem))
-            allocate(tag_dmg(nelem))
-            allocate(tag_id(nelem))
+            call my_alloc(tag_elem, nelem, "tag_elem")
+            call my_alloc(tag_nix, nelem, "tag_nix")
+            call my_alloc(tag_dmg, nelem, "tag_dmg")
+            call my_alloc(tag_id, nelem, "tag_id")
             tag_dmg(:)  = zero
             tag_elem(:) = 0
             tag_nix(:)  = 0
@@ -117,10 +121,10 @@
               fail_fractal%fractal(ifract)%random_walk(i)%elnum  = tag_elem(i)
               fail_fractal%fractal(ifract)%random_walk(i)%nix    = tag_nix(i)
             end do
-            deallocate(tag_id)
-            deallocate(tag_dmg)
-            deallocate(tag_nix)
-            deallocate(tag_elem)
+            call my_dealloc(tag_id)
+            call my_dealloc(tag_dmg)
+            call my_dealloc(tag_nix)
+            call my_dealloc(tag_elem)
           end do
 ! ----------------------------------------------------------------------------------------------------------------------
           return

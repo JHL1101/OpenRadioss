@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    tensors            ../engine/source/output/anim/generate/tensor6.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod        ../engine/share/resol/initbuf.F
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE TENSORS(ELBUF_TAB,IPARG   ,ITENS   ,IXS     ,PM       ,
      2                   EL2FA    ,NBF     ,TENS    ,EPSDOT  ,
@@ -50,6 +52,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -87,7 +90,7 @@ C-----------------------------------------------
       TYPE(L_BUFEL_)  ,POINTER :: LBUF
       my_real :: EVAR(6,MVSIZ)
 C=======================================================================
-      CALL MY_ALLOC(WA,6*NBF)
+      call my_alloc(WA, 6*NBF, "WA")
       DO J=1,18
         R4(J) = ZERO
       ENDDO         
@@ -3390,7 +3393,7 @@ C-----------------------------------------------
       ENDIF
 C-----------------------------------------------
 C-----------
-      DEALLOCATE(WA)
+      call my_dealloc(WA)
       RETURN
       END SUBROUTINE TENSORS
 !||====================================================================
@@ -3909,6 +3912,7 @@ C-----------
 !||    element_mod        ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod        ../engine/share/resol/initbuf.F
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    outmax_mod         ../common_source/modules/outmax_mod.F
 !||====================================================================
       SUBROUTINE TENSGPS3(ELBUF_TAB,FUNC1   ,FUNC2   ,IPARG   ,GEO     ,
@@ -3926,6 +3930,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -4038,7 +4043,7 @@ C-----Nj : KSI,ETA,ZETA
 C======================================================================= 
       ALPHA = ZEP1381966
       BETA  = ZEP5854102
-      CALL MY_ALLOC(EVAR,6,NUMNOD)
+      call my_alloc(EVAR, 6, NUMNOD, "EVAR")
       DO I=1,NUMNOD
         EVAR(1,I) = ZERO
         EVAR(2,I) = ZERO
@@ -4629,7 +4634,7 @@ C
         ENDIF
 c
  900  CONTINUE
-      DEALLOCATE(EVAR)
+      call my_dealloc(EVAR)
 C-----------------------------------------------
       RETURN
       END SUBROUTINE TENSGPS3
@@ -4757,6 +4762,7 @@ C-----------------------------------------------
 !||    element_mod           ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod           ../engine/share/resol/initbuf.F
 !||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE TENSGPS_SKIN(ELBUF_TAB,FUNC1   ,FUNC2   ,IPARG   ,
      .                        IXS      ,IXS10   ,IXS16   ,IXS20   ,X        ,
@@ -4771,6 +4777,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -4881,7 +4888,7 @@ C-----Nj : KSI,ETA,ZETA
 C======================================================================= 
       ALPHA = ZEP1381966
       BETA  = ZEP5854102
-      CALL MY_ALLOC(EVAR,6,NUMNOD)
+      call my_alloc(EVAR, 6, NUMNOD, "EVAR")
       DO I=1,NUMNOD
         EVAR(1,I) = ZERO
         EVAR(2,I) = ZERO
@@ -5447,7 +5454,7 @@ C
         ENDIF
 c
  900  CONTINUE
-      DEALLOCATE(EVAR)
+      call my_dealloc(EVAR)
 C-----------------------------------------------
       RETURN
       END SUBROUTINE TENSGPS_SKIN

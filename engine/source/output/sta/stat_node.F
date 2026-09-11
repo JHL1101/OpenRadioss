@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_node          ../engine/source/output/sta/stat_node.F
 !||--- called by ------------------------------------------------------
@@ -28,9 +29,10 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_dstat_vgath   ../engine/source/mpi/output/spmd_stat.F
 !||--- uses       -----------------------------------------------------
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE STAT_NODE(X,NUMNOD,ITAB,ITABG,LENG,
-     .                    NODGLOB,WEIGHT,NODTAG)
+     .                     NODGLOB,WEIGHT,NODTAG,IRESP)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -38,6 +40,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -51,6 +54,7 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER ITAB(*), NUMNOD,WEIGHT(*),ITABG(*),LENG,
      .        NODGLOB(*),NODTAG(*)
+      INTEGER, INTENT(IN) :: IRESP
       my_real
      .   X(3,*)
 C-----------------------------------------------
@@ -59,9 +63,10 @@ C-----------------------------------------------
       INTEGER I
       INTEGER,DIMENSION(:),ALLOCATABLE :: NODTAGLOB
       my_real,DIMENSION(:,:),ALLOCATABLE :: VGLOB
+      my_real,DIMENSION(3) :: X_COPY
 C-----------------------------------------------
-      CALL MY_ALLOC(NODTAGLOB,LENG)
-      CALL MY_ALLOC(VGLOB,3,LENG)
+      call my_alloc(NODTAGLOB, LENG, "NODTAGLOB")
+      call my_alloc(VGLOB, 3, LENG, "VGLOB")
 C-----------------------------------------------
 
       IF (NSPMD > 1) THEN
@@ -77,20 +82,34 @@ C-----------------------------------------------
       IF (NSPMD == 1) THEN
         DO I=1,NUMNOD
            IF(NODTAG(I) /= 0) THEN
-            WRITE(IUGEO,'(I10,1P3E20.13)')
-     .       ITAB(I),X(1,I),X(2,I),X(3,I)
+            X_COPY(1)=X(1,I)
+            X_COPY(2)=X(2,I)
+            X_COPY(3)=X(3,I)
+             if (iresp == 0) then
+                if (ABS(X_COPY(1))<= .1D-90 ) X_COPY(1)=ZERO
+                if (ABS(X_COPY(2))<= .1D-90 ) X_COPY(2)=ZERO
+                if (ABS(X_COPY(3))<= .1D-90 ) X_COPY(3)=ZERO
+             endif
+             WRITE(IUGEO,'(I10,1P3E20.13)')
+     .             ITAB(I),X_COPY(1),X_COPY(2),X_COPY(3)
            END IF
         END DO
       ELSE
         DO I=1,NUMNODG
-          IF(NODTAGLOB(I) /= 0)
-     .      WRITE(IUGEO,'(I10,1P3E20.13)')
-     .       ITABG(I),VGLOB(1,I),VGLOB(2,I),VGLOB(3,I)
+          IF(NODTAGLOB(I) /= 0)then
+              if (iresp == 0) then
+                if (ABS(VGLOB(1,I))<= .1D-90 ) VGLOB(1,I)=ZERO
+                if (ABS(VGLOB(2,I))<= .1D-90 ) VGLOB(2,I)=ZERO
+                if (ABS(VGLOB(3,I))<= .1D-90 ) VGLOB(3,I)=ZERO
+              endif
+             WRITE(IUGEO,'(I10,1P3E20.13)')  
+     .             ITABG(I),VGLOB(1,I),VGLOB(2,I),VGLOB(3,I)
+          ENDIF
         END DO
       ENDIF
 C-----------------------------------------------
-      DEALLOCATE(NODTAGLOB)
-      DEALLOCATE(VGLOB)
+      call my_dealloc(NODTAGLOB)
+      call my_dealloc(VGLOB)
 C-----------------------------------------------
       RETURN
       END

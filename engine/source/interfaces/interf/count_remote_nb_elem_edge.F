@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,21 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    count_remote_nb_elem_edge   ../engine/source/interfaces/interf/count_remote_nb_elem_edge.F
 !||--- called by ------------------------------------------------------
 !||    init_nodal_state            ../engine/source/interfaces/interf/init_nodal_state.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    element_mod                 ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod            ../common_source/modules/nodal_arrays.F90
 !||====================================================================
         SUBROUTINE COUNT_REMOTE_NB_ELEM_EDGE( SIZE_BUFFER,BUFFER,GEO,IXS,IXC,
@@ -48,6 +52,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -59,7 +65,8 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
         INTEGER, INTENT(in) :: SIZE_BUFFER
-        INTEGER, INTENT(in) :: CHUNK ! chunk size : 1-> interface id, 2-> surface id, 3:6-> node id (for type11, 5&6 values are equal to 0)
+        INTEGER, INTENT(in) :: CHUNK
+! chunk size : 1-> interface id, 2-> surface id, 3:6-> node id (for type11, 5&6 values are equal to 0)
         INTEGER, DIMENSION(SIZE_BUFFER), INTENT(inout) :: BUFFER
         INTEGER, DIMENSION(NIXS,NUMELS),TARGET, INTENT(in) :: IXS   ! solid array
         INTEGER, DIMENSION(NIXC,NUMELC),TARGET, INTENT(in) :: IXC   ! shell array
@@ -105,12 +112,13 @@ C-----------------------------------------------
         ! cnel is not bijective (2 differents index can give the same cnel(i) value)
         ! --> need to tag the elements to avoid a duplication
         NUMBER_ELEMENT = NUMELS + NUMELQ + NUMELC + NUMELT + NUMELP + NUMELR + NUMELTG
-        ALLOCATE( LIST_ELEMENT(NUMBER_ELEMENT) ) ! <-- list of element to flush only the modified cells
-        ALLOCATE( ALREADY_HERE(NUMBER_ELEMENT) ) ! <-- boolean to avoid any element duplications
+        call my_alloc(LIST_ELEMENT, NUMBER_ELEMENT, "LIST_ELEMENT")
+! <-- list of element to flush only the modified cells
+        call my_alloc(ALREADY_HERE, NUMBER_ELEMENT, "ALREADY_HERE") ! <-- boolean to avoid any element duplications
         ALREADY_HERE(1:NUMBER_ELEMENT) = .FALSE.
         NUMBER_ELEMENT_HERE = 0
 
-        ALLOCATE( TAG_NODE(NUMNOD+1) )
+        call my_alloc(TAG_NODE, NUMNOD+1, "TAG_NODE")
         TAG_NODE(1:NUMNOD+1) = 0
         DO J=1,SIZE_BUFFER,CHUNK
             NIN = BUFFER(J)
@@ -215,9 +223,9 @@ C-----------------------------------------------
             ! ---------------
         ENDDO
 
-        DEALLOCATE( TAG_NODE )
-        DEALLOCATE( LIST_ELEMENT )
-        DEALLOCATE( ALREADY_HERE )
+        call my_dealloc(TAG_NODE)
+        call my_dealloc(LIST_ELEMENT)
+        call my_dealloc(ALREADY_HERE)
 
         RETURN
         END SUBROUTINE COUNT_REMOTE_NB_ELEM_EDGE

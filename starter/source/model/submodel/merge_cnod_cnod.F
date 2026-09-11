@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    merge_cnod_cnod   ../starter/source/model/submodel/merge_cnod_cnod.F
 !||--- called by ------------------------------------------------------
@@ -33,9 +34,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       SUBROUTINE MERGE_CNOD_CNOD(X      ,ITAB     ,ITABM1 ,CMERGE ,IMERGE,
      .                           IMERGE2,IADMERGE2,IMERGE0,NMERGE_TOT)
       USE MESSAGE_MOD
+      use my_alloc_mod, only : my_alloc
+      use my_dealloc_mod, only : my_dealloc
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -145,13 +149,18 @@ C=======================================================================
 C  
       NBAND = MAX(NBX, NBY,NBZ) + 1
 C      
-      ALLOCATE(NPX(0:NUMCNOD+NBAND)      , NPY(0:3*(NUMCNOD+NBAND)), 
-     .         NPZ(0:9*(NUMCNOD+NBAND))  , IPX(NUMCNOD+NBAND)      ,
-     .         IPY(NUMCNOD+NBAND)        , IPZ(NUMCNOD+NBAND)      ,
-     .         NPCX(0:NUMCNOD+NBAND)     , NPCY(0:NUMCNOD+NBAND)   ,
-     .         NPCZ(0:NUMCNOD+NBAND)     , IPCX(NUMCNOD+NBAND)     ,
-     .         IPCY(NUMCNOD+NBAND)       , IPCZ(NUMCNOD+NBAND)     ,
-     .         IMERGETMP(NUMCNOD))
+      call my_alloc(IPX, NUMCNOD+NBAND, "IPX")
+      call my_alloc(IPY, NUMCNOD+NBAND, "IPY")
+      call my_alloc(IPZ, NUMCNOD+NBAND, "IPZ")
+      call my_alloc(IPCX, NUMCNOD+NBAND, "IPCX")
+      call my_alloc(IPCY, NUMCNOD+NBAND, "IPCY")
+      call my_alloc(IPCZ, NUMCNOD+NBAND, "IPCZ")
+      call my_alloc(IMERGETMP, NUMCNOD, "IMERGETMP")
+      ALLOCATE(NPX(0:NUMCNOD+NBAND), NPY(0:3*(NUMCNOD+NBAND)), NPZ(0:9*(NUMCNOD+NBAND)), NPCX(0:NUMCNOD+NBAND),
+     &NPCY(0:NUMCNOD+NBAND), NPCZ(0:NUMCNOD+NBAND))
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
 !
       NPX(0:NUMCNOD+NBAND) = 0
       NPY(0:3*(NUMCNOD+NBAND)) = 0
@@ -469,9 +478,19 @@ C--------------------------------------------------
         ENDIF
       ENDDO
 C--------
-       DEALLOCATE(NPX   ,NPY   ,NPZ   ,IPX   ,IPY   ,IPZ  ,
-     .            NPCX  ,NPCY  ,NPCZ  ,IPCX  ,IPCY  ,IPCZ ,
-     .            IMERGETMP)
+       call my_dealloc(NPX)
+       call my_dealloc(NPY)
+       call my_dealloc(NPZ)
+       call my_dealloc(IPX)
+       call my_dealloc(IPY)
+       call my_dealloc(IPZ)
+       call my_dealloc(NPCX)
+       call my_dealloc(NPCY)
+       call my_dealloc(NPCZ)
+       call my_dealloc(IPCX)
+       call my_dealloc(IPCY)
+       call my_dealloc(IPCZ)
+       call my_dealloc(IMERGETMP)
 C--------
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    szforc3                ../engine/source/elements/solid/solidez/szforc3.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    mod_close              ../engine/source/elements/solid/solide/mod_close.F
 !||    nsvis_sm12             ../engine/source/elements/solid/solide10/nsvis_sm12.F
 !||    s11defo3               ../engine/source/elements/solid/solide/s11defo3.F
+!||    s8dlenmax_sm           ../engine/source/elements/solid/solide/s8dlenmax_sm.F90
 !||    s8for_distor           ../engine/source/elements/solid/solide/s8for_distor.F
 !||    s8get_x3               ../engine/source/elements/solid/solide/s8get_x3.F
 !||    s8sav12                ../engine/source/elements/solid/solide/s8sav12.F
@@ -93,8 +95,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    glob_therm_mod         ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    mat_elem_mod           ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    mmain_mod              ../engine/source/materials/mat_share/mmain.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod         ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod             ../common_source/modules/output/output_mod.F90
+!||    s8dlenmax_sm_mod       ../engine/source/elements/solid/solide/s8dlenmax_sm.F90
 !||    sdistor_ini_mod        ../engine/source/elements/solid/solide/sdistror_ini.F90
 !||    sensor_mod             ../common_source/modules/sensor_mod.F90
 !||    sz_dt1_mod             ../engine/source/elements/solid/solidez/sz_dt1.F90
@@ -142,9 +147,12 @@ C-----------------------------------------------
       USE SENSOR_MOD
       USE sz_dt1_mod, only : sz_dt1
       use element_mod , only : nixs
+      use s8dlenmax_sm_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -314,7 +322,7 @@ C 8-nodes Solid Connectivities
      .  XGXYA(MVSIZ),XGYZA(MVSIZ),XGZXA(MVSIZ),
      .  XGXA2(MVSIZ),XGYA2(MVSIZ),XGZA2(MVSIZ),
      .  STI_C(MVSIZ),LL(MVSIZ),L_MAX(MVSIZ),FLD(MVSIZ),
-     .  CNS2,RHO0_1,NU,FQMAX
+     .  CNS2,RHO0_1,NU,FQMAX,VOLGS(MVSIZ),L_MIN(MVSIZ)
       my_real, dimension(mvsiz) :: fheat
       my_real ,DIMENSION(:), POINTER :: EINT
 C-----
@@ -339,7 +347,7 @@ C=======================================================================
       ISM12_11 = ELBUF_TAB(NG)%BUFLY(1)%L_SIGL
       NPTS = IPARG(6,NG) 
       INLOC = IPARG(78,NG)
-      ALLOCATE(VAR_REG(NEL))   
+      call my_alloc(VAR_REG, NEL, "VAR_REG")
       TEMPEL(:) = ZERO
       FHEAT(:)  = ZERO
       IBID = 0
@@ -397,8 +405,8 @@ C
      .        NN_DEL=8
       IF (NN_DEL ==0 .AND. DT%IDEL_BRICK>0) NN_DEL=8
       CNS2 = ZERO
+      RHO0_1 =PM( 1,IMAT)
       IF (ICP==1.AND.MTN==1.AND.ISMSTR==12) THEN
-         RHO0_1 =PM( 1,IMAT)
          CNS2 = ZEP02
          IF (IGEO(35,NGEO(1))>0) CNS2=CNS2-ABS(GEO(17,NGEO(1)))
       END IF
@@ -703,8 +711,11 @@ C Element temperature
         ENDDO
       ENDIF
 C
-      DELTAXI(1:NEL) = DELTAX(1:NEL)   
-      IF (FAC_NU<ONE) DELTAXI(1:NEL) = MAX(DELTAXI(1:NEL),NU_SP*DELTAX(1:NEL))   
+      IF (FAC_NU<ONE) THEN 
+        DELTAXI(1:NEL) = MAX(DELTAXI(1:NEL),NU_SP*DELTAX(1:NEL)) 
+      ELSE 
+        DELTAXI(1:NEL) = DELTAX(1:NEL)   
+      ENDIF	  
 C-----------------------------------------------------------------------
       IF ((ITASK==0).AND.(IMON_MAT==1)) CALL STARTIME(TIMERS,35)
       ILAY = 1 
@@ -805,7 +816,15 @@ C
 C
       ITET = 0
       IF (NN_DEL >0) THEN
-        CALL SDLENMAX(L_MAX, 
+        IF (ISMSTR == 1 .OR. ISMSTR == 11) THEN 
+          CALL S8DLENMAX_SM(                          
+     1           NEL      ,RHO0_1   ,GBUF%VOL   ,X       ,       
+     2           NC1      ,NC2      ,NC3        ,NC4     ,       
+     3           NC5      ,NC6      ,NC7        ,NC8     ,       
+     4           L_MAX    ,GBUF%RHO ,VOLGS      ,L_MIN   ,
+     5           NUMNOD )
+        ELSE
+          CALL SDLENMAX(L_MAX, 
      1   X1,      X2,      X3,      X4,      
      2   X5,      X6,      X7,      X8,      
      3   Y1,      Y2,      Y3,      Y4,      
@@ -813,7 +832,10 @@ C
      5   Z1,      Z2,      Z3,      Z4,      
      6   Z5,      Z6,      Z7,      Z8,      
      7   NEL)
-       CALL SGEODEL3(NGL,GBUF%OFF,VOLN,DELTAX,GBUF%VOL,GEO(1,NGEO(1)),L_MAX,DT,NEL,IDEL7NOK )
+         VOLGS(1:NEL) =VOLN(1:NEL)
+         L_MIN(1:NEL) =DELTAX(1:NEL)
+        END IF  
+       CALL SGEODEL3(NGL,GBUF%OFF,VOLGS,L_MIN,GBUF%VOL,GEO(1,NGEO(1)),L_MAX,DT,NEL,IDEL7NOK )
       END IF
 C
 C Small strain formulation is activated:
@@ -972,7 +994,7 @@ C
      O   SIGO,         ICP,          LBUF%PLA,     IMATVIS,
      P   ET,           R3_DAM,       NEL,          GBUF%STRHG,
      Q   ISTRAIN,      MTN,          ISMSTR,       JLAG,
-     R   IINT)
+     R   IINT, MAT_ELEM%MAT_PARAM(IMAT))
       END IF !(ISORTH>0) THEN
       IF (CNS2 > ZERO) 
      .     CALL NSVIS_SM12(GBUF%OFF ,CNS2,CXX  ,VOLN ,DXX     ,
@@ -1303,6 +1325,6 @@ C Assemble internal forces
      I   NEL,     NFT,     JTHE,    ISROT,
      J   IPARTSPH,GLOB_THERM%NODADT_THERM)
       ENDIF
-      IF (ALLOCATED(VAR_REG)) DEALLOCATE(VAR_REG)
+      IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
       RETURN
       END

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    funct_python_update_elements_mod   ../engine/source/tools/curve/funct_python_update_elements.F90
 !||--- called by ------------------------------------------------------
@@ -49,6 +50,8 @@
 !||    matparam_def_mod               ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    multi_fvm_mod                  ../common_source/modules/ale/multi_fvm_mod.F90
 !||    mvsiz_mod                      ../engine/share/spe_inc/mvsiz_mod.F90
+!||    my_alloc_mod                   ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                 ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod           ../common_source/modules/names_and_titles_mod.F
 !||    nodal_arrays_mod               ../common_source/modules/nodal_arrays.F90
 !||    precision_mod                  ../common_source/modules/precision_mod.F90
@@ -92,6 +95,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                     implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                     Arguments
@@ -190,18 +195,18 @@
             !-----------------------------------------------------------!
             idmds = 0
             imdsvar = 0
-            allocate(mds_matid(0))
+            call my_alloc(mds_matid, 0, "mds_matid")
             ipt_input = -2
             layer_input = -2
             ply_input = -2
             iuvar_input = -2
             id = -1
             mode = -1
-            allocate(h3d_part(npart))
-            allocate(scalar_results(MVSIZ))
-            allocate(id_elem(MVSIZ))
-            allocate(ity_elem(MVSIZ))
-            allocate(is_written(MVSIZ))
+            call my_alloc(h3d_part, npart, "h3d_part")
+            call my_alloc(scalar_results, MVSIZ, "scalar_results")
+            call my_alloc(id_elem, MVSIZ, "id_elem")
+            call my_alloc(ity_elem, MVSIZ, "ity_elem")
+            call my_alloc(is_written, MVSIZ, "is_written")
             is_written(1:MVSIZ) = 0
             !-------------------------------------------------------!
             !     LOOP OVER ELEM GROUPS & OUTPUT DATA               !
@@ -271,16 +276,16 @@
 
             end do
 
-            deallocate(scalar_results)
-            deallocate(id_elem)
-            deallocate(ity_elem)
-            deallocate(is_written)
+            call my_dealloc(scalar_results)
+            call my_dealloc(id_elem)
+            call my_dealloc(ity_elem)
+            call my_dealloc(is_written)
 
             call python_element_sync(py%elements)
 
 
 
-            deallocate(h3d_part)
+            call my_dealloc(h3d_part)
           end if
           return
         end subroutine funct_python_update_elements

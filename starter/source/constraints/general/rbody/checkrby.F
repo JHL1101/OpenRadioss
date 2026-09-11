@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    checkrby               ../starter/source/constraints/general/rbody/checkrby.F
 !||--- called by ------------------------------------------------------
@@ -45,6 +46,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE ifrbody_off_mod , ONLY : ifrbody_off
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -74,7 +76,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,K,KK,N,NSL,
      .   ISPHER,IDIR,ID,ICDG,NSL_XTRA,
-     .   NRB,NUMSL_TMP,IFOUND,IM_ID(NRBYKIN),NM,IM,IACTI
+     .   NRB,NUMSL_TMP,IFOUND,IM_ID(NRBYKIN),NM,IM,IACTI,NUMSL1
       CHARACTER(LEN=NCHARTITLE)::TITR
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: TABSL
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX,IKINE1
@@ -99,9 +101,10 @@ C   NPBY(14,N) = NUMBER OF XTRA_NODE with Iflag=1
 C   NPBY(15,N) = NUMBER OF XTRA_NODE with Iflag=2
 C   NPBY(16,N) = NUMBER OF XTRA_NODE with Iflag=3
 C=======================================================================
-      IF (NUMSL > 0) THEN
-        ALLOCATE(TABSL(2,NUMSL))
-        ALLOCATE(INDEX(3*NUMSL))
+      NUMSL1 = NPBY(2,NRBYKIN) + NPBY(11,NRBYKIN) ! effective number<allocated size due to reductions
+      IF (NUMSL1 > 0) THEN
+        call my_alloc(TABSL, 2, NUMSL1, "TABSL")
+        call my_alloc(INDEX, 3*NUMSL1, "INDEX")
         TABSL=0
         INDEX=0
       END IF
@@ -110,7 +113,7 @@ C=======================================================================
       KK=0
       NRB = 0
 C
-      ALLOCATE(IKINE1(3*NUMNOD))
+      call my_alloc(IKINE1, 3*NUMNOD, "IKINE1")
       DO I=1,3*NUMNOD
         IKINE1(I) = 0
       ENDDO
@@ -128,7 +131,7 @@ c
           TABSL(2,J+KK)=N
         ENDDO
 C
-        IF(IDDLEVEL==0)THEN
+        IF(IDDLEVEL==0.AND.NPBY(21,N)==0)THEN ! check for rbody by part later
          IF(IKREM == 0)THEN
           DO J=1,NSL
            DO IDIR=1,6
@@ -224,9 +227,9 @@ C-------------------------------------
       END IF
 C
 C------------------------------------
-      IF(ALLOCATED(TABSL))DEALLOCATE(TABSL)
-      IF(ALLOCATED(INDEX))DEALLOCATE(INDEX)
-      IF(ALLOCATED(IKINE1)) DEALLOCATE(IKINE1)
+      IF(ALLOCATED(TABSL))CALL MY_DEALLOC(TABSL)
+      IF(ALLOCATED(INDEX))CALL MY_DEALLOC(INDEX)
+      IF(ALLOCATED(IKINE1)) CALL MY_DEALLOC(IKINE1)
 C------------------------------------
       RETURN
 C

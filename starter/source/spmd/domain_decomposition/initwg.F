@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C NEW ROUTINE TO FILL THE WEIGHT TABLE
 !||====================================================================
 !||    initwg               ../starter/source/spmd/domain_decomposition/initwg.F
@@ -37,6 +38,7 @@ C NEW ROUTINE TO FILL THE WEIGHT TABLE
 !||    initwg_x             ../starter/source/spmd/domain_decomposition/initwg_x.F
 !||--- uses       -----------------------------------------------------
 !||    ddweights_mod        ../starter/share/modules1/ddweights_mod.F
+!||    elm_group_mod        ../starter/source/modules/elm_group_mod.F90
 !||    mid_pid_mod          ../starter/share/modules1/mid_pid_mod.F
 !||====================================================================
       SUBROUTINE INITWG(WD,PM,GEO,IXS,IXQ,
@@ -49,7 +51,7 @@ C NEW ROUTINE TO FILL THE WEIGHT TABLE
      .            TABMP_L,IPART,IPARTC,IPARTG,
      .            IPARTS,NPART,POIN_PART_SHELL,POIN_PART_TRI,POIN_PART_SOL,
      .            MID_PID_SHELL,MID_PID_TRI,MID_PID_SOL,IDDLEVEL,
-     .            MAT_PARAM,iworksh)
+     .            MAT_PARAM,iworksh,elm_group)
 C-----------------------------------------------
 C            M o d u l e s
 C-----------------------------------------------
@@ -57,6 +59,7 @@ C-----------------------------------------------
       USE MID_PID_MOD
       USE MATPARAM_DEF_MOD
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      use elm_group_mod , only : elm_group_          
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -100,40 +103,32 @@ C     REAL OR REAL*8
       my_real, DIMENSION(TAILLE_OLD) :: CPUTIME_MP_OLD
       REAL WD(*)
       TYPE(MATPARAM_STRUCT_) ,DIMENSION(NUMMAT), INTENT(IN) :: MAT_PARAM
-      integer, dimension(3,numelc+numeltg), intent(in) :: iworksh !< ply data for shell & shell3n elements      
+      integer, dimension(3,numelc+numeltg), intent(in) :: iworksh !< ply data for shell & shell3n elements
+      type(elm_group_), intent(in) :: elm_group !< element group data structure to store the group id and the number of element in the group for each element   
 C-----------------------------------------------
-      INTEGER OFF, NPN, MID, PID, JHBE, IGT, MLN,
-     .    ISTRAIN, ITHK, IHBE, IPLA, ISSN, MTN, I, J, K,L,
-     .    NFUNC,MPT,NPTS,NPTT,NPTR,NPTOT,IFLAG,JSROT,
-     .    NFUNC1,NFUNC2,IRUP,II,IRUP2,IRUP_TAB(6),
-     .    I_MID,I_PID,I_MID_OLD,I_PID_OLD,PUID,MUID,
+      INTEGER OFF, MID, PID, MLN,
+     .    I, J, K,
+     .    PUID,MUID,
      .    ELM_TYP,ELM_TYP_OLD,ILAW,ILAW_OLD,TEST_MAT,
      .    I_PRO,ISOL,MID_OLD,PID_OLD,MUID_OLD,PUID_OLD,
-     .    TEST,RECHERCHE,NUMEL_RE,IAD,INDI,
+     .    RECHERCHE,NUMEL_RE,
      .    MAX_ELM_OLD,MAX_ELM,MAX_ELM_OLD_36_2,MAX_ELM_36_2,
      .    K_36_2,I_PRO_36_2,NBR_ELM
      
       INTEGER, DIMENSION(TAILLE) :: CONCORDANCE_MAT
-      REAL
-     .   WTYPE(9),FWIHBE,FAC8,
-     .   TABMAT(3),TABX(3),TIMMAT,NPT,TELT,POIDS,W,
-     .   BATOZMULT,TMAT,TABRUP(3),TRUP_LOCAL,TRUP
+      REAL WTYPE(9)
       my_real INVTELT_PRO,TELT_PRO
 
       INTEGER, DIMENSION(NUMMAT) :: PID_SHELL,PID_TRI
       INTEGER, DIMENSION(NUMMAT,7) :: PID_SOL
-      INTEGER :: IPID,ID,IGTYP,MODE
+      INTEGER :: MODE
       
-      my_real
-     .        CC, INVTREF,A,B,A1,A2
       my_real, DIMENSION(TAILLE_OLD) :: CPUTIME_MP_OLD_2
       INTEGER :: SIZE_IRUP !Maximum number of rupture criteria
 
 
        DATA WTYPE /1.6 ,1. ,1. ,.9 ,1.1 ,1.4 ,0.65 ,.9 ,2.0/
 !     ---------------------------------------------------------------------
-
-
       SIZE_IRUP = 0
       DO I = 1, NUMMAT
         SIZE_IRUP = MAX(SIZE_IRUP, MAT_PARAM(I)%NFAIL)
@@ -256,7 +251,7 @@ C-----------------------------------------------
      .            NUMEL_RE,IPM,NUMMAT,NUMGEO,POIN_PART_SHELL,
      .            MID_PID_SHELL,IPARTC,OFF,BUFMAT,
      .            MID,PID,MLN,RECHERCHE,TELT_PRO,
-     .            TABMP_L,MAT_PARAM,numeltg,iworksh)
+     .            TABMP_L,MAT_PARAM,numeltg,iworksh,elm_group%shell)
 ! --------------------------
 !       TRI             
            ELSEIF(ELM_TYP_OLD==7) THEN
@@ -264,7 +259,7 @@ C-----------------------------------------------
             CALL INITWG_TRI(WD,PM,GEO,IXTG,IGEO,NUMEL_RE,IPM ,SIZE_IRUP,
      .            NUMMAT,NUMGEO,POIN_PART_TRI,MID_PID_TRI,IPARTG,
      .            OFF,BUFMAT,MID,PID,MLN,RECHERCHE,TELT_PRO,
-     .            TABMP_L,MAT_PARAM,numelc,iworksh)
+     .            TABMP_L,MAT_PARAM,numelc,iworksh,elm_group%shell3n)
 
 ! --------------------------
 !       OTHER        
@@ -283,7 +278,7 @@ C-----------------------------------------------
      .            NUMMAT,NUMGEO,
      .            POIN_PART_SOL,MID_PID_SOL,IPARTS,BUFMAT,
      .            MID,PID,MLN,RECHERCHE,ISOL,
-     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM)
+     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM,elm_group%solid)
            ENDIF
            ! --------------------------
            ! Convert the old weight : new_weight = old_weight*reference_weight/reference_old_weight
@@ -321,7 +316,7 @@ C -------------------------------
      .            NUMMAT,NUMGEO,
      .            POIN_PART_SOL,MID_PID_SOL,IPARTS,BUFMAT,
      .            MID,PID,MLN,RECHERCHE,ISOL,
-     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM)
+     .            TELT_PRO,TABMP_L,NPART,MAT_PARAM,elm_group%solid)
 C      
       OFF = NUMELS
 ! -------------------- 
@@ -334,7 +329,7 @@ C
      .            NUMELC,IPM,NUMMAT,NUMGEO,POIN_PART_SHELL,
      .            MID_PID_SHELL,IPARTC,OFF,BUFMAT,
      .            MID,PID,MLN,RECHERCHE,TELT_PRO,
-     .            TABMP_L,MAT_PARAM,numeltg,iworksh)
+     .            TABMP_L,MAT_PARAM,numeltg,iworksh,elm_group%shell)
 C
       OFF = OFF + NUMELC
 ! -------------------- 
@@ -356,7 +351,7 @@ C
       CALL INITWG_TRI(WD,PM,GEO,IXTG,IGEO,NUMELTG,IPM , SIZE_IRUP,
      .            NUMMAT,NUMGEO,POIN_PART_TRI,MID_PID_TRI,IPARTG,
      .            OFF,BUFMAT,MID,PID,MLN,RECHERCHE,TELT_PRO,
-     .            TABMP_L,MAT_PARAM,numelc,iworksh)
+     .            TABMP_L,MAT_PARAM,numelc,iworksh,elm_group%shell3n)
 C
       OFF = OFF + NUMELTG
 ! -------------------- 

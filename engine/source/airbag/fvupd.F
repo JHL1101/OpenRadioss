@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fvupd0                ../engine/source/airbag/fvupd.F
 !||--- called by ------------------------------------------------------
@@ -246,6 +247,8 @@ C
 !||--- uses       -----------------------------------------------------
 !||    fvbag_mod                ../engine/share/modules/fvbag_mod.F
 !||    fvmbag_meshcontrol_mod   ../common_source/modules/airbag/fvmbag_meshcontrol_mod.F
+!||    my_alloc_mod             ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod           ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE FVUPD1(NEL       , IBUF    , ELEM     , X    , NPOLH ,
      .                  MPOLH     , QPOLH   , EPOLH    , V    ,
@@ -271,6 +274,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -877,7 +882,7 @@ C
       ENDDO
       IF (CMAX==1) GOTO 300      
 C
-      ALLOCATE(MERGE(CMAX+1,NPOLH))
+      call my_alloc(MERGE, CMAX+1, NPOLH, "MERGE")
       DO I=1,NPOLH
          MERGE(1,I)=1
          MERGE(2,I)=I
@@ -894,7 +899,7 @@ C
       ENDDO
 C
       LEN=IFVPADR(NPOLH+1)-1
-      ALLOCATE(IFVPOLH_OLD(LEN))
+      call my_alloc(IFVPOLH_OLD, LEN, "IFVPOLH_OLD")
 
 !$OMP PARALLEL PRIVATE(I)
 !$OMP DO SCHEDULE(DYNAMIC,MVSIZ) 
@@ -1065,7 +1070,8 @@ C
             POLHAPP(2,I)=REDIR(IP2)
          ENDIF
       ENDDO
-      DEALLOCATE(MERGE, IFVPOLH_OLD)
+      call my_dealloc(MERGE)
+      call my_dealloc(IFVPOLH_OLD)
 
 
 !$OMP PARALLEL PRIVATE(I)
@@ -1158,10 +1164,10 @@ C
 
   300 CONTINUE 
 
-      DEALLOCATE(FVSPMD(IFV)%XXX)
-      DEALLOCATE(FVSPMD(IFV)%VVV) 
-      DEALLOCATE(FVSPMD(IFV)%WAV) 
-      DEALLOCATE(FVSPMD(IFV)%WAX) 
+      call my_dealloc(FVSPMD(IFV)%XXX)
+      call my_dealloc(FVSPMD(IFV)%VVV)
+      call my_dealloc(FVSPMD(IFV)%WAV)
+      call my_dealloc(FVSPMD(IFV)%WAX)
 
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat101           ../starter/source/materials/mat/mat101/hm_read_mat101.F
 !||--- called by ------------------------------------------------------
@@ -73,11 +74,8 @@ C-----------------------------------------------
      . RHO0,DR,DEREF,DE1,DPOISS,DVE1,DVE2,DEDOT_REF, 
      . GAMV_REF, ALPHAP, DQ, DV, DM, DC3, DC4, CALPHAK1, CALPHAK2, H0,
      . DES1_0, DC5, DC6, DC7, DC8, DC9, DC10, H1, DES2_0, DC11, DC12,
-     . DC13, DC14, DC1, DC2, DLAMBDA, RHOA, CV, THETA0, BETA0, BTHETA0,
-     . FACTOR, TEMP_OPT, THETAI, THETAG,STIFINT,
-     . C1,C2,C3,C4,C5,MU,LM,D,BETA,FACPL, SCALE1, SCALE2
-      CHARACTER(LEN=NCHARFIELD) ::STRING,KEYNET
-      CHARACTER(LEN=NCHARTITLE) ::  KEY
+     . DC13, DC14, DC1, DC2, DLAMBDA, RHOA, CV, THETA0, BETA0,
+     . FACTOR, TEMP_OPT, THETAI, THETAG,STIFINT
       INTEGER ILAW
 C     
       LOGICAL :: IS_AVAILABLE,IS_ENCRYPTED

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_gather_nodal_scalar_mod   ../engine/source/mpi/nodes/spmd_gather_nodal_scalar.F
 !||--- called by ------------------------------------------------------
@@ -37,21 +38,18 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- called by ------------------------------------------------------
 !||    spmd_exch_output_noda_pext   ../engine/source/mpi/output/spmd_exch_output_noda_pext.F
 !||--- calls      -----------------------------------------------------
+!||    spmd_get_count_int           ../engine/source/mpi/generic/spmd_get_count.F90
 !||--- uses       -----------------------------------------------------
 !||    constant_mod                 ../common_source/modules/constant_mod.F
 !||    precision_mod                ../common_source/modules/precision_mod.F90
-!||    spmd_comm_world_mod          ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_recv_mod                ../engine/source/mpi/spmd_recv.F90
-!||    spmd_send_mod                ../engine/source/mpi/spmd_send.F90
+!||    spmd_mod                     ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
        subroutine spmd_gather_nodal_scalar(v_glob,num,v,numnod,weight,nodglob)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
-        use spmd_comm_world_mod, only : spmd_comm_world
+        use spmd_mod, only : spmd_send, spmd_recv, spmd_probe, spmd_get_count_int
         use precision_mod , only : WP
-        use spmd_send_mod, only: spmd_send
-        use spmd_recv_mod, only: spmd_recv
         use constant_mod , only : zero
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
@@ -98,9 +96,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
          END DO 
 
          MSGTYP = MSGOFF2
-         CALL spmd_send(IBUF,SIZ,IT_SPMD(1),MSGTYP)
+         CALL spmd_send(IBUF(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
          MSGTYP = MSGOFF 
-         CALL spmd_SEND(BUFSR,SIZ,IT_SPMD(1),MSGTYP)
+         CALL spmd_SEND(BUFSR(1:SIZ),SIZ,IT_SPMD(1),MSGTYP)
 
        ELSE
 
@@ -116,12 +114,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
           DO I=2,NSPMD
             !--- Receiving the full buffer of NODGLOB addresses
             MSGTYP = MSGOFF2
-            CALL MPI_PROBE(IT_SPMD(I),MSGTYP,SPMD_COMM_WORLD,STATUS,ierror)
-            CALL MPI_GET_COUNT(STATUS,MPI_INTEGER,SIZ,ierror)
-            CALL spmd_RECV(IBUF,SIZ,IT_SPMD(I),MSGTYP)
+            CALL spmd_probe(IT_SPMD(I),MSGTYP,STATUS)
+            CALL spmd_get_count_int(STATUS,SIZ)
+            CALL spmd_RECV(IBUF(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
             !--- Receiving the floating buffer of NODGLOB addresses
             MSGTYP = MSGOFF 
-            CALL spmd_RECV(BUFSR,SIZ,IT_SPMD(I),MSGTYP)
+            CALL spmd_RECV(BUFSR(1:SIZ),SIZ,IT_SPMD(I),MSGTYP)
             NREC = SIZ
             DO K = 1, NREC
               NG = IBUF(K)

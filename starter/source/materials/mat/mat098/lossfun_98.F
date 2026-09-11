@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lossfun_98             ../starter/source/materials/mat/mat098/lossfun_98.F
 !||--- calls      -----------------------------------------------------
@@ -68,23 +69,20 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,II,J,ID,NP1,NP2,J1,K,K1,NCON, ITER,NITER,
+      INTEGER I,II,NITER,
      .      PN1,PN2,ISYM,LENC,LENT
       my_real 
-     .      EMBC,EMBT,Y,FMINS,FMINF,DEMBC,EMBCP,FLEXP,
-     .      FLEX1,FLEX2,LC0,LT0,DC0,DT0,HC0,HT0,KC,KT,KFC,KFT,
-     .      HC,HT,DCC,DC,DT,UDC,UDT,HDC,HDT,FC,FT,FPC,FPT,KF,
-     .      DERIC,DTT,FUNC,DCP,DTP, T1,T2,A1,A2,DFLEX,FLEX2P,FLEX1P,
-     .      FMINC,FMINT,FMINC2,FMINS2,FMINF2,FMINF1,YP,EMBTP,DEMBT,YFAC(8)
+     .      EMBC,EMBT,FMINS,FMINF,DEMBC,EMBCP,FLEXP,
+     .      FLEX1,FLEX2,DC0,DT0,HC0,HT0,
+     .      A1,A2,DFLEX,
+     .      FMINC,FMINT,FMINS2,FMINF2,FMINF1,EMBTP,DEMBT,YFAC(8)
 
       my_real
-     .      EC(LENC),FCU(LENC),LC(LENC),YC(LENC),SIGC(LENC), 
-     .      SIGCP(LENC),
+     .      EC(LENC),FCU(LENC),SIGC(LENC),
      .      XFIB(LENC),YFIB(LENC),
      .      XCFIB(NPTBI),YCFIB(NPTBI),XTFIB(NPTBI),YTFIB(NPTBI)
       my_real
-     .      ET(LENT),FTU(LENT),LT(LENT),YT(LENT),SIGT(LENT),
-     .      SIGTP(LENT)
+     .      ET(LENT),FTU(LENT),SIGT(LENT)
 
 c      my_real, DIMENSION(:)   ,ALLOCATABLE ::  
 c---------------------------- 
@@ -452,9 +450,9 @@ C-----------------------------------------------
 #include      "implicit_f.inc"
 C-----------------------------------------------
 
-      INTEGER IFUNC, I,NPT
+      INTEGER I,NPT
       my_real 
-     .    ABC,DERI,XX,DX1,DX2,XC(NPT),YC(NPT)
+     .    DERI,XX,DX1,DX2,XC(NPT),YC(NPT)
 C-----------------------------------------------
         FINTER58 = ZERO
 C
@@ -504,13 +502,13 @@ C-----------------------------------------------
       INTEGER NPC(*) 
       my_real FINTER ,PLD(*),XBIA(NPTBI)
       EXTERNAL FINTER
-      INTEGER I,J,IDN1,IDN2,NPTBI,NP1, NITER,ITER
+      INTEGER I,J,IDN1,IDN2,NPTBI,NITER,ITER
       my_real 
      .   DC0,HC0,DT0,HT0,LC,LT,DC,UDC,UDT,HDC,HDT,YFAC1,YFAC2,YC,YT,
      .   FPC,FPT, Y,HC,HT,DT, FC,FT,KF,KFT,KFC,FUNC,DERIC,
-     .   XX(NPTBI),YB(NPTBI),XFIB(NPTBI),YFIB(NPTBI),XCFIB(NPTBI),
-     .   YCFIB(NPTBI),XTFIB(NPTBI),YTFIB(NPTBI),DCC(NPTBI),
-     .   DTT(NPTBI),STISSUC(NPTBI),STISSUT(NPTBI)
+     .   XCFIB(NPTBI),
+     .   YCFIB(NPTBI),XTFIB(NPTBI),YTFIB(NPTBI),
+     .   STISSUC(NPTBI),STISSUT(NPTBI)
 C-----------------------------------------------
        INTENT(IN)    :: NPC,PLD ,NPTBI,YFAC1,YFAC2
 c---------------------------------------------- 
@@ -597,7 +595,7 @@ C-----------------------------------------------
      .    PLD(*)
       INTEGER I,J,IDN,SIZEPN,NP1
       my_real 
-     .   XX(SIZEPN),YB(SIZEPN),XFIB(SIZEPN),YFIB(SIZEPN),DC0,HC0,
+     .   XX(SIZEPN),XFIB(SIZEPN),YFIB(SIZEPN),DC0,HC0,
      .   LC,DC
 C-----------------------------------------------
        INTENT(IN)    :: NPC,PLD 
@@ -650,8 +648,8 @@ c-----------------------------------------------
 c---------------------------- 
       INTEGER  ITER,NITER
       my_real 
-     .    HC,HT,YC,DC,DCC,UDC,HDC,LC,LT,DERIC,DT0,
-     .  FC,EC2,FPC
+     .    HC,YC,DC,DCC,UDC,HDC,LC,DERIC,
+     .  FC,FPC
       my_real 
      .    FINTER58
       EXTERNAL FINTER58

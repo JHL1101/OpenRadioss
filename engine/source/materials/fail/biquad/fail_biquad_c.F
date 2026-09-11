@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,31 +15,29 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_biquad_c           ../engine/source/materials/fail/biquad/fail_biquad_c.F
 !||--- called by ------------------------------------------------------
 !||    mulawc                  ../engine/source/materials/mat_share/mulawc.F90
 !||    usermat_shell           ../engine/source/materials/mat_share/usermat_shell.F
 !||--- calls      -----------------------------------------------------
-!||    finter                  ../engine/source/tools/curve/finter.F
 !||    table_mat_vinterp       ../engine/source/materials/tools/table_mat_vinterp.F
 !||--- uses       -----------------------------------------------------
 !||    fail_param_mod          ../common_source/modules/mat_elem/fail_param_mod.F90
 !||    table_mat_vinterp_mod   ../engine/source/materials/tools/table_mat_vinterp.F
 !||====================================================================
       SUBROUTINE FAIL_BIQUAD_C(FAIL ,
-     1           NEL      ,NUVAR    ,
-     2           TIME     ,NGL      ,IPT      ,NPTOT    ,
+     1           NEL      ,NUVAR    ,NVARTMP  ,UVAR     ,VARTMP   ,
+     2           TIME     ,NGL      ,IPT      ,NPTOT    ,IPG      ,
      3           SIGNXX   ,SIGNYY   ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,
-     4           DPLA     ,UVAR     ,UEL1     ,
-     5           OFF      ,OFFL     ,DFMAX    ,TDEL     ,NFUNC    ,
-     6           IFUNC    ,NPF      ,TF       ,ALDT     ,FOFF     ,
-     7           IPG      ,DMG_FLAG ,DMGSCL   )
+     4           DPLA     ,UEL1     ,OFF      ,OFFL     ,DFMAX    ,
+     5           TDEL     ,ALDT     ,FOFF     ,DMG_FLAG ,DMGSCL   )
 C-----------------------------------------------
 C    Biquadratic failure model for shells
 ! ---------------------------- ----------------------------------------------------------------------
@@ -56,7 +54,6 @@ C   G l o b a l   P a r a m e t e r s
 C-----------------------------------------------
 #include "units_c.inc"
 #include "comlock.inc"
-#include "mvsiz_p.inc"
 C---------+---------+---+---+--------------------------------------------
 C VAR     | SIZE    |TYP| RW| DEFINITION
 C---------+---------+---+---+--------------------------------------------
@@ -90,47 +87,36 @@ C IGTYP                       PROPERTY TYPE
 C-----------------------------------------------
 C   I N P U T   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NEL,NUVAR,IPT,NPTOT,NFUNC,IPG
-      INTEGER NGL(NEL),IFUNC(NFUNC)
-      my_real TIME,DPLA(NEL),UEL1(NEL),ALDT(NEL)
+      INTEGER ,INTENT(IN)    :: NEL,NUVAR,NVARTMP,IPT,NPTOT,IPG
+      INTEGER ,INTENT(IN)    :: NGL(NEL)
       INTEGER, INTENT(INOUT) :: DMG_FLAG
+      my_real ,INTENT(IN)    :: TIME
+      my_real ,INTENT(IN)    :: DPLA(NEL),ALDT(NEL)
+      my_real ,INTENT(INOUT) :: UEL1(NEL)
       type (fail_param_) ,target ,intent(inout) :: fail    !< failure model data structure
 C-----------------------------------------------
 C   I N P U T   O U T P U T   A r g u m e n t s 
 C-----------------------------------------------
-      INTEGER ,DIMENSION(NEL), INTENT(INOUT) :: FOFF
-      my_real 
-     .  UVAR(NEL,NUVAR),OFF(NEL),OFFL(NEL),
-     .  SIGNXX(NEL),SIGNYY(NEL),SIGNXY(NEL),SIGNYZ(NEL),SIGNZX(NEL),
-     .  DFMAX(NEL),TDEL(NEL)
+      INTEGER ,DIMENSION(NEL)        , INTENT(INOUT) :: FOFF
+      INTEGER ,DIMENSION(NEL,NVARTMP), INTENT(INOUT) :: VARTMP
+      my_real ,DIMENSION(NEL,NUVAR)  , INTENT(INOUT) :: UVAR
+      my_real :: OFF(NEL),OFFL(NEL),DFMAX(NEL),TDEL(NEL),
+     .  SIGNXX(NEL),SIGNYY(NEL),SIGNXY(NEL),SIGNYZ(NEL),SIGNZX(NEL)
       my_real, INTENT(INOUT) :: DMGSCL(NEL)
-C-----------------------------------------------
-C   VARIABLES FOR FUNCTION INTERPOLATION 
-C-----------------------------------------------
-      INTEGER NPF(*)
-      my_real FINTER ,TF(*)
-      EXTERNAL FINTER
-C        Y = FINTER(IFUNC(J),X,NPF,TF,DYDX)
-C        Y       : y = f(x)
-C        X       : x
-C        DYDX    : f'(x) = dy/dx
-C        IFUNC(J): FUNCTION INDEX
-C              J : FIRST(J=1), SECOND(J=2) .. FUNCTION USED FOR THIS LAW
-C        NPF,TF  : FUNCTION PARAMETER
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
        my_real pressure, svm, triax,REF_EL_LEN
-       INTEGER I,J,NINDX1,NINDX2,FLAG_PERTURB,SFLAG
+       INTEGER I,J,NINDX1,NINDX2,FLAG_PERTURB,SFLAG,NTABLE
        INTEGER IREG
        INTEGER ICOUP
-       INTEGER, DIMENSION(MVSIZ) :: INDX1,INDX2
+       INTEGER, DIMENSION(NEL) :: INDX1,INDX2
        INTEGER, DIMENSION(NEL,1) :: IPOS
-       my_real  ,DIMENSION(NEL)   :: REG_FAC,regf_eta,DERI
+       my_real  ,DIMENSION(NEL)   :: REG_FAC,regf_eta,lambda,DERI
        my_real  ,DIMENSION(NEL,1) :: ETA
        my_real  X_1(3) , X_2(3),c3,DYDX,DC(NEL)
        my_real  EPS_FAIL, EPS_FAIL2, DAMAGE, INST, DCRIT, EXP
-       my_real  P1X,P1Y,S1X,S1Y,S2Y, A1, A2, B1, B2, C1, C2,LAMBDA
+       my_real  P1X,P1Y,S1X,S1Y,S2Y, A1, A2, B1, B2, C1, C2
 C-----------------------------------------------
 c! UVAR1 = damage due to instability (triax between 1/3 and 2/3)
 c! UVAR2 = actual integration point ON or OFF
@@ -157,28 +143,24 @@ C-----------------------------------------------
        EPS_FAIL2    = ZERO
        DCRIT        = FAIL%UPARAM(15)
        EXP          = FAIL%UPARAM(16)
+       NTABLE       = FAIL%NTABLE4D
 !---------------------------------------------------------------------------
 !      Element size scale factor on failure plastic strain
 !---------------------------------------------------------------------------
-       IF (IREG > 0) THEN 
-         IF (NUVAR == 3) THEN 
-           IF (UVAR(1,3)==ZERO) THEN 
-             DO I=1,NEL
-               LAMBDA    = ALDT(I) / REF_EL_LEN
-               UVAR(I,3) = FINTER(IFUNC(1),LAMBDA,NPF,TF,DYDX) 
-             ENDDO
-           ENDIF
-           REG_FAC(1:NEL) = UVAR(1:NEL,3)
-         ELSEIF (NUVAR == 9) THEN 
-           IF (UVAR(1,9)==ZERO) THEN 
-             DO I=1,NEL
-               LAMBDA    = ALDT(I) / REF_EL_LEN
-               UVAR(I,9) = FINTER(IFUNC(1),LAMBDA,NPF,TF,DYDX) 
-             ENDDO
-           ENDIF
-           REG_FAC(1:NEL) = UVAR(1:NEL,9)
-         ENDIF
-       ENDIF
+       if (ireg > 0) then 
+         lambda(1:nel) = aldt(1:nel) / ref_el_len
+         if (nuvar == 3) then 
+           if (uvar(1,3) == zero) then
+             call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,lambda,uvar(1:nel,3),deri)
+           endif
+           reg_fac(1:nel) = uvar(1:nel,3)
+         elseif (nuvar == 9) then 
+           if (uvar(1,9) == zero) then 
+             call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,lambda,uvar(1:nel,9),deri)
+           endif
+           reg_fac(1:nel) = uvar(1:nel,9)
+         endif
+       endif
        ! calculate triaxiality
          do i=1,nel
            pressure = (signxx(I)+ signyy(I)) * third
@@ -187,12 +169,12 @@ C-----------------------------------------------
            eta(i,1) = triax
          end do
 !
-       IF (IREG > 1) THEN
-         ! calculate scaling factor on failure limits depending on triaxiality
+       if (ireg > 1) then
+         ! calculate scaling factor on failure limits depending on triaxiality, automatically created table is always last one
          ipos(1:nel,1) = 1
-         call table_mat_vinterp(fail%table4d(1),nel,nel,ipos,eta,regf_eta,deri)
+         call table_mat_vinterp(fail%table4d(ntable),nel,nel,ipos,eta,regf_eta,deri)
          reg_fac(1:nel) = (one - regf_eta(1:nel)) + regf_eta(1:nel)*reg_fac(1:nel)
-       END IF
+       end if
 !---------------------------------------------------------------------------
        IF(FLAG_PERTURB == 0) THEN
          DO I =1,NEL

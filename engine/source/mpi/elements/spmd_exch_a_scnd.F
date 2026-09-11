@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,29 +15,30 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_exch_a_scnd      ../engine/source/mpi/elements/spmd_exch_a_scnd.F
+!||    spmd_exch_a_scnd   ../engine/source/mpi/elements/spmd_exch_a_scnd.F
 !||--- called by ------------------------------------------------------
-!||    s10cndamp             ../engine/source/elements/solid/solide10/s10cndf.F
-!||    s10cndf1              ../engine/source/elements/solid/solide10/s10cndf.F
-!||    s10cndf2              ../engine/source/elements/solid/solide10/s10cndf.F
-!||    s10cnidamp            ../engine/source/elements/solid/solide10/s10cndf.F
-!||    s10cnistat            ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cndamp          ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cndf1           ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cndf2           ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cnidamp         ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cnistat         ../engine/source/elements/solid/solide10/s10cndf.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod           ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_A_SCND(
      1            A    ,STIFN ,FR_CDNM,IAD_CDNM, LCOMM,ISIZE)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -80,9 +81,9 @@ c      ISIZE = 3
           L=L+1
           INDEXI(L)=I
           MSGTYP = MSGOFF
-          CALL MPI_IRECV(
-     S      RBUF(IDEB),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(L),IERROR)
+          CALL SPMD_IRECV(
+     S      RBUF(IDEB:IDEB+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,
+     G      REQ_R(L))
           IDEB = IDEB + SIZ
         ENDIF
       ENDDO
@@ -109,14 +110,14 @@ C
         LEN = IAD_CDNM(I+1)-IAD_CDNM(I)
         SIZ = LEN*ISIZE
         MSGTYP = MSGOFF
-        CALL MPI_ISEND(
-     S    SBUF(IDEB),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G    SPMD_COMM_WORLD,REQ_S(L),IERROR)
+        CALL SPMD_ISEND(
+     S    SBUF(IDEB:IDEB+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,
+     G    REQ_S(L))
         IDEB = IDEB + SIZ
       ENDDO
 C
       DO L=1,NBINDEX
-        CALL MPI_WAITANY(NBINDEX,REQ_R,INDEX,STATUS,IERROR)
+        CALL SPMD_WAITANY(REQ_R,NBINDEX,INDEX,STATUS)
         I = INDEXI(INDEX)
         IDEB = 1+(IAD_CDNM(I)-1)*ISIZE
         LEN = IAD_CDNM(I+1)-IAD_CDNM(I)
@@ -132,10 +133,9 @@ C
       ENDDO
 C
       DO L=1,NBINDEX
-        CALL MPI_WAITANY(NBINDEX,REQ_S,INDEX,STATUS,IERROR)
+        CALL SPMD_WAITANY(REQ_S,NBINDEX,INDEX,STATUS)
       ENDDO
 C
 #endif
       RETURN
       END SUBROUTINE
-

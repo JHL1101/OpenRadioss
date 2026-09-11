@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C   Only BC in global system are processed
 !||====================================================================
 !||    bc_imp0      ../engine/source/constraints/general/bcs/bc_imp0.F
@@ -45,7 +46,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, ISK,  ICT,ICR,J,K,NFIX,ND
+      INTEGER I, ISK,  ICT,ICR,K,ND
 C----------------BC-------------------------
 Ccw   FIX X-DOF FOR 2D CASE
       IF (N2D/=0) THEN
@@ -283,7 +284,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L,KC
+      INTEGER J,KC
       my_real
      .   EJ(3)
 C----------------BC-------------------------
@@ -356,7 +357,6 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
       my_real
      .   EJ1,EJ2,EJ3
 C-----------------------------------------------
@@ -505,8 +505,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ND,K,L,J1,K1,L1,ID,SHF,JFT,KFT,LFT,NL,NJ,
-     .        IT(6),KK
+      INTEGER I,J,ND,K,L,J1,K1,L1,ID,SHF,JFT,KFT,LFT,NL,NJ
       my_real
      .   KDD(6,6),KII(6,6)
 C-----------------------------------------------
@@ -735,9 +734,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L
+      INTEGER J,K,J1
       my_real
-     .   EJ(3),EJ1(3),MAX_E,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C----------------BC-------negative ICT only possible with 2 dirs------------------
          IF (ICT == 4 ) THEN
           EJ(1)=SKEW(1,ISK)
@@ -853,7 +852,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,ND,K,L
+      INTEGER K,L
 C-----------------------------------------------
       K = J + 1
       L = J + 2
@@ -882,7 +881,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,K,L
+      INTEGER K
       my_real
      .   S
 C-----------------------------------------------
@@ -928,7 +927,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L
+      INTEGER J
       my_real
      .   EJ(3)
 C----------------BC-------------------------
@@ -988,7 +987,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,N,K,L,J1,K1,L1,K2,K3,II,ISK,ICT
+      INTEGER J,N,II,ISK,ICT
       my_real
      .   EJ(3)
 C-----------------------------------------------
@@ -1079,7 +1078,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ND,K,L,J1,K1,L1
+      INTEGER ND,K,L,J1,K1,L1
 C-----------------------------------------------
       IF (IR==0) THEN
        ND = 3
@@ -1280,7 +1279,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L
+      INTEGER J
       my_real
      .   EJ(3)
 C----------------BC-------------------------
@@ -1429,7 +1428,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L
+      INTEGER J
       my_real
      .   EJ(3)
 C----------------BC-------------------------
@@ -1511,7 +1510,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,N,IER1,IR,IAD,NN,ND,KC
+      INTEGER I,J,N,IR,IAD,NN,ND,KC
 C
       my_real
      .  EJ(3)
@@ -1820,10 +1819,10 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real
      *   AMTX(9), COPY(9)
-      INTEGER IDMTX,JDMTX,KDMTX,NZERO
-      INTEGER I, J, IND, IHIGH, NMTX, IEQ, ID(3)
+      INTEGER IDMTX,JDMTX,NZERO
+      INTEGER I, J, IND, NMTX, IEQ, ID(3)
       my_real
-     *   EIGVEC(9), EIGVAL(3), HIGH,NOM
+     *   EIGVEC(9), EIGVAL(3), HIGH
 C
 C     INITIALIZE GRID MATRIX DATA TO ZERO
 C
@@ -2087,18 +2086,20 @@ C---------reset in BC_IMPA ---
       END
 C
 !||====================================================================
-!||    upd_aspc0     ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    upd_aspc0        ../engine/source/constraints/general/bcs/bc_imp0.F
 !||--- called by ------------------------------------------------------
-!||    upd_aspc      ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    upd_aspc         ../engine/source/constraints/general/bcs/bc_imp0.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../engine/source/output/message/message.F
-!||    arret         ../engine/source/system/arret.F
-!||    autspc        ../engine/source/constraints/general/bcs/bc_imp0.F
-!||    get_kii       ../engine/source/implicit/imp_glob_k.F
-!||    spc_dir       ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    ancmsg           ../engine/source/output/message/message.F
+!||    arret            ../engine/source/system/arret.F
+!||    autspc           ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    get_kii          ../engine/source/implicit/imp_glob_k.F
+!||    spc_dir          ../engine/source/constraints/general/bcs/bc_imp0.F
 !||--- uses       -----------------------------------------------------
-!||    imp_aspc      ../engine/share/modules/impbufdef_mod.F
-!||    message_mod   ../engine/share/message_module/message_mod.F
+!||    imp_aspc         ../engine/share/modules/impbufdef_mod.F
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE UPD_ASPC0(NDDL  ,NDOF  ,IDDL  ,IKC    ,ITAB  ,
      .                    IADK  ,JDIK  ,DIAG_K,LT_K   )
@@ -2110,6 +2111,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2129,12 +2132,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NSPCLI,NSPCT,NSPCTI,I,J,K,N,
+      INTEGER NSPCT,NSPCTI,I,J,K,
      .        ID(3),IK,IDK,IER1,IER2,IERR,NSPC,IR,NDOFT,J1,NSPCR,
      .        NSPCN,IKC3
 C
       my_real
-     *       KII(3,3),KDD(6,6),SMLEIG,KDIV3,RS
+     *       KII(3,3),KDD(6,6),SMLEIG,KDIV3
       INTEGER, DIMENSION(:),ALLOCATABLE :: ILT,ILR
       my_real, DIMENSION(:,:),ALLOCATABLE ::
      .                                     SKEWT,SKEWR
@@ -2146,11 +2149,13 @@ C-----------------------------------------------
       IERR = 0
       SMLEIG = EM8
       IF(IAUTSPC>1) THEN
-        ALLOCATE(ILT(NUMNOD),SKEWT(6,NUMNOD),STAT=IER1)
+        call my_alloc(ILT, NUMNOD, "ILT", stat=IER1)
+        call my_alloc(SKEWT, 6, NUMNOD, "SKEWT", stat=IER1)
         ILT=0
         SKEWT=ZERO
        IF (IRODDL/=0) THEN
-        ALLOCATE(ILR(NUMNOD),SKEWR(6,NUMNOD),STAT=IER2)
+        call my_alloc(ILR, NUMNOD, "ILR", stat=IER2)
+        call my_alloc(SKEWR, 6, NUMNOD, "SKEWR", stat=IER2)
         ILR=0
         SKEWR=ZERO
        ENDIF
@@ -2251,11 +2256,12 @@ C
       ENDIF
 C
       IF (NSPCL>0) THEN
-        IF(ALLOCATED(IN_SPC)) DEALLOCATE(IN_SPC)
-        IF(ALLOCATED(IC_SPC)) DEALLOCATE(IC_SPC)
-        ALLOCATE(IN_SPC(NSPCL),IC_SPC(NSPCL),STAT=IER1)
-        IF(ALLOCATED(SKEW_SPC)) DEALLOCATE(SKEW_SPC)
-        ALLOCATE(SKEW_SPC(6*NSPCL),STAT=IER2)
+        IF(ALLOCATED(IN_SPC)) call my_dealloc(IN_SPC)
+        IF(ALLOCATED(IC_SPC)) call my_dealloc(IC_SPC)
+        call my_alloc(IN_SPC, NSPCL, "IN_SPC", stat=IER1)
+        call my_alloc(IC_SPC, NSPCL, "IC_SPC", stat=IER1)
+        IF(ALLOCATED(SKEW_SPC)) call my_dealloc(SKEW_SPC)
+        call my_alloc(SKEW_SPC, 6*NSPCL, "SKEW_SPC", stat=IER2)
        IC_SPC =0
        IN_SPC =0
        SKEW_SPC=ZERO
@@ -2298,7 +2304,8 @@ C
 C
  900  CONTINUE
       IF(IAUTSPC>1) THEN
-       DEALLOCATE(ILT,SKEWT)
+       call my_dealloc(ILT)
+       call my_dealloc(SKEWT)
        IF (IRODDL/=0) DEALLOCATE(ILR,SKEWR)
       ENDIF
       IF (IERR>0) THEN
@@ -2311,19 +2318,24 @@ C
       RETURN
       END
 !||====================================================================
-!||    upd_aspc      ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    upd_aspc         ../engine/source/constraints/general/bcs/bc_imp0.F
 !||--- called by ------------------------------------------------------
-!||    upd_glob_k    ../engine/source/implicit/upd_glob_k.F
+!||    upd_glob_k       ../engine/source/implicit/upd_glob_k.F
 !||--- calls      -----------------------------------------------------
-!||    cp_real       ../engine/source/implicit/produt_v.F
-!||    spmd_sumf_k   ../engine/source/mpi/implicit/imp_spmd.F
-!||    upd_aspc0     ../engine/source/constraints/general/bcs/bc_imp0.F
+!||    cp_real          ../engine/source/implicit/produt_v.F
+!||    spmd_sumf_k      ../engine/source/mpi/implicit/imp_spmd.F
+!||    upd_aspc0        ../engine/source/constraints/general/bcs/bc_imp0.F
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE UPD_ASPC(NDDL  ,NDOF  ,IDDL  ,IKC    ,ITAB     ,
      .                    IADK  ,JDIK  ,DIAG_K,LT_K   )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2345,13 +2357,15 @@ C-----------------------------------------------
 C-----------------------------------------------
        IF (NSPMD>1) THEN
          NZ = IADK(NDDL+1)-IADK(1)
-         ALLOCATE(DIAG_KP(NDDL),LT_KP(NZ),STAT=IERR)
+         call my_alloc(DIAG_KP, NDDL, "DIAG_KP", stat=IERR)
+         call my_alloc(LT_KP, NZ, "LT_KP", stat=IERR)
          CALL CP_REAL(NDDL,DIAG_K,DIAG_KP)
          CALL CP_REAL(NZ,LT_K,LT_KP)
          CALL SPMD_SUMF_K(DIAG_KP  ,LT_KP     )
          CALL UPD_ASPC0(NDDL  ,NDOF  ,IDDL  ,IKC    ,ITAB  ,
      .                  IADK  ,JDIK  ,DIAG_KP,LT_KP   )
-         DEALLOCATE(DIAG_KP,LT_KP)
+         call my_dealloc(DIAG_KP)
+         call my_dealloc(LT_KP)
        ELSE
            CALL UPD_ASPC0(NDDL  ,NDOF  ,IDDL  ,IKC    ,ITAB  ,
      .                    IADK  ,JDIK  ,DIAG_K,LT_K   )
@@ -2385,9 +2399,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L,ND
+      INTEGER J,K,J1
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)
@@ -2433,9 +2447,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J,K,J1,L
+      INTEGER J,K,J1
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)
@@ -2479,9 +2493,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,K,L,J,J1
+      INTEGER K,J,J1
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)
@@ -2524,9 +2538,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,ND,K,L,J1,K1,L1,J
+      INTEGER K,J1,J
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)
@@ -2572,9 +2586,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER K,L,J,J1
+      INTEGER K,J,J1
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB
+     .   EJ(3),EJ1(3),EA,EB
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)
@@ -2625,9 +2639,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ND,K,L,J1,ID,IDM
+      INTEGER I,J,ND,K,J1,ID,IDM
       my_real
-     .   EJ(3),EJ1(3),S,EA,EB,KDD(6,6)
+     .   EJ(3),EJ1(3),EA,EB,KDD(6,6)
 C-----------------------------------------------
           EJ(1)=SKEW(1)
           EJ(2)=SKEW(2)

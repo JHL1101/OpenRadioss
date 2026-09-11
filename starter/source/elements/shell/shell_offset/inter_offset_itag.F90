@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_offset_itag_mod   ../starter/source/elements/shell/shell_offset/inter_offset_itag.F90
 !||--- called by ------------------------------------------------------
@@ -27,7 +28,7 @@
 !||====================================================================
       module inter_offset_itag_mod
 
-      implicit none
+        implicit none
 
       contains
 ! ======================================================================================================================
@@ -41,6 +42,7 @@
 !||    inter_offset_itag   ../starter/source/elements/shell/shell_offset/inter_offset_itag.F90
 !||--- called by ------------------------------------------------------
 !||    lectur              ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine inter_offset_itag(                                          &
@@ -51,18 +53,20 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           use intbufdef_mod
           use groupdef_mod
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: ninter           !< number of interface
-          integer, intent (in   )                          :: npari            !< 1er dim of ipari
+          integer, intent (in   )                          :: npari            !< first dimension of ipari
           integer, intent (in   )                          :: nsurf            !< number of surface
           integer, intent (in   )                          :: numelc           !< number shell 4n element
           integer, intent (in   )                          :: numeltg          !< number shell 3n element
           integer, intent (in   ) ,dimension(npari,ninter) :: ipari            !< interface array
-          integer, intent (inout),dimension(numelc+numeltg):: itagsh           !< < shell w/ offset
+          integer, intent (inout),dimension(numelc+numeltg):: itagsh           !< < shell with offset
           type (surf_)   ,       dimension(nsurf) ,target  :: igrsurf          !< surf array
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
@@ -73,7 +77,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(intage(numelc+numeltg))
+          call my_alloc(intage, numelc+numeltg, "intage")
           intage(1:numelc+numeltg)=-itagsh(1:numelc+numeltg)
 ! for the moment secondary node isn't taken into account
           do ni = 1,ninter
@@ -102,7 +106,7 @@
               end if
             end select
           end do
-          deallocate(intage)
+          call my_dealloc(intage)
 !-----------
         end subroutine inter_offset_itag
       end module  inter_offset_itag_mod

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C Please note: any modification in these routines must be postponed
 C             in identical routines in the machine
 !||====================================================================
@@ -105,7 +106,7 @@ C-----------------------------------------------
       my_real, DIMENSION(:,:), ALLOCATABLE :: X
       my_real DIRX,DIRY,DIRZ,DIR2X,DIR2Y,DIR2Z,ORIGX,ORIGY,ORIGZ,LX,LY,LZ
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7--
-      CALL MY_ALLOC(X,3,NB_NODE)
+      CALL MY_ALLOC(X,3,NB_NODE,"X")
       PFLAG = 0
       IFV=0
       DO N = 1, NVOLU
@@ -176,10 +177,10 @@ C
             NBY = T_MONVOL(N)%IVOLU(55)          
             NBRIC = NBX * NBY          
             NNB = (NBX + 1) * (NBY + 1) * 2
-            ALLOCATE(FVDATA(IFV)%BRIC(8,NBRIC),
-     .           FVDATA(IFV)%TBRIC(13,NBRIC),
-     .           FVDATA(IFV)%XB(3,NNB),
-     .           FVDATA(IFV)%SFAC(6,4,NBRIC))
+            call my_alloc(FVDATA(IFV)%BRIC, 8, NBRIC, "FVDATA(IFV)%BRIC")
+            call my_alloc(FVDATA(IFV)%TBRIC, 13, NBRIC, "FVDATA(IFV)%TBRIC")
+            call my_alloc(FVDATA(IFV)%XB, 3, NNB, "FVDATA(IFV)%XB")
+            call my_alloc(FVDATA(IFV)%SFAC, 6, 4, NBRIC, "FVDATA(IFV)%SFAC")
 C
             CALL FVBRIC(T_MONVOL(N)%IVOLU, T_MONVOL(N)%RVOLU, T_MONVOL(N)%NODES, X, NNS)
 C
@@ -222,7 +223,7 @@ C-----------------------------
 C--------------------------------
 C  Injectors on internal surface
 C--------------------------------
-              ALLOCATE(MINUS_SIGN_REVERSE(NTGI))
+              call my_alloc(MINUS_SIGN_REVERSE, NTGI, "MINUS_SIGN_REVERSE")
               MINUS_SIGN_REVERSE(:) = 0
               CALL FVINJECTINT(
      .               T_MONVOL(N)%NODES, T_MONVOL(N)%ELEM(1, NTG + 1), T_MONVOL(N)%IBAGJET,
@@ -247,7 +248,7 @@ C-----------------------------------------------------------------------
      .             T_MONVOL(N)%NODES, T_MONVOL(N)%ELEM(1, NTG + 1), IXC, IXTG, 
      .             T_MONVOL(N)%ELTG(NTG + 1), NTGI, ILVOUT,
      .             MINUS_SIGN_REVERSE)
-              DEALLOCATE(MINUS_SIGN_REVERSE)
+              CALL MY_DEALLOC(MINUS_SIGN_REVERSE)
               CALL FVELPRINT(
      .               IXC, IXTG, NTGI, T_MONVOL(N)%ITAGEL(NTG + 1), T_MONVOL(N)%ELTG(NTG + 1),
      .               T_MONVOL(N)%IBAGHOL,  ILVOUT , 1 )
@@ -303,7 +304,7 @@ C
          ENDIF
       ENDDO
 C
-      DEALLOCATE(X)
+      CALL MY_DEALLOC(X)
       RETURN
 C
 1000  FORMAT(
@@ -318,6 +319,7 @@ C
 !||    applysort2fvm            ../starter/source/airbag/fvmesh0.F
 !||--- called by ------------------------------------------------------
 !||    lectur                   ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    fvbag_mod                ../starter/share/modules1/fvbag_mod.F
 !||    monvol_struct_mod        ../starter/share/modules1/monvol_struct_mod.F
@@ -333,6 +335,7 @@ C-----------------------------------------------
       USE FVMBAG_MESHCONTROL_MOD
       USE REORDER_MOD
       USE MONVOL_STRUCT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -375,7 +378,7 @@ C Parameters for automatic volume splitting
 C----------------------------------------------
 C           PERMUTATION ELTG
             IF (NTG > 0) THEN
-              ALLOCATE(TMP(NTG))
+              call my_alloc(TMP, NTG, "TMP")
               DO J = 1, NTG
                 IEL = T_MONVOL(N)%ELTG(J)
                 IF (IEL <= NUMELC) THEN
@@ -385,11 +388,11 @@ C           PERMUTATION ELTG
                 ENDIF
               ENDDO 
               T_MONVOL(N)%ELTG(1:NTG) = TMP(1:NTG)
-              DEALLOCATE(TMP)
+              CALL MY_DEALLOC(TMP)
             ENDIF
      
             IF (NTGI > 0) THEN
-              ALLOCATE(TMP(NTGI))
+              call my_alloc(TMP, NTGI, "TMP")
               DO J = 1, NTGI
                 IEL = T_MONVOL(N)%ELTG(NTG + J) 
                 IF (IEL <= NUMELC) THEN
@@ -399,7 +402,7 @@ C           PERMUTATION ELTG
                 ENDIF
               ENDDO 
               T_MONVOL(N)%ELTG(NTG + 1: NTG + NTGI) = TMP(1:NTGI)
-              DEALLOCATE(TMP)
+              CALL MY_DEALLOC(TMP)
             ENDIF
 
 C      PERMUTATION TBA 

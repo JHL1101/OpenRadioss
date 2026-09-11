@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    min_dist_grnod_to_surface_mod   ../starter/source/model/transformation/min_distance_grnod_to_surface.F90
 !||--- called by ------------------------------------------------------
@@ -39,6 +40,7 @@
 !||    min_dist_grnod_to_surface   ../starter/source/model/transformation/min_distance_grnod_to_surface.F90
 !||--- called by ------------------------------------------------------
 !||    lectrans                    ../starter/source/model/transformation/lectrans.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    message_mod                 ../starter/share/message_module/message_mod.F
 !||====================================================================
@@ -50,6 +52,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           use precision_mod, only : WP
           use message_mod, only : ancmsg, msgerror, aninfo
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -89,7 +93,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(xn(3, n_nodes), xsn(3, n_surf_nodes))
+          call my_alloc(xn, 3, n_nodes, "xn")
+          call my_alloc(xsn, 3, n_surf_nodes, "xsn")
           xn(:,:) = 0.0_WP
           xsn(:,:) = 0.0_WP
           max_pos = -huge(1.0_WP)
@@ -294,8 +299,8 @@
             end do
           end if
 
-          if(allocated(xn)) deallocate(xn)
-          if(allocated(xsn)) deallocate(xsn)
+          if(allocated(xn)) call my_dealloc(xn)
+          if(allocated(xsn)) call my_dealloc(xsn)
 ! ----------------------------------------------------------------------------------------------------------------------
         end subroutine min_dist_grnod_to_surface
       end module min_dist_grnod_to_surface_mod

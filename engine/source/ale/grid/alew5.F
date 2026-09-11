@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    alew5                  ../engine/source/ale/grid/alew5.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    ale_connectivity_mod   ../common_source/modules/ale/ale_connectivity_mod.F
 !||    ale_mod                ../common_source/modules/ale/ale_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE ALEW5( 
      1     X               ,V       ,W       , WA      ,
@@ -62,6 +65,8 @@ C      Consequently X is defined here X(3,SX/3) instead of X(3,NUMNOD) as usuall
 C-----------------------------------------------
 C     I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C     C o m m o n   B l o c k s
@@ -150,7 +155,7 @@ C-----------------------------------------------
                   IAD2 = ALE_NN_CONNECT%IAD_CONNECT(I + 1) - 1
                   NUM = 0
                   VEC(1:3) = ZERO
-                  ALLOCATE(DIST(IAD2 - IAD1 + 1))                        
+                  call my_alloc(DIST, IAD2 - IAD1 + 1, "DIST")
                   DO IAD = IAD1, IAD2
                      NUM = NUM + 1
                      NODE_ID = ALE_NN_CONNECT%CONNECTED(IAD)
@@ -191,7 +196,7 @@ C-----------------------------------------------
                   W(2,I)=WA(2,I)
                   W(3,I)=WA(3,I)     
                ENDIF
-               DEALLOCATE(DIST)
+               call my_dealloc(DIST)
             ENDDO        
          ENDIF
          

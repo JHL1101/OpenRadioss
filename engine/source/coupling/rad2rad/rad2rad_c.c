@@ -1,25 +1,26 @@
-//Copyright>    OpenRadioss
-//Copyright>    Copyright (C) 1986-2026 Altair Engineering Inc.
+//Copyright>        OpenRadioss
+//Copyright>        Copyright (C) 2026 Siemens
 //Copyright>
-//Copyright>    This program is free software: you can redistribute it and/or modify
-//Copyright>    it under the terms of the GNU Affero General Public License as published by
-//Copyright>    the Free Software Foundation, either version 3 of the License, or
-//Copyright>    (at your option) any later version.
+//Copyright>        This program is free software: you can redistribute it and/or modify
+//Copyright>        it under the terms of the GNU Affero General Public License as published by
+//Copyright>        the Free Software Foundation, either version 3 of the License, or
+//Copyright>        (at your option) any later version.
 //Copyright>
-//Copyright>    This program is distributed in the hope that it will be useful,
-//Copyright>    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//Copyright>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//Copyright>    GNU Affero General Public License for more details.
+//Copyright>        This program is distributed in the hope that it will be useful,
+//Copyright>        but WITHOUT ANY WARRANTY; without even the implied warranty of
+//Copyright>        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//Copyright>        GNU Affero General Public License for more details.
 //Copyright>
-//Copyright>    You should have received a copy of the GNU Affero General Public License
-//Copyright>    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//Copyright>        You should have received a copy of the GNU Affero General Public License
+//Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //Copyright>
 //Copyright>
-//Copyright>    Commercial Alternative: Altair Radioss Software
+//Copyright>        Commercial Alternative: Simcenter Radioss Software
 //Copyright>
-//Copyright>    As an alternative to this open-source version, Altair also offers Altair Radioss
-//Copyright>    software under a commercial license.  Contact Altair to discuss further if the
-//Copyright>    commercial version may interest you: https://www.altair.com/radioss/.
+//Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+//Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+//Copyright>        commercial version may interest you: 
+//Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 #include "hardware.inc"
 
 #include "pipes_c.inc"
@@ -1119,7 +1120,7 @@ void send_mass_nl_c__(int *idp, int *nng, int *iadd_nl, my_real_c *ms){
 }
 
 void send_mass_rby_c(int *idp, int *nng, int *nodbuf, my_real_c *ms, my_real_c *in, int *npby, int *nrbody, my_real_c *rby, int *tag, int *add_rby, int *nnpby, int *nrby){
-    int i, k, l, nn, lbuf, flag, *cbuf;
+    int i, k, l, nn, lbuf, flag, *cbuf, lbufi;
     my_real_c *mbuf, *ibuf, *m2buf, *matrix_buf;
 
     writer(fidw, (void *)idp, sizeof(int));
@@ -1127,9 +1128,11 @@ void send_mass_rby_c(int *idp, int *nng, int *nodbuf, my_real_c *ms, my_real_c *
     flagrot[*idp] = flag;
 
     lbuf = *nng * sizeof(my_real_c);
+    lbufi = *nng * sizeof(int);
     mbuf = (my_real_c *)malloc(lbuf);
     m2buf = (my_real_c *)malloc(lbuf);
     cbuf = (int *)malloc(lbuf);
+
     if (flagrot[*idp]) {
         ibuf = (my_real_c *)malloc(lbuf);
         matrix_buf = (my_real_c *)malloc(9 * lbuf);
@@ -1153,7 +1156,7 @@ void send_mass_rby_c(int *idp, int *nng, int *nodbuf, my_real_c *ms, my_real_c *
 
     writer(fidw, (void *)mbuf, lbuf);
     if (flagrot[*idp]) writer(fidw, (void *)ibuf, lbuf);
-    writer(fidw, (void *)cbuf, lbuf);
+    writer(fidw, (void *)cbuf, lbufi);
     writer(fidw, (void *)m2buf, lbuf);
     writer(fidw, (void *)matrix_buf, 9 * lbuf);
 

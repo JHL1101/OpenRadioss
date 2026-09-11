@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    iniebcs_propellant_   ../starter/source/boundary_conditions/ebcs/iniebcs_propellant.F90
 !||--- called by ------------------------------------------------------
 !||    lectur                ../starter/source/starter/lectur.F
 !||====================================================================
       module iniebcs_propellant_
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -122,7 +123,9 @@
           use constant_mod , only : em06, zero, one
           use array_reindex_mod, only : real_array_reindex
           use precision_mod, only : WP
-          use element_mod , only : nixs,nixq,nixtg          
+          use element_mod , only : nixs,nixq,nixtg
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -150,12 +153,13 @@
           real(kind=WP),allocatable,dimension(:) :: tmp,tmp2  !< Cp parameters for each segment
           integer,allocatable,dimension(:) :: indx       !< array for sorting algorithm
           logical :: MULTIPLE_CP_DETECTED
+          character(len=10) :: matid_str
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate (tmp(ebcs%nb_elem))
-          allocate (tmp2(ebcs%nb_elem))
-          allocate (indx(ebcs%nb_elem))
+          call my_alloc(tmp, ebcs%nb_elem, "tmp")
+          call my_alloc(tmp2, ebcs%nb_elem, "tmp2")
+          call my_alloc(indx, ebcs%nb_elem, "iniebcs_propellant_get_cp/indx")
           do kk = 1, ebcs%nb_elem
             indx(kk) = kk
           end do
@@ -212,11 +216,11 @@
             call real_array_reindex(tmp, indx, ebcs%nb_elem)
             Cp = tmp( int(ebcs%nb_elem/2) )     !median value
             gamma = tmp2( int(ebcs%nb_elem/2) )     !median value
-            call ancmsg(msgid = 3083, msgtype = msgwarning, anmode = aninfo, &
+            write(matid_str, '(I0)') MAT_param(imat)%mat_id
+            call ancmsg(msgid = 3077, msgtype = msgwarning, anmode = aninfo, &
               i1 = ebcs%ebcs_id, c1 = title(1:len_trim(title)), &
               C2 = "EBCS PROPERGOL IS FACING DIFFERENT GAS EOS : CHECK Cp PARAMETER (Cp=GAMMA.E0/RHO0/T0)", &
-              C3 = "RETAINED Cp VALUE FROM EOS ID :", &
-              I2 = MAT_param(imat)%mat_id )
+              C3 = "RETAINED Cp VALUE FROM EOS ID : " // trim(matid_str))
           end if
 
           !Setting Heat of combustion (q)
@@ -229,9 +233,9 @@
 
 
 
-          if (allocated(tmp)) deallocate(tmp)
-          if (allocated(tmp2)) deallocate(tmp2)
-          if (allocated(indx)) deallocate(indx)
+          if (allocated(tmp)) call my_dealloc(tmp)
+          if (allocated(tmp2)) call my_dealloc(tmp2)
+          if (allocated(indx)) call my_dealloc(indx)
 
         end subroutine iniebcs_propellant_get_cp
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_viscparam         ../engine/source/output/restart/read_viscparam.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    message_mod            ../engine/share/message_module/message_mod.F
 !||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||    visc_param_mod         ../common_source/modules/mat_elem/visc_param_mod.F90
 !||====================================================================
@@ -46,6 +48,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -63,7 +66,7 @@ c     read viscosity model parameters
 C=======================================================================
       CALL READ_I_C(ILEN, 1)
       LEN = ILEN(1)
-      ALLOCATE (IBUF(LEN) )
+      call my_alloc(IBUF, LEN, "IBUF")
       CALL READ_I_C(IBUF, LEN)
       IAD = 0
 c      
@@ -80,7 +83,7 @@ c
       IAD = IAD+1
         VISC%NTABLE  = IBUF(IAD)
 c
-      DEALLOCATE( IBUF )
+      call my_dealloc(IBUF)
       
       IF (VISC%ILAW > 0) THEN
 c
@@ -94,8 +97,8 @@ c       read material title
 c       read viscosity parameter arrays
         NUPARAM = VISC%NUPARAM
         NIPARAM = VISC%NIPARAM
-        CALL MY_ALLOC(VISC%UPARAM ,NUPARAM)
-        CALL MY_ALLOC(VISC%IPARAM ,NIPARAM)
+        call my_alloc(VISC%UPARAM, NUPARAM, "VISC%UPARAM")
+        call my_alloc(VISC%IPARAM, NIPARAM, "VISC%IPARAM")
 
         IF (NUPARAM > 0) THEN
           CALL READ_DB(VISC%UPARAM  ,NUPARAM)
@@ -116,9 +119,9 @@ c
 c
         VISC%TITLE = " "
         LEN = 0
-        ALLOCATE (VISC%UPARAM(LEN))
-        ALLOCATE (VISC%IPARAM(LEN))
-        ALLOCATE (VISC%FUNC(LEN))
+        call my_alloc(VISC%UPARAM, LEN, "VISC%UPARAM")
+        call my_alloc(VISC%IPARAM, LEN, "VISC%IPARAM")
+        call my_alloc(VISC%FUNC, LEN, "VISC%FUNC")
         ALLOCATE (VISC%TABLE(LEN))
         VISC%UPARAM = 0
         VISC%IPARAM = 0

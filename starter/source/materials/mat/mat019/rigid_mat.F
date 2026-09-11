@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rigid_mat              ../starter/source/materials/mat/mat019/rigid_mat.F
 !||--- called by ------------------------------------------------------
@@ -68,8 +69,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J, NOSKEW, I, N, NONOD,ICDG,KK,NR,NSL,IR
-      my_real XG(3), XM0(3), XMG, XX, XY, XZ, YY, YZ, ZZ, XIIN, INMIN,
+      INTEGER J, I, N, KK,NR,NSL
+      my_real XG(3), XX, XY, XZ, YY, YZ, ZZ, INMIN,
      .        MASRB,DD,TOL, II1,II2,II3,II4,II5,II6,II7,II8,II9,RBY(20)
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
@@ -258,9 +259,7 @@ C
 C
       RETURN
 C
-1000  FORMAT(//
-     . '      RIGID BODY INITIALIZATION '/
-     . '      ------------------------- ')
+
 1100  FORMAT(/5X,'RIGID BODY ID',I10
      .       /5X,'NUMBER OF SECONDARY NODE' ,I10
      .       /10X,'NEW X,Y,Z            ',3G14.7

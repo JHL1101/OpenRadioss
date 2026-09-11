@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    w_bufbric_22     ../starter/source/interfaces/inter3d1/w_bufbric_22.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE I22BUFBRIC_MOD  
       USE I22TRI_MOD    
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -48,7 +50,6 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real          :: BID(1)
       INTEGER          :: NIN, I, J, K, IERR1, ISIZ
-      INTEGER          :: Isectype(14)  
       CHARACTER*14     :: string
 C-----------------------------------------------
 C   S o u r c e   L i n e s
@@ -57,19 +58,19 @@ C-----------------------------------------------
       NB  = 0
       
       IF(.NOT.ALLOCATED(LIST_B_OLD))THEN   
-        ALLOCATE(LIST_B_OLD(INT22,I22LEN),STAT=IERR1)
+        call my_alloc(LIST_B_OLD, INT22, I22LEN, "LIST_B_OLD", stat=IERR1)
         IF (IERR1/=0) GOTO 1000        
         LIST_B_OLD(:,:) = 0
       ENDIF   
       
       IF(.NOT.ALLOCATED(NBOLD))THEN   
-        ALLOCATE(NBOLD(INT22)            ,STAT=IERR1)
+        call my_alloc(NBOLD, INT22, "NBOLD", stat=IERR1)
         IF (IERR1/=0) GOTO 1000       
         NBOLD(:) = 0
       ENDIF        
       
       IF(.NOT.ALLOCATED(BRICK_LIST))THEN
-        ALLOCATE(BRICK_LIST(INT22,I22LEN),STAT=IERR1)
+        allocate(BRICK_LIST(INT22, I22LEN), stat=IERR1)
         IF (IERR1/=0) GOTO 1000 
         
         BRICK_LIST(:,:)%ID                                = -1
@@ -313,7 +314,7 @@ C-----------------------------------------------
         BRICK_LIST(:,:)%bakMAT%sig(6)    = -68D00
         BRICK_LIST(:,:)%bakMAT%ssp       = -69D00
  
-       ALLOCATE(OLD_SecndList(INT22,I22LEN) )
+       allocate(OLD_SecndList(INT22, I22LEN))
        DO NIN=1,INT22
        !=====%OLD_SecndList(NIN,1:I22LEN)
                    OLD_SecndList(NIN,1:I22LEN)%VOL_Unmerged    = ZERO                 

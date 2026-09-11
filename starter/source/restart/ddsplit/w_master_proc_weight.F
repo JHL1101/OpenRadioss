@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    w_main_proc_weight   ../starter/source/restart/ddsplit/w_master_proc_weight.F
 !||--- called by ------------------------------------------------------
 !||    ddsplit              ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
 !||    nlocal               ../starter/source/spmd/node/ddtools.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
         SUBROUTINE W_MAIN_PROC_WEIGHT(NODGLOB,NUMNOD_L,NSPMD,PROC)
 C-----------------------------------------------
@@ -34,6 +36,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -65,7 +68,7 @@ C-----------------------------------------------
 
 C-----------------------------------------------
 !       allocate 1d array
-        ALLOCATE( MAIN_PROC(NUMNOD_L) )
+        call my_alloc(MAIN_PROC, NUMNOD_L, "MAIN_PROC")
         ALLOCATE( WEIGHT(NUMNOD_L) )
 ! -----------------------------------
         MAIN_PROC(1:NUMNOD_L) = 0
@@ -89,7 +92,7 @@ C-----------------------------------------------
         CALL WRITE_I_C(WEIGHT,NUMNOD_L)
 ! -----------------------------------
 !       deallocate 1d array
-        DEALLOCATE(MAIN_PROC )
+        CALL MY_DEALLOC(MAIN_PROC)
         DEALLOCATE( WEIGHT )
 ! -----------------------------------
         RETURN

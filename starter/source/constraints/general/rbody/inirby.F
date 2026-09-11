@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inirby                 ../starter/source/constraints/general/rbody/inirby.F
 !||--- called by ------------------------------------------------------
@@ -53,6 +54,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE R2R_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -87,7 +89,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NSL, J, NOSKEW, I, N, NONOD,ICDG, FLAG,NSL_XTRA
       my_real
-     .   XG(3), XM0(3), XMG, XX, XY, XZ, YY, YZ, ZZ, XIIN, INMIN,
+     .   XG(3), XMG, XX, XY, XZ, YY, YZ, ZZ, XIIN, INMIN,
      .   MASRB,DD,TOL,
      .   V1X2, V2X1, V2X3, V3X2, V3X1, V1X3,
      .   INMAX,X_MSN0(3),DIST
@@ -100,8 +102,8 @@ C
       NSL = NPBY(2,NRB) ! Nombre total de noeuds SECONDARY 
       LSN => LPBY(NPBY(11,NRB)+1:NPBY(11,NRB)+NSL) ! List of SECONDARY nodes
       RBLEVEL = NPBY(12,NRB)
-      ALLOCATE (MS_LOC(NSL))
-      ALLOCATE (IN_LOC(NSL))
+      call my_alloc(MS_LOC, NSL, "MS_LOC")
+      call my_alloc(IN_LOC, NSL, "IN_LOC")
 C
 C------------------------------------------------------------------------------------------------------
       FLAG = 0
@@ -612,12 +614,12 @@ C    LSN is updated
 C----------------------------------------------
       IF(RBLEVEL == 0) THEN ! IF THIS RIGID BODY IS THE TOP MAIN
         IF(NRBMERGE > 0) THEN
-          DEALLOCATE(MS_LOC)
-          DEALLOCATE(IN_LOC)
+          CALL MY_DEALLOC(MS_LOC)
+          CALL MY_DEALLOC(IN_LOC)
           NSL = NPBY(2,NRB) ! Liste totale des noeuds SECONDARY
           LSN => LPBY(NPBY(11,NRB)+1:NPBY(11,NRB)+NSL)
-          ALLOCATE (MS_LOC(NSL))
-          ALLOCATE (IN_LOC(NSL))
+          call my_alloc(MS_LOC, NSL, "MS_LOC")
+          call my_alloc(IN_LOC, NSL, "IN_LOC")
 C
 C-----------Multidomaines : on ne compte l'ajout de masse et d'inertie uniquement d'1 cote-------------
           IF ((NSUBDOM>0).AND.(IPID==0)) THEN
@@ -837,8 +839,8 @@ C
       MS(M) = MASRB
       IN(M) = MIN(RBY(10,NRB),RBY(11,NRB),RBY(12,NRB))
 C
-      DEALLOCATE(MS_LOC)
-      DEALLOCATE(IN_LOC)
+      CALL MY_DEALLOC(MS_LOC)
+      CALL MY_DEALLOC(IN_LOC)
 c
 C----------------------------------------------------------------
 C     processing the rigid body without a main node
@@ -1162,9 +1164,9 @@ C-----------------------------------------------
      .        RBLEVEL, OPT_MERGE, M_I, NSL_XTRA
 C     REAL
       my_real
-     .   XG(3), XM0(3), XX, XY, XZ, YY, YZ, ZZ, XIIN, INMIN,
+     .   XG(3), XX, XY, XZ, YY, YZ, ZZ, XIIN, INMIN,
      .   V1X2, V2X1, V2X3, V3X2, V3X1, V1X3,
-     .   MASRB,DD,INMAX, XMG, X_MSN0(3), DIST
+     .   MASRB,INMAX, XMG, X_MSN0(3), DIST
       INTEGER, DIMENSION(:), POINTER  :: LSN, LSN_XTRA 
 C
       MS(M)=ZERO

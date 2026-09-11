@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat151             ../starter/source/materials/mat/mat151/hm_read_mat151.F
 !||--- called by ------------------------------------------------------
@@ -48,6 +49,7 @@ C-----------------------------------------------
       USE INIVOL_DEF_MOD
       USE MATPARAM_DEF_MOD, ONLY : MATPARAM_STRUCT_
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod, only : my_alloc
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -77,7 +79,6 @@ C-----------------------------------------------
       INTEGER :: II
       my_real :: FRAC_VOL, SUM_FRAC_VOL
       my_real :: VFRAC(21)
-      my_real :: FAC
       INTEGER :: IMID(21)
 C-----------------------------------------------
 C     B o d y
@@ -97,8 +98,9 @@ C-----------------------------------------------
       PM(20) = NBMAT + EM01
       MATPARAM%MULTIMAT%NB = NBMAT
       ! Multimaterial data
-      IF(.NOT.ALLOCATED(MATPARAM%multimat%vfrac))ALLOCATE(MATPARAM%multimat%vfrac(NBMAT))
-      IF(.NOT.ALLOCATED(MATPARAM%multimat%mid))  ALLOCATE(MATPARAM%multimat%mid(NBMAT))
+      IF(.NOT.ALLOCATED(MATPARAM%multimat%vfrac))CALL my_alloc(MATPARAM%multimat%vfrac, NBMAT,
+     &"MATPARAM%multimat%vfrac")
+      IF(.NOT.ALLOCATED(MATPARAM%multimat%mid))  CALL my_alloc(MATPARAM%multimat%mid, NBMAT, "MATPARAM%multimat%mid")
 
       ! Reading submaterial IDS and corresponding volumic fractions
       SUM_FRAC_VOL = ZERO
@@ -112,9 +114,10 @@ C-----------------------------------------------
          SUM_FRAC_VOL = SUM_FRAC_VOL + FRAC_VOL
          IF (FRAC_VOL < ZERO .OR. FRAC_VOL > ONE) THEN
             IF (NUM_INIVOL == 0) THEN
-               CALL ANCMSG(MSGID = 1511, MSGTYPE = MSGERROR, ANMODE = ANINFO, C1 = "ERROR", I1 = ID, I2 = MAT_ID, R1 = FRAC_VOL)
+      CALL ANCMSG(MSGID = 1511, MSGTYPE = MSGERROR, ANMODE = ANINFO, C1 = "ERROR", I1 = ID, I2 = MAT_ID, R1 = FRAC_VOL)
             ELSE
-               CALL ANCMSG(MSGID = 1511, MSGTYPE = MSGWARNING, ANMODE = ANINFO, C1 = "WARNING", I1 = ID, I2 = MAT_ID, R1 = FRAC_VOL)
+      CALL ANCMSG(MSGID = 1511, MSGTYPE = MSGWARNING, ANMODE = ANINFO, C1 = "WARNING", I1 = ID, I2 = MAT_ID, R1 =
+     &FRAC_VOL)
             ENDIF
          ENDIF
       ENDDO

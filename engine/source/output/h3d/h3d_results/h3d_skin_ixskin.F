@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_skin_ixskin       ../engine/source/output/h3d/h3d_results/h3d_skin_ixskin.F
 !||--- called by ------------------------------------------------------
@@ -80,8 +81,7 @@ C-----------------------------------------------
      .        JTHE    ,JLAG    ,JMULT   ,JHBE    ,JIVF    ,    
      .        NVAUX   ,JPOR    ,KCVT    ,JCLOSE  ,JPLASOL ,    
      .        IREP    ,IINT    ,IGTYP   ,ISRAT   ,ISROT   ,    
-     .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS    , 
-     .        NN,NN1,N1,IDB
+     .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS
 C-----------------------------------------------
        NSKIN =0
       IF (NUMSKIN> NUMSKINP) THEN      
@@ -362,8 +362,7 @@ C-----------------------------------------------
      .        JTHE    ,JLAG    ,JMULT   ,JHBE    ,JIVF    ,    
      .        NVAUX   ,JPOR    ,KCVT    ,JCLOSE  ,JPLASOL ,    
      .        IREP    ,IINT    ,IGTYP   ,ISRAT   ,ISROT   ,    
-     .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS   ,
-     .        NN,ICS,ISOLNOD
+     .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS
 C-----------------------------------------------
        DO NG=1,NGROUP
         CALL INITBUF(IPARG    ,NG      ,                      
@@ -421,7 +420,7 @@ C-----------------------------------------------
      .        NVAUX   ,JPOR    ,KCVT    ,JCLOSE  ,JPLASOL ,    
      .        IREP    ,IINT    ,IGTYP   ,ISRAT   ,ISROT   ,    
      .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS   ,
-     .        NN,ICS,ISOLNOD,NN1,JJ,II,K1,K2,NF(3),NSKIN2,IDB
+     .        ICS,ISOLNOD,JJ
       INTEGER FACES(4, 6), PWR(7), LL
       DATA PWR/1,2,4,8,16,32,64/
       DATA FACES/4,3,2,1,
@@ -493,8 +492,11 @@ C-----------
 !||    h3d_skin_pre_dim   ../engine/source/output/h3d/h3d_results/h3d_skin_ixskin.F
 !||--- called by ------------------------------------------------------
 !||    h3d_skin_dim       ../engine/source/output/h3d/h3d_results/h3d_skin_ixskin.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    loads_mod          ../common_source/modules/loads/loads_mod.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    pblast_mod         ../common_source/modules/loads/pblast_mod.F90
 !||    pinchtype_mod      ../common_source/modules/pinchtype_mod.F
 !||====================================================================
@@ -508,6 +510,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "param_c.inc"
 C-----------------------------------------------
@@ -529,7 +533,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NL, N1, N2, N3, N4, J, 
-     .        IAD ,NP ,IFUNC ,NPRES ,N,NSKIN_I,NSKINP0,IERR,IXST,SHIFT
+     .        IAD ,NP ,N,NSKIN_I,NSKINP0,IERR,IXST,SHIFT
       INTEGER, DIMENSION(:), ALLOCATABLE  :: ITAGN
       INTEGER, DIMENSION(:,:), ALLOCATABLE  :: IRECT
 C=======================================================================
@@ -580,7 +584,8 @@ C
        NSKIN0 = NSKIN
        NSKINP0 = NSKIN0 - NSKIN_I
        IF (NSKINP0 > (NCONLD-NPLOADPINCH)) THEN
-         ALLOCATE(IRECT(4,NSKINP0),ITAGN(NUMNOD),STAT=IERR)
+         call my_alloc(IRECT, 4, NSKINP0, "IRECT", stat=IERR)
+         call my_alloc(ITAGN, NUMNOD, "ITAGN", stat=IERR)
 C
          NP = 0 
          ITAGN = 0         
@@ -732,7 +737,8 @@ C----add only not existing
              ENDDO
            END DO
           NSKIN = NSKIN_I + NP
-          DEALLOCATE(IRECT,ITAGN)
+          call my_dealloc(IRECT)
+          call my_dealloc(ITAGN)
        END IF
 C-----some segs are used > 1 times       
 C
@@ -784,7 +790,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NL, N1, N2, N3, N4, 
-     .        IAD ,NP ,IFUNC ,NPRES,NSKIN0,NSKIN1,N,I,PID0,SHIFT
+     .        IAD ,NP ,NSKIN0,NSKIN1,N,I,PID0,SHIFT
 C=======================================================================
 C-----IXSKIN(1,*):ipart;IXSKIN(2:5,*):N1-4,IXSKIN(6,*):pid;IXSKIN(7,*):usr_id
        PID0 =0
@@ -966,7 +972,7 @@ C-----------------------------------------------
      .        NVAUX   ,JPOR    ,KCVT    ,JCLOSE  ,JPLASOL ,    
      .        IREP    ,IINT    ,IGTYP   ,ISRAT   ,ISROT   ,    
      .        ICSEN   ,ISORTH  ,ISORTHG ,IFAILURE,JSMS    , 
-     .        NN,NN1,N1,IDB
+     .        NN1
 C-----------------------------------------------
        DO NG=1,NGROUP
         ISOLNOD = IPARG(28,NG)

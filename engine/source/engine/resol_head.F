@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    resol_head             ../engine/source/engine/resol_head.F
 !||--- called by ------------------------------------------------------
@@ -201,7 +202,7 @@ C     REAL
       type (pblast_) ,intent(inout)           :: PBLAST
       type (rbe3_) ,intent(inout)             :: RBE3
       type (rwall_), intent(inout)            :: RWALL
-      type (sfem_), intent(inout)             :: SFEM
+      type (global_sfem_), intent(inout) :: SFEM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -254,7 +255,7 @@ C
      T  NBRCVOIS        ,NBSDVOIS       ,LNRCVOIS       ,LNSDVOIS       ,NERCVOIS       ,NESDVOIS    ,LERCVOIS         ,
      U  LESDVOIS        ,NPSEGCOM       ,LSEGCOM        ,NPORGEO        ,
      V  IXTG1           ,NPBYL          ,LPBYL          ,RBYL           ,IGEO           ,IPM         ,
-     W  MADPRT         ,MADSH4         ,MADSH3         ,MADSOL         ,MADNOD      ,MADFAIL          ,
+     W  MADPRT         ,MADSH4         ,MADSH3         ,MADSOL         ,MADNOD      ,
      X  IAD_RBY         ,FR_RBY         ,IAD_RBY2       ,
      Y  FR_RBY2         ,IAD_I2M        ,FR_I2M         ,ADDCNI2        ,PROCNI2        ,IADI2       ,FR_MV            ,
      Z  IADMV2          ,FR_LL          ,FR_RL          ,IADCJ          ,

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !----s---1----+----2----+----3----+----4----+----5----+----6----+----7--
 !||====================================================================
 !||    redef3_mod       ../engine/source/elements/spring/redef3.F90
@@ -29,6 +30,7 @@
 !||    r23l108def3      ../engine/source/elements/spring/r23l108def3.F
 !||    r23l113def3      ../engine/source/elements/spring/r23l113def3.F
 !||    r23l114def3      ../engine/source/elements/spring/r23l114def3.F
+!||    r23l135def3      ../engine/source/elements/spring/r23l135def3.F90
 !||    r2def3           ../engine/source/elements/spring/r2def3.F
 !||    r3def3           ../engine/source/elements/spring/r3def3.F
 !||    r4def3           ../engine/source/elements/spring/r4def3.F
@@ -155,7 +157,7 @@
           real(kind=WP), dimension(nel),intent(inout) :: dpx2                     !< gbuf%dep_in_comp
           real(kind=WP), dimension(nel),intent(inout) :: yield                    !< gbuf%yield(ii(1))
           real(kind=WP), dimension(nel),intent(inout) :: xx_old                   !< uvar(1,1:nel)
-          real(kind=WP), dimension(mvsiz),intent(inout) :: xk
+          real(kind=WP), dimension(mvsiz),intent(inout) :: xk                     !< stiffness
           real(kind=WP), dimension(mvsiz),intent(inout) :: dxold                  !< previous dx
           real(kind=WP), dimension(mvsiz),intent(inout) :: xc                     !<
           real(kind=WP), dimension(mvsiz),intent(inout) :: off                    !< element activated/deactivated (local buffer)
@@ -266,6 +268,7 @@
           x1s = zero
           x2s = zero
           fxb = zero
+
           if(dt11==zero)dt11 = ep30
           do i=1,nel
             dx(i)=dx(i)/xl0(i)
@@ -734,8 +737,8 @@
           if(jecrou(-1)>0)then
             do i=1,nel
               if(ifunc(i)==0)then
-                fx(i)=xk(i)*dx(i)
-              end if
+                fx(i)=xk(i)*dx(i) 
+              end if 
             end do
           end if
 !-------------------------------------

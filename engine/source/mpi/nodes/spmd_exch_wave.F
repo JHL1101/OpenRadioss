@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_wave_mod   ../engine/source/mpi/nodes/spmd_exch_wave.F
 !||--- called by ------------------------------------------------------
@@ -46,28 +47,34 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    spmd_exch_wave_init   ../engine/source/mpi/nodes/spmd_exch_wave.F
 !||--- called by ------------------------------------------------------
 !||    resol                 ../engine/source/engine/resol.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE SPMD_EXCH_WAVE_INIT(FR_WAVE_BUF, SIZ, LENR, NSPMD)
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
           implicit none
           TYPE(FR_WAVE_), INTENT(INOUT) :: FR_WAVE_BUF
           INTEGER, INTENT(IN) :: SIZ, LENR, NSPMD
 
           !deallocate if size changed
           IF(ALLOCATED(FR_WAVE_BUF%RBUF) .AND. size(FR_WAVE_BUF%RBUF)<SIZ*LENR) THEN
-            DEALLOCATE(FR_WAVE_BUF%RBUF)
-            DEALLOCATE(FR_WAVE_BUF%SBUF)
+            call my_dealloc(FR_WAVE_BUF%RBUF)
+            call my_dealloc(FR_WAVE_BUF%SBUF)
           END IF
 
           IF(.NOT.ALLOCATED(FR_WAVE_BUF%RBUF)) THEN
-            ALLOCATE(FR_WAVE_BUF%RBUF(SIZ*LENR))
-            ALLOCATE(FR_WAVE_BUF%SBUF(SIZ*LENR))
+            call my_alloc(FR_WAVE_BUF%RBUF, SIZ*LENR, "FR_WAVE_BUF%RBUF")
+            call my_alloc(FR_WAVE_BUF%SBUF, SIZ*LENR, "FR_WAVE_BUF%SBUF")
           END IF
 
           IF(.NOT.ALLOCATED(FR_WAVE_BUF%IAD_SEND)) THEN
-            ALLOCATE(FR_WAVE_BUF%IAD_SEND(NSPMD+1))
-            ALLOCATE(FR_WAVE_BUF%IAD_RECV(NSPMD+1))
-            ALLOCATE(FR_WAVE_BUF%REQ_R(NSPMD))
-            ALLOCATE(FR_WAVE_BUF%REQ_S(NSPMD))
+            call my_alloc(FR_WAVE_BUF%IAD_SEND, NSPMD+1, "FR_WAVE_BUF%IAD_SEND")
+            call my_alloc(FR_WAVE_BUF%IAD_RECV, NSPMD+1, "FR_WAVE_BUF%IAD_RECV")
+            call my_alloc(FR_WAVE_BUF%REQ_R, NSPMD, "FR_WAVE_BUF%REQ_R")
+            call my_alloc(FR_WAVE_BUF%REQ_S, NSPMD, "FR_WAVE_BUF%REQ_S")
           END IF
           FR_WAVE_BUF%SIZE = SIZ
           FR_WAVE_BUF%LENR = LENR
@@ -78,7 +85,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- called by ------------------------------------------------------
 !||    resol            ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait        ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    constant_mod     ../common_source/modules/constant_mod.F
 !||    precision_mod    ../common_source/modules/precision_mod.F90

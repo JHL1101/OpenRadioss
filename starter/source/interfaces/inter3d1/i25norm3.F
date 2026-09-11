@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mod_i25norm   ../starter/source/interfaces/inter3d1/i25norm3.F
 !||--- called by ------------------------------------------------------
@@ -31,11 +32,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .       , DIMENSION(:,:,:), ALLOCATABLE :: WNOD_NORMAL
       END MODULE MOD_I25NORM
 !||====================================================================
-!||    i25norm       ../starter/source/interfaces/inter3d1/i25norm3.F
+!||    i25norm          ../starter/source/interfaces/inter3d1/i25norm3.F
 !||--- called by ------------------------------------------------------
-!||    inint3        ../starter/source/interfaces/inter3d1/inint3.F
+!||    inint3           ../starter/source/interfaces/inter3d1/inint3.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    mod_i25norm   ../starter/source/interfaces/inter3d1/i25norm3.F
+!||    mod_i25norm      ../starter/source/interfaces/inter3d1/i25norm3.F
 !||====================================================================
       SUBROUTINE I25NORM(NRTM,IRECTM,NUMNOD,X     ,NOD_NORMAL,
      .                  NMN  ,MSR   ,ITAB  ,NRTM0 ,MSEGTYP   ,
@@ -49,6 +51,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -88,7 +92,6 @@ C     REAL
      .     XN2(MVSIZ),YN2(MVSIZ),ZN2(MVSIZ),
      .     XN3(MVSIZ),YN3(MVSIZ),ZN3(MVSIZ),
      .     XN4(MVSIZ),YN4(MVSIZ),ZN4(MVSIZ),
-     .     XS(MVSIZ),YS(MVSIZ),ZS(MVSIZ),
      .     AAA, XAD, S1, S2, S3, S4,
      .     RZERO, RUN, REM30, REP30, RDIX,
      .     NX, NY, NZ, VX, VY, VZ, X12, Y12, Z12
@@ -468,7 +471,7 @@ C         LBOUND(IS2)=1
         ENDIF
       END DO
 C------------------------------------
-      ALLOCATE(WNOD_NORMAL(3,4,NRTM))
+      call my_alloc(WNOD_NORMAL, 3, 4, NRTM, "WNOD_NORMAL")
 C------------------------------------
       DO IRM=1,NRTM
          IF(IELEM_M(2,IRM) ==0)THEN
@@ -523,7 +526,7 @@ C------------------------------------
        ENDIF
 C------------------------------------
 
-      DEALLOCATE(WNOD_NORMAL)
+      call my_dealloc(WNOD_NORMAL)
 
       RETURN
       END

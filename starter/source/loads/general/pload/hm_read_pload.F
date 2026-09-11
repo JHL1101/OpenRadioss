@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_pload          ../starter/source/loads/general/pload/hm_read_pload.F
 !||--- called by ------------------------------------------------------
@@ -31,7 +32,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_get_intv            ../starter/source/devtools/hm_reader/hm_get_intv.F
 !||    hm_option_read_key     ../starter/source/devtools/hm_reader/hm_option_read_key.F
 !||    hm_option_start        ../starter/source/devtools/hm_reader/hm_option_start.F
-!||    usr2sys                ../starter/source/system/sysfus.F
 !||--- uses       -----------------------------------------------------
 !||    hm_option_read_mod     ../starter/share/modules1/hm_option_read_mod.F
 !||    message_mod            ../starter/share/message_module/message_mod.F
@@ -78,10 +78,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER K, M, I1, I2, I3, I4, IFU, I, ISENS,NPR0,NN,ISU,IS,
-     .        IAD,ID,J,UID,IFLAGUNIT,IFIX_TMP,
+      INTEGER K, I1, I2, IFU, I, ISENS,NPR0,NN,ISU,IS,
+     .        ID,J,UID,IFLAGUNIT,
      .        CAPT,H,SUB_INDEX,FLAG_PINCH,KPINCH,IDEL,IFUNCTYPE
-      INTEGER N1,N2,N3,N4
       my_real FCX,FCY,FAC_FCX,FAC_FCY
       CHARACTER MESS*40
       CHARACTER(LEN=NCHARTITLE) :: TITR
@@ -89,7 +88,6 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER USR2SYS
       DATA MESS/'PRESSURE LOADS DEFINITION               '/
 C-----------------------------------------------
 C     IBCL(NIBCLD,NUMCLD+NUMPRES), NUMCLD = Total nb of (cloads * nodes)
@@ -285,10 +283,6 @@ C
        I2=MIN0(I2+50,NPRELD)
        GOTO 90
  200  RETURN
- 300  CALL ANCMSG(MSGID=157,
-     .            MSGTYPE=MSGERROR,
-     .            ANMODE=ANINFO,
-     .            I1=K)
 C---
  2000 FORMAT(//
      .'     PRESSURE   LOADS  '/

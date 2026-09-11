@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22intersect     ../engine/source/interfaces/int22/i22intersect.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i22bufbric_mod   ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    i22edge_mod      ../common_source/modules/interfaces/cut-cell-buffer_mod.F
 !||    i22tri_mod       ../common_source/modules/interfaces/cut-cell-search_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    realloc_mod      ../engine/share/modules/realloc_mod.F
 !||====================================================================
       SUBROUTINE I22INTERSECT(
@@ -58,6 +61,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -219,14 +224,14 @@ C================================================================
       NIN = 1
       
       IF (ITASK==0)THEN
-        ALLOCATE(vNE(NCANDE,3,4))
-        ALLOCATE(BasisCONST(NCANDE,4))
-        ALLOCATE(NbSubTriangles(NCANDE))
-        ALLOCATE(diag22(NB))
-        ALLOCATE(ptZ(NCANDE,3)) 
-        ALLOCATE(vZA(NCANDE,3,4))
-        ALLOCATE(vZB(NCANDE,3,4))
-        ALLOCATE(ptA(NCANDE,3,4))
+        call my_alloc(vNE, NCANDE, 3, 4, "vNE")
+        call my_alloc(BasisCONST, NCANDE, 4, "BasisCONST")
+        call my_alloc(NbSubTriangles, NCANDE, "NbSubTriangles")
+        call my_alloc(diag22, NB, "diag22")
+        call my_alloc(ptZ, NCANDE, 3, "ptZ")
+        call my_alloc(vZA, NCANDE, 3, 4, "vZA")
+        call my_alloc(vZB, NCANDE, 3, 4, "vZB")
+        call my_alloc(ptA, NCANDE, 3, 4, "ptA")
       END IF   
       CALL MY_BARRIER
 
@@ -747,14 +752,14 @@ C 5   DEALLOCATE
 C================================================================ 
 
       IF (ITASK==0)THEN
-        DEALLOCATE(vNE)
-        DEALLOCATE(BasisCONST)
-        DEALLOCATE(NbSubTriangles)
-        DEALLOCATE(ptZ) 
-        DEALLOCATE(vZA)
-        DEALLOCATE(vZB)
-        DEALLOCATE(ptA)
-        DEALLOCATE(diag22)
+        call my_dealloc(vNE)
+        call my_dealloc(BasisCONST)
+        call my_dealloc(NbSubTriangles)
+        call my_dealloc(ptZ)
+        call my_dealloc(vZA)
+        call my_dealloc(vZB)
+        call my_dealloc(ptA)
+        call my_dealloc(diag22)
       END IF 
 
       
@@ -771,7 +776,6 @@ C================================================================
 !||    isonsh3n       ../engine/source/interfaces/int22/i22intersect.F
 !||--- called by ------------------------------------------------------
 !||    i22intersect   ../engine/source/interfaces/int22/i22intersect.F
-!||    i22trivox      ../engine/source/interfaces/intsort/i22trivox.F
 !||====================================================================
       INTEGER FUNCTION ISONSH3N(Z, A, ZA, ZB, P, IFLG_DB)
 C-----------------------------------------------

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    execargcheck            ../engine/source/engine/execargcheck.F
 !||--- called by ------------------------------------------------------
 !||    radioss0                ../engine/source/engine/radioss0.F
 !||--- calls      -----------------------------------------------------
 !||    arret                   ../engine/source/system/arret.F
-!||    build_msg               ../common_source/tools/memory/my_alloc.F90
+!||    build_msg               ../common_source/tools/memory/my_alloc_tools.F90
 !||    isanargument            ../engine/source/engine/execargcheck.F
 !||    pexecinfo               ../engine/source/engine/execargcheck.F
 !||    phelpinfo               ../engine/source/engine/execargcheck.F
@@ -74,8 +75,9 @@ C-----------------------------------------------
        LOGICAL :: CONDITION
        CHARACTER C
        INTEGER IARGC,CDL_CASE,IJK
+       integer :: debug_name_len
        CHARACTER :: LAST_LETTER,SEPARATOR
-       CHARACTER(LEN=2096) ARGS2,ARGS_REDUCE,ARGP
+       CHARACTER(LEN=2096) ARGS2,ARGS_REDUCE,ARGP,debug_name
        CHARACTER(LEN=4096) ULIBC
        PARAMETER (LENLIST=20)
        CHARACTER(LEN=12):: ARGLIST(LENLIST)
@@ -114,6 +116,7 @@ C-----------------------------------------------
        MDS_PATHI = 0
        MDS_DIRI = 0
        GOT_PREVIEW= 0
+       GPU = 0
 
        ! Initialize MDS_PATH Array
        MDS_PATH=''
@@ -151,6 +154,7 @@ C-----------------------------------------------
         CDL_CASE = 0
         IF(ARGS_REDUCE(1:9)=='-OUTFILE=') CDL_CASE = 1
         IF(ARGS_REDUCE(1:8)=='-INFILE=') CDL_CASE = 2
+        if(args_reduce(1:7)=='-DEBUG=') cdl_case = 3
         IF(CDL_CASE==0) THEN
           SELECT CASE (ARGS)
 C------------------------------------------------
@@ -219,6 +223,8 @@ C -MEM-MAP
              GOT_INSPIRE_ALM=1
           CASE ( '-INSPIRE')
              GOT_INSPIRE=1
+          CASE ( '-GPU')
+             GPU=1
 C------------------------------------------------
 C -NORST : no restart file command
           CASE ( '-NORST')
@@ -266,33 +272,36 @@ C------------------------------------------------
          !       -OUTFILE=... option
          ! -----------------------------
             CASE(1)
-
-                OUTFILE_NAME_LEN = LEN_TRIM(ARGS2) - 9
-                OUTFILE_NAME(1:OUTFILE_NAME_LEN) = ARGS2(10:LEN_TRIM(ARGS2))
-                OUTFILE_BOOL=.TRUE.
-                DO IJK=1,OUTFILE_NAME_LEN
-                    LAST_LETTER = OUTFILE_NAME(IJK:IJK)
-                ENDDO
-                IF(LAST_LETTER/=SEPARATOR) THEN
-                    OUTFILE_NAME(1:OUTFILE_NAME_LEN+1) = 
-     .                       OUTFILE_NAME(1:OUTFILE_NAME_LEN)//SEPARATOR
-                    OUTFILE_NAME_LEN = OUTFILE_NAME_LEN + 1
-                ENDIF
+              OUTFILE_NAME_LEN = LEN_TRIM(ARGS2) - 9
+              OUTFILE_NAME(1:OUTFILE_NAME_LEN) = ARGS2(10:LEN_TRIM(ARGS2))
+              OUTFILE_BOOL=.TRUE.
+              DO IJK=1,OUTFILE_NAME_LEN
+                LAST_LETTER = OUTFILE_NAME(IJK:IJK)
+              ENDDO
+              IF(LAST_LETTER/=SEPARATOR) THEN
+                OUTFILE_NAME(1:OUTFILE_NAME_LEN+1) = 
+     .                   OUTFILE_NAME(1:OUTFILE_NAME_LEN)//SEPARATOR
+                OUTFILE_NAME_LEN = OUTFILE_NAME_LEN + 1
+              ENDIF
          ! -----------------------------
          !       -INFILE=... option
          ! -----------------------------
             CASE(2)
-                INFILE_NAME_LEN = LEN_TRIM(ARGS2) - 8
-                INFILE_NAME(1:INFILE_NAME_LEN) = ARGS2(9:LEN_TRIM(ARGS2))
-                INFILE_BOOL=.TRUE.
-                DO IJK=1,INFILE_NAME_LEN
-                    LAST_LETTER = INFILE_NAME(IJK:IJK)
-                ENDDO
-                IF(LAST_LETTER/=SEPARATOR) THEN
-                    INFILE_NAME(1:INFILE_NAME_LEN+1) = 
-     .                       INFILE_NAME(1:INFILE_NAME_LEN)//SEPARATOR
-                    INFILE_NAME_LEN = INFILE_NAME_LEN + 1
-                ENDIF
+              INFILE_NAME_LEN = LEN_TRIM(ARGS2) - 8
+              INFILE_NAME(1:INFILE_NAME_LEN) = ARGS2(9:LEN_TRIM(ARGS2))
+              INFILE_BOOL=.TRUE.
+              DO IJK=1,INFILE_NAME_LEN
+                LAST_LETTER = INFILE_NAME(IJK:IJK)
+              ENDDO
+              IF(LAST_LETTER/=SEPARATOR) THEN
+                INFILE_NAME(1:INFILE_NAME_LEN+1) = 
+     .                    INFILE_NAME(1:INFILE_NAME_LEN)//SEPARATOR
+                INFILE_NAME_LEN = INFILE_NAME_LEN + 1
+              ENDIF
+            case(3)
+              debug_name_len = len_trim(args2) - 7
+              debug_name(1:debug_name_len) = args2(8:len_trim(args2))
+
             END SELECT
 !   ------------------------------------------------
         ENDIF

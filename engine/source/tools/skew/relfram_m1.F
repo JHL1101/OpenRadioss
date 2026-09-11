@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    relfram_m1   ../engine/source/tools/skew/relfram_m1.F
 !||--- called by ------------------------------------------------------
@@ -50,11 +51,8 @@ C-----------------------------------------------
  
 C     REAL
       my_real
-     .   ROT(9),ROT0(9),ROTDT05(9),ROTT05(9),
-     .   OMEGAX, OMEGAY, OMEGAZ, NN, CS, SN, UX, UY, UZ,
-     .   OMEGAXX, OMEGAXY, OMEGAXZ, OMEGAYY, OMEGAYZ, OMEGAZZ,
      .  O(3), OM(3), W(3), DWDT(3), WOM(3), VE(3), AE(3), AC(3), OM2(3),
-     .  DT05, DREL(3), VREL(3), AG(3), VRREL(3), ARREL(3)
+     .  DT05, VREL(3)
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------

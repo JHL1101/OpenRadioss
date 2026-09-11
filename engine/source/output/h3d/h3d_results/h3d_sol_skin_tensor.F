@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_sol_skin_tensor    ../engine/source/output/h3d/h3d_results/h3d_sol_skin_tensor.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod           ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod            ../common_source/modules/elements/element_mod.F90
 !||    initbuf_mod            ../engine/share/resol/initbuf.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||====================================================================
       SUBROUTINE H3D_SOL_SKIN_TENSOR(
@@ -52,6 +55,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -99,8 +104,10 @@ C-----------------------------------------------
      .           1,5,8,4/
 C-----------------------------------------------
 C
-      ALLOCATE(AFLU(3,NUMNOD),VFLU(3,NUMNOD),VALUE(6,NUMNOD))
-      ALLOCATE(ITAGPS(NUMNOD))
+      call my_alloc(AFLU, 3, NUMNOD, "AFLU")
+      call my_alloc(VFLU, 3, NUMNOD, "VFLU")
+      call my_alloc(VALUE, 6, NUMNOD, "VALUE")
+      call my_alloc(ITAGPS, NUMNOD, "ITAGPS")
       AFLU  = ZERO
       VFLU  = ZERO
       VALUE = ZERO
@@ -194,7 +201,10 @@ C-------------check for strain case still eij=0.5*shear
          END IF
          IDEB = IDEB + NEL
        END DO 
-       DEALLOCATE(AFLU,VFLU,VALUE,ITAGPS)
+       call my_dealloc(AFLU)
+       call my_dealloc(VFLU)
+       call my_dealloc(VALUE)
+       call my_dealloc(ITAGPS)
 C-----------
       RETURN
       END       

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    updmat                 ../starter/source/materials/updmat.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    law100_upd_ab          ../starter/source/materials/mat/mat100/law100_upd.F
 !||    law100_upd_nht         ../starter/source/materials/mat/mat100/law100_upd.F
 !||    law104_upd             ../starter/source/materials/mat/mat104/law104_upd.F
+!||    law105_upd             ../starter/source/materials/mat/mat133/law105_upd.F90
 !||    law108_upd             ../starter/source/materials/mat/mat108/law108_upd.F
 !||    law111_upd             ../starter/source/materials/mat/mat111/law111_upd.F
 !||    law112_upd             ../starter/source/materials/mat/mat112/law112_upd.F
@@ -43,7 +45,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    law129_upd             ../starter/source/materials/mat/mat129/law129_upd.F90
 !||    law133_upd             ../starter/source/materials/mat/mat133/law133_upd.F90
 !||    law158_upd             ../starter/source/materials/mat/mat158/law158_upd.F
-!||    law163_upd             ../starter/source/materials/mat/mat163/law163_upd.F90
 !||    law190_upd             ../starter/source/materials/mat/mat190/law190_upd.F90
 !||    law19_upd              ../starter/source/materials/mat/mat019/law19_upd.F90
 !||    law36_upd              ../starter/source/materials/mat/mat036/law36_upd.F
@@ -52,7 +53,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    law62_upd              ../starter/source/materials/mat/mat062/law62_upd.F
 !||    law69_upd              ../starter/source/materials/mat/mat069/law69_upd.F
 !||    law70_upd              ../starter/source/materials/mat/mat070/law70_upd.F
-!||    law76_upd              ../starter/source/materials/mat/mat076/law76_upd.F
 !||    law77_upd              ../starter/source/materials/mat/mat077/law77_upd.F
 !||    law81_upd              ../starter/source/materials/mat/mat081/law81_upd.F90
 !||    law87_upd              ../starter/source/materials/mat/mat087/law87_upd.F90
@@ -64,10 +64,10 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbuftag_mod           ../starter/share/modules1/elbuftag_mod.F
 !||    eosfun_usr2sys_mod     ../starter/source/materials/tools/eosfun_usr2sys.F90
 !||    law02_upd_mod          ../starter/source/materials/mat/mat002/law02_upd.F90
+!||    law105_upd_mod         ../starter/source/materials/mat/mat133/law105_upd.F90
 !||    law123_upd_mod         ../starter/source/materials/mat/mat123/law123_upd.F90
 !||    law129_upd_mod         ../starter/source/materials/mat/mat129/law129_upd.F90
 !||    law133_upd_mod         ../starter/source/materials/mat/mat133/law133_upd.F90
-!||    law163_upd_mod         ../starter/source/materials/mat/mat163/law163_upd.F90
 !||    law190_upd_mod         ../starter/source/materials/mat/mat190/law190_upd.F90
 !||    law19_upd_mod          ../starter/source/materials/mat/mat019/law19_upd.F90
 !||    law81_upd_mod          ../starter/source/materials/mat/mat081/law81_upd.F90
@@ -91,10 +91,10 @@ C-----------------------------------------------
       USE LAW19_UPD_MOD  , ONLY : LAW19_UPD
       USE LAW81_UPD_MOD  , ONLY : LAW81_UPD
       USE LAW87_UPD_MOD  , ONLY : LAW87_UPD
+      USE LAW105_UPD_MOD , ONLY : LAW105_UPD
       USE LAW123_UPD_MOD , ONLY : LAW123_UPD
       USE LAW129_UPD_MOD , ONLY : LAW129_UPD
       USE LAW133_UPD_MOD , ONLY : LAW133_UPD
-      USE LAW163_UPD_MOD , ONLY : LAW163_UPD
       USE LAW190_UPD_MOD , ONLY : LAW190_UPD
       USE VISC_PARAM_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
@@ -115,7 +115,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NPC(SNPC), FUNC_ID(NFUNCT)
+      INTEGER NPC(SNPC)
+      INTEGER :: FUNC_ID(NFUNCT) ! user ids
       INTEGER, DIMENSION(NPROPMI,NUMMAT) ,INTENT(INOUT) :: IPM
       my_real PM(NPROPM,NUMMAT), PLD(STF),BUFMAT(SBUFMAT)
       TARGET IPM,BUFMAT
@@ -137,7 +138,6 @@ C-----------------------------------------------
       my_real, DIMENSION(:), POINTER :: UPARAM,UPARF
       TYPE(MLAW_TAG_), POINTER :: MTAG
       CHARACTER(LEN=NCHARTITLE)::TITR, TITLE
-      TYPE(MATPARAM_STRUCT_) , POINTER :: MATPARAM
       TYPE (VISC_PARAM_)     , POINTER :: VISC
       INTEGER :: NFUNC_EOS
 C=======================================================================
@@ -259,7 +259,7 @@ c-------------------------
           CASE (36) 
             MTAG => MLAW_TAG(IMAT)
             CALL LAW36_UPD(IOUT   ,TITR   ,MAT_ID ,NPARAM,UPARAM ,
-     .                    NFUNC  ,IFUNC  ,FUNC_ID,NPC    ,PLD  ,
+     .                    NFUNC  ,IFUNC  ,FUNC_ID ,NPC    ,PLD  ,
      .                    MTAG   ,NFUNCT )        
 c-------------------------
           CASE (42) 
@@ -286,12 +286,6 @@ c------------------
             CALL LAW70_UPD(MAT_PARAM(IMAT)    ,TITR     ,MAT_ID   ,NPARAM   ,UPARAM   ,
      .                     NFUNC    ,IFUNC    ,NPC      ,PLD      ,IOUT     ,
      .                     NFUNCT   ,FUNC_ID  ,NPROPM   ,PM(1,IMAT),MAT_PARAM(IMAT)%YOUNG0)       
-c------------------
-          CASE (76) 
-            CALL LAW76_UPD(IOUT   ,TITR    ,MAT_ID   ,NPARAM ,MAT_PARAM(IMAT) ,
-     .                     UPARAM ,NUMTABL ,ITABLE   ,TABLE   ,NFUNC    ,
-     .                     IFUNC  ,NPC     ,PLD      )       
-c
 c------------------
           CASE (77) 
             CALL LAW77_UPD(TITR    ,MAT_ID   ,NPARAM ,MAT_PARAM(IMAT) ,
@@ -355,7 +349,12 @@ c
               CALL LAW104_UPD(IFAILG  ,NPARAM,NUPARF,UPARAM,UPARF   ,
      .                        NLOC_DMG,IMAT   ,MLAW_TAG(IMAT),IPM    ,
      .                        MAT_PARAM(IMAT))
-            ENDIF 
+            ENDIF
+c------------------
+          CASE (105)    ! Powder-Burn
+           ! IMAT   : internatl ID
+           ! MAT_ID : user ID
+            CALL LAW105_UPD(MAT_PARAM(IMAT), PM(1,IMAT), NPROPM ,MAT_ID , NFUNC, IFUNC, NPC, PLD, UPARAM(3))
 c------------------
           CASE (108)    ! Spring material------------------
             CALL LAW108_UPD(IOUT,TITR,UPARAM,NPC,PLD,
@@ -413,9 +412,6 @@ c-------------------------
             CALL LAW158_UPD(MAT_PARAM(IMAT),TITR,NPC,PLD,
      .                      NFUNC,NFUNCL,IFUNC,MAT_ID,FUNC_ID,
      .                      PM(1,IMAT),SENSORS)
-c------------------
-          CASE (163)
-            CALL LAW163_UPD(MAT_PARAM(IMAT),PM(1,IMAT),NPROPM)
 c------------------
           CASE (190) !Path DEPENDE FAAM (DUBOIS)
             CALL LAW190_UPD(MAT_PARAM(IMAT) ,NUMTABL ,ITABLE   ,TABLE   ,PM(1,IMAT),

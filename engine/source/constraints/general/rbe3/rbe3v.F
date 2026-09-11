@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rbe3v              ../engine/source/constraints/general/rbe3/rbe3v.F
 !||--- called by ------------------------------------------------------
@@ -28,6 +29,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    prerbe3            ../engine/source/constraints/general/rbe3/rbe3f.F
 !||    rbe3cl             ../engine/source/constraints/general/rbe3/rbe3f.F
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod   ../common_source/modules/nodal_arrays.F90
 !||    rbe3_mod           ../common_source/modules/constraints/rbe3_mod.F90
 !||====================================================================
@@ -40,6 +43,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -69,7 +74,7 @@ C     REAL
 C======================================================================|
       IADS = SLRBE3/2
       CALL PRERBE3(RBE3%IRBE3 ,MAX_M , IROTG,JT  ,JR   )
-      ALLOCATE(FDSTNB(3,6,MAX_M))
+      call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
       IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
       DO N= NRBE3,1,-1
         IAD = RBE3%IRBE3(1,N)
@@ -123,24 +128,29 @@ C======================================================================|
         ENDIF 
       ENDDO
 C      
-      DEALLOCATE(FDSTNB)
-      IF (IROTG>0) DEALLOCATE(MDSTNB)
+      call my_dealloc(FDSTNB)
+      IF (IROTG>0) call my_dealloc(MDSTNB)
 C---
       RETURN
       END
 !||====================================================================
-!||    rbe3_impd   ../engine/source/constraints/general/rbe3/rbe3v.F
+!||    rbe3_impd        ../engine/source/constraints/general/rbe3/rbe3v.F
 !||--- called by ------------------------------------------------------
-!||    recukin     ../engine/source/implicit/recudis.F
+!||    recukin          ../engine/source/implicit/recudis.F
 !||--- calls      -----------------------------------------------------
-!||    prerbe3     ../engine/source/constraints/general/rbe3/rbe3f.F
-!||    rbe3cl      ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    prerbe3          ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    rbe3cl           ../engine/source/constraints/general/rbe3/rbe3f.F
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE RBE3_IMPD(IRBE3 ,LRBE3 ,X    ,D     ,DR    ,
      1                     FRBE3 ,SKEW  )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -170,7 +180,7 @@ C     REAL
 C======================================================================|
       IADS = SLRBE3/2
       CALL PRERBE3(IRBE3 ,MAX_M , IROTG,JT  ,JR   )
-      ALLOCATE(FDSTNB(3,6,MAX_M))
+      call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
       IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
       DO N=1,NRBE3
         IAD = IRBE3(1,N)
@@ -215,8 +225,8 @@ C======================================================================|
         ENDIF 
       ENDDO
 C      
-      DEALLOCATE(FDSTNB)
-      IF (IROTG>0) DEALLOCATE(MDSTNB)
+      call my_dealloc(FDSTNB)
+      IF (IROTG>0) call my_dealloc(MDSTNB)
 C---
       RETURN
       END

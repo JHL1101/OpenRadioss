@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s6cinit3               ../starter/source/elements/thickshell/solide6c/s6cinit3.F
 !||--- called by ------------------------------------------------------
@@ -115,7 +116,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,NF1,IBID,IGTYP,IREP,IP,ILAY,NLAY,NUVAR,NCC,JHBE,
-     .   NUVARR,IDEF,IPANG,IPTHK,IPPOS,IPMAT,IG,IM,MTN0,NLYMAX,
+     .   IDEF,IPANG,IPTHK,IPPOS,IPMAT,IG,IM,MTN0,NLYMAX,
      .   IPID1,NPTR,NPTS,NPTT,L_PLA,L_SIGB,IMAS_DS
       INTEGER MAT(MVSIZ), PID(MVSIZ), NGL(MVSIZ), MAT0(MVSIZ)
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ),
@@ -128,7 +129,7 @@ C-----------------------------------------------
       my_real
      .   BID, FV, STI, ZI,WI
       my_real
-     .   V8LOC(51,MVSIZ),VOLU(MVSIZ),DTX(MVSIZ),VZL(MVSIZ),VZQ(MVSIZ),
+     .   VOLU(MVSIZ),DTX(MVSIZ),VZL(MVSIZ),
      .   RX(MVSIZ) ,RY(MVSIZ) ,RZ(MVSIZ) ,SX(MVSIZ) ,
      .   SY(MVSIZ) ,SZ(MVSIZ) ,TX(MVSIZ) ,TY(MVSIZ) ,TZ(MVSIZ) ,
      .   E1X(MVSIZ),E1Y(MVSIZ),E1Z(MVSIZ),

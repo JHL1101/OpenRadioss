@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    c_idglob               ../starter/source/restart/ddsplit/c_idglob.F
 !||--- called by ------------------------------------------------------
 !||    ddsplit                ../starter/source/restart/ddsplit/ddsplit.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    reorder_mod            ../starter/share/modules1/reorder_mod.F
 !||====================================================================
@@ -36,6 +38,7 @@ C-----------------------------------------------
       USE REORDER_MOD
       USE ALE_CONNECTIVITY_MOD
       use element_mod , only : nixs,nixq,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -62,7 +65,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-      ALLOCATE(TAG(NUMEL))
+      call my_alloc(TAG, NUMEL, "TAG")
       TAG(1:NUMEL) = 0
 
       ICOUNT = 0
@@ -158,7 +161,7 @@ C-----------------------------------------------
 
       ENDDO
       
-      DEALLOCATE(TAG)
+      CALL MY_DEALLOC(TAG)
       END SUBROUTINE C_IDGLOB
 C
 !||====================================================================

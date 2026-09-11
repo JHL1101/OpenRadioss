@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    nasg_mod    ../common_source/eos/nasg.F
 !||--- called by ------------------------------------------------------
@@ -111,7 +112,6 @@ C-----------------------------------------------
 
       ELSEIF(IFLAG == 1) THEN
         DO I=1,NEL
-          EINT(I) = EINT(I) - HALF*DVOL(I)*(PNEW(I)+PSH(I))
           UNPMU   =  ONE+MU(I)
           RHO     = UNPMU*RHO0
           V0      = VNEW(I)*RHO/RHO0
@@ -121,6 +121,7 @@ C-----------------------------------------------
           dPdE(I) = BB  !partial derivative
           PNEW(I) = (AA+BB*EINT(I)/V0)/(ONE+BB*DVOL(I)/TWO/V0)   ! P(mu[n+1],E[n+1])
           PNEW(I) = MAX(PNEW(I),-GAMMA*PSTAR)*OFF(I)
+          EINT(I) = EINT(I) - HALF*DVOL(I)*(PNEW(I)+PSH(I))
         ENDDO
 
       ELSEIF(IFLAG == 2) THEN

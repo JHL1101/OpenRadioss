@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,27 +15,30 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    i25comp_2       ../engine/source/interfaces/int25/i25comp_2.F
+!||    i25comp_2        ../engine/source/interfaces/int25/i25comp_2.F
 !||--- called by ------------------------------------------------------
-!||    i25maind_2      ../engine/source/interfaces/int25/i25maind_2.F
+!||    i25maind_2       ../engine/source/interfaces/int25/i25maind_2.F
 !||--- calls      -----------------------------------------------------
-!||    i25cdcor3       ../engine/source/interfaces/int25/i25mainf.F
-!||    i25cor3_21      ../engine/source/interfaces/int25/i25cor3.F
-!||    i25cor3_22      ../engine/source/interfaces/int25/i25cor3.F
-!||    i25dst3_21      ../engine/source/interfaces/int25/i25dst3_21.F
-!||    i25dst3_22      ../engine/source/interfaces/int25/i25dst3_22.F
-!||    i25glob         ../engine/source/interfaces/int25/i25dst3_1.F
-!||    i25glob_22      ../engine/source/interfaces/int25/i25dst3_22.F
-!||    my_barrier      ../engine/source/system/machine.F
+!||    i25cdcor3        ../engine/source/interfaces/int25/i25mainf.F
+!||    i25cor3_21       ../engine/source/interfaces/int25/i25cor3.F
+!||    i25cor3_22       ../engine/source/interfaces/int25/i25cor3.F
+!||    i25dst3_21       ../engine/source/interfaces/int25/i25dst3_21.F
+!||    i25dst3_22       ../engine/source/interfaces/int25/i25dst3_22.F
+!||    i25glob          ../engine/source/interfaces/int25/i25dst3_1.F
+!||    i25glob_22       ../engine/source/interfaces/int25/i25dst3_22.F
+!||    my_barrier       ../engine/source/system/machine.F
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    tri7box         ../engine/share/modules/tri7box.F
+!||    intbufdef_mod    ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE I25COMP_2(
      1                   IPARI   ,INTBUF_TAB ,X      ,ITAB   ,NIN        ,
@@ -50,6 +53,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -77,14 +82,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER JD(50),KD(50), JFI, KFI,
-     .        I, J, L, H, I_STOK, JLT_NEW, JLT , NFT, 
-     .         NSEG,  IADM,
+      INTEGER I, L, I_STOK, JLT , NFT, 
+     .         IADM,
      .        IGAP, INACTI,  
      .        NB_LOC, I_STOK_LOC,DEBUT,
-     .        ILAGM, LENR, INTTH,
-     .        I_STOK_GLO, MGLOB, MG, N, NN, IERROR
-      INTEGER  LENT, MAXCC
+     .        INTTH,
+     .        I_STOK_GLO, MG, N
       INTEGER IX1(MVSIZ), IX2(MVSIZ), IX3(MVSIZ), IX4(MVSIZ),
      .        NSVG(MVSIZ), ISHEL(MVSIZ),
      .        CAND_N_N(MVSIZ),CAND_E_N(MVSIZ),SUBTRIA(MVSIZ),
@@ -107,15 +110,12 @@ C     REAL
      .   VY1(MVSIZ), VY2(MVSIZ), VY3(MVSIZ), VY4(MVSIZ), 
      .   VZ1(MVSIZ), VZ2(MVSIZ), VZ3(MVSIZ), VZ4(MVSIZ), 
      .   VXI(MVSIZ), VYI(MVSIZ), VZI(MVSIZ), 
-     .   GAPV(MVSIZ),MSI(MVSIZ),
-     .   NM1(MVSIZ), NM2(MVSIZ), NM3(MVSIZ), 
-     .   TEMPI(MVSIZ),PHI(MVSIZ),AREASI(MVSIZ), GAPS(MVSIZ), GAPM(MVSIZ),
+     .   GAPS(MVSIZ), GAPM(MVSIZ),
      .   PENT(MVSIZ,4), LB(MVSIZ,4), LC(MVSIZ,4), 
      .   LBH(MVSIZ,4), LCH(MVSIZ,4), GAP_NM(4,MVSIZ),
      .   DIST(MVSIZ), GAPMXL(MVSIZ)
       my_real
-     .     RCURVI(MVSIZ), ANGLMI(MVSIZ),  PENMIN,MARGE,DRAD,DGAPLOAD
-      INTEGER NRTMFT, NRTMLT, NMNFT, NMNLT
+     .     PENMIN,MARGE,DRAD,DGAPLOAD
       INTEGER ILEV,NRTM,NSN
 C-----------------------------------------------
 C
@@ -137,7 +137,7 @@ C
       DGAPLOAD    = INTBUF_TAB%VARIABLES(46)
 
       ILEV  = IPARI(20,NIN)
-      ALLOCATE(INDEX2(LINDMAX))
+      call my_alloc(INDEX2, LINDMAX, "INDEX2")
 
 c----------------------------------------------------
 c   radius of curvature: calculation of nodal normals (normalized)
@@ -282,7 +282,7 @@ C cand_n and cand_e replaced by cand_n_n and cand_e_n
      J  INTBUF_TAB%GAP_M,GAPM   ,INTBUF_TAB%GAP_NM,GAP_NM ,
      L  INTBUF_TAB%MVOISIN,NRTM ,INTBUF_TAB%MSEGTYP24,ISHEL   ,
      P  MVOISA  ,MVOISB  ,INTBUF_TAB%GAP_SL,INTBUF_TAB%GAP_ML,GAPMXL,
-     Q  INTBUF_TAB%LBOUND,IBOUNDA,IBOUNDB )
+     Q  INTBUF_TAB%LBOUND,IBOUNDA,IBOUNDB ,ETYP)
 
 C
           CALL I25DST3_22(
@@ -303,7 +303,7 @@ C
      J FAR     ,PENT  ,
      L SUBTRIA ,LB    ,LC      ,LBH   ,LCH    ,
      P MVOISA  ,MVOISB,GAPMXL  ,IBOUNDA,IBOUNDB,
-     Q INTBUF_TAB%VTX_BISECTOR ,DRAD   ,DGAPLOAD)
+     Q INTBUF_TAB%VTX_BISECTOR ,DRAD   ,DGAPLOAD,ETYP)
 C
           CALL I25GLOB_22(
      1 JLT    ,CAND_N_N ,CAND_E_N ,INTBUF_TAB%CAND_OPT_E,
@@ -326,7 +326,7 @@ C pmax_gap..
       INTBUF_TAB%VARIABLES(23) = ZERO
 #include "lockoff.inc"
 C-----------------------------------------------------------------------
-      DEALLOCATE(INDEX2)
+      call my_dealloc(INDEX2)
       RETURN
       END
 

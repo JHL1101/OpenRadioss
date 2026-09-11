@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,44 +15,47 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    rdcomi           ../engine/source/output/restart/rdcomm.F
+!||    rdcomi             ../engine/source/output/restart/rdcomm.F
 !||--- called by ------------------------------------------------------
-!||    rdresa           ../engine/source/output/restart/rdresa.F
+!||    rdresa             ../engine/source/output/restart/rdresa.F
 !||--- calls      -----------------------------------------------------
-!||    read_array       ../common_source/comm/read_array.F
+!||    read_array         ../common_source/comm/read_array.F
 !||--- uses       -----------------------------------------------------
-!||    ale_mod          ../common_source/modules/ale/ale_mod.F
-!||    alefvm_mod       ../common_source/modules/ale/alefvm_mod.F
-!||    alemuscl_mod     ../common_source/modules/ale/alemuscl_mod.F
-!||    damp_mod         ../engine/share/modules/damp_mod.F
-!||    drape_mod        ../engine/share/modules/drape_mod.F
-!||    eos_param_mod    ../common_source/modules/mat_elem/eos_param_mod.F90
-!||    glob_therm_mod   ../common_source/modules/mat_elem/glob_therm_mod.F90
-!||    h3d_mod          ../engine/share/modules/h3d_mod.F
-!||    intbufdef_mod    ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    loads_mod        ../common_source/modules/loads/loads_mod.F90
-!||    mat_elem_mod     ../common_source/modules/mat_elem/mat_elem_mod.F90
-!||    multi_fvm_mod    ../common_source/modules/ale/multi_fvm_mod.F90
-!||    outmax_mod       ../common_source/modules/outmax_mod.F
-!||    output_mod       ../common_source/modules/output/output_mod.F90
-!||    parameters_mod   ../common_source/modules/interfaces/parameters_mod.F
-!||    pblast_mod       ../common_source/modules/loads/pblast_mod.F90
-!||    pinchtype_mod    ../common_source/modules/pinchtype_mod.F
-!||    pload_cyl_mod    ../common_source/modules/loads/pload_cyl_mod.F
-!||    rbe3_mod         ../common_source/modules/constraints/rbe3_mod.F90
-!||    rwall_mod        ../common_source/modules/constraints/rwall_mod.F90
-!||    seatbelt_mod     ../common_source/modules/seatbelt_mod.F
-!||    sensor_mod       ../common_source/modules/sensor_mod.F90
-!||    sfem_mod         ../common_source/modules/elements/sfem_mod.F90
-!||    skew_mod         ../common_source/modules/skew_mod.F90
-!||    state_mod        ../common_source/modules/state_mod.F
-!||    th_mod           ../engine/share/modules/th_mod.F
+!||    ale_mod            ../common_source/modules/ale/ale_mod.F
+!||    alefvm_mod         ../common_source/modules/ale/alefvm_mod.F
+!||    alemuscl_mod       ../common_source/modules/ale/alemuscl_mod.F
+!||    damp_mod           ../engine/share/modules/damp_mod.F
+!||    drape_mod          ../engine/share/modules/drape_mod.F
+!||    eos_param_mod      ../common_source/modules/mat_elem/eos_param_mod.F90
+!||    glob_therm_mod     ../common_source/modules/mat_elem/glob_therm_mod.F90
+!||    h3d_mod            ../engine/share/modules/h3d_mod.F
+!||    intbufdef_mod      ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    loads_mod          ../common_source/modules/loads/loads_mod.F90
+!||    mat_elem_mod       ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    multi_fvm_mod      ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    outmax_mod         ../common_source/modules/outmax_mod.F
+!||    output_mod         ../common_source/modules/output/output_mod.F90
+!||    parameters_mod     ../common_source/modules/interfaces/parameters_mod.F
+!||    pblast_mod         ../common_source/modules/loads/pblast_mod.F90
+!||    pinchtype_mod      ../common_source/modules/pinchtype_mod.F
+!||    pload_cyl_mod      ../common_source/modules/loads/pload_cyl_mod.F
+!||    q1np_restart_mod   ../common_source/modules/q1np_restart_mod.F90
+!||    rbe3_mod           ../common_source/modules/constraints/rbe3_mod.F90
+!||    rwall_mod          ../common_source/modules/constraints/rwall_mod.F90
+!||    seatbelt_mod       ../common_source/modules/seatbelt_mod.F
+!||    sensor_mod         ../common_source/modules/sensor_mod.F90
+!||    sfem_mod           ../common_source/modules/elements/sfem_mod.F90
+!||    skew_mod           ../common_source/modules/skew_mod.F90
+!||    state_mod          ../common_source/modules/state_mod.F
+!||    th_mod             ../engine/share/modules/th_mod.F
 !||====================================================================
       SUBROUTINE RDCOMI(OUTPUT,TABVINT,MULTI_FVM,H3D_DATA,DYNAIN_DATA,
      .                  INTER_PARAMETERS,SENSORS,LOADS ,MAT_ELEM,SKEWS,
@@ -86,9 +89,11 @@ C-----------------------------------------------
       USE RWALL_MOD
       USE SFEM_MOD
       USE SEATBELT_MOD , ONLY : NGUIDED_CABLE,NGUIDED_CABLE_G
+      USE Q1NP_RESTART_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
       INTEGER TABVINT(*)
       TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT
@@ -104,7 +109,7 @@ C-----------------------------------------------
       TYPE (PBLAST_)        ,INTENT(INOUT) :: PBLAST
       TYPE (RBE3_)          ,INTENT(INOUT) :: RBE3
       TYPE (RWALL_)         ,INTENT(INOUT) :: RWALL
-      TYPE (SFEM_)          ,INTENT(INOUT) :: SFEM
+      TYPE (global_sfem_), INTENT(INOUT) :: SFEM
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
 C-----------------------------------------------
@@ -156,7 +161,8 @@ C-----------------------------------------------
 C----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-          INTEGER LWASPH44C, I, NEXT,IDUM1,ISUSED,SENS_NSTOP,SENS_NSTAT,SENS_NOUTP,SENS_NANIM
+          INTEGER LWASPH44C, I, NEXT,IDUM1,ISUSED,SENS_NSTOP,SENS_NSTAT,
+     .            SENS_NOUTP,SENS_NANIM,NEXTLOC
 C-----------------------------------------------
 C     reading of integer variables.
 C-----------------------------------------------
@@ -275,7 +281,7 @@ C Empty field           = TABVINT(47)
       SMADSH3   = TABVINT(106)
       SMADSOL   = TABVINT(107)
       SMADNOD   = TABVINT(108)
-      SMADFAIL  = TABVINT(109)
+      ! SMADFAIL  = TABVINT(109)  obsolete option removed
       SNPBY     = TABVINT(110)
       SNPBYL    = TABVINT(111)
       SLPBY     = TABVINT(112)
@@ -1452,6 +1458,42 @@ C
 C
       NEXT=NEXT+1
       SENSORS%STABSEN = TABVINT(NEXT)
+
+C Q1Np element data (always stored after SENSORS%STABSEN)
+      IF (TABVINT_LEN_G - NEXT >= 7) THEN
+        NEXTLOC = NEXT
+        NEXTLOC = NEXTLOC + 1
+        NUMELQ1NP_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SKQ1NP_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SIQ1NP_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SQ1NPBULK_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SQ1NPCTRL_SHARED_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SQ1NPWEIGHT_L_G = TABVINT(NEXTLOC)
+        NEXTLOC = NEXTLOC + 1
+        SQ1NPKNOT_L_G = TABVINT(NEXTLOC)
+        IF (NUMELQ1NP_G > 0 .AND. SKQ1NP_G > 0) THEN
+          NKQ1NP_G = SKQ1NP_G / NUMELQ1NP_G
+        ELSE
+          NKQ1NP_G = 0
+        ENDIF
+C Q1Np counters read from TABVINT (diagnostics removed for verbosity)
+        NEXT = NEXTLOC
+      ELSE
+        NUMELQ1NP_G = 0
+        SKQ1NP_G = 0
+        SIQ1NP_G = 0
+        SQ1NPBULK_G = 0
+        SQ1NPCTRL_SHARED_G = 0
+        SQ1NPWEIGHT_L_G = 0
+        SQ1NPKNOT_L_G = 0
+        NKQ1NP_G = 0
+      ENDIF
+
 C Stack info
       NEXT    = NEXT + 1
       IPART_STACK = TABVINT(NEXT)
@@ -1717,10 +1759,10 @@ C  Pinching
         SENSORS%NSTAT = SENS_NSTAT
         SENSORS%NOUTP = SENS_NOUTP
         SENSORS%NANIM = SENS_NANIM
-        ALLOCATE (SENSORS%STOP(SENSORS%NSTOP))
-        ALLOCATE (SENSORS%OUTP(SENSORS%NOUTP))
-        ALLOCATE (SENSORS%STAT(SENSORS%NSTAT))
-        ALLOCATE (SENSORS%ANIM(SENSORS%NANIM))
+        call my_alloc(SENSORS%STOP, SENSORS%NSTOP, "SENSORS%STOP")
+        call my_alloc(SENSORS%OUTP, SENSORS%NOUTP, "SENSORS%OUTP")
+        call my_alloc(SENSORS%STAT, SENSORS%NSTAT, "SENSORS%STAT")
+        call my_alloc(SENSORS%ANIM, SENSORS%NANIM, "SENSORS%ANIM")
         SENSORS%STOP = 0  
         SENSORS%OUTP = 0 
         SENSORS%STAT = 0 

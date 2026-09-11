@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_sphcel         ../starter/source/elements/reader/hm_read_sphcel.F
 !||--- called by ------------------------------------------------------
@@ -153,20 +154,20 @@ C--------------------------------------------------
 C      ALLOCS & INITS
 c      use NUMELQ IN PLACE OF NUMELC ( NBADMESH routine is modifying NUMELC )
 C--------------------------------------------------
-      CALL MY_ALLOC(ITAG,NUMNOD)
-      ALLOCATE (SUB_SPH(NUMSPH),STAT=stat)
+      CALL MY_ALLOC(ITAG,NUMNOD,"ITAG")
+      call my_alloc(SUB_SPH, NUMSPH, "SUB_SPH", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='SUB_SPH')
-      ALLOCATE (UID_SPH(NUMSPH),STAT=stat)
+      call my_alloc(UID_SPH, NUMSPH, "UID_SPH", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='UID_SPH') 
-      ALLOCATE (TYPE(NUMSPH),STAT=stat)
+      call my_alloc(TYPE, NUMSPH, "TYPE", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='TYPE') 
-      ALLOCATE (HM_MASS(NUMSPH),STAT=stat)
+      call my_alloc(HM_MASS, NUMSPH, "HM_MASS", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                             C1='HM_MASS') 
@@ -256,10 +257,10 @@ C--------------------------------------------------
         ENDIF
       ENDDO
 C-------------------------------------
-       IF(ALLOCATED(SUB_SPH)) DEALLOCATE(SUB_SPH)
-       IF(ALLOCATED(UID_SPH)) DEALLOCATE(UID_SPH)
-       IF(ALLOCATED(TYPE)) DEALLOCATE(TYPE)
-       IF(ALLOCATED(HM_MASS)) DEALLOCATE(HM_MASS)
+       IF(ALLOCATED(SUB_SPH)) CALL MY_DEALLOC(SUB_SPH)
+       IF(ALLOCATED(UID_SPH)) CALL MY_DEALLOC(UID_SPH)
+       IF(ALLOCATED(TYPE)) CALL MY_DEALLOC(TYPE)
+       IF(ALLOCATED(HM_MASS)) CALL MY_DEALLOC(HM_MASS)
 C-------------------------------------
        FIRST_SPHRES=NCELL+1
        IF(NSPHRES/=0)THEN
@@ -466,7 +467,7 @@ C
         WRITE (IOUT,'(A)') 'END OF CELL TRACEBACK'
       ENDIF
 
-       DEALLOCATE(ITAG)
+       CALL MY_DEALLOC(ITAG)
 C
  300  FORMAT(/' SPH CELLS             '/
      +        ' ----------------------'/

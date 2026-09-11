@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_beam     ../starter/source/elements/reader/hm_read_beam.F
 !||--- called by ------------------------------------------------------
@@ -62,6 +63,7 @@ C-----------------------------------------------
       USE READER_OLD_MOD , ONLY : LINE
       USE USER_ID_MOD , ONLY : ID_LIMIT
       use element_mod , only : nixp
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -112,16 +114,16 @@ C=======================================================================
 C--------------------------------------------------
 C      ALLOCS & INITS
 C--------------------------------------------------
-      ALLOCATE (SUB_BEAM(NUMELP),STAT=stat)
+      call my_alloc(SUB_BEAM, NUMELP, "SUB_BEAM", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='SUB_BEAM')
       SUB_BEAM(1:NUMELP) = 0
-      ALLOCATE (VX(NUMELP),STAT=stat)
+      call my_alloc(VX, NUMELP, "VX", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='VX')
       VX(1:NUMELP) = ZERO
-      ALLOCATE (VY(NUMELP),STAT=stat)
+      call my_alloc(VY, NUMELP, "VY", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='VY')
       VY(1:NUMELP) = ZERO
-      ALLOCATE (VZ(NUMELP),STAT=stat)
+      call my_alloc(VZ, NUMELP, "VZ", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='VZ')
       VZ(1:NUMELP) = ZERO
       INDEX_PART = 1
@@ -180,10 +182,10 @@ C Node 3 is just a used node, to define directions (CHECK_USED)
         CALL ANODSET(IXP(3,I), CHECK_BEAM)  
         CALL ANODSET(IXP(4,I), CHECK_USED)
       ENDDO
-      IF(ALLOCATED(SUB_BEAM)) DEALLOCATE(SUB_BEAM)
-      IF(ALLOCATED(VX)) DEALLOCATE(VX)
-      IF(ALLOCATED(VY)) DEALLOCATE(VY)
-      IF(ALLOCATED(VZ)) DEALLOCATE(VZ)
+      IF(ALLOCATED(SUB_BEAM)) CALL MY_DEALLOC(SUB_BEAM)
+      IF(ALLOCATED(VX)) CALL MY_DEALLOC(VX)
+      IF(ALLOCATED(VY)) CALL MY_DEALLOC(VY)
+      IF(ALLOCATED(VZ)) CALL MY_DEALLOC(VZ)
 C-----------
       CALL ANCMSG(MSGID=402,MSGTYPE=MSGERROR,ANMODE=ANINFO_BLIND_1, PRMOD=MSG_PRINT)
 C     

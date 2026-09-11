@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,36 +15,48 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
+
 !||====================================================================
-!||    fail_fld_xfem   ../engine/source/materials/fail/fld/fail_fld_xfem.F
+!||    fail_fld_xfem           ../engine/source/materials/fail/fld/fail_fld_xfem.F
 !||--- called by ------------------------------------------------------
-!||    mulawc          ../engine/source/materials/mat_share/mulawc.F90
-!||    usermat_shell   ../engine/source/materials/mat_share/usermat_shell.F
+!||    mulawc                  ../engine/source/materials/mat_share/mulawc.F90
+!||    usermat_shell           ../engine/source/materials/mat_share/usermat_shell.F
 !||--- calls      -----------------------------------------------------
-!||    finter          ../engine/source/tools/curve/finter.F
-!||    finterfld       ../engine/source/materials/fail/fld/fail_fld_c.F
+!||    table_mat_vinterp       ../engine/source/materials/tools/table_mat_vinterp.F
+!||    vinter_1d               ../engine/source/materials/fail/fld/fail_fld_c.F
+!||--- uses       -----------------------------------------------------
+!||    fail_param_mod          ../common_source/modules/mat_elem/fail_param_mod.F90
+!||    my_alloc_mod            ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod          ../common_source/tools/memory/my_dealloc.F90
+!||    table_mat_vinterp_mod   ../engine/source/materials/tools/table_mat_vinterp.F
 !||====================================================================
-      SUBROUTINE FAIL_FLD_XFEM(
-     1     NEL      ,NUPARAM  ,NUVAR    ,NFUNC    ,IFUNC    ,
-     2     NPF      ,TF       ,TIME     ,UPARAM   ,
+      SUBROUTINE FAIL_FLD_XFEM(FAIL     ,
+     1     NEL      ,NUVAR    ,NVARTMP  ,UVAR     ,VARTMP   ,
+     2     TIME     ,
      3     NGL      ,IPT      ,NPTOT    ,SSP      ,TENS     ,
      4     SIGNXX   ,SIGNYY   ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,
      5     EPSXX    ,EPSYY    ,EPSXY    ,EPSYZ    ,EPSZX    ,  
-     6     UVAR     ,NOFF     ,OFF      ,LF_DAMMX ,
+     6     NOFF     ,OFF      ,LF_DAMMX ,
      7     ELCRKINI ,IXFEM    ,IXEL     ,ILAY     ,IPTT     ,  
      8     OFFL     ,NPTT     ,NPTTF    ,DFMAX    ,TDEL     ,   
-     9     DAM      ,FLD_IDX  ,NIPARAM  ,IPARAM   ,PLA      ,
+     9     DAM      ,FLD_IDX  ,PLA      ,
      A     DEPSXX   ,DEPSYY   ,DEPSXY   ,DT1      )
 C-----------------------------------------------
 c    FLD failure model for XFEM
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
+      use fail_param_mod
+      use table_mat_vinterp_mod
+
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -56,15 +68,8 @@ C---------+---------+---+---+--------------------------------------------
 C VAR     | SIZE    |TYP| RW| DEFINITION
 C---------+---------+---+---+--------------------------------------------
 C NEL     |  1      | I | R | SIZE OF THE ELEMENT GROUP NEL 
-C NUPARAM |  1      | I | R | SIZE OF THE USER PARAMETER ARRAY
-C UPARAM  | NUPARAM | F | R | USER MATERIAL PARAMETER ARRAY
 C NUVAR   |  1      | I | R | NUMBER OF USER ELEMENT VARIABLES
-C UVAR    |NEL*NUVAR| F |R/W| USER ELEMENT VARIABLE ARRAY
-C---------+---------+---+---+--------------------------------------------
-C NFUNC   |  1      | I | R | NUMBER FUNCTION USED FOR THIS USER LAW not used
-C IFUNC   | NFUNC   | I | R | FUNCTION INDEX
-C NPF     |  *      | I | R | FUNCTION ARRAY   
-C TF      |  *      | F | R | FUNCTION ARRAY 
+C UVAR    |NEL*NUVAR| F |R/W| USER ELEMENT VARIABLE ARRAY 
 C---------+---------+---+---+--------------------------------------------
 C TIME    |  1      | F | R | CURRENT TIME
 C---------+---------+---+---+--------------------------------------------
@@ -79,47 +84,35 @@ C IPTT                        CURRENT INTEGRATION POINT IN THE LAYER (FOR OUTPUT
 C---------+---------+---+---+--------------------------------------------
 C   I N P U T   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NEL,NUPARAM,NUVAR,NFUNC,IPT,IPTT,NPTOT,IXFEM,IXEL,ILAY,NPTT
-      INTEGER ELCRKINI(NXLAYMAX,NEL),NOFF(NEL),IFUNC(NFUNC),NGL(NEL),FLD_IDX(NEL)
+      INTEGER NEL,NUVAR,NVARTMP,IPT,IPTT,NPTOT,IXFEM,IXEL,ILAY,NPTT
+      INTEGER ELCRKINI(NXLAYMAX,NEL),NOFF(NEL),NGL(NEL),FLD_IDX(NEL)
       my_real 
-     .   TIME,UPARAM(NUPARAM),SIGNXX(NEL),SIGNYY(NEL),
+     .   TIME,SIGNXX(NEL),SIGNYY(NEL),
      .   SIGNXY(NEL),SIGNYZ(NEL),SIGNZX(NEL),SSP(NEL),
      .   EPSXX(NEL),EPSYY(NEL),EPSXY(NEL),EPSYZ(NEL),EPSZX(NEL),
      .   TENS(NEL,5),DFMAX(NEL,LF_DAMMX),TDEL(NEL),NPTTF(NEL),DAM(NEL)
-      INTEGER, INTENT(IN) :: NIPARAM, LF_DAMMX
-      INTEGER, DIMENSION(NIPARAM), INTENT(IN) :: IPARAM
+      INTEGER, DIMENSION(NEL,NVARTMP), INTENT(INOUT) :: VARTMP
+      INTEGER, INTENT(IN) :: LF_DAMMX
       my_real, DIMENSION(NEL), INTENT(IN) :: PLA,DEPSXX,DEPSYY,DEPSXY
       my_real, INTENT(IN) :: DT1
 C-----------------------------------------------
 C   I N P U T   O U T P U T   A r g u m e n t s 
 C-----------------------------------------------
       my_real UVAR(NEL,NUVAR),OFF(NEL),OFFL(NEL)
-C-----------------------------------------------
-C   VARIABLES FOR FUNCTION INTERPOLATION 
-C-----------------------------------------------
-      INTEGER NPF(*)
-      my_real FINTER , FINTERFLD ,TF(*)
-      EXTERNAL FINTER
-C        Y = FINTER(IFUNC(J),X,NPF,TF,DYDX)
-C        Y       : y = f(x)
-C        X       : x
-C        DYDX    : f'(x) = dy/dx
-C        IFUNC(J): FUNCTION INDEX
-C              J : FIRST(J=1), SECOND(J=2) .. FUNCTION USED FOR THIS LAW
-C        NPF,TF  : FUNCTION PARAMETER
+      type (fail_param_) ,intent(inout) :: fail    !< failure model data structure
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,II,J,IENG,IAD,NINDX,NINDXP,ISHELL,LAYXFEM,LENF
+      INTEGER I,J,IENG,IAD,NINDX,NINDXP,ISHELL,LAYXFEM,LENF
       INTEGER INDX(NEL),INDXP(NEL),RFLAG(NEL),RFLAGP(NEL)  
       my_real 
-     .   RANI,R1,R2,DADV,S1,S2,SS,Q,DYDX,E12
-      my_real, ALLOCATABLE, DIMENSION(:) :: XF  
+     .   RANI,R1,R2,DADV,S1,S2,SS,Q,E12
+      my_real, ALLOCATABLE, DIMENSION(:) :: XF,YF  
       my_real 
-     .   EMAJ(NEL),EMIN(NEL),
+     .   EMAJ(NEL),EMIN(NEL),DYDX(NEL),
      .   EM(NEL),EM_DCRIT(NEL),EM_DADV(NEL),DEMAJ(NEL),DEMIN(NEL),
      .   BETA(NEL),ALPHA,FCUT
-      CHARACTER (LEN=3) :: XCHAR
+      CHARACTER (LEN=8) :: XCHAR
 C=======================================================================
       IAD = (IPT-1)*NEL
       XCHAR  = ' '
@@ -133,18 +126,18 @@ C=======================================================================
       NINDXP = 0  
 c---
       !=================================================================
-      ! - INITIALISATION OF COMPUTATION ON TIME STEP
+      ! - INITIALISATION OF FAILURE MODEL PARAMETERS
       !=================================================================
       ! Recovering failure criterion parameters
       ! -> Integer parameter
-      ISHELL = IPARAM(1)
-      IENG   = IPARAM(3)
+      ISHELL = FAIL%IPARAM(1)
+      IENG   = FAIL%IPARAM(3)
       ! -> Real parameters
-      DADV   = UPARAM(2)
-      RANI   = UPARAM(3)
-      FCUT   = UPARAM(5)
-      IF (UPARAM(6) > ZERO) THEN 
-        ALPHA = UPARAM(6) 
+      DADV   = FAIL%UPARAM(2)
+      RANI   = FAIL%UPARAM(3)
+      FCUT   = FAIL%UPARAM(5)
+      IF (FAIL%UPARAM(6) > ZERO) THEN 
+        ALPHA = FAIL%UPARAM(6) 
       ELSE 
         ALPHA = TWO*PI*FCUT*DT1/(ONE + TWO*PI*FCUT*DT1)
       ENDIF
@@ -196,33 +189,36 @@ c
       !=================================================================
       ! -> Engineering strains input
       IF (IENG == 1) THEN   ! transform input fld curve to true strain
-        II   = NPF(IFUNC(1))
-        LENF = NPF(IFUNC(1)+ 1) - NPF(IFUNC(1))
-        ALLOCATE(XF(LENF))
+        LENF = size(fail%table4d(1)%x(1)%values)
+        call my_alloc(XF, LENF, "XF")
+        call my_alloc(YF, LENF, "YF")
         DO I = 1,LENF
-          XF(I) = LOG(TF(II + I-1) + ONE)
+          XF(I) = LOG(fail%table4d(1)%x(1)%values(i) + ONE)
+          YF(I) = fail%table4d(1)%y1d(i)
         ENDDO
+        call vinter_1d(nel,nel,lenf,vartmp,xf,yf,emin,em)
 c
         DO I = 1,NEL
-          EM(I)  = FINTERFLD(EMIN(I),LENF,XF)
           DAM(I) = EMAJ(I) / EM(I)
           DFMAX(I,2) = DAM(I)
           DFMAX(I,1) = MIN(ONE, DAM(I))
         ENDDO
-      ! -> True strain input
-      ELSE
+        call my_dealloc(XF)
+        call my_dealloc(YF)
+
+      ELSE          ! -> True strain input
         ! -> Classic formulation
         IF (IENG == 0) THEN 
+          call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,emin,em,dydx)
           DO I = 1,NEL
-            EM(I)  = FINTER(IFUNC(1),EMIN(I),NPF,TF,DYDX)
             DAM(I) = EMAJ(I) / EM(I)
             DFMAX(I,2) = DAM(I)
             DFMAX(I,1) = MIN(ONE, DAM(I))
           ENDDO
         ! -> Non-linear path formulation
         ELSEIF (IENG == 2) THEN
+          call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,emin,em,dydx)
           DO I = 1,NEL
-            EM(I)  = FINTER(IFUNC(1),EMIN(I),NPF,TF,DYDX)
             DAM(I) = MAX(PLA(I) / EM(I),DAM(I))
             DFMAX(I,2) = DAM(I)
             DFMAX(I,1) = MIN(ONE, DAM(I))
@@ -278,12 +274,13 @@ c--------------------------------------------------------------------
         TENS(I,4) = SIGNYZ(I)
         TENS(I,5) = SIGNZX(I)
         EM_DCRIT(I)= EM(I)
-        IF (NFUNC > 1 .and. IFUNC(2) > 0) THEN
-          EM_DADV(I) = DADV*FINTER(IFUNC(2),EMIN(I),NPF,TF,DYDX)
-        ELSE
-          EM_DADV(I) = DADV*EM_DCRIT(I)
-        ENDIF
       END DO
+      IF (fail%table4d(2)%notable > 0) THEN
+        call table_mat_vinterp(fail%table4d(2),nel,nel,vartmp(1:nel,2),emin,em_dadv,dydx)
+        EM_DADV(1:nel) = DADV*EM_DADV(1:nel)
+      ELSE
+        EM_DADV(1:NEL) = DADV*EM(1:NEL)
+      ENDIF
 C
       IF (IXEL > 0) THEN  ! testing phantom elements
         IF (IXEL == 1) THEN
@@ -546,7 +543,7 @@ c               delete phantom
 c-----------------
       END SELECT ! LAYXFEM
 c
-      IF (IENG == 1) DEALLOCATE(XF)
+      IF (IENG == 1) call my_dealloc(XF)
 c-----------------------------------------------
 c---  multilayer xfem
  3000 FORMAT(1X,'CRACK INITIALIZATION IN SHELL ELEMENT',I10,1X,'LAYER',I3)

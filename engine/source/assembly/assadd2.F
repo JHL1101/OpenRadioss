@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C Parith/On SPMD finalization (1st part carried out in Starter)
 !||====================================================================
 !||    assadd2          ../engine/source/assembly/assadd2.F
@@ -30,6 +31,7 @@ C Parith/On SPMD finalization (1st part carried out in Starter)
 !||--- uses       -----------------------------------------------------
 !||    glob_therm_mod   ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE ASSADD2(ADDCNE  ,INDSKY  ,FSKY  ,FSKYM    ,IAD_ELEM ,
      2             FR_ELEM ,FR_NBCC ,PROCNE,NISKYFI  ,ADDCNI2  ,        
@@ -48,6 +50,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -89,7 +92,7 @@ C-----------------------------------------------
      .        WORK(70000), LSD1,LRC1,NOD1,XFEM_REM_COUNT
       INTEGER,DIMENSION(:),ALLOCATABLE :: INDEX
 C-----------------------------------------------
-      CALL MY_ALLOC(INDEX,2*NUMNOD)
+      call my_alloc(INDEX, 2*NUMNOD, "INDEX")
 C-----------------------------------------------
 C   Init a ZERO FORCES NODALES 
 C-----------------------------------------------
@@ -419,13 +422,18 @@ C fin ivector=1
 C fin interface type I2NSNT > 0
       END IF
 C
-      DEALLOCATE(INDEX)
+      call my_dealloc(INDEX)
       RETURN
       END
+
+
+
+
 C 
 !||====================================================================
 !||    assinit              ../engine/source/assembly/assadd2.F
 !||--- called by ------------------------------------------------------
+!||    resol                ../engine/source/engine/resol.F
 !||    resol_alloc_phase2   ../engine/source/engine/resol_alloc.F90
 !||====================================================================
       SUBROUTINE ASSINIT(
@@ -478,6 +486,169 @@ C
         LIRECVP = 0
       END IF
 C
+      RETURN
+      END
+!||====================================================================
+!||    rebuild_pon_tables   ../engine/source/assembly/assadd2.F
+!||--- called by ------------------------------------------------------
+!||    resol                ../engine/source/engine/resol.F
+!||====================================================================
+      SUBROUTINE REBUILD_PON_TABLES(
+     .    ADDCNE, IAD_ELEM, FR_ELEM, PROCNE,
+     .    FR_NBCC, IADSDP, IADRCP, ISENDP, IRECVP,
+     .    NUMNOD_OLD, ITAB)
+C-----------------------------------------------
+C   I m p l i c i t   T y p e s
+C-----------------------------------------------
+#include      "implicit_f.inc"
+C-----------------------------------------------
+C   C o m m o n   B l o c k s
+C-----------------------------------------------
+#include      "com01_c.inc"
+#include      "parit_c.inc"
+#include      "task_c.inc"
+C-----------------------------------------------
+C   D u m m y   A r g u m e n t s
+C-----------------------------------------------
+      INTEGER ADDCNE(*), IAD_ELEM(2,*), FR_ELEM(*), PROCNE(*)
+      INTEGER FR_NBCC(2,*), IADSDP(*), IADRCP(*), ISENDP(*), IRECVP(*)
+      INTEGER NUMNOD_OLD
+      INTEGER ITAB(*)
+C-----------------------------------------------
+C   L o c a l   V a r i a b l e s
+C-----------------------------------------------
+      INTEGER I, J, NOD, CC, LOC_PROC, LSD, LRC
+      INTEGER NNEW, IA, IB, ITMP, KK
+      INTEGER, ALLOCATABLE :: NEWLIST(:)
+C      LOGICAL DBG57
+C-----------------------------------------------
+C  Rebuild Parith/ON send/recv index tables after a topology change
+C  (node split). Mirrors the basic branch of ASSADD2 without zeroing
+C  FSKY — continuity of FSKY values across the split is intentional.
+C
+C  Two-pass loop: process pre-existing nodes (ID <= NUMNOD_OLD) first,
+C  then new nodes (ID > NUMNOD_OLD). This guarantees that the new FSKY
+C  slots are appended at the same relative position in ISENDP/IRECVP on
+C  EVERY rank, so that SPMD_EXCH2_A_PON pairs them correctly:
+C    - On the owner rank the new node appears in the SEND sub-block
+C      (after all old entries).
+C    - On the ghost rank the new node appears in the RECV sub-block
+C      (before the old SEND entries in the merged boundary).
+C  Without the two-pass approach both insertion points differ, causing a
+C  position mismatch and wrong values being received into the new slot.
+C-----------------------------------------------
+      IF (NSPMD > 0 .AND. IPARIT > 0) THEN
+        LOC_PROC = ISPMD + 1
+        DO I = 1, NSPMD+1
+          FR_NBCC(1,I) = 0
+          FR_NBCC(2,I) = 0
+        ENDDO
+        LSD = 1
+        LRC = 1
+        DO I = 1, NSPMD
+          IADSDP(I) = LSD
+          IADRCP(I) = LRC
+          IF (I /= LOC_PROC) THEN
+C            DBG57 = (LOC_PROC == 6 .AND. I == 8) .OR.
+C     .              (LOC_PROC == 8 .AND. I == 6)
+C            IF (DBG57) THEN
+C              WRITE(6,'(A,I0,A,I0,A,I0,A,I0)')
+C     .          '[EXCH_DBG] PAIR begin r=',ISPMD,' partner=',I-1,
+C     .          ' nbnd=',IAD_ELEM(1,I+1)-IAD_ELEM(1,I),
+C     .          ' numnod_old=',NUMNOD_OLD
+C              CALL FLUSH(6)
+C            ENDIF
+C           Pass 1: pre-existing nodes (ID <= NUMNOD_OLD) — same order as ASSADD2
+            DO J = IAD_ELEM(1,I), IAD_ELEM(1,I+1)-1
+              NOD = FR_ELEM(J)
+              IF (NOD > NUMNOD_OLD) CYCLE
+              DO CC = ADDCNE(NOD), ADDCNE(NOD+1)-1
+                IF (PROCNE(CC) == LOC_PROC) THEN
+                  FR_NBCC(1,I) = FR_NBCC(1,I) + 1
+                  ISENDP(LSD)  = CC
+C                   IF (DBG57) WRITE(6,900) ISPMD,I-1,1,LSD,NOD,
+C     .                       ITAB(NOD),CC,PROCNE(CC)
+                  LSD = LSD + 1
+                ELSEIF (PROCNE(CC) == I) THEN
+                  FR_NBCC(2,I) = FR_NBCC(2,I) + 1
+                  IRECVP(LRC)  = CC
+C                   IF (DBG57) WRITE(6,901) ISPMD,I-1,1,LRC,NOD,
+C     .                       ITAB(NOD),CC,PROCNE(CC)
+                  LRC = LRC + 1
+                ENDIF
+              ENDDO
+            ENDDO
+C           Pass 2: new split nodes (ID > NUMNOD_OLD), enumerated in ascending
+C           global-id (ITAB) order rather than boundary order. A split node is
+C           bidirectional (owner AND mirror both assemble it) and can sit in
+C           opposite recv/send sub-blocks on the two ranks, so boundary order
+C           lists them differently on each rank and SPMD_EXCH2_A_PON then pairs
+C           the wrong send/recv slots. ITAB is identical on every rank, so
+C           sorting by it makes the owner SEND order match the partner RECV order.
+            NNEW = 0
+            DO J = IAD_ELEM(1,I), IAD_ELEM(1,I+1)-1
+              IF (FR_ELEM(J) > NUMNOD_OLD) NNEW = NNEW + 1
+            ENDDO
+            IF (NNEW > 0) THEN
+              ALLOCATE(NEWLIST(NNEW))
+              KK = 0
+              DO J = IAD_ELEM(1,I), IAD_ELEM(1,I+1)-1
+                IF (FR_ELEM(J) > NUMNOD_OLD) THEN
+                  KK = KK + 1
+                  NEWLIST(KK) = FR_ELEM(J)
+                ENDIF
+              ENDDO
+C             insertion sort NEWLIST by ascending ITAB (global id)
+              DO IA = 2, NNEW
+                ITMP = NEWLIST(IA)
+                IB = IA - 1
+                DO WHILE (IB >= 1)
+                  IF (ITAB(NEWLIST(IB)) <= ITAB(ITMP)) EXIT
+                  NEWLIST(IB+1) = NEWLIST(IB)
+                  IB = IB - 1
+                ENDDO
+                NEWLIST(IB+1) = ITMP
+              ENDDO
+              DO KK = 1, NNEW
+                NOD = NEWLIST(KK)
+                DO CC = ADDCNE(NOD), ADDCNE(NOD+1)-1
+                  IF (PROCNE(CC) == LOC_PROC) THEN
+                    FR_NBCC(1,I) = FR_NBCC(1,I) + 1
+                    ISENDP(LSD)  = CC
+C                     IF (DBG57) WRITE(6,900) ISPMD,I-1,2,LSD,NOD,
+C     .                         ITAB(NOD),CC,PROCNE(CC)
+                    LSD = LSD + 1
+                  ELSEIF (PROCNE(CC) == I) THEN
+                    FR_NBCC(2,I) = FR_NBCC(2,I) + 1
+                    IRECVP(LRC)  = CC
+C                     IF (DBG57) WRITE(6,901) ISPMD,I-1,2,LRC,NOD,
+C     .                         ITAB(NOD),CC,PROCNE(CC)
+                    LRC = LRC + 1
+                  ENDIF
+                ENDDO
+              ENDDO
+              DEALLOCATE(NEWLIST)
+            ENDIF
+C            IF (DBG57) THEN
+C              WRITE(6,'(A,I0,A,I0,A,I0,A,I0)')
+C     .          '[EXCH_DBG] PAIR end r=',ISPMD,' partner=',I-1,
+C     .          ' send_cnt=',FR_NBCC(1,I),' recv_cnt=',FR_NBCC(2,I)
+C              CALL FLUSH(6)
+C            ENDIF
+          ENDIF
+        ENDDO
+        IADSDP(NSPMD+1) = LSD
+        IADRCP(NSPMD+1) = LRC
+        DO I = 1, NSPMD
+          FR_NBCC(1,NSPMD+1) = FR_NBCC(1,NSPMD+1) + FR_NBCC(1,I)
+          FR_NBCC(2,NSPMD+1) = FR_NBCC(2,NSPMD+1) + FR_NBCC(2,I)
+        ENDDO
+      END IF
+C
+C  900 FORMAT('[EXCH_DBG] r=',I0,' p',I0,' SEND pass',I0,' pos=',I0,
+C     .       ' nod=',I0,' uid=',I0,' cc=',I0,' procne=',I0)
+C  901 FORMAT('[EXCH_DBG] r=',I0,' p',I0,' RECV pass',I0,' pos=',I0,
+C     .       ' nod=',I0,' uid=',I0,' cc=',I0,' procne=',I0)
       RETURN
       END
 !||====================================================================
@@ -587,7 +758,7 @@ C
                    LRC = LRC + 1           ! exchange boundary length for receive
                  ENDIF
                ENDDO
-            ENDIF 
+            ENDIF
           ENDDO
          ENDIF
         ENDDO
@@ -600,3 +771,4 @@ C
 C
       RETURN
       END
+C

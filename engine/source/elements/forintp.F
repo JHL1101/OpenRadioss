@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    forintp          ../engine/source/elements/forintp.F
 !||--- called by ------------------------------------------------------
@@ -58,6 +59,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    glob_therm_mod   ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    initbuf_mod      ../engine/share/resol/initbuf.F
 !||    mat_elem_mod     ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod   ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod       ../common_source/modules/output/output_mod.F90
 !||    sensor_mod       ../common_source/modules/sensor_mod.F90
@@ -104,6 +107,8 @@ C-----------------------------------------------
 C----6---------------------------------------------------------------7---------8
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -265,15 +270,15 @@ C
 C SPMD allowance to do in memory shared
 C
         IF(ITASK==0) THEN
-          ALLOCATE(SPH_WORK%WASIGSM(6*NSPHSYM))
+          call my_alloc(SPH_WORK%WASIGSM, 6*NSPHSYM, "SPH_WORK%WASIGSM")
           SPH_WORK%WASIGSM = ZERO
         ENDIF
         IF(ITASK==0 .AND. NSPMD > 1)THEN 
-          ALLOCATE(SPH_WORK%WAR(10,NSPHR))
-          ALLOCATE(SPH_WORK%WTR(NSPHR))
-          ALLOCATE(SPH_WORK%WGR(3,NSPHR))
-          ALLOCATE(SPH_WORK%LAMBDR(NSPHR))
-          ALLOCATE(SPH_WORK%WAR2(9,NSPHR))
+          call my_alloc(SPH_WORK%WAR, 10, NSPHR, "SPH_WORK%WAR")
+          call my_alloc(SPH_WORK%WTR, NSPHR, "SPH_WORK%WTR")
+          call my_alloc(SPH_WORK%WGR, 3, NSPHR, "SPH_WORK%WGR")
+          call my_alloc(SPH_WORK%LAMBDR, NSPHR, "SPH_WORK%LAMBDR")
+          call my_alloc(SPH_WORK%WAR2, 9, NSPHR, "SPH_WORK%WAR2")
         END IF
 C-------
         KVNORM =16*NUMSPH+1
@@ -285,11 +290,11 @@ C       old density storage.
 
         IF( (GLOB_THERM%ITHERM/=0) .OR. (GLOB_THERM%ITHERM_FE/=0)) THEN
          IF(ITASK==0)THEN
-           ALLOCATE(SPH_WORK%WT(NUMSPH))
-           ALLOCATE(SPH_WORK%WGRADT(3*NUMSPH))
-           ALLOCATE(SPH_WORK%WLAPLT(NUMSPH))
-           ALLOCATE(SPH_WORK%LAMBDA(NUMSPH))
-           ALLOCATE(SPH_WORK%WGRADTSM(3*NSPHSYM))
+           call my_alloc(SPH_WORK%WT, NUMSPH, "SPH_WORK%WT")
+           call my_alloc(SPH_WORK%WGRADT, 3*NUMSPH, "SPH_WORK%WGRADT")
+           call my_alloc(SPH_WORK%WLAPLT, NUMSPH, "SPH_WORK%WLAPLT")
+           call my_alloc(SPH_WORK%LAMBDA, NUMSPH, "SPH_WORK%LAMBDA")
+           call my_alloc(SPH_WORK%WGRADTSM, 3*NSPHSYM, "SPH_WORK%WGRADTSM")
          END IF
          NGDONE = 1
 C       /---------------/
@@ -306,7 +311,7 @@ C
          NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 50
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 50
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -398,7 +403,7 @@ C
          NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 60
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 60
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -472,7 +477,7 @@ C
          NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 70
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 70
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -559,7 +564,7 @@ C-------
         NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 100
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 100
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -626,7 +631,7 @@ C-----------------------------------------------
         NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 250
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 250
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -697,7 +702,7 @@ C-----------------------------------------------
 C       Stabilization (SPH without a tensile instability) :: W(Dp)
 C-----------------------------------------------
        IF(ITASK==0)THEN
-         ALLOCATE(SPH_WORK%STAB(7,NUMSPH+NSPHR+NSPHSYM+1),STAT=STAT)
+         call my_alloc(SPH_WORK%STAB, 7, NUMSPH+NSPHR+NSPHSYM+1, "SPH_WORK%STAB", stat=STAT)
          IF (STAT/=0)THEN
          END IF
          SPH_WORK%STAB=ZERO
@@ -815,7 +820,7 @@ C-------
 #include "lockoff.inc"
 C--------
 C Solids to SPH, particles must be computed when cloud active
-          IF(IPARG(8,NG)==1)GOTO 350
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 350
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1
@@ -1198,7 +1203,11 @@ C SPMD DEALLOGATION TO MAKE IN MEMORY SHARED
 C
         IF(ITASK==0) DEALLOCATE(SPH_WORK%STAB, SPH_WORK%WASIGSM)
         IF(ITASK==0 .AND. NSPMD > 1)THEN
-          DEALLOCATE(SPH_WORK%WAR, SPH_WORK%WTR, SPH_WORK%WGR, SPH_WORK%LAMBDR, SPH_WORK%WAR2)
+          call my_dealloc(SPH_WORK%WAR)
+          call my_dealloc(SPH_WORK%WTR)
+          call my_dealloc(SPH_WORK%WGR)
+          call my_dealloc(SPH_WORK%LAMBDR)
+          call my_dealloc(SPH_WORK%WAR2)
         END IF
 C
 C--------
@@ -1216,7 +1225,7 @@ C--------
           NGDONE = NG + 1
 #include "lockoff.inc"
 C--------
-          IF(IPARG(8,NG)==1)GOTO 400
+          IF(IPARG(8,NG)==1.OR.IPARG(1,NG)==13)GOTO 400
           IF (IDDW>0) CALL STARTIMEG(NG)
           DO NELEM = 1,IPARG(2,NG),NVSIZ
             OFFSET = NELEM - 1

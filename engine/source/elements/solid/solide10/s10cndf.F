@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s10cndf1               ../engine/source/elements/solid/solide10/s10cndf.F
 !||--- called by ------------------------------------------------------
@@ -395,7 +396,7 @@ C----6---------------------------------------------------------------7---------8
 !||====================================================================
       SUBROUTINE S10CND_INI(ICNDS10,ITAGND,IAD_CNDM,FR_CNDM,FR_NBCCCND,
      1                      ADDCNCND,PROCNCND,VND  ,V   ,ITAB    ,
-     2                      IAD_CNDM1,FR_CNDM1,FR_NBCCCND1)
+     2                      IAD_CNDM1,FR_CNDM1,FR_NBCCCND1,TIME )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -416,6 +417,7 @@ C-----------------------------------------------
 C     REAL
       my_real
      .   V(3,*),VND(3,*)
+      my_real, INTENT(IN) :: TIME
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -430,6 +432,12 @@ C-----------------------------------------------
         VND(2,I) = HALF*(V(2,N1) + V(2,N2))
         VND(3,I) = HALF*(V(3,N1) + V(3,N2))
        END DO
+       IF (TIME==ZERO) THEN 
+         DO I = 1, NS10E
+           NOD = IABS(ICNDS10(1,I))
+           V(1:3,NOD) = VND(1:3,I)
+         END DO
+       END IF
 C       
        IF (IPARIT/=0) THEN
         DO I = 1, NSPMD+1

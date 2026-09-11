@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_cluster        ../starter/source/output/cluster/hm_read_cluster.F
 !||--- called by ------------------------------------------------------
@@ -51,8 +52,9 @@ C-----------------------------------------------
       USE SUBMODEL_MOD , ONLY : NSUBMOD, SUBMODEL_DATA
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARFIELD
-      USE READER_OLD_MOD , ONLY : LINE, KLINE, KEY0, KCUR
+      USE READER_OLD_MOD , ONLY : LINE, KLINE, KEY0
       use element_mod , only : nixs,nixr
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -80,7 +82,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, K, II, JJ, KK, CLID, UID, IG, IGR, ISK, IFAIL, IEL, NEL, NNOD, IFLAGUNIT, NNOD0, NELMAX
       INTEGER NOD1(2000),NOD2(2000),SUB_INDEX,ISK_L
-      my_real BID(1),AX(4),NX(4),FMAX(2),MMAX(2)
+      my_real AX(4),NX(4),FMAX(2),MMAX(2)
       CHARACTER(LEN=NCHARTITLE)::TITR
       CHARACTER(LEN=NCHARFIELD) :: KEY
       PARAMETER (NELMAX = 500)
@@ -118,7 +120,7 @@ c
             ENDIF                                 
           ENDDO                                   
         ENDIF
-        IF (UID / = 0 .and. IFLAGUNIT == 0) THEN                        
+        IF (UID /= 0 .AND. IFLAGUNIT == 0) THEN                        
           CALL ANCMSG(MSGID=659,ANMODE=ANINFO,MSGTYPE=MSGERROR,I1=CLID,I2=UID,C1='CLUSTER',C2='CLUSTER',C3=TITR)
         ENDIF                                                        
 c----------------------------
@@ -192,8 +194,8 @@ c----------------------------
               CLUSTERS(I)%OFF  = 1                                       
               CLUSTERS(I)%FAIL = ONE                                         
 c
-              ALLOCATE (CLUSTERS(I)%NG(NEL) )
-              ALLOCATE (CLUSTERS(I)%ELEM(NEL) )                              
+              call my_alloc(CLUSTERS(I)%NG, NEL, "CLUSTERS(I)%NG")
+              call my_alloc(CLUSTERS(I)%ELEM, NEL, "CLUSTERS(I)%ELEM")
               DO IEL = 1,NEL
                 JJ = IGRBRIC(IG)%ENTITY(IEL)
                 CLUSTERS(I)%ELEM(IEL) = JJ            ! Sys number
@@ -211,8 +213,8 @@ c
               CALL ITRIMHPSORT(NOD2,NNOD)                                    
               CLUSTERS(I)%NNOD = NNOD                                        
 c
-              ALLOCATE (CLUSTERS(I)%NOD1(NNOD))       
-              ALLOCATE (CLUSTERS(I)%NOD2(NNOD))  
+              call my_alloc(CLUSTERS(I)%NOD1, NNOD, "CLUSTERS(I)%NOD1")
+              call my_alloc(CLUSTERS(I)%NOD2, NNOD, "CLUSTERS(I)%NOD2")
               DO K=1,NNOD                                                    
                 CLUSTERS(I)%NOD1(K) = NOD1(K)                                
                 CLUSTERS(I)%NOD2(K) = NOD2(K)                                
@@ -250,8 +252,8 @@ c----------------------------
               CLUSTERS(I)%OFF  = 1                                       
               CLUSTERS(I)%FAIL = ONE                                         
 c
-              ALLOCATE (CLUSTERS(I)%NG(NEL) )                                
-              ALLOCATE (CLUSTERS(I)%ELEM(NEL) )                              
+              call my_alloc(CLUSTERS(I)%NG, NEL, "CLUSTERS(I)%NG")
+              call my_alloc(CLUSTERS(I)%ELEM, NEL, "CLUSTERS(I)%ELEM")
               DO IEL = 1,NEL
                 JJ = IGRSPRING(IG)%ENTITY(IEL)
                 CLUSTERS(I)%ELEM(IEL) = JJ !IXR(6,JJ)  ! Elem ID
@@ -266,8 +268,8 @@ c
               CALL ITRIMHPSORT(NOD2,NNOD)                                    
               CLUSTERS(I)%NNOD = NNOD                                        
 c
-              ALLOCATE (CLUSTERS(I)%NOD1(NNOD) )                             
-              ALLOCATE (CLUSTERS(I)%NOD2(NNOD) )                             
+              call my_alloc(CLUSTERS(I)%NOD1, NNOD, "CLUSTERS(I)%NOD1")
+              call my_alloc(CLUSTERS(I)%NOD2, NNOD, "CLUSTERS(I)%NOD2")
               DO K=1,NNOD                                                    
                 CLUSTERS(I)%NOD1(K) = NOD1(K)                                
                 CLUSTERS(I)%NOD2(K) = NOD2(K)                                
@@ -294,19 +296,19 @@ c--------------------------
           IF (FMAX(2) == ZERO) FMAX(2) = INFINITY
           IF (MMAX(1) == ZERO) MMAX(1) = INFINITY
           IF (MMAX(2) == ZERO) MMAX(2) = INFINITY
-          ALLOCATE (CLUSTERS(I)%FMAX(2) )                                  
-          ALLOCATE (CLUSTERS(I)%MMAX(2) )                                  
+          call my_alloc(CLUSTERS(I)%FMAX, 2, "CLUSTERS(I)%FMAX")
+          call my_alloc(CLUSTERS(I)%MMAX, 2, "CLUSTERS(I)%MMAX")
           CLUSTERS(I)%FMAX(1) = FMAX(1)                                         
           CLUSTERS(I)%FMAX(2) = FMAX(2)                                         
           CLUSTERS(I)%MMAX(1) = MMAX(1)                                         
           CLUSTERS(I)%MMAX(2) = MMAX(2)                                         
         ELSE                                      
-          ALLOCATE (CLUSTERS(I)%FMAX(0) )                                  
-          ALLOCATE (CLUSTERS(I)%MMAX(0) )                                  
+          call my_alloc(CLUSTERS(I)%FMAX, 0, "CLUSTERS(I)%FMAX")
+          call my_alloc(CLUSTERS(I)%MMAX, 0, "CLUSTERS(I)%MMAX")
         ENDIF                                                              
         IF (IFAIL == 3) THEN                                                  
-          ALLOCATE (CLUSTERS(I)%AX(4) )                                    
-          ALLOCATE (CLUSTERS(I)%NX(4) )             
+          call my_alloc(CLUSTERS(I)%AX, 4, "CLUSTERS(I)%AX")
+          call my_alloc(CLUSTERS(I)%NX, 4, "CLUSTERS(I)%NX")
           IF (AX(1) == ZERO) AX(1) = ONE           
           IF (AX(2) == ZERO) AX(2) = ONE           
           IF (AX(3) == ZERO) AX(3) = ONE           
@@ -324,8 +326,8 @@ c--------------------------
           CLUSTERS(I)%NX(3) = NX(3)                                         
           CLUSTERS(I)%NX(4) = NX(4)                                         
         ELSE                                        
-          ALLOCATE (CLUSTERS(I)%AX(0) )                                    
-          ALLOCATE (CLUSTERS(I)%NX(0) )             
+          call my_alloc(CLUSTERS(I)%AX, 0, "CLUSTERS(I)%AX")
+          call my_alloc(CLUSTERS(I)%NX, 0, "CLUSTERS(I)%NX")
         ENDIF                                                                
 c-----
         WRITE(IOUT,2000) IGR, ISK_L, NEL, NNOD*2, IFAIL            

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lecint                           ../starter/source/interfaces/interf1/lecint.F
 !||--- called by ------------------------------------------------------
@@ -78,6 +79,7 @@ C-----------------------------------------------
       USE I2_SURFI_DIM_MOD ,     ONLY : I2_SURFI_DIM
       use inter1_check_ale_lag_sides_mod , only : inter1_check_ale_lag_sides
       use element_mod , only : nixs
+      use my_alloc_mod
 C-----------------------------------------------      
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -131,18 +133,19 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,K,L,IRS,IRM,NI,NSN,NMN,
+      INTEGER I,K,IRS,IRM,NI,NSN,NMN,
      .        NTYP,IS1,IS2,NOINT,NRTS,NRTM,IBUC,ILEV, 
      .        MULTIMP,IGAP,INACTI,NME,LAG_NC16,LAG_NK16,
      .        ILAGM,NCF_I2,NUVAR,
-     .        NIN,NISUB,JSUB,IGR,ISU,ISU1,ISU2,PID,STAT,
+     .        NISUB,JSUB,IGR,ISU,ISU1,ISU2,PID,STAT,
      .        NRTMS,NRTMM,IALLO,NLINSA,NLINMA,NSNE,NLN,
      .        NRTS_NEW, NRTM_NEW,NRTM_FE,
      .        NRTM_IGE,NRTMM_IGE,
      .        NRTS_IGE,NRTMS_IGE,NRTS_FE,
      .        NMN_IGE,NMN_FE,NSN_IGE,NSN_FE,IAD_IGE,
-     .        IEDGE,NCONTE,MULTIMPE,MULTIMPS,ISTIFF,NIN25
-      INTEGER KD(50),JD(50),IBID,NRTM_SH,ETYP,INTPLY
+     .        IEDGE,NCONTE,MULTIMPE,MULTIMPS,ISTIFF,NIN25,
+     .        NEDGE_FE,NEDGE_L,ISU3,ISU4,NMN_1D
+      INTEGER IBID,NRTM_SH,INTPLY
       INTEGER, DIMENSION(:), ALLOCATABLE :: IRECTS,IRECTM,NSV,MSR
       INTEGER ID,ISL, GRBRIC_ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
@@ -256,7 +259,7 @@ C=======================================================================
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-      ALLOCATE(NTAG_TARGET(2*NUMNOD+1), STAT=Stat)
+      call my_alloc(NTAG_TARGET, 2*NUMNOD+1, "NTAG_TARGET", stat=Stat)
       NTAG(0:2*NUMNOD) => NTAG_TARGET(1:2*NUMNOD+1)
 
       DO K=0,2*NUMNOD
@@ -293,6 +296,8 @@ C
         ISU2    = IPARI(46,NI)  
         ISTIFF  = IPARI(29,NI)       
         ILAGM   = IPARI(33,NI)
+        ISU3    = IPARI(102,NI) 
+        ISU4    = IPARI(103,NI)  
         TYPE18=.FALSE.
         IF(NTYP==7 .AND. INACTI==7 )TYPE18=.TRUE.
         GRBRIC_ID = ISU1
@@ -310,6 +315,9 @@ C-----  --
         NRTM=0
         NRTM_IGE=0
         NRTM_FE =0
+        NEDGE_FE =0
+        NEDGE_L =0 
+        NMN_1D =0
         IF(IS1 == 1)THEN
             NRTS_IGE=IGRSURF(ISU1)%NSEG_IGE
             NRTS_FE =IGRSURF(ISU1)%NSEG
@@ -324,7 +332,13 @@ C-----  --
             NSN=0
         ELSEIF(IS1 == 5) THEN
             NSN_FE=IGRBRIC(ISU1)%NENTITY
-            NSN = NSN_FE            
+            NSN = NSN_FE     
+        ELSEIF(IS1 == 6)THEN
+            NRTS_FE =IGRSURF(ISU1)%NSEG
+            NRTS = NRTS_FE 
+            NEDGE_FE=IGRSLIN(ISU3)%NSEG
+            NEDGE_L= NEDGE_FE  
+            NMN_1D = 2*NEDGE_L
         ENDIF
         IF(IS2 == 1)THEN
             NRTM_IGE=IGRSURF(ISU2)%NSEG_IGE
@@ -342,6 +356,12 @@ C              ISURF(4,NS) == 100 Hyper-Ellipsoid MaDyMo coupled with.
 C              ISURF(4,NS) == 101 Hyper-Ellipsoid Radioss defined.
 C     IS2=4 is available for Interface TYPE 14 only :
 C     should be checked for all others interfaces in LECIN4 ...
+        ELSEIF(IS2 == 6)THEN
+            NRTM_FE =IGRSURF(ISU2)%NSEG
+            NRTM = NRTM_FE
+            NEDGE_FE=IGRSLIN(ISU4)%NSEG
+            NEDGE_L= NEDGE_L + NEDGE_FE 
+            NMN_1D= NEDGE_L + 2*NEDGE_L
         ENDIF
 C
         IPARI(3,NI)  = NRTS
@@ -356,6 +376,8 @@ C
         IPARI(78,NI) = NSN_FE
         IPARI(79,NI) = NMN_IGE
         IPARI(80,NI) = NMN_FE
+        IPARI(101,NI) = NEDGE_L
+        IPARI(104,NI) = NMN_1D
 C
         IF (NTYP == 2 .AND. IS1==-1.AND. IS2==-1) THEN
             CALL I2_SURFI_DIM( NPARI   ,IPARI(1,NI),NSURF   ,IGRSURF ,           
@@ -457,7 +479,9 @@ C
      7      NOD2ELTG     ,KNOD2ELS     ,NOD2ELS     ,IXS          ,
      8      IXS10        ,IXS16        ,IXS20       ,IBID         ,
      9      IBID         ,IBID         ,IBID        ,INTERFACES%PARAMETERS,
-     A      NIN25        ,FLAG_ELEM_INTER25)
+     A      NIN25        ,FLAG_ELEM_INTER25,IGRSLIN     ,
+     B      IBID         ,IBID         ,IBID        ,IBID         ,
+     C      IBID         )
             IPARI(66,NI) = INTPLY
             IF(INTPLY > 0) INTPLYXFEM = 1          
 C----------NRTS,NRTM is calculated in I25SURFI     
@@ -469,6 +493,8 @@ C!!!!!re-calculate NRTM_SH taking into account to ISU1  :inside I25SURFI
           NSN  = IPARI(5,NI)
           NLN  = IPARI(35,NI)
           NRTM_SH=IPARI(42,NI)
+          NEDGE_L = IPARI(101,NI)
+          NMN_1D = IPARI(104,NI)
         ENDIF
 C--------------------------------------------     
 C     Sizing due to sub-interfaces
@@ -679,12 +705,12 @@ C
 C=======================================================================
       S_IRECTS = NRTMS*4
       S_IRECTM = NRTMM*4
-      ALLOCATE (IRECTS(S_IRECTS)    ,STAT=stat)
-      ALLOCATE (IRECTM(S_IRECTM)    ,STAT=stat)
+      call my_alloc(IRECTS, S_IRECTS, "IRECTS", stat=stat)
+      call my_alloc(IRECTM, S_IRECTM, "IRECTM", stat=stat)
       S_NSV=MAX(NUMNOD,NRTMS_IGE*16)
-      ALLOCATE (NSV(S_NSV) ,STAT=stat)
+      call my_alloc(NSV, S_NSV, "NSV", stat=stat)
       S_MSR=MAX(NUMNOD,NRTMM_IGE*16)
-      ALLOCATE (MSR(S_MSR) ,STAT=stat)
+      call my_alloc(MSR, S_MSR, "MSR", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268, ANMODE=ANINFO, MSGTYPE=MSGERROR, C1='IRECTS')
       IRECTS = 0
       IRECTM = 0
@@ -813,6 +839,15 @@ C--------------------------------------------
                NBRIC = IGRBRIC(ISU1)%NENTITY
                CALL INGRBRIC(NSN, IGRBRIC(ISU1)%ENTITY, NSV,
      .                       IXS, NBRIC, PM,S_NSV, IGEO)
+            ELSEIF(IS1==6) THEN
+              SURF_NODES => IGRSURF(ISU1)%NODES(1:NRTS_FE,1:4)
+              CALL INSURF(NRTS_FE,NSN_FE,IRS,IRECTS,
+     .                    SURF_NODES,ITAB,NSV,ID,TITR,
+     .                    NTAG,S_NSV,S_IRECTS,TYPE18)
+              LINE_NODES => IGRSLIN(ISU1)%NODES(1:NRTS,1:2)
+              CALL INSLIN(NRTS,NSN_FE,IRECTS,NOINT,
+     .                    LINE_NODES,ITAB,NSV,
+     .                    NTAG)
             ENDIF
           ENDIF
           NSN = NSN_FE+NSN_IGE
@@ -1202,10 +1237,11 @@ C
 C         NADMSR, NEDGE are over estimated for ALLOCATE
 C         NADMSR, NEDGE will be over written before writing
           IPARI(67,NI)=4*NRTM
-          IPARI(68,NI)=4*NRTM
+          NEDGE_L = IPARI(101,NI)
+          IPARI(68,NI)=4*NRTM + NEDGE_L
 C
           IF(IEDGE /= 0) THEN
-            NCONTE=4*NRTM       ! cf NCONTE=NEDGE
+            NCONTE=4*NRTM + NEDGE_L    ! cf NCONTE=NEDGE
             IPARI(88,NI)=NCONTE
           ELSE
             NCONTE=0
@@ -1234,13 +1270,13 @@ C-----
 C
 C=======================================================================
 C-
-      DEALLOCATE (IRECTS)
-      DEALLOCATE (IRECTM)
-      DEALLOCATE (NSV)
-      DEALLOCATE (MSR)
+      CALL MY_DEALLOC(IRECTS)
+      CALL MY_DEALLOC(IRECTM)
+      CALL MY_DEALLOC(NSV)
+      CALL MY_DEALLOC(MSR)
 
       NULLIFY(NTAG)
-      DEALLOCATE(NTAG_TARGET)
+      CALL MY_DEALLOC(NTAG_TARGET)
 
 ! inter18 : automatic gap if not defined in input file 
 1000  FORMAT(/1X,'  INTERFACE NUMBER :',I10,1X,A)

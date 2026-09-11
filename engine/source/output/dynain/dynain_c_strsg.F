@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dynain_c_strsg      ../engine/source/output/dynain/dynain_c_strsg.F
 !||--- called by ------------------------------------------------------
@@ -37,6 +38,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    matparam_def_mod    ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    stack_mod           ../engine/share/modules/stack_mod.F
 !||    state_mod           ../common_source/modules/state_mod.F
 !||====================================================================
@@ -58,6 +61,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -134,10 +139,10 @@ C=======================================================================
 C-----------------------
 C    Allocation Tabs
 C-----------------------
-      ALLOCATE(PTWA(MAX(DYNAIN_DATA%DYNAIN_NUMELC ,
-     .             DYNAIN_DATA%DYNAIN_NUMELTG)),STAT=IERR)
+      call my_alloc(PTWA, MAX(DYNAIN_DATA%DYNAIN_NUMELC ,DYNAIN_DATA%DYNAIN_NUMELTG), "PTWA", stat=IERR)
       ALLOCATE(PTWA_P0(0:MAX(1,DYNAIN_DATA%DYNAIN_NUMELC_G,
      .         DYNAIN_DATA%DYNAIN_NUMELTG_G)),STAT=IERR)
+! TODO: non-default lower bound, convert manually
 C*********************************************
 C     4-NODE SHELLS
 C*********************************************
@@ -190,8 +195,10 @@ C
           ENDIF
           !
           NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-          ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+          call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+          call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+          call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+          call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
           MATLY  = 0
           THKLY  = ZERO
           POSLY  = ZERO
@@ -234,8 +241,8 @@ C-------------------------------------------------------
 
           L_DIRA = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRA
           L_DIRB = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRB
-          ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-          ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+          call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+          call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
           DIRA=ZERO
           DIRB=ZERO
           IF (L_DIRA == 0) THEN
@@ -1064,10 +1071,13 @@ C           Pointer last position of shell IE in WA
             PTWA(IE)=JJ
           ENDDO  !  DO I=LFT,LLT
 
-          IF (ALLOCATED(DIRB))     DEALLOCATE(DIRB)                                                          
-          IF (ALLOCATED(DIRA))     DEALLOCATE(DIRA)   
+          IF (ALLOCATED(DIRB)) call my_dealloc(DIRB)
+          IF (ALLOCATED(DIRA)) call my_dealloc(DIRA)
 c------- end loop over 4 node shell elements
-          DEALLOCATE(MATLY, THKLY, POSLY, THK_LY) 
+          call my_dealloc(MATLY)
+          call my_dealloc(THKLY)
+          call my_dealloc(POSLY)
+          call my_dealloc(THK_LY)
         ENDIF ! ITY == 3
        ENDDO   ! NG = 1, NGROUP
       ENDIF  ! DYNAIN_NUMEL /= 0
@@ -1232,8 +1242,10 @@ C
           ENDIF
           !
           NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-          ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+          call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+          call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+          call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+          call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
           MATLY  = 0
           THKLY  = ZERO
           POSLY  = ZERO
@@ -1276,8 +1288,8 @@ C-------------------------------------------------------
 
           L_DIRA = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRA
           L_DIRB = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRB
-          ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-          ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+          call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+          call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
           DIRA=ZERO
           DIRB=ZERO
           IF (L_DIRA == 0) THEN
@@ -1802,9 +1814,12 @@ C        pointer for last position for element IE
             PTWA(IE)=JJ
           ENDDO  !  DO I=LFT,LLT
 
-          IF (ALLOCATED(DIRB))     DEALLOCATE(DIRB)                                                          
-          IF (ALLOCATED(DIRA))     DEALLOCATE(DIRA)   
-          DEALLOCATE(MATLY, THKLY, POSLY, THK_LY) 
+          IF (ALLOCATED(DIRB)) call my_dealloc(DIRB)
+          IF (ALLOCATED(DIRA)) call my_dealloc(DIRA)
+          call my_dealloc(MATLY)
+          call my_dealloc(THKLY)
+          call my_dealloc(POSLY)
+          call my_dealloc(THK_LY)
         ENDIF  !  IF (ITY == 7)
        ENDDO  !  DO NG=1,NGROUP
       ENDIF
@@ -1915,7 +1930,8 @@ C
         ENDDO  !  DO N=1,DYNAIN_NUMELTG_G
       ENDIF  !  IF (ISPMD == 0.AND.LEN > 0)
 C
-      DEALLOCATE(PTWA,PTWA_P0)
+      call my_dealloc(PTWA)
+      call my_dealloc(PTWA_P0)
 C
       RETURN
       END

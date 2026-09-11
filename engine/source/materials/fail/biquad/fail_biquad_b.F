@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,28 +15,35 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    fail_biquad_b   ../engine/source/materials/fail/biquad/fail_biquad_b.F
+!||    fail_biquad_b           ../engine/source/materials/fail/biquad/fail_biquad_b.F
 !||--- called by ------------------------------------------------------
-!||    fail_beam3      ../engine/source/elements/beam/fail_beam3.F
+!||    fail_beam3              ../engine/source/elements/beam/fail_beam3.F
 !||--- calls      -----------------------------------------------------
-!||    finter          ../engine/source/tools/curve/finter.F
+!||    table_mat_vinterp       ../engine/source/materials/tools/table_mat_vinterp.F
+!||--- uses       -----------------------------------------------------
+!||    fail_param_mod          ../common_source/modules/mat_elem/fail_param_mod.F90
+!||    table_mat_vinterp_mod   ../engine/source/materials/tools/table_mat_vinterp.F
 !||====================================================================
-      SUBROUTINE FAIL_BIQUAD_B(
-     .           NEL      ,NGL      ,NUPARAM  ,UPARAM   ,
+      SUBROUTINE FAIL_BIQUAD_B(FAIL ,NEL      ,NGL     ,
+     .           NUVAR    ,NVARTMP  ,UVAR     ,VARTMP  ,
      .           TIME     ,SVM      ,PRESSURE ,
      .           DPLA     ,OFF      ,DFMAX    ,
-     .           TDEL     ,IOUT     ,ISTDO    ,IFUNC    ,NFUNC,
-     .           SNPC     ,NPF      , STF     , TF      ,
-     .           NUVAR    , UVAR   ,AL, 
-     .           DMGSCL)       
+     .           TDEL     ,IOUT     ,ISTDO    ,
+     .           AL       ,DMGSCL   )       
 C-----------------------------------------------
 c    BIQUAD- failure model for standard beams (TYPE 3) IRUP=30
+! --------------------------------------------------------------------------------------------------
+!         Modules
+! --------------------------------------------------------------------------------------------------
+          use fail_param_mod
+          use table_mat_vinterp_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -49,20 +56,14 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER                     ,INTENT(IN)    :: NEL     ! size of element group
-      INTEGER                     ,INTENT(IN)    :: NUPARAM ! size of parameter array
       INTEGER                     ,INTENT(IN)    :: IOUT    ! output file unit
-      INTEGER                     ,INTENT(IN)    :: ISTDO   ! output file unit
-      INTEGER                     ,INTENT(IN)    :: NFUNC   ! number of functions
-      INTEGER                     ,INTENT(IN)    :: SNPC 
-      INTEGER                     ,INTENT(IN)    :: STF       
+      INTEGER                     ,INTENT(IN)    :: ISTDO   ! output file unit      
       INTEGER ,DIMENSION(NEL)     ,INTENT(IN)    :: NGL     ! table of element identifiers
-      INTEGER ,DIMENSION(100)     ,INTENT(IN)    :: IFUNC   ! table of functions identifiers
-      INTEGER ,DIMENSION(SNPC)    ,INTENT(IN)    :: NPF
       INTEGER                     ,INTENT(IN)    :: NUVAR
-      my_real ,DIMENSION(STF)     ,INTENT(IN)    :: TF
+      INTEGER                     ,INTENT(IN)    :: NVARTMP
+      INTEGER, DIMENSION(NEL,NVARTMP), intent(inout) :: VARTMP
       my_real                     ,INTENT(IN)    :: TIME    ! current time
       my_real ,DIMENSION(NEL)     ,INTENT(IN)    :: AL
-      my_real ,DIMENSION(NUPARAM) ,INTENT(IN)    :: UPARAM  ! failure model parameter array
       my_real ,DIMENSION(NEL)     ,INTENT(IN)    :: DPLA    ! plastic strain increment
       my_real ,DIMENSION(NEL)     ,INTENT(IN)    :: SVM     ! Von Mises stress
       my_real ,DIMENSION(NEL)     ,INTENT(IN)    :: PRESSURE! element pressure
@@ -70,61 +71,51 @@ C-----------------------------------------------
       my_real ,DIMENSION(NEL)     ,INTENT(INOUT) :: OFF     ! flag
       my_real ,DIMENSION(NEL)     ,INTENT(INOUT) :: DFMAX   ! maximum damage
       my_real ,DIMENSION(NEL)     ,INTENT(INOUT) :: TDEL    ! deactivation time
-      my_real ,DIMENSION(NEL,NUVAR),INTENT(INOUT) :: UVAR   
+      my_real ,DIMENSION(NEL,NUVAR),INTENT(INOUT):: UVAR   
       my_real, DIMENSION(NEL)     ,INTENT(INOUT) :: DMGSCL 
+      type (fail_param_)          ,intent(inout) :: fail    !< failure model data structure
 C!-----------------------------------------------
 C!   L o c a l   V a r i a b l e s
 C!-----------------------------------------------
-      INTEGER I,J,INDX(NEL),NINDX,
-     .        IR,SEL,ICOUP
-      my_real 
-     .        D1,DF,TRIAX
-      my_real EPS_FAIL,FINTER
-      EXTERNAL FINTER
-      my_real P1X,P1Y,S1X,S1Y, A1, B1, C1, REF_EL_LEN, LAMBDA,FAC,DCRIT,EXP
+      INTEGER I,J,INDX(NEL),NINDX,SEL,ICOUP,IREG,NTABLE
+      my_real D1,TRIAX
+      my_real EPS_FAIL
+      my_real P1X,P1Y,S1X,S1Y, A1, B1, C1, REF_EL_LEN, DCRIT,EXP
       my_real X_1(3) , X_2(3)
-
+      my_real ,dimension(nel) :: lambda,dydx
 C!--------------------------------------------------------------
-       IR    = 0
        EPS_FAIL = -HUGE(EPS_FAIL)
-       X_1(1) = UPARAM(1)
-       X_1(2) = UPARAM(2)
-       X_1(3) = UPARAM(3)
-       X_2(1) = UPARAM(4)
-       X_2(2) = UPARAM(5)
-       X_2(3) = UPARAM(6)
-       D1     = UPARAM(7)
-       SEL    = INT(UPARAM(11)+0.0001)
+       X_1(1) = FAIL%UPARAM(1)
+       X_1(2) = FAIL%UPARAM(2)
+       X_1(3) = FAIL%UPARAM(3)
+       X_2(1) = FAIL%UPARAM(4)
+       X_2(2) = FAIL%UPARAM(5)
+       X_2(3) = FAIL%UPARAM(6)
+       D1     = FAIL%UPARAM(7)
+       REF_EL_LEN = FAIL%UPARAM(13)
+       DCRIT = FAIL%UPARAM(15)
+       EXP   = FAIL%UPARAM(16)
+       !
+       IREG   = FAIL%IPARAM(1)
+       SEL    = FAIL%IPARAM(3)
+       ICOUP  = FAIL%IPARAM(4)
        IF (SEL == 3) SEL = 2
-       REF_EL_LEN   = UPARAM(13)
-       ICOUP = NINT(UPARAM(14))
-       DCRIT = UPARAM(15)
-       EXP   = UPARAM(16)
- 
-C-----------------------------------------------
-C!  Initialization
-C-----------------------------------------------
-       IF (NFUNC > 0) THEN 
-        IF (NUVAR == 3) THEN 
-          IF (UVAR(1,3)==ZERO) THEN 
-            DO I=1,NEL
-              UVAR(I,3) = AL(I) 
-              LAMBDA = UVAR(I,3) / REF_EL_LEN
-              FAC = FINTER(IFUNC(1),LAMBDA,NPF,TF,DF) 
-              UVAR(I,3) = FAC
-            ENDDO
-          ENDIF
-        ELSEIF (NUVAR == 9) THEN 
-          IF (UVAR(1,9)==ZERO) THEN 
-            DO I=1,NEL
-              UVAR(I,9) = AL(I) 
-              LAMBDA = UVAR(I,9) / REF_EL_LEN
-              FAC = FINTER(IFUNC(1),LAMBDA,NPF,TF,DF) 
-              UVAR(I,9) = FAC
-            ENDDO
-          ENDIF
-        ENDIF
-      ENDIF
+       NTABLE   = FAIL%NTABLE4D
+!---------------------------------------------------------------------------
+!      Element size scale factor on failure plastic strain
+!---------------------------------------------------------------------------
+       if (ireg > 0) then 
+         lambda(1:nel) = al(1:nel) / ref_el_len
+         if (nuvar == 3) then 
+           if (uvar(1,3) == zero) then
+             call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,lambda,uvar(1:nel,3),dydx)
+           endif
+         elseif (nuvar == 9) then 
+           if (uvar(1,9) == zero) then 
+             call table_mat_vinterp(fail%table4d(1),nel,nel,vartmp,lambda,uvar(1:nel,9),dydx)
+           endif
+         endif
+       endif
 c-----------------------------
        
        NINDX = 0  
@@ -136,14 +127,14 @@ c-----------------------------
            IF (TRIAX>TWO_THIRD)  TRIAX =  TWO_THIRD
            IF (TRIAX <= THIRD) THEN
               EPS_FAIL =   X_1(1) +  X_1(2) * TRIAX + X_1(3) * TRIAX**2
-              IF ((NUVAR == 3).AND.(NFUNC > 0)) EPS_FAIL = EPS_FAIL* UVAR(I,3)
-              IF ((NUVAR == 9).AND.(NFUNC > 0)) EPS_FAIL = EPS_FAIL* UVAR(I,9)
+              IF ((NUVAR == 3).AND.(IREG > 0)) EPS_FAIL = EPS_FAIL* UVAR(I,3)
+              IF ((NUVAR == 9).AND.(IREG > 0)) EPS_FAIL = EPS_FAIL* UVAR(I,9)
            ELSE
               SELECT CASE (SEL)
                CASE(1)
                  EPS_FAIL   =   X_2(1) +  X_2(2) * TRIAX + X_2(3) * TRIAX**2
-                 IF ((NUVAR == 3).AND.(NFUNC > 0))EPS_FAIL = EPS_FAIL * UVAR(I,3)
-                 IF ((NUVAR == 9).AND.(NFUNC > 0))EPS_FAIL = EPS_FAIL * UVAR(I,9)
+                 IF ((NUVAR == 3).AND.(IREG > 0))EPS_FAIL = EPS_FAIL * UVAR(I,3)
+                 IF ((NUVAR == 9).AND.(IREG > 0))EPS_FAIL = EPS_FAIL * UVAR(I,9)
                CASE(2)
                  IF (TRIAX <= ONE/SQR3) THEN                     ! triax < 0.57735
                    P1X      = THIRD
@@ -154,8 +145,8 @@ c-----------------------------
                    B1       = -TWO * A1 * S1X
                    C1       = A1 * S1X**2 + S1Y 
                    EPS_FAIL = C1 + B1 * TRIAX + A1 * TRIAX**2
-                   IF ((NUVAR == 3).AND.(NFUNC > 0))EPS_FAIL = EPS_FAIL * UVAR(I,3)
-                   IF ((NUVAR == 9).AND.(NFUNC > 0))EPS_FAIL = EPS_FAIL * UVAR(I,9)
+                   IF ((NUVAR == 3).AND.(IREG > 0))EPS_FAIL = EPS_FAIL * UVAR(I,3)
+                   IF ((NUVAR == 9).AND.(IREG > 0))EPS_FAIL = EPS_FAIL * UVAR(I,9)
                  ELSE                                             ! triax > 0.57735
                    P1X      = TWO * THIRD
                    P1Y      = X_2(1) + X_2(2) * P1X + X_2(3) * P1X**2
@@ -166,8 +157,8 @@ c-----------------------------
                    C1       = A1 * S1X**2 + S1Y 
                    EPS_FAIL = C1 + B1 * TRIAX + A1 * TRIAX**2
                    
-                   IF ((NUVAR == 3).AND.(NFUNC> 0)) EPS_FAIL = EPS_FAIL * UVAR(I,3)
-                   IF ((NUVAR == 9).AND.(NFUNC> 0)) EPS_FAIL = EPS_FAIL * UVAR(I,9)
+                   IF ((NUVAR == 3).AND.(IREG > 0)) EPS_FAIL = EPS_FAIL * UVAR(I,3)
+                   IF ((NUVAR == 9).AND.(IREG > 0)) EPS_FAIL = EPS_FAIL * UVAR(I,9)
                  ENDIF
                END SELECT
            ENDIF

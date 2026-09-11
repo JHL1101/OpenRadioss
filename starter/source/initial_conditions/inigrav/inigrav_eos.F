@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inigrav_eos        ../starter/source/initial_conditions/inigrav/inigrav_eos.F
 !||--- called by ------------------------------------------------------
@@ -61,13 +62,14 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER :: I,K
-      INTEGER :: EOSTYPE, ITER, MAX_ITER, MAT(NEL), REMAINING_ELTS, NBMAT, NVAREOS, NVARTMP_EOS
+      INTEGER :: EOSTYPE, ITER, MAX_ITER, MAT(NEL), REMAINING_ELTS, NVAREOS, NVARTMP_EOS
       my_real :: BID(NEL) !bfrac not used int his context
       my_real :: TOL, INCR
       my_real :: FUNC(NEL), DFUNC(NEL), ERROR(NEL), RHOZERO(NEL), RHO(NEL), 
      .           MU(NEL), MU2(NEL), ESPE(NEL), DVOL(NEL), DF(NEL), VOL(NEL), PSH(NEL), 
-     .           DPDRHO(NEL), DPDM(NEL), DPDE(NEL), THETA(NEL), ECOLD(NEL), P0(NEL), 
-     .           GRUN(NEL),PREF(NEL), OFF(NEL), EINT(NEL), SIG(NEL,6),RHO_OLD,V0(NEL)
+     .           DPDRHO(NEL), DPDM(NEL), DPDE(NEL), THETA(NEL),
+     .           PREF(NEL), OFF(NEL), EINT(NEL), SIG(NEL,6),RHO_OLD,V0(NEL)
+      my_real :: ABS_GRAV0
 
       LOGICAL :: CONT, CONVERGED(NEL)
       TYPE(G_BUFEL_), POINTER :: GBUF
@@ -81,7 +83,7 @@ C LIST IS SUBGROUP TO TREAT : ONLY ELEM WITH RELEVANT PARTS ARE KEPT
 C NEL IS ISEZ OF LIST
 C NELG IS SIZE OF ORIGINAL GROUP : needed to shift indexes in GBUF%SIG & MBUF%VAR
 C IMAT : relevant for multifluid eos. imat=0 => monomaterial law
-      
+      ABS_GRAV0 = ABS(GRAV0)
       GBUF => ELBUF_TAB(NG)%GBUF
       NULLIFY(LBUF)
       NULLIFY(EBUF)
@@ -115,7 +117,7 @@ C IMAT : relevant for multifluid eos. imat=0 => monomaterial law
            RHOZERO(K) = PM(1,MATID)
            PSH(K)     = PM(88, MATID)
            MAT(K)     = MATID
-           PREF(K)    = PSURF - RHO0 * GRAV0 * DEPTH(K)   !RHO in : RHO0_mixture (gravity model applied to the mixture not to the single submaterial)
+           PREF(K)    = PSURF + RHO0 * ABS_GRAV0 * DEPTH(K)   ! positive depth is below the surface. !RHO in : RHO0_mixture (gravity model applied to the mixture not to the single submaterial)
            VOL(K)     = ONE   !  Real volume value not useful here, just an indicator : ONE = compute, ZERO = do not compute
            MU(K)      = ZERO
            SIG(K,1)   = -PM(31,MATID)

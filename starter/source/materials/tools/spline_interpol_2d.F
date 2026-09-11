@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spline_interpol_2d   ../starter/source/materials/tools/spline_interpol_2d.F
 !||--- called by ------------------------------------------------------
@@ -56,7 +57,6 @@ C-----------------------------------------------
       my_real :: DK21,DK32,DK43,DK31,DK42,KT1,KT2,KT3,KT4
       my_real :: TT  ! in [T1,T2]=[KNOT(2),KNOT(3)]
       my_real :: A1X,A1Y,A2X,A2Y,A3X,A3Y,B1X,B1Y,B2X,B2Y
-      my_real :: CX,CY,C_DX,C_DY,C_DDX,C_DDY
       my_real :: A1PX,A1PY,A2PX,A2PY,A3PX,A3PY,B1PX,B1PY,B2PX,B2PY
       my_real :: B1PPX,B1PPY,B2PPX,B2PPY
 C-----------------------------------------------

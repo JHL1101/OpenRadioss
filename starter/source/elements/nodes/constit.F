@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,24 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    constit        ../starter/source/elements/nodes/constit.F
+!||    constit              ../starter/source/elements/nodes/constit.F
 !||--- called by ------------------------------------------------------
-!||    build_admesh   ../starter/source/model/remesh/build_admesh.F
-!||    hm_read_node   ../starter/source/elements/reader/hm_read_node.F
-!||    init_monvol    ../starter/source/airbag/init_monvol.F
-!||    nbadigemesh    ../starter/source/elements/ige3d/nbadigemesh.F
-!||    nbadmesh       ../starter/source/model/remesh/nbadmesh.F
-!||    r2r_split      ../starter/source/coupling/rad2rad/r2r_split.F
+!||    build_admesh         ../starter/source/model/remesh/build_admesh.F
+!||    hm_read_node         ../starter/source/elements/reader/hm_read_node.F
+!||    init_monvol          ../starter/source/airbag/init_monvol.F
+!||    nbadigemesh          ../starter/source/elements/ige3d/nbadigemesh.F
+!||    nbadmesh             ../starter/source/model/remesh/nbadmesh.F
+!||    q1np_generate_main   ../starter/source/elements/solid/solid_q1np/q1np_generate_main.F90
+!||    r2r_split            ../starter/source/coupling/rad2rad/r2r_split.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE CONSTIT(ITAB,ITABM1,NUMNOD)
 C
@@ -38,6 +41,7 @@ C    ITABM1(J)=NO USER ITABM1(NUMNOD+J)=NO SYSTEME
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -53,7 +57,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
-      ALLOCATE(INDX(2*NUMNOD))
+      call my_alloc(INDX, 2*NUMNOD, "CONSTIT/INDX")
       DO I = 1, NUMNOD
         INDX(I) = I
       END DO
@@ -77,7 +81,7 @@ C    .                I1=ITABM1(I))
         END IF
         ITABM1(NUMNOD+I) = INDX(I)
       END DO
-      DEALLOCATE(INDX)
+      CALL MY_DEALLOC(INDX)
 
       RETURN
       END

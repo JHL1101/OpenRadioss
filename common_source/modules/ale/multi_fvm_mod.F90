@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    multi_fvm_mod                    ../common_source/modules/ale/multi_fvm_mod.F90
 !||--- called by ------------------------------------------------------
@@ -28,7 +29,6 @@
 !||    alewdx                           ../engine/source/ale/grid/alewdx.F
 !||    anim_nodal_ssp_elems             ../engine/source/output/anim/generate/anim_nodal_ssp_elems.F90
 !||    build_connectivity               ../engine/source/multifluid/connectivity.F
-!||    c3grhead                         ../starter/source/elements/sh3n/coque3n/c3grhead.F
 !||    c_ixfloc                         ../starter/source/restart/ddsplit/c_ixfloc.F
 !||    c_multi_vel                      ../starter/source/restart/ddsplit/c_multi_vel.F
 !||    c_vois                           ../starter/source/restart/ddsplit/c_vois.F
@@ -122,6 +122,7 @@
 !||    iniphase                         ../starter/source/initial_conditions/inivol/iniphase.F
 !||    init_bcs_nrf                     ../starter/source/boundary_conditions/init_bcs_nrf.F90
 !||    init_bcs_wall                    ../starter/source/boundary_conditions/init_bcs_wall.F90
+!||    init_h3d_engine                  ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    init_inivol                      ../starter/source/initial_conditions/inivol/init_inivol.F90
 !||    init_inivol_2d_polygons          ../starter/source/initial_conditions/inivol/init_inivol_2D_polygons.F90
 !||    initia                           ../starter/source/elements/initia/initia.F

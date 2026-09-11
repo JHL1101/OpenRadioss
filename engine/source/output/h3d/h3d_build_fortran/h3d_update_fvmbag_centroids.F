@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_update_fvmbag_centroids   ../engine/source/output/h3d/h3d_build_fortran/h3d_update_fvmbag_centroids.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    fvbag_mod                     ../engine/share/modules/fvbag_mod.F
 !||    groupdef_mod                  ../common_source/modules/groupdef_mod.F
+!||    my_alloc_mod                  ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE H3D_UPDATE_FVMBAG_CENTROIDS(H3DTITLE,LEN_H3DTITLE,IH3D,MONVOL,VOLMON, NFVBAG, SMONVOL, SVOLMON,
      .                                       FVDATA_P, AIRBAGS_NODE_ID_SHIFT)
@@ -49,6 +52,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -104,8 +109,8 @@ C-----------------------------------------------
               
               IF(NPOLH > 0)THEN ! if there are any polyhedron
 
-                 ALLOCATE(ITAB_FVMBAG(NPOLH))
-                 ALLOCATE(DISP_FVMBAG(3,NPOLH))
+                 call my_alloc(ITAB_FVMBAG, NPOLH, "ITAB_FVMBAG")
+                 call my_alloc(DISP_FVMBAG, 3, NPOLH, "DISP_FVMBAG")
                  
                  DO II=1, FVDATA_P(IFV)%NPOLH !loop over polyhedra composing the airbag mesh
                    
@@ -118,8 +123,8 @@ C-----------------------------------------------
 
                  CALL C_H3D_UPDATE_FVMBAG_NODES(H3DTITLE,LEN_H3DTITLE,IH3D,ITAB_FVMBAG,NPOLH,DISP_FVMBAG)
                  
-                 DEALLOCATE(ITAB_FVMBAG)
-                 DEALLOCATE(DISP_FVMBAG)
+                 call my_dealloc(ITAB_FVMBAG)
+                 call my_dealloc(DISP_FVMBAG)
                  NNODES = NNODES + FVDATA_P(IFV)%NPOLH
 
               ENDIF !NNODES>0
@@ -134,8 +139,8 @@ C-----------------------------------------------
       
       !loop from NNODES +1 to AIRBAGS_TOTAL_FVM_IN_H3D : locate them to  0,0,0
       ILEN = AIRBAGS_TOTAL_FVM_IN_H3D - NNODES
-      ALLOCATE(ITAB_FVMBAG(ILEN+1))
-      ALLOCATE(DISP_FVMBAG(3,ILEN+1))
+      call my_alloc(ITAB_FVMBAG, ILEN+1, "ITAB_FVMBAG")
+      call my_alloc(DISP_FVMBAG, 3, ILEN+1, "DISP_FVMBAG")
 
       DO II=1,ILEN
         ITAB_FVMBAG(II) = AIRBAGS_NODE_ID_SHIFT+NNODES+II
@@ -146,8 +151,8 @@ C-----------------------------------------------
 
       CALL C_H3D_UPDATE_FVMBAG_NODES(H3DTITLE,LEN_H3DTITLE,IH3D,ITAB_FVMBAG,ILEN,DISP_FVMBAG)
 
-      DEALLOCATE(ITAB_FVMBAG)
-      DEALLOCATE(DISP_FVMBAG)
+      call my_dealloc(ITAB_FVMBAG)
+      call my_dealloc(DISP_FVMBAG)
 
       
       RETURN

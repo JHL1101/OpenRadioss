@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    iniebcs_dp     ../starter/source/boundary_conditions/ebcs/iniebcs_dp.F
 !||--- called by ------------------------------------------------------
@@ -27,7 +28,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    inigrav        ../starter/share/modules1/inigrav_mod.F
 !||====================================================================
-      SUBROUTINE INIEBCS_DP(NSEG,NOD,ISEG,IELEM,IRECT,LISTE,
+      SUBROUTINE INIEBCS_DP(NSEG,NOD,IELEM,IRECT,LISTE,
      .                    IPARG,ELBUF_STR,X, IXS,IXQ,IXTG,DP0,
      .                    IPARTS,IPARTQ,IPARTTG)
 C-----------------------------------------------
@@ -47,7 +48,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE ELBUFDEF_MOD    
       USE INIGRAV
-      use element_mod , only : nixs,nixq,nixtg      
+      use element_mod , only : nixs,nixq,nixtg
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -61,7 +62,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER             :: NSEG,NOD,ISEG(NSEG),IRECT(4,NSEG),LISTE(NOD),IPARG(NPARG,NGROUP), IELEM(NSEG)
+      INTEGER             :: NSEG,NOD,IRECT(4,NSEG),LISTE(NOD),IPARG(NPARG,NGROUP), IELEM(NSEG)
       INTEGER,INTENT(IN)  :: IXS(NIXS,NUMELS),IXQ(NIXQ,NUMELQ), IXTG(NIXTG,NUMELTG)
       INTEGER, INTENT(IN) :: IPARTS(NUMELS), IPARTQ(NUMELQ), IPARTTG(NUMELTG)      
       my_real :: X(3,NUMNOD), DP0(NSEG)
@@ -69,18 +70,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER :: NodeLOC(4),NG,IS,KSEG,NodeG(8),ESEG,EAD,KTY,KLT,MFT,ISOLNOD,ITY,IP
-      my_real :: ORIENT, FAC,ZF(3),ZC(3),VEC(3),RHO ,DIST,GRAV0
-      my_real :: NGX,NGY,NGZ                       
+      INTEGER :: NodeLOC(4),NG,IS,NodeG(8),ESEG,EAD,KTY,KLT,MFT,ISOLNOD,ITY,IP
+      my_real :: ZF(3),ZC(3),VEC(3),RHO ,DIST,GRAV0
+      my_real :: NGX,NGY,NGZ
       TYPE(G_BUFEL_)  ,POINTER :: GBUF  
-      LOGICAL IS_TRIA   
+      LOGICAL IS_TRIA
 C=======================================================================
 
       DO IS=1,NSEG    
-                                                                     
-        KSEG = ABS(ISEG(IS))                                                         
-        ORIENT = ZERO                                                                
-        IF(KSEG /= 0)ORIENT=FLOAT(ISEG(IS)/KSEG)                                     
 
         !local ids in IRECT array
         NodeLOC(1:4) = IRECT(1:4,IS)                                                               
@@ -92,18 +89,21 @@ C=======================================================================
         IF(NodeLOC(4) == 0 .OR. NodeLOC(3) == NodeLOC(4))IS_TRIA=.TRUE.
         
         !centroid at face
-        IF(IS_TRIA) THEN                                               
-          FAC=THIRD*ORIENT                                                           
-          !NodeLOC(3)=NodeLOC(4)
-          ZF(1) = FAC*SUM( X(1,NodeG(1:3)) )
-          ZF(2) = FAC*SUM( X(2,NodeG(1:3)) )
-          ZF(3) = FAC*SUM( X(3,NodeG(1:3)) )
-        ELSE                                                                         
-          FAC=FOURTH*ORIENT                                                          
-          ZF(1) = FAC*SUM( X(1,NodeG(1:4)) )
-          ZF(2) = FAC*SUM( X(2,NodeG(1:4)) )
-          ZF(3) = FAC*SUM( X(3,NodeG(1:4)) )
-        ENDIF                                                                        
+        IF(N2D == 0) THEN
+          IF(IS_TRIA) THEN
+            ZF(1) = THIRD*SUM( X(1,NodeG(1:3)) )
+            ZF(2) = THIRD*SUM( X(2,NodeG(1:3)) )
+            ZF(3) = THIRD*SUM( X(3,NodeG(1:3)) )
+          ELSE
+            ZF(1) = FOURTH*SUM( X(1,NodeG(1:4)) )
+            ZF(2) = FOURTH*SUM( X(2,NodeG(1:4)) )
+            ZF(3) = FOURTH*SUM( X(3,NodeG(1:4)) )
+          ENDIF
+        ELSE
+          ZF(1) = HALF*SUM( X(1,NodeG(1:2)) )
+          ZF(2) = HALF*SUM( X(2,NodeG(1:2)) )
+          ZF(3) = HALF*SUM( X(3,NodeG(1:2)) )
+        ENDIF
 
         !centroid at cell
         ESEG=IELEM(IS)                                                                                   
@@ -159,9 +159,10 @@ C=======================================================================
         ENDIF  
         
         !-- distance from cell centroid to ghost cell is twice the distance from centroid to face centroid
-        VEC(1) = -ZC(1)+ZF(1)
-        VEC(2) = -ZC(2)+ZF(2)
-        VEC(3) = -ZC(3)+ZF(3)
+        !   projected onto gravity direction. Positive depth is along the gravity direction.
+        VEC(1) = ZF(1)-ZC(1)
+        VEC(2) = ZF(2)-ZC(2)
+        VEC(3) = ZF(3)-ZC(3)
         !DIST = VEC(1)*VEC(1) + VEC(2)*VEC(2) + VEC(3)*VEC(3)
         !DIST = TWO*SQRT(DIST) 
         
@@ -184,7 +185,7 @@ C=======================================================================
             
             DIST = VEC(1)*NGX + VEC(2)*NGY +VEC(3)*NGZ
             DIST = TWO * DIST
-            
+
             DP0(IS) = RHO*ABS(GRAV0)*DIST
          ELSE 
            !no increment to hydrostatic pressure

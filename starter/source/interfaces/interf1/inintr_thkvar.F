@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    thickvar        ../starter/source/interfaces/interf1/inintr_thkvar.F
 !||--- called by ------------------------------------------------------
@@ -116,6 +117,7 @@ C-----------------------------------------------
       USE INTBUFSCRATCH_MOD
       USE INOUTFILE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -165,15 +167,15 @@ C-----------------------------------------------
       I_MEM = 0
       RESORT = 0
 C----
-      ALLOCATE (THKSH4_VAR(NUMELC) ,STAT=stat)
+      call my_alloc(THKSH4_VAR, NUMELC, "THKSH4_VAR", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='THKSH4_VAR')
-      ALLOCATE (THKSH3_VAR(NUMELTG) ,STAT=stat)
+      call my_alloc(THKSH3_VAR, NUMELTG, "THKSH3_VAR", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='THKSH3_VAR')
-      ALLOCATE (THKNOD(NUMNOD) ,STAT=stat)
+      call my_alloc(THKNOD, NUMNOD, "THKNOD", stat=stat)
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                         C1='THKNOD')
@@ -250,7 +252,8 @@ C
         CLOSE(UNIT=IOU2)
       ENDIF
 C
-      DEALLOCATE (THKSH4_VAR,THKSH3_VAR)
+      CALL MY_DEALLOC(THKSH4_VAR)
+      CALL MY_DEALLOC(THKSH3_VAR)
 C-----------
       RETURN
       END

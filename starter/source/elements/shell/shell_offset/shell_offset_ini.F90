@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    shell_offset_ini_mod   ../starter/source/elements/shell/shell_offset/shell_offset_ini.F90
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@
 ! ======================================================================================================================
 !
 !=======================================================================================================================
-!!\brief This subroutine do the initialization of shell offset treatment
+!!\brief This subroutine performs the initialization of shell offset treatment
 !=======================================================================================================================
 !||====================================================================
 !||    shell_offset_ini   ../starter/source/elements/shell/shell_offset/shell_offset_ini.F90
@@ -62,16 +63,16 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: ngroup           !< number of elem group
-          integer, intent (in   )                          :: nparg            !< 1er dim of iparg
-          integer, intent (in   )                          :: npropg           !< 1er dim of geo
+          integer, intent (in   )                          :: nparg            !< first dimension of iparg
+          integer, intent (in   )                          :: npropg           !< first dimension of geo
           integer, intent (in   )                          :: numgeo           !< number of prop
-          integer, intent (in   )                          :: npropgi          !< 1er dim of igeo
+          integer, intent (in   )                          :: npropgi          !< first dimension of igeo
           integer, intent (in   )                          :: numelc           !< number shell 4n element
           integer, intent (in   )                          :: numeltg          !< number shell 3n element
           integer, intent (in   ) ,dimension(nparg,ngroup) :: iparg            !< elem group array
           integer, intent (inout),dimension(npropgi,numgeo):: igeo             !< property array
           real(kind=WP), intent (inout),dimension(npropg,numgeo) :: geo              !< property array
-          integer, intent (in   ),dimension(numelc+numeltg):: itagsh           !< shell w/ offset
+          integer, intent (in   ),dimension(numelc+numeltg):: itagsh           !< shell with offset
           type (elbuf_struct_),  target, dimension(ngroup) :: elbuf_tab        !< el_buf struct_
           type (shell_defaults_),intent(in)                :: defaults_shell   !< Default values for Shell : /DEF_SHELL option
 ! ----------------------------------------------------------------------------------------------------------------------

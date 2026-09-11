@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    c3fint_reg_ini    ../starter/source/elements/sh3n/coque3n/c3fint_reg_ini.F
 !||--- called by ------------------------------------------------------
@@ -41,9 +42,11 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE NLOCAL_REG_MOD
       use element_mod , only : nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -191,15 +194,15 @@ C=======================================================================
          ! Allocation of the velocities predictor
          IF (NDOF>1) THEN
            IF (NDOF > 2) THEN 
-             ALLOCATE(VPRED(NEL,NDOF+1))
+             call my_alloc(VPRED, NEL, NDOF+1, "VPRED")
              NDNOD = NDOF + 1
            ELSE
-             ALLOCATE(VPRED(NEL,NDOF))
+             call my_alloc(VPRED, NEL, NDOF, "VPRED")
              NDNOD = NDOF
            ENDIF
          ENDIF
          ! Variable to regularize
-         IF (.NOT.ALLOCATED(VAR_REG)) ALLOCATE(VAR_REG(NEL,NDOF))
+         IF (.NOT.ALLOCATED(VAR_REG)) call my_alloc(VAR_REG, NEL, NDOF, "VAR_REG")
 c
          ! Computation of kinematical data
 # include "vectorize.inc"
@@ -443,6 +446,6 @@ c
            ENDDO
          ENDDO
 c -------------------
-        IF (ALLOCATED(VAR_REG)) DEALLOCATE(VAR_REG)
-        IF (ALLOCATED(VPRED))   DEALLOCATE(VPRED)
+        IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
+        IF (ALLOCATED(VPRED))   CALL MY_DEALLOC(VPRED)
       END

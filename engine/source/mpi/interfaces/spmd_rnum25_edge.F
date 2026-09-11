@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_rnum25_edge   ../engine/source/mpi/interfaces/spmd_rnum25_edge.F
 !||--- called by ------------------------------------------------------
 !||    i25main_tri        ../engine/source/interfaces/intsort/i25main_tri.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
 !||    tri25ebox          ../engine/share/modules/tri25ebox.F
 !||    tri7box            ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -37,6 +40,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 #include      "i25edge_c.inc"
 C-----------------------------------------------
@@ -61,13 +65,13 @@ C-----------------------------------------------
         N_REMOTE_OLD = N_REMOTE_OLD + NSNFIEOLD(P)
       ENDDO
 
-      ALLOCATE(RENUM_EDGE(N_REMOTE_OLD))
+      call my_alloc(RENUM_EDGE, N_REMOTE_OLD, "RENUM_EDGE")
       DO I = 1, N_REMOTE_OLD
         RENUM_EDGE(I) = -1
       END DO
 
 
-      ALLOCATE(OLDNUM_EDGE(NEDGE_REMOTE))
+      call my_alloc(OLDNUM_EDGE, NEDGE_REMOTE, "OLDNUM_EDGE")
       DO I = 1, NEDGE_REMOTE
         OLDNUM_EDGE(I) = 0 
 !       OLDNUM_EDGE(NEW) = OLD or 0

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    check_dynain           ../starter/source/starter/check_dynain.F
 !||--- called by ------------------------------------------------------
@@ -37,6 +38,7 @@ C-----------------------------------------------
       USE INOUTFILE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARLINE
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -60,14 +62,14 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, K, N ,NELC , NELTG , IO_ERR1 , IP , NPRT , 
      .   FLG_CHK , IS_CHECK , JWARN, NELMIN , NELMAX , IPRT ,
-     .   NELTGG , NELCG , IPRTALL , IERR2 ,IS_READ,
+     .   IPRTALL , IERR2 ,IS_READ,
      .   DYNPART(NPART), IPART_DYNAIN(NPART)
 C        
       INTEGER WORK(70000)
       INTEGER ,  DIMENSION(:),ALLOCATABLE :: NELIDC ,NELIDTG,
-     .        CLEFC ,CLEFTG ,INDXC ,INDXTG ,IDWARN ,NELIDCG ,NELIDTGG
+     .        CLEFC ,CLEFTG ,INDXC ,INDXTG ,IDWARN
       my_real T0,DT0
-      CHARACTER FILNAM*109, KEYA*80, KEYA2*80
+      CHARACTER FILNAM*109, KEYA*80
       CHARACTER(LEN=NCHARLINE) ::CARTE
       INTEGER :: LEN_TMP_NAME
       CHARACTER(len=4096) :: TMP_NAME
@@ -111,14 +113,14 @@ C--     Check dynain file is requested --
 
         IF(KEYA(1:14)=='/DYNAIN/DT/ALL') THEN
           IF(NUMELC/=0)THEN
-            ALLOCATE(NELIDC(NUMELC),STAT=IERR2)
+            call my_alloc(NELIDC, NUMELC, "NELIDC", stat=IERR2)
             DO I=1,NUMELC
                NELIDC(I) = IXC(NIXC,I)
             ENDDO
             NELC = NUMELC 
           ENDIF
           IF(NUMELTG/=0)THEN
-            ALLOCATE(NELIDTG(NUMELTG),STAT=IERR2)
+            call my_alloc(NELIDTG, NUMELTG, "NELIDTG", stat=IERR2)
             DO I=1,NUMELTG
                NELIDTG(NELTG) = IXTG(NIXTG,I)
             ENDDO
@@ -191,8 +193,12 @@ C--     parts id to local part --
                 END IF
                 IPART_DYNAIN(IP)=1
              ENDDO
-             IF(NUMELC/=0) ALLOCATE(NELIDC(NUMELC),STAT=IERR2)
-             IF(NUMELTG/=0) ALLOCATE(NELIDTG(NUMELTG),STAT=IERR2)
+             IF(NUMELC/=0) THEN
+               call my_alloc(NELIDC, NUMELC, "NELIDC", stat=IERR2)
+             ENDIF
+             IF(NUMELTG/=0) THEN
+               call my_alloc(NELIDTG, NUMELTG, "NELIDTG", stat=IERR2)
+             ENDIF
 
           ENDIF
 C
@@ -227,8 +233,8 @@ C
       IF(FLG_CHK == 1 ) THEN ! IF check is needed
         IS_CHECK = 0
 
-        ALLOCATE(CLEFC(NELC),STAT=IERR2)
-        ALLOCATE(INDXC(2*NELC),STAT=IERR2)
+        call my_alloc(CLEFC, NELC, "CLEFC", stat=IERR2)
+        call my_alloc(INDXC, 2*NELC, "INDXC", stat=IERR2)
 
         DO N=1,NELC
            INDXC(N)=N
@@ -236,8 +242,8 @@ C
         END DO
         CALL MY_ORDERS(0,WORK,CLEFC,INDXC,NELC,1)     
 
-        ALLOCATE(CLEFTG(NELTG),STAT=IERR2)
-        ALLOCATE(INDXTG(2*NELTG),STAT=IERR2)
+        call my_alloc(CLEFTG, NELTG, "CLEFTG", stat=IERR2)
+        call my_alloc(INDXTG, 2*NELTG, "INDXTG", stat=IERR2)
 
         DO N=1,NELTG
            INDXTG(N)=N
@@ -265,7 +271,7 @@ C
            NELMIN = MAX(NELIDC(INDXC(1)),NELIDTG(INDXTG(1)))
            NELMAX = MIN(NELIDC(INDXC(NELC)),NELIDTG(INDXTG(NELTG)))
 
-           ALLOCATE(IDWARN(MIN(NELC,NELTG)),STAT=IERR2)
+           call my_alloc(IDWARN, MIN(NELC,NELTG), "IDWARN", stat=IERR2)
            JWARN = 0
            DO I=1,NELC
               IF(NELIDC(INDXC(I))>=NELMIN.AND.NELIDC(INDXC(I))<=NELMAX) THEN
@@ -301,16 +307,19 @@ C
 
             ENDIF
            ENDIF
-           DEALLOCATE(IDWARN)
+           CALL MY_DEALLOC(IDWARN)
         ENDIF
 
-        DEALLOCATE(CLEFC,CLEFTG,INDXC,INDXTG)
+        CALL MY_DEALLOC(CLEFC)
+        CALL MY_DEALLOC(CLEFTG)
+        CALL MY_DEALLOC(INDXC)
+        CALL MY_DEALLOC(INDXTG)
 
       ENDIF
 
       IF(IS_READ > 0 ) THEN
-         IF(NUMELC/=0) DEALLOCATE(NELIDC,STAT=IERR2)
-         IF(NUMELTG/=0) DEALLOCATE(NELIDTG,STAT=IERR2)
+         IF(NUMELC/=0) CALL MY_DEALLOC(NELIDC)
+         IF(NUMELTG/=0) CALL MY_DEALLOC(NELIDTG)
       ENDIF
 
       RETURN

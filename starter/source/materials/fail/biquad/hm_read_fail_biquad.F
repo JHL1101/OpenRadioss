@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_fail_biquad      ../starter/source/materials/fail/biquad/hm_read_fail_biquad.F
 !||--- called by ------------------------------------------------------
@@ -27,18 +28,21 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                   ../starter/source/output/message/message.F
 !||    biquad_coefficients      ../starter/source/materials/fail/biquad/biquad_coefficients.F
+!||    func_table_copy          ../starter/source/materials/tools/func_table_copy.F90
 !||    hm_get_floatv            ../starter/source/devtools/hm_reader/hm_get_floatv.F
 !||    hm_get_floatv_dim        ../starter/source/devtools/hm_reader/hm_get_floatv_dim.F
 !||    hm_get_intv              ../starter/source/devtools/hm_reader/hm_get_intv.F
 !||    hm_option_is_encrypted   ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
 !||--- uses       -----------------------------------------------------
+!||    func_table_copy_mod      ../starter/source/materials/tools/func_table_copy.F90
 !||    hm_option_read_mod       ../starter/share/modules1/hm_option_read_mod.F
 !||    message_mod              ../starter/share/message_module/message_mod.F
 !||    submodel_mod             ../starter/share/modules1/submodel_mod.F
+!||    table_mod                ../starter/share/modules1/table_mod.F
 !||====================================================================
-      SUBROUTINE HM_READ_FAIL_BIQUAD(
-     .            FAIL     ,MAT_ID   ,FAIL_ID  ,IRUPT    ,
-     .            TITR     ,LSUBMODEL,UNITAB   )
+      SUBROUTINE HM_READ_FAIL_BIQUAD(FAIL      ,
+     .            TITLE    ,MAT_ID   ,FAIL_ID  ,IRUPT    ,
+     .            NTABLE4D ,TABLE    ,LSUBMODEL,UNITAB   )
 C-----------------------------------------------
 c    ROUTINE DESCRIPTION :
 c    Read read double parabolic analytical failure model parameters
@@ -55,7 +59,10 @@ C-----------------------------------------------
       USE MESSAGE_MOD 
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
-      USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
+      use table_mod
+      use func_table_copy_mod
+      use names_and_titles_mod , only : nchartitle
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -71,18 +78,23 @@ C-----------------------------------------------
       INTEGER            ,INTENT(IN) :: FAIL_ID         ! failure model ID
       INTEGER            ,INTENT(IN) :: MAT_ID          ! material law ID
       INTEGER            ,INTENT(IN) :: IRUPT           ! failure model type number
-      CHARACTER(LEN=NCHARTITLE) ,INTENT(IN) :: TITR     ! material model title
+      CHARACTER(LEN=NCHARTITLE) ,INTENT(IN) :: TITLE    ! material model title
       TYPE(UNIT_TYPE_)   ,INTENT(IN) :: UNITAB          ! table of input units
       TYPE(SUBMODEL_DATA),INTENT(IN) :: LSUBMODEL(*)    ! submodel table
       TYPE(FAIL_PARAM_)  ,INTENT(INOUT) :: FAIL         ! failure model data structure
+      integer            ,intent(in)    :: ntable4d     !< number of function tables in Radioss input
+      type(ttable) ,dimension(ntable4d) ,intent(in) :: table  !< input table array
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER   :: MFLAG,SFLAG,REG_FUNC,ICOUP,IREG,NFUNC,NUVAR,NUPARAM,FAILIP 
+      INTEGER   :: MFLAG,SFLAG,REG_FUNC,ICOUP,IREG,NFUNC,NUVAR,NUPARAM,FAILIP,IERROR
       my_real   :: C1,C2,C3,C4,C5,E1,E2,E3,E4,PTHK,INST,REF_LEN,REF_SIZ_UNIT
       my_real   :: X_1(2)
       my_real   :: X_2(3)
       my_real   :: XMIN,YMIN,DCRIT,EXP
+      integer, dimension(1) :: func_id
+      my_real :: x1scale,x2scale
+      my_real, dimension(1) :: x2vect,yscale
       LOGICAL   :: IS_AVAILABLE,IS_ENCRYPTED
 C=======================================================================
       IS_ENCRYPTED = .FALSE.
@@ -182,12 +194,12 @@ c
       IF (SFLAG == 3 .AND. INST <= ZERO) THEN
         CALL ANCMSG(MSGID=3042, MSGTYPE=MSGWARNING, ANMODE=ANINFO_BLIND_1,
      .              I1=MAT_ID,
-     .              C1=TITR) 
+     .              C1=TITLE) 
         SFLAG = 2
       ELSEIF (SFLAG == 3 .AND. INST >= c4) THEN
         CALL ANCMSG(MSGID=3043, MSGTYPE=MSGWARNING, ANMODE=ANINFO_BLIND_1,
      .              I1=MAT_ID,
-     .              C1=TITR) 
+     .              C1=TITLE) 
         SFLAG = 2
       ENDIF
 c
@@ -200,7 +212,7 @@ c
       IF (SFLAG /= 3 .AND. ICOUP == 2) THEN 
         CALL ANCMSG(MSGID=3044, MSGTYPE=MSGWARNING, ANMODE=ANINFO_BLIND_1,
      .              I1=MAT_ID,
-     .              C1=TITR)         
+     .              C1=TITLE)         
         ICOUP = 0
       ENDIF
 c
@@ -211,7 +223,7 @@ c
       IF (YMIN < ZERO) THEN 
         CALL ANCMSG(MSGID=3004, MSGTYPE=MSGWARNING, ANMODE=ANINFO_BLIND_1,
      .              I1=MAT_ID,
-     .              C1=TITR)          
+     .              C1=TITLE)          
       ENDIF
       ENDIF
       ! Check if minimum of second parabola is negative 
@@ -221,12 +233,11 @@ c
         IF (YMIN < ZERO) THEN 
           CALL ANCMSG(MSGID=3005, MSGTYPE=MSGWARNING, ANMODE=ANINFO_BLIND_1,
      .                I1=MAT_ID,
-     .                C1=TITR)          
+     .                C1=TITLE)          
         ENDIF
       ENDIF
 c
 c---------------------------------------------------
-      NUPARAM = 17
       IF (REG_FUNC == 0) THEN
         NFUNC = 0
         NUVAR = 2
@@ -240,27 +251,40 @@ c-------------------------
       FAIL%KEYWORD = 'BIQUAD' 
       FAIL%IRUPT   = IRUPT 
       FAIL%FAIL_ID = FAIL_ID 
-      FAIL%NUPARAM = NUPARAM
-      FAIL%NIPARAM = 4
+      FAIL%NUPARAM = 16
+      FAIL%NIPARAM = 5
       FAIL%NUVAR   = NUVAR
-      FAIL%NFUNC   = NFUNC
+      FAIL%NVARTMP = NFUNC
+      FAIL%NFUNC   = 0
       FAIL%NTABLE  = 0
+      FAIL%NTABLE4D= 1
       FAIL%NMOD    = 0
 c            
       FAIL%PTHK    = PTHK
 c            
-      ALLOCATE (FAIL%UPARAM(FAIL%NUPARAM))
-      ALLOCATE (FAIL%IPARAM(FAIL%NIPARAM))
-      ALLOCATE (FAIL%IFUNC (FAIL%NFUNC))
-      ALLOCATE (FAIL%TABLE (FAIL%NTABLE))
-      
+      call my_alloc(FAIL%UPARAM, FAIL%NUPARAM, "FAIL%UPARAM")
+      call my_alloc(FAIL%IPARAM, FAIL%NIPARAM, "FAIL%IPARAM")
+      call my_alloc(FAIL%IFUNC, FAIL%NFUNC,    "FAIL%IFUNC")
+      call my_alloc(FAIL%TABLE, FAIL%NTABLE,   "FAIL%TABLE")
+      allocate(FAIL%TABLE4D(FAIL%NTABLE4D))
+      ! 
       FAIL%IPARAM(1)  = IREG
       FAIL%IPARAM(2)  = MFLAG
       FAIL%IPARAM(3)  = SFLAG
       FAIL%IPARAM(4)  = ICOUP
-
-      IF (NFUNC == 1) FAIL%IFUNC(1) = REG_FUNC
-
+      FAIL%IPARAM(5)  = FAILIP
+! ----------------------------------------------------------------------------------------------------------------------
+      ! create local function table using input function ID
+      nfunc = 1
+      func_id(1) = reg_func
+      x1scale    = one
+      x2scale    = one
+      x2vect(:)  = zero
+      yscale(1)  = one
+      call func_table_copy(fail%table4d(1) ,title   ,mat_id   ,      
+     .           nfunc   ,func_id ,x2vect  ,x1scale ,x2scale  ,yscale  ,      
+     .           ntable4d,table   ,ierror  )
+!
       FAIL%UPARAM(1)  = C2
       FAIL%UPARAM(2)  = X_1(1)
       FAIL%UPARAM(3)  = X_1(2)
@@ -270,14 +294,13 @@ c
       FAIL%UPARAM(7)  = PTHK
       FAIL%UPARAM(8)  = 0
       FAIL%UPARAM(9)  = C3
-      FAIL%UPARAM(10) = MFLAG ! del
-      FAIL%UPARAM(11) = SFLAG ! del
+      FAIL%UPARAM(10) = 0  ! MFLAG ! del
+      FAIL%UPARAM(11) = 0  ! SFLAG ! del
       FAIL%UPARAM(12) = INST
       FAIL%UPARAM(13) = REF_LEN  
-      FAIL%UPARAM(14) = ICOUP ! del
+      FAIL%UPARAM(14) = 0  ! ICOUP ! del
       FAIL%UPARAM(15) = DCRIT 
       FAIL%UPARAM(16) = EXP  
-      FAIL%UPARAM(17) = FAILIP
 c---------------------------------------------------
       IF (IS_ENCRYPTED)THEN
         WRITE(IOUT,'(5X,A,//)')'CONFIDENTIAL DATA'

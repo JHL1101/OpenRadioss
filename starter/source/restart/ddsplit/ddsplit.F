@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ddsplit                          ../starter/source/restart/ddsplit/ddsplit.F
 !||--- called by ------------------------------------------------------
@@ -185,6 +186,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    w_pon                            ../starter/source/restart/ddsplit/w_pon.F
 !||    w_poro                           ../starter/source/restart/ddsplit/w_poro.F
 !||    w_pxfem                          ../starter/source/restart/ddsplit/w_pxfem.F
+!||    w_q1np_int                       ../starter/source/restart/ddsplit/w_q1np.F90
+!||    w_q1np_real                      ../starter/source/restart/ddsplit/w_q1np.F90
 !||    w_r3nloc                         ../starter/source/restart/ddsplit/w_r3nloc.F
 !||    w_rbyk                           ../starter/source/restart/ddsplit/w_rbyk.F
 !||    w_rbymk                          ../starter/source/restart/ddsplit/w_rbymk.F
@@ -222,7 +225,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    c_inivell_mod                    ../starter/source/restart/ddsplit/c_inivell.F90
 !||    checksum_starter_option_mod      ../starter/source/output/checksum/checksum_option.F90
 !||    cluster_mod                      ../starter/share/modules1/cluster_mod.F
-!||    constraint_mod                   ../starter/source/modules/constaint_mod.F90
+!||    constraint_mod                   ../starter/source/modules/constraint_mod.F90
 !||    detonators_mod                   ../starter/share/modules1/detonators_mod.F
 !||    drape_mod                        ../starter/share/modules1/drape_mod.F
 !||    dsgraph_mod                      ../starter/share/modules1/dsgraph_mod.F
@@ -241,6 +244,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    table_mod                        ../starter/share/modules1/table_mod.F
 !||    w_bcs_proc_mod                   ../starter/source/restart/ddsplit/w_bcs_proc.F90
 !||    w_inivel_str_mod                 ../starter/source/restart/ddsplit/w_inivel_str.F90
+!||    w_q1np_mod                       ../starter/source/restart/ddsplit/w_q1np.F90
 !||====================================================================
       SUBROUTINE DDSPLIT(
      1   P            ,CEP          ,CEL            ,IGEO         ,MAT_ELEM    ,
@@ -337,7 +341,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      E   DRAPEG       ,USER_WINDOWS,OUTPUT          ,INTERFACES  ,NUMBER_LOAD_CYL,
      F   LOADS_PER_PROC, PYTHON    ,DPL0CLD         ,VEL0CLD     ,NAMES_AND_TITLES,
      G   BCS_PER_PROC,constraint_struct,glob_therm  ,PBLAST      ,RWSTIF_PEN,SLN_PEN,
-     H   IN_SFEM     , NE_SFEM )
+     H   IN_SFEM     , NE_SFEM , bcs)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -364,6 +368,7 @@ C-----------------------------------------------
       USE GROUPDEF_MOD
       USE MID_PID_MOD
       USE FAILWAVE_MOD
+      USE Q1NP_RESTART_MOD
       USE NLOCAL_REG_MOD
       USE SKEW_MOD
       USE SPLIT_CFD_MOD
@@ -391,6 +396,7 @@ C-----------------------------------------------
       use constraint_mod , only : constraint_
       use c_inivell_mod ,  only : c_inivell
       use w_inivel_str_mod , only : w_inivel_str
+      use W_Q1NP_MOD
       use glob_therm_mod
       use write_ale_grid_mod, only : write_ale_grid
       use PBLAST_MOD
@@ -409,6 +415,7 @@ C   C o m m o n   B l o c k s
 C-----------------------------------------------
 #include      "com01_c.inc"
 #include      "com04_c.inc"
+#include      "units_c.inc"
 #include      "com10_c.inc"
 #include      "com_xfem1.inc"
 #include      "eigcom.inc"
@@ -539,9 +546,10 @@ C-----------------------------------------------
      .       DMELRT(*), RES_SMS(*), VSPHIO(*), SPHVELN(*), ALPH(*),
      .       MS_PLY(*),ZI_PLY(*),CFIELD(*),MSZ2(*),
      .       DIAG_SMS(*),LOADP(*),GAUGE(*),DFLOW(*),VFLOW(*),WFLOW(*),
-     .       RTHBUF(*),KNOT(*),WIGE(*),TAB_UMP(7,TAILLE),
+     .       RTHBUF(*),KNOT(*),WIGE(*),
      .       KNOTLOCPC(*),KNOTLOCEL(*)
       my_real, INTENT(IN) :: DPL0CLD(6,NCONLD),VEL0CLD(6,NCONLD)
+      integer :: TAB_UMP(7,TAILLE)
       TYPE (INTSTAMP_DATA) INTSTAMP(*)
       TYPE (TTABLE) TABLE(*)
       TYPE (INTBUF_STRUCT_) INTBUF_TAB(*)
@@ -648,11 +656,13 @@ C-----------------------------------------------
         INTEGER, INTENT(IN) :: NUMBER_LOAD_CYL ! sum of load segment number
         TYPE(LOADS_),INTENT(IN)    :: LOADS ! initial structure of load cyl
         TYPE(LOADS_),INTENT(INOUT) :: LOADS_PER_PROC ! structure of load cyl for for the current proc P
-        TYPE(BCS_STRUCT_),INTENT(INOUT) :: BCS_PER_PROC
-        TYPE(NAMES_AND_TITLES_),INTENT(IN) :: NAMES_AND_TITLES !< NAMES_AND_TITLES host the input deck names and titles for outputs
+        TYPE(BCS_STRUCT_),INTENT(INOUT) :: BCS_PER_PROC !< bcs data structure for the current proc P
+        TYPE(NAMES_AND_TITLES_),INTENT(IN) :: NAMES_AND_TITLES
+! < NAMES_AND_TITLES host the input deck names and titles for outputs
         type(constraint_), intent(inout) :: constraint_struct !< constraint structure for the splitting
         TYPE(INTERSURFP) :: INTERCEP(3,NINTER)
         TYPE(glob_therm_) ,intent(inout) :: glob_therm
+        type(bcs_struct_), intent(in) :: bcs !< bcs data structure
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -820,33 +830,46 @@ C=======================================================================
 C ALLOCATION
 C ----------
       IF (MULTI_FVM%IS_USED) THEN
-         ALLOCATE(MULTI_FVM_VEL_L(3, NUMELS + NUMELQ + NUMELTG))
+         CALL MY_ALLOC(MULTI_FVM_VEL_L,3, NUMELS + NUMELQ + NUMELTG,
+     .              "MULTI_FVM_VEL_L")
       ELSE
-         ALLOCATE(MULTI_FVM_VEL_L(1,1))
+         CALL MY_ALLOC(MULTI_FVM_VEL_L,1,1,
+     .              "MULTI_FVM_VEL_L")
       ENDIF
 
 
-      ALLOCATE(NODLOCAL(NUMNOD))
+      CALL MY_ALLOC(NODLOCAL,NUMNOD,
+     .              "NODLOCAL")
 
-      IF (TETRAMESHER_USED) ALLOCATE(NODLOCAL_MGM(NB_TOTAL_NODE))
-      ALLOCATE(IEPXFEM_L(NUMELC))
-      ALLOCATE(INPXFEM_L(NUMNOD))
-      ALLOCATE(IELXFEMC_L(NUMELC))
-      ALLOCATE(IELXFEMTG_L(NUMELTG))
-      ALLOCATE(INCRKXFEM_L(NUMNOD))
-      ALLOCATE(NUMLOCGROUP(NGROUP)) !NUMLOCGROUP(NG) = NG_LOC or 0
-      ALLOCATE(NUMLOCCLUSTER(NCLUSTER)) !NUMLOCCLUSTER(I) = NG_LOC or 0
+      IF (TETRAMESHER_USED) CALL MY_ALLOC(NODLOCAL_MGM,NB_TOTAL_NODE,
+     .              "NODLOCAL_MGM")
+      CALL MY_ALLOC(IEPXFEM_L,NUMELC,
+     .              "IEPXFEM_L")
+      CALL MY_ALLOC(INPXFEM_L,NUMNOD,
+     .              "INPXFEM_L")
+      CALL MY_ALLOC(IELXFEMC_L,NUMELC,
+     .              "IELXFEMC_L")
+      CALL MY_ALLOC(IELXFEMTG_L,NUMELTG,
+     .              "IELXFEMTG_L")
+      CALL MY_ALLOC(INCRKXFEM_L,NUMNOD,
+     .              "INCRKXFEM_L")
+      CALL MY_ALLOC(NUMLOCGROUP,NGROUP,
+     .              "NUMLOCGROUP")
+      CALL MY_ALLOC(NUMLOCCLUSTER,NCLUSTER,
+     .              "NUMLOCCLUSTER")
       NUMLOCCLUSTER(1:NCLUSTER) = 0
-      ALLOCATE(ISKWP_L(NUMSKW+1))
+      CALL MY_ALLOC(ISKWP_L,NUMSKW+1,
+     .              "ISKWP_L")
 
-      CALL MY_ALLOC(IPARI_L,NPARI,MAX(1,NINTER))
-      CALL MY_ALLOC(RDPARTSAV,NPSAV*NPART)
-      CALL MY_ALLOC(DD_RBYM2,3,NRBYM)
-      CALL MY_ALLOC(DD_RBY2,3,NRBYKIN)
+      CALL MY_ALLOC(IPARI_L,NPARI,MAX(1,NINTER),"IPARI_L")
+      CALL MY_ALLOC(RDPARTSAV,NPSAV*NPART,"RDPARTSAV")
+      CALL MY_ALLOC(DD_RBYM2,3,NRBYM,"DD_RBYM2")
+      CALL MY_ALLOC(DD_RBY2,3,NRBYKIN,"DD_RBY2")
 C--------------------------------------------
 C Allocate and init MONVOL local
 C--------------------------------------------
-      ALLOCATE(MONVOL_L(LENVOLU))
+      CALL MY_ALLOC(MONVOL_L,LENVOLU,
+     .              "MONVOL_L")
       DO I = 1, LENVOLU
         MONVOL_L(I) = MONVOL(I)
       END DO
@@ -864,7 +887,8 @@ C--------------------------------------------
 C--------------------------------------------
 C Node numbering tables
 C--------------------------------------------
-      IF(NUMNOD_L>0) ALLOCATE(NODGLOB(NUMNOD_L))
+      IF(NUMNOD_L>0) CALL MY_ALLOC(NODGLOB,NUMNOD_L,
+     .              "NODGLOB")
       CALL F_NODLOC2(NUMNOD,P  ,NODGLOB,NODLOCAL,IGEO ,
      2               IPARG,IXS   ,IXQ,IXC    ,IXTG    ,
      3               IXT  ,IXP   ,IXR,GEO    ,NUMNOD_L)
@@ -967,9 +991,12 @@ C--------------------------------------
 C     count ebcs (multifluid)
 C--------------------------------------
       IEBCSLGTH = 0
-      ALLOCATE(IEBCS_LISTELEM_L(0))
-      ALLOCATE(IEBCS_LISTFAC_L(0))
-      ALLOCATE(IEBCS_LISTDP0_L(0))
+      CALL MY_ALLOC(IEBCS_LISTELEM_L,0,
+     .              "IEBCS_LISTELEM_L")
+      CALL MY_ALLOC(IEBCS_LISTFAC_L,0,
+     .              "IEBCS_LISTFAC_L")
+      CALL MY_ALLOC(IEBCS_LISTDP0_L,0,
+     .              "IEBCS_LISTDP0_L")
       EBCS_TAB_LOC%nebcs_fvm = 0
       NEBCS_FVM = 0
       NEBCS_PARALLEL = 0
@@ -1009,12 +1036,15 @@ C--------------------------------------
          ! --------------------
 
 C        ALLOCATE
-         DEALLOCATE(IEBCS_LISTELEM_L)
-         DEALLOCATE(IEBCS_LISTFAC_L)
-         DEALLOCATE(IEBCS_LISTDP0_L)
-         ALLOCATE(IEBCS_LISTFAC_L(IEBCSLGTH))
-         ALLOCATE(IEBCS_LISTELEM_L(IEBCSLGTH))
-         ALLOCATE(IEBCS_LISTDP0_L(IEBCSLGTH))
+         CALL MY_DEALLOC(IEBCS_LISTELEM_L)
+         CALL MY_DEALLOC(IEBCS_LISTFAC_L)
+         CALL MY_DEALLOC(IEBCS_LISTDP0_L)
+         CALL MY_ALLOC(IEBCS_LISTFAC_L,IEBCSLGTH,
+     .              "IEBCS_LISTFAC_L")
+         CALL MY_ALLOC(IEBCS_LISTELEM_L,IEBCSLGTH,
+     .              "IEBCS_LISTELEM_L")
+         CALL MY_ALLOC(IEBCS_LISTDP0_L,IEBCSLGTH,
+     .              "IEBCS_LISTDP0_L")
 
          ! --------------------
          ! mode 1 : initialization
@@ -1048,22 +1078,23 @@ C        ALLOCATE
                NEBCS_FVM = NEBCS_FVM + 1
                ALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly, source = EBCS_TAB%tab(II)%poly)
                IF (ALLOCATED(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem)) THEN
-                  DEALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem)
+                  CALL MY_DEALLOC(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem)
                ENDIF
                IF (ALLOCATED(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface)) THEN
-                  DEALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface)
+                  CALL MY_DEALLOC(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface)
                ENDIF
                IF (ALLOCATED(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0)) THEN
                   DEALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0)
                ENDIF
                EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%nb_elem = IEBCS_NELEM_L(II)
-               ALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem(IEBCS_NELEM_L(II)))
-               ALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface(IEBCS_NELEM_L(II)))
-                IF(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%has_dp0) ALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0(IEBCS_NELEM_L(II)))
+      call my_alloc(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem, IEBCS_NELEM_L(II), "EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem")
+      call my_alloc(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface, IEBCS_NELEM_L(II), "EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface")
+               IF(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%has_dp0)
+     .           ALLOCATE(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0(IEBCS_NELEM_L(II)))
                DO JJ = 1, IEBCS_NELEM_L(II)
                   EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%ielem(JJ) = IEBCS_LISTELEM_L(IPT)
                   EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%iface(JJ) = IEBCS_LISTFAC_L(IPT)
-                  IF(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%has_dp0)EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0(JJ) = IEBCS_LISTDP0_L(IPT)
+      IF(EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%has_dp0)EBCS_TAB_LOC%tab(NEBCS_FVM)%poly%dp0(JJ) = IEBCS_LISTDP0_L(IPT)
                   IPT = IPT + 1
                ENDDO
             ! ------------
@@ -1074,10 +1105,11 @@ C        ALLOCATE
                IF(EBCS_TAB%tab(II)%poly%has_ielem) THEN
                     EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%nb_elem = IEBCS_NELEM_L(II)
                     IF (ALLOCATED(EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface)) THEN
-                       DEALLOCATE(EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface)
+                       CALL MY_DEALLOC(EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface)
                     ENDIF
                     EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%nb_elem = IEBCS_NELEM_L(II)
-                    ALLOCATE(EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface(IEBCS_NELEM_L(II)))
+      call my_alloc(EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface, IEBCS_NELEM_L(II),
+     &"EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface")
                     DO JJ = 1, IEBCS_NELEM_L(II)
                        EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%ielem(JJ) = IEBCS_LISTELEM_L(IPT)
                        EBCS_TAB_LOC_2%tab(NEBCS_PARALLEL)%poly%iface(JJ) = IEBCS_LISTFAC_L(IPT)
@@ -1092,14 +1124,14 @@ C        ALLOCATE
             ELSEIF(EBCS_TAB%tab(II)%poly%has_ielem .and. P==1) THEN
                EBCS_TAB%tab(II)%poly%nb_elem = IEBCS_NELEM_L(II)
                IF (ALLOCATED(EBCS_TAB%tab(II)%poly%ielem)) THEN
-                  DEALLOCATE(EBCS_TAB%tab(II)%poly%ielem)
+                  CALL MY_DEALLOC(EBCS_TAB%tab(II)%poly%ielem)
                ENDIF
                IF (ALLOCATED(EBCS_TAB%tab(II)%poly%iface)) THEN
-                  DEALLOCATE(EBCS_TAB%tab(II)%poly%iface)
+                  CALL MY_DEALLOC(EBCS_TAB%tab(II)%poly%iface)
                ENDIF
                EBCS_TAB%tab(II)%poly%nb_elem = IEBCS_NELEM_L(II)
-               ALLOCATE(EBCS_TAB%tab(II)%poly%ielem(IEBCS_NELEM_L(II)))
-               ALLOCATE(EBCS_TAB%tab(II)%poly%iface(IEBCS_NELEM_L(II)))
+               call my_alloc(EBCS_TAB%tab(II)%poly%ielem, IEBCS_NELEM_L(II), "EBCS_TAB%tab(II)%poly%ielem")
+               call my_alloc(EBCS_TAB%tab(II)%poly%iface, IEBCS_NELEM_L(II), "EBCS_TAB%tab(II)%poly%iface")
                DO JJ = 1, IEBCS_NELEM_L(II)
                   EBCS_TAB%tab(II)%poly%ielem(JJ) = IEBCS_LISTELEM_L(IPT)
                   EBCS_TAB%tab(II)%poly%iface(JJ) = IEBCS_LISTFAC_L(IPT)
@@ -1269,7 +1301,8 @@ C--------------------------------------
       LWASPH_L = 0
       NSPHSOL_L =0
       FIRST_SPHSOL_L = 0
-C--   SOL2SPH_FLAG : general flag for all CPUS for SOL2SPH - communications are required for proc having common nodes on elements having SOL2SPH
+C --   SOL2SPH_FLAG : general flag for all CPUS for SOL2SPH - communications are required for proc having common nodes
+C on elements having SOL2SPH
       IF (NSPHSOL > 0) THEN
         SOL2SPH_FLAG = 1
       ELSE
@@ -1409,9 +1442,16 @@ C Split arrays
      .     LENNOD_L,  LENMOD_L, LENELM_L, LENSIG_L, P-1,
      .     LENGRVI_L, FXBGRVI )
 C
-         ALLOCATE(FXBNOD_L(LENNOD_L*2), FXBMOD_L(LENMOD_L*6),
-     .            FXBELM_L(LENELM_L), FXBSIG_L(LENSIG_L),
-     .            FXBGRVI_L(LENGRVI_L))
+         CALL MY_ALLOC(FXBNOD_L,LENNOD_L*2,
+     .              "FXBNOD_L")
+         CALL MY_ALLOC(FXBMOD_L,LENMOD_L*6,
+     .              "FXBMOD_L")
+         CALL MY_ALLOC(FXBELM_L,LENELM_L,
+     .              "FXBELM_L")
+         CALL MY_ALLOC(FXBSIG_L,LENSIG_L,
+     .              "FXBSIG_L")
+         CALL MY_ALLOC(FXBGRVI_L,LENGRVI_L,
+     .              "FXBGRVI_L")
 C
          CALL C_FXBODY2(
      .     FXBIPM,    FXBNOD,   NODLOCAL, IPARG,    FXBELM,
@@ -1423,10 +1463,20 @@ C arrays pined to PMAIN
      .     LENGLM_L, LENCP_L,   LENLM_L,  LENFLS_L, LENDLS_L,
      .     LENMCD_L, LENGRVR_L, FXBIPM_L, P-1     )
 C
-         ALLOCATE(FXBGLM_L(LENGLM_L), FXBCPM_L(LENCP_L),
-     .            FXBCPS_L(LENCP_L), FXBLM_L(LENLM_L),
-     .            FXBFLS_L(LENFLS_L), FXBDLS_L(LENDLS_L),
-     .            FXBGRVR_L(LENGRVR_L))
+         CALL MY_ALLOC(FXBGLM_L,LENGLM_L,
+     .              "FXBGLM_L")
+         CALL MY_ALLOC(FXBCPM_L,LENCP_L,
+     .              "FXBCPM_L")
+         CALL MY_ALLOC(FXBCPS_L,LENCP_L,
+     .              "FXBCPS_L")
+         CALL MY_ALLOC(FXBLM_L,LENLM_L,
+     .              "FXBLM_L")
+         CALL MY_ALLOC(FXBFLS_L,LENFLS_L,
+     .              "FXBFLS_L")
+         CALL MY_ALLOC(FXBDLS_L,LENDLS_L,
+     .              "FXBDLS_L")
+         CALL MY_ALLOC(FXBGRVR_L,LENGRVR_L,
+     .              "FXBGRVR_L")
 C
          CALL C_FXBODY4(
      .     FXBGLM,    FXBCPM,   FXBCPS,  FXBLM,    FXBFLS,
@@ -1568,7 +1618,8 @@ C--------------------------------------------
        IELXFEMTG_L=0
        NOD_XFE_L = 0
        IF(ICRACK3D > 0)THEN
-         ALLOCATE(TAGEDGE(NUMEDGES))
+         CALL MY_ALLOC(TAGEDGE,NUMEDGES,
+     .              "TAGEDGE")
          TAGEDGE = 0
 C
          OFF = NUMELS + NUMELQ
@@ -1585,12 +1636,15 @@ C
          NUMELCRKXFE_L = NUMELCCRKXFE_L + NUMELTGCRKXFE_L
 C
          IF(NUMELCRKXFE_L>0)THEN
-           ALLOCATE(NODGLOBXFE(4*NUMELCRKXFE_L*NLEVMAX))
+           CALL MY_ALLOC(NODGLOBXFE,4*NUMELCRKXFE_L*NLEVMAX,
+     .              "NODGLOBXFE")
            NODGLOBXFE = 0
          ENDIF
 C
-         ALLOCATE(INDEX_CRKXFEM(NCRKXFE))
-         ALLOCATE(NODLEVXF_L(NCRKXFE))
+         CALL MY_ALLOC(INDEX_CRKXFEM,NCRKXFE,
+     .              "INDEX_CRKXFEM")
+         CALL MY_ALLOC(NODLEVXF_L,NCRKXFE,
+     .              "NODLEVXF_L")
          INDEX_CRKXFEM = 0
          NODLEVXF_L = 0
 C
@@ -1599,12 +1653,22 @@ C
      .                   IXC,IXTG,CEP_CRKXFEM,NODLOCAL,NODLEVXF_L,
      .                   NODLEVXF,NODGLOBXFE,NOD_XFE_L,CRKSHELL)
 C
-         ALLOCATE(IEDGECRK_L(4*NUMELCCRKXFE_L+3*NUMELTGCRKXFE_L),
-     .            IBORDEDGE_L(NUMEDGES_L),NODEDGE_L(2*NUMEDGES_L),
-     .            IEDGESH4_L(4*NUMELCCRKXFE_L),
-     .            IEDGESH3_L(3*NUMELTGCRKXFE_L),IEDGE_L(NUMEDGES_L))
-         ALLOCATE(EDGELOCAL(NUMEDGES))
-         ALLOCATE(EDGEGLOBAL(NUMEDGES))
+         CALL MY_ALLOC(IEDGECRK_L,4*NUMELCCRKXFE_L+3*NUMELTGCRKXFE_L,
+     .              "IEDGECRK_L")
+         CALL MY_ALLOC(IBORDEDGE_L,NUMEDGES_L,
+     .              "IBORDEDGE_L")
+         CALL MY_ALLOC(NODEDGE_L,2*NUMEDGES_L,
+     .              "NODEDGE_L")
+         CALL MY_ALLOC(IEDGESH4_L,4*NUMELCCRKXFE_L,
+     .              "IEDGESH4_L")
+         CALL MY_ALLOC(IEDGESH3_L,3*NUMELTGCRKXFE_L,
+     .              "IEDGESH3_L")
+         CALL MY_ALLOC(IEDGE_L,NUMEDGES_L,
+     .              "IEDGE_L")
+         CALL MY_ALLOC(EDGELOCAL,NUMEDGES,
+     .              "EDGELOCAL")
+         CALL MY_ALLOC(EDGEGLOBAL,NUMEDGES,
+     .              "EDGEGLOBAL")
          IEDGECRK_L   = 0
          IBORDEDGE_L = 0
          NODEDGE_L = 0
@@ -1620,17 +1684,30 @@ C
      .                  IEL_CRKXFEM,IEDGE_L   ,IEDGE     ,ECRKXFEC ,
      .                  EDGELOCAL  ,NBDDEDGE_L,IEDGE_TMP,EDGEGLOBAL)
        ELSE
-         ALLOCATE(IEDGECRK_L(0))
-         ALLOCATE(IBORDEDGE_L(0))
-         ALLOCATE(NODEDGE_L(0))
-         ALLOCATE(IEDGESH4_L(0),IEDGESH3_L(0))
-         ALLOCATE(TAGEDGE(0))
-         ALLOCATE(IEDGE_L(0))
-         ALLOCATE(EDGELOCAL(0))
-         ALLOCATE(EDGEGLOBAL(0))
-         ALLOCATE(NODGLOBXFE(0))
-         ALLOCATE(INDEX_CRKXFEM(0))
-         ALLOCATE(NODLEVXF_L(0))
+         CALL MY_ALLOC(IEDGECRK_L,0,
+     .              "IEDGECRK_L")
+         CALL MY_ALLOC(IBORDEDGE_L,0,
+     .              "IBORDEDGE_L")
+         CALL MY_ALLOC(NODEDGE_L,0,
+     .              "NODEDGE_L")
+         CALL MY_ALLOC(IEDGESH4_L,0,
+     .              "IEDGESH4_L")
+         CALL MY_ALLOC(IEDGESH3_L,0,
+     .              "IEDGESH3_L")
+         CALL MY_ALLOC(TAGEDGE,0,
+     .              "TAGEDGE")
+         CALL MY_ALLOC(IEDGE_L,0,
+     .              "IEDGE_L")
+         CALL MY_ALLOC(EDGELOCAL,0,
+     .              "EDGELOCAL")
+         CALL MY_ALLOC(EDGEGLOBAL,0,
+     .              "EDGEGLOBAL")
+         CALL MY_ALLOC(NODGLOBXFE,0,
+     .              "NODGLOBXFE")
+         CALL MY_ALLOC(INDEX_CRKXFEM,0,
+     .              "INDEX_CRKXFEM")
+         CALL MY_ALLOC(NODLEVXF_L,0,
+     .              "NODLEVXF_L")
        ENDIF
       CALL SETLENWA(
      1      LENWA_L ,NTHWA    ,NAIRWA    ,NUMELS_L ,NUMELQ_L,
@@ -1958,25 +2035,36 @@ C--------------------------------------------
       IF(DETONATORS%IS_SHADOWING_REQUIRED) ISHADOW = 1
       IF (IALE+IEULER+GLOB_THERM%ITHERM+IALELAG +ISHADOW > 0) THEN
         IF(NUMELS_L+NUMELQ_L+NUMELTG_L>0) THEN
-          ALLOCATE(IDGLOB_L(NUMELS_L + NSVOIS + NUMELQ_L + NQVOIS + NUMELTG_L + NTGVOIS))
-          ALLOCATE(UIDGLOB_L(NUMELS_L + NSVOIS + NUMELQ_L + NQVOIS + NUMELTG_L + NTGVOIS))
-          ALLOCATE( ID_GLOBAL_VOIS(NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L) )
+          CALL MY_ALLOC(IDGLOB_L,NUMELS_L + NSVOIS + NUMELQ_L + NQVOIS + NUMELTG_L + NTGVOIS,
+     .              "IDGLOB_L")
+          CALL MY_ALLOC(UIDGLOB_L,NUMELS_L + NSVOIS + NUMELQ_L + NQVOIS + NUMELTG_L + NTGVOIS,
+     .              "UIDGLOB_L")
+          CALL MY_ALLOC(ID_GLOBAL_VOIS,NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L,
+     .              "ID_GLOBAL_VOIS")
           ID_GLOBAL_VOIS(1:NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L) = 0
-          ALLOCATE( FACE_VOIS(NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L) )
+          CALL MY_ALLOC(FACE_VOIS,NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L,
+     .              "FACE_VOIS")
           FACE_VOIS(1:NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L) = -1
         ELSE
-          ALLOCATE( ID_GLOBAL_VOIS(0) )
-          ALLOCATE(IDGLOB_L(0))
-          ALLOCATE(UIDGLOB_L(0))
-          ALLOCATE( FACE_VOIS(0) )
+          CALL MY_ALLOC(ID_GLOBAL_VOIS,0,
+     .              "ID_GLOBAL_VOIS")
+          CALL MY_ALLOC(IDGLOB_L,0,
+     .              "IDGLOB_L")
+          CALL MY_ALLOC(UIDGLOB_L,0,
+     .              "UIDGLOB_L")
+          CALL MY_ALLOC(FACE_VOIS,0,
+     .              "FACE_VOIS")
         ENDIF
         NUMEL = MAX(NUMELS,NUMELQ,NUMELTG)
         IF(NSVOIS>0)
-     +    ALLOCATE(IXSF(NSVOIS*NIXS))
+     +    CALL MY_ALLOC(IXSF,NSVOIS*NIXS,
+     .              "IXSF")
         IF(NQVOIS>0)
-     +    ALLOCATE(IXQF(NQVOIS*NIXQ))
+     +    CALL MY_ALLOC(IXQF,NQVOIS*NIXQ,
+     .              "IXQF")
         IF(NTGVOIS>0)
-     +    ALLOCATE(IXTGF(NTGVOIS*NIXTG))
+     +    CALL MY_ALLOC(IXTGF,NTGVOIS*NIXTG,
+     .              "IXTGF")
         CALL C_IXFLOC(NUMEL,IXSF,IXQF,IXTGF,NSVOIS,
      +                NQVOIS,NTGVOIS,P-1,IPARG,CEP,CEL,
      +                ALE_CONNECTIVITY,ee_connect_l,IXS,IXQ,IXTG,NODLOCAL,NUMELS_L,NUMELQ_L,NUMELTG_L,MULTI_FVM,
@@ -1985,8 +2073,7 @@ C--------------------------------------------
 
         CALL WRITE_I_C(IXTGF, NIXTG * NTGVOIS)
         LEN_IA = LEN_IA + NIXTG * NTGVOIS
-        IF (NTGVOIS > 0)
-     +       DEALLOCATE(IXTGF)
+        IF (NTGVOIS > 0)        CALL MY_DEALLOC(IXTGF)
         IF (MULTI_FVM%NS_DIFF) THEN
            CALL C_IDGLOB(NUMEL, NUMELS_L, NUMELQ_L, NUMELTG_L, NUMELS, NUMELQ, NUMELTG,
      .          P - 1, CEL, CEP, IPARG, ALE_CONNECTIVITY, IXS,IXQ,IXTG, IDGLOB_L, UIDGLOB_L, N2D, NGROUP, NPARG)
@@ -2009,8 +2096,7 @@ C
       IF (IALE+IEULER+GLOB_THERM%ITHERM+IALELAG+ISHADOW > 0) THEN
          CALL WRITE_I_C(IXSF,NIXS*NSVOIS)
          LEN_IA = LEN_IA + NIXS*NSVOIS
-         IF(NSVOIS>0)
-     +        DEALLOCATE(IXSF)
+         IF(NSVOIS>0)         CALL MY_DEALLOC(IXSF)
       ENDIF
 C--------------------------------------------
 C Solids
@@ -2034,8 +2120,7 @@ C--------------------------------------------
       IF (IALE+IEULER+GLOB_THERM%ITHERM+IALELAG > 0) THEN
         CALL WRITE_I_C(IXQF,NIXQ*NQVOIS)
         LEN_IA = LEN_IA + NIXQ*NQVOIS
-        IF(NQVOIS>0)
-     +    DEALLOCATE(IXQF)
+        IF(NQVOIS>0)     CALL MY_DEALLOC(IXQF)
       ENDIF
 C--------------------------------------------
       CALL W_IXLOC(IXC,NIXC,4,CEP(MIN(OFF+1,LEN_CEP)),P-1,
@@ -2101,10 +2186,11 @@ C--------------------------------------
         LEN_IA = LEN_IA + NUMELS_L*6+NUMELQ_L*4+3*NUMELTG_L
 
 
-        DEALLOCATE(ID_GLOBAL_VOIS)
-        DEALLOCATE(FACE_VOIS)
+        CALL MY_DEALLOC(ID_GLOBAL_VOIS)
+        CALL MY_DEALLOC(FACE_VOIS)
 
-        ALLOCATE(ELEMID_L(NUMEL))
+        CALL MY_ALLOC(ELEMID_L,NUMEL,
+     .              "ELEMID_L")
 C     ----------------------    C
 C     Node node connectivity
 C     ----------------------    C
@@ -2122,7 +2208,7 @@ C     ----------------------    C
      .            ELEMID_L,NUMNOD,NODGLOB,NODLOCAL,NUMNOD_L,LEN_IA,ALE%GRID%NWALE)
           ENDIF
 
-        DEALLOCATE(ELEMID_L)
+        CALL MY_DEALLOC(ELEMID_L)
       ENDIF
 
       NS_DIFF = 0
@@ -2316,28 +2402,34 @@ C IRBE2
 C--------------------------------------
       IF (NRBE2>0) THEN
         IF(NBDDRBE2>0) THEN
-         ALLOCATE(ITABRBE2M(NUMNOD_L))
+         CALL MY_ALLOC(ITABRBE2M,NUMNOD_L,
+     .              "ITABRBE2M")
         ELSE
-         ALLOCATE(ITABRBE2M(1))
+         CALL MY_ALLOC(ITABRBE2M,1,
+     .              "ITABRBE2M")
         ENDIF
        CALL W_IRBE2(IRBE2   ,LRBE2  ,NODLOCAL ,P-1     ,
      .              LLRBE2_L,ITABRBE2M,NBDDRBE2,NUMNOD_L,LEN_IA  )
       ELSE
-       ALLOCATE(ITABRBE2M(1))
+       CALL MY_ALLOC(ITABRBE2M,1,
+     .              "ITABRBE2M")
       ENDIF
 C--------------------------------------
 C IRBE3
 C--------------------------------------
       IF (NRBE3>0) THEN
         IF(NBDDRBE3M>0) THEN
-         ALLOCATE(ITABRBE3M(NUMNOD_L))
+         CALL MY_ALLOC(ITABRBE3M,NUMNOD_L,
+     .              "ITABRBE3M")
         ELSE
-         ALLOCATE(ITABRBE3M(1))
+         CALL MY_ALLOC(ITABRBE3M,1,
+     .              "ITABRBE3M")
         ENDIF
        CALL W_IRBE3(IRBE3   ,LRBE3  ,NODLOCAL ,P-1     ,
      .              LLRBE3_L,ITABRBE3M,NBDDRBE3M,NUMNOD_L,LEN_IA)
       ELSE
-       ALLOCATE(ITABRBE3M(1))
+       CALL MY_ALLOC(ITABRBE3M,1,
+     .              "ITABRBE3M")
       ENDIF
 C--------------------------------------
 C IACTIV
@@ -2379,16 +2471,18 @@ C INTBUF_TAB
 C--------------------------------------
       IF(NINTER>0) THEN
         IF(NBDDI2M>0)THEN
-          ALLOCATE(ITABI2M(NUMNOD_L))
+          CALL MY_ALLOC(ITABI2M,NUMNOD_L,
+     .              "ITABI2M")
         ELSE
-          ALLOCATE(ITABI2M(1))
+          CALL MY_ALLOC(ITABI2M,1,
+     .              "ITABI2M")
         ENDIF
 
 c       start CPU timer for INTBUF_INI
         CALL STARTIME(6,1)
 
         !allocate local structure INTBUF_TAB_L to stock local sizes for interfaces
-        ALLOCATE(INTBUF_TAB_L(NINTER))
+        allocate(INTBUF_TAB_L(NINTER))
 
 c       start CPU timer for INTBUF_INI
         CALL STARTIME(6,1)
@@ -2424,7 +2518,8 @@ c       start CPU timer for SPLIT_INTERFACES
 c       stop CPU timer for SPLIT_INTERFACES
         CALL STOPTIME(7,1)
       ELSE
-       ALLOCATE(ITABI2M(1))
+       CALL MY_ALLOC(ITABI2M,1,
+     .              "ITABI2M")
       ENDIF
 
 C--------------------------------------
@@ -2495,14 +2590,17 @@ C     WRITE ICNDS10 Itet=2 of S10
 C--------------------------------------
       IF (NS10E_L > 0) THEN
         IF(NBDDCNDM > 0) THEN
-         ALLOCATE(ITABCNDM(NUMNOD_L))
+         CALL MY_ALLOC(ITABCNDM,NUMNOD_L,
+     .              "ITABCNDM")
         ELSE
-         ALLOCATE(ITABCNDM(1))
+         CALL MY_ALLOC(ITABCNDM,1,
+     .              "ITABCNDM")
         ENDIF
        CALL W_ICNDS10(ICNDS10,ITAGND,P-1,NODLOCAL,NS10E_L,
      .                ITABCNDM,NBDDCNDM,NUMNOD_L,LEN_IA ,itab)
       ELSE
-       ALLOCATE(ITABCNDM(1))
+       CALL MY_ALLOC(ITABCNDM,1,
+     .              "ITABCNDM")
       ENDIF
 C--------------------------------------------
 C TH Groups
@@ -2563,11 +2661,11 @@ C--------------------------------------
      L   NUMNOR_L ,NBDDEDGT_L,NBDDEDG_MAX_L,INTERCEP ,NBDDCNDM,
      M   ITABCNDM,MULTI_FVM,IGRSURF,ISKWP_L,ALE_ELM,
      N   SIZE_ALE_ELM,SENSORS%NSENSOR,NLOC_DMG,constraint_struct,GLOB_THERM%ITHERM)
-      DEALLOCATE(ITABI2M)
-      DEALLOCATE(ITABRBE3M)
-      DEALLOCATE(ITABRBE2M)
-      DEALLOCATE(ITABCNDM)
-      DEALLOCATE(ISKWP_L)
+      CALL MY_DEALLOC(ITABI2M)
+      CALL MY_DEALLOC(ITABRBE3M)
+      CALL MY_DEALLOC(ITABRBE2M)
+      CALL MY_DEALLOC(ITABCNDM)
+      CALL MY_DEALLOC(ISKWP_L)
 C--------------------------------------
 C Parith/ON SPMD
 C--------------------------------------
@@ -2599,7 +2697,8 @@ C--------------------------------------
      O      IBFFLUX   ,NFXFLUX_L ,CEPCND  ,CELCND   ,ADDCNCND    ,
      P      CNCND     ,NS10E_L   ,ICNDS10 ,LCNCND_L ,ITAGND ,IGRSURF,
      Q      IGRSURF_PROC ,NEBCS_PARALLEL, EBCS_TAB_LOC_2,
-     R      NUMBER_LOAD_CYL,LOADS,LOADS_PER_PROC,GLOB_THERM)
+     R      NUMBER_LOAD_CYL,LOADS,LOADS_PER_PROC,GLOB_THERM,
+     S      bcs,bcs_per_proc)
 
       ! -------------------
       CALL EBCS_TAB_LOC_2%destroy()
@@ -2719,12 +2818,18 @@ C       NODGLOB nodxfem
 C--------------------------------------
         CALL WRITE_I_C(NODGLOBXFE,NOD_XFE_L)
         LEN_IA = LEN_IA + NOD_XFE_L
-        IF(ALLOCATED(NODGLOBXFE))DEALLOCATE(NODGLOBXFE)
+        IF(ALLOCATED(NODGLOBXFE))CALL MY_DEALLOC(NODGLOBXFE)
       END IF
 C--------------------------------------
 C     Isogeo                                      
 C--------------------------------------
       IF (NUMELIG3D>0) CALL W_ELIG3D(KXIG3D,NUMELIG3D,ISUMNIG3D_L,IXIG3D,P-1,NODLOCAL,LEN_IA)
+
+      IF (NUMELQ1NP_G  > 0) THEN
+        CALL W_Q1NP_INT(NUMELQ1NP_G ,NKQ1NP,KQ1NP_TAB,
+     .                  IQ1NP_TAB,IQ1NP_BULK_TAB,NODLOCAL,CEL,
+     .                  CEP,P-1,NUMELS,NUMELS_L,NUMNOD,LEN_IA)
+      ENDIF
 C--------------------------------------
 C TAG_SKINS6 : used for /H3D/STRESS/TENS/OUTER
 C--------------------------------------
@@ -2736,13 +2841,14 @@ C--------------------------------------
 C--------------------------------------------
 C BCS/WALL
 C--------------------------------------------
-      CALL W_BCS_PROC(BCS_PER_PROC,CEL,SCEL,LEN_IA,LEN_AM)
+      CALL W_BCS_PROC(BCS_PER_PROC,CEL,SCEL,LEN_IA,LEN_AM, NODLOCAL,NUMNOD)
 C--------------------------------------
 C     Write REAL variable                               
 C--------------------------------------
       LEN_AM = 0
       CALL WRITE_DB(TABVREA, LVARREA)
       LEN_AM = LEN_AM + LVARREA
+
 C--------------------------------------------
 C X, D, V, VR, DR
 C--------------------------------------------
@@ -2865,7 +2971,8 @@ C--------------------------------------------
       LEN_AM = LEN_AM + LBUFMAT
       IF(IRESP == 1)THEN
 C In BUFGEO is a double precision Buffer, even in Single Precision
-        ALLOCATE (RBUFGEO(LBUFGEO))
+        CALL MY_ALLOC(RBUFGEO,LBUFGEO,
+     .              "RBUFGEO")
         RBUFGEO(1:LBUFGEO)=BUFGEO(1:LBUFGEO)
         CALL WRITE_DB(RBUFGEO,LBUFGEO)
       ELSE
@@ -3069,12 +3176,12 @@ C--------------------------------------------
       CALL W_BUFEL(IPARG,P-1,LBUFEL_L,ELBUF,LEN_AM)   ! old buffer
 c------------------
       FLAG_XFEM = 0
-      CALL W_ELBUF_STR(P-1,IPARG,ELBUF_TAB,LEN_AM,FLAG_XFEM)
+      CALL W_ELBUF_STR(P-1,IPARG,ELBUF_TAB,LEN_AM,FLAG_XFEM,NUMNOD,NODLOCAL)
 c------------------
       IF (ICRACK3D > 0) THEN   ! if XFEM
         DO IXEL=1,NXEL
           FLAG_XFEM = 1
-          CALL W_ELBUF_STR(P-1,IPARG,XFEM_TAB(1:NGROUP,IXEL),LEN_AM,FLAG_XFEM)
+          CALL W_ELBUF_STR(P-1,IPARG,XFEM_TAB(1:NGROUP,IXEL),LEN_AM,FLAG_XFEM,NUMNOD,NODLOCAL)
         ENDDO
       ENDIF
 C--------------------------------------------
@@ -3213,19 +3320,19 @@ C--------------------------------------------
       IF(NPINCH > 0 ) THEN
         CALL WRITE_DB(PINCH_DATA%VPINCH,3*NUMNOD_L)
         LEN_AM = LEN_AM + 3*NUMNOD_L
-        DEALLOCATE(PINCH_DATA%VPINCH)
+        CALL MY_DEALLOC(PINCH_DATA%VPINCH)
 
         CALL WRITE_DB(PINCH_DATA%DPINCH,3*NUMNOD_L)
         LEN_AM = LEN_AM + 3*NUMNOD_L
-        DEALLOCATE(PINCH_DATA%DPINCH)
+        CALL MY_DEALLOC(PINCH_DATA%DPINCH)
 
         CALL WRITE_DB(PINCH_DATA%XPINCH,3*NUMNOD_L)
         LEN_AM = LEN_AM + 3*NUMNOD_L
-        DEALLOCATE(PINCH_DATA%XPINCH)
+        CALL MY_DEALLOC(PINCH_DATA%XPINCH)
 
         CALL WRITE_DB(PINCH_DATA%MSPINCH,NUMNOD_L)
         LEN_AM = LEN_AM + NUMNOD_L
-        DEALLOCATE(PINCH_DATA%MSPINCH)
+        CALL MY_DEALLOC(PINCH_DATA%MSPINCH)
       ENDIF
 C
       IF(ISTATCND /= 0)THEN
@@ -3304,9 +3411,18 @@ C-----------------------------------------------
      .     LENCP_L,   LENLM_L,   LENFLS_L,  LENDLS_L, LENELM_L,
      .     LENSIG_L,  LENGRVI_L, LENGRVR_L, LEN_AM,   ITASK)
 C
-         DEALLOCATE(FXBNOD_L, FXBMOD_L, FXBGLM_L, FXBCPM_L, FXBCPS_L,
-     .              FXBLM_L, FXBFLS_L, FXBDLS_L, FXBELM_L, FXBSIG_L,
-     .              FXBGRVI_L, FXBGRVR_L)
+         CALL MY_DEALLOC(FXBNOD_L)
+         CALL MY_DEALLOC(FXBMOD_L)
+         CALL MY_DEALLOC(FXBGLM_L)
+         CALL MY_DEALLOC(FXBCPM_L)
+         CALL MY_DEALLOC(FXBCPS_L)
+         CALL MY_DEALLOC(FXBLM_L)
+         CALL MY_DEALLOC(FXBFLS_L)
+         CALL MY_DEALLOC(FXBDLS_L)
+         CALL MY_DEALLOC(FXBELM_L)
+         CALL MY_DEALLOC(FXBSIG_L)
+         CALL MY_DEALLOC(FXBGRVI_L)
+         CALL MY_DEALLOC(FXBGRVR_L)
       ENDIF
 C-----------------------------------------------
 C EIG
@@ -3364,11 +3480,12 @@ C-----------------------------------------------
 C Nitsche Method
 C-----------------------------------------------
       IF(NITSCHE > 0   ) THEN
-        ALLOCATE(FORNEQS(3*NUMNOD_L))
+        CALL MY_ALLOC(FORNEQS,3*NUMNOD_L,
+     .              "FORNEQS")
         FORNEQS(1:3*NUMNOD_L) = ZERO
         CALL WRITE_DB(FORNEQS,3*NUMNOD_L)
         LEN_AM = LEN_AM + 3*NUMNOD_L
-        DEALLOCATE(FORNEQS)
+        CALL MY_DEALLOC(FORNEQS)
       ENDIF
 C ----------------------------------------------
 C Units
@@ -3501,11 +3618,16 @@ C Crk_xfem Anim
      .               NCRKPART, INDX_CRK,CRKSHELL,CRKSKY,CRKAVX,
      .               CRKEDGE ,XFEM_PHANTOM,NUMNODCRKXFE_L)
 c
-         ALLOCATE(ELCUTC_L(2*NUMELC_L))
-         ALLOCATE(ELCUTTG_L(2*NUMELTG_L))
-         ALLOCATE(NODENR_L(NUMNODCRKXFE_L))
-         ALLOCATE(KXFENOD2ELC_L(NUMNODCRKXFE_L))
-         ALLOCATE(ENRTAG_L(NUMNOD_L*IENRNOD))
+         CALL MY_ALLOC(ELCUTC_L,2*NUMELC_L,
+     .              "ELCUTC_L")
+         CALL MY_ALLOC(ELCUTTG_L,2*NUMELTG_L,
+     .              "ELCUTTG_L")
+         CALL MY_ALLOC(NODENR_L,NUMNODCRKXFE_L,
+     .              "NODENR_L")
+         CALL MY_ALLOC(KXFENOD2ELC_L,NUMNODCRKXFE_L,
+     .              "KXFENOD2ELC_L")
+         CALL MY_ALLOC(ENRTAG_L,NUMNOD_L*IENRNOD,
+     .              "ENRTAG_L")
          ELCUTC_L = 0
          ELCUTTG_L = 0
          NODENR_L = 0
@@ -3531,17 +3653,33 @@ C--------------------------------------
          CALL WRITE_I_C(ENRTAG_L,NUMNOD_L*IENRNOD)
          LEN_IA = LEN_IA + NUMNOD_L*IENRNOD
 C
-         DEALLOCATE(ELCUTC_L,ELCUTTG_L,NODENR_L,KXFENOD2ELC_L,ENRTAG_L)
-         DEALLOCATE(IEDGECRK_L,IBORDEDGE_L,NODEDGE_L,TAGEDGE,IEDGE_L)
-         DEALLOCATE(EDGELOCAL,EDGEGLOBAL)
-         DEALLOCATE(IEDGESH4_L,IEDGESH3_L)
-         DEALLOCATE(INDEX_CRKXFEM,NODLEVXF_L)
+         CALL MY_DEALLOC(ELCUTC_L)
+         CALL MY_DEALLOC(ELCUTTG_L)
+         CALL MY_DEALLOC(NODENR_L)
+         CALL MY_DEALLOC(KXFENOD2ELC_L)
+         CALL MY_DEALLOC(ENRTAG_L)
+         CALL MY_DEALLOC(IEDGECRK_L)
+         CALL MY_DEALLOC(IBORDEDGE_L)
+         CALL MY_DEALLOC(NODEDGE_L)
+         CALL MY_DEALLOC(TAGEDGE)
+         CALL MY_DEALLOC(IEDGE_L)
+         CALL MY_DEALLOC(EDGELOCAL)
+         CALL MY_DEALLOC(EDGEGLOBAL)
+         CALL MY_DEALLOC(IEDGESH4_L)
+         CALL MY_DEALLOC(IEDGESH3_L)
+         CALL MY_DEALLOC(INDEX_CRKXFEM)
+         CALL MY_DEALLOC(NODLEVXF_L)
        ELSE
-         ALLOCATE(ELCUTC_L(0))
-         ALLOCATE(ELCUTTG_L(0))
-         ALLOCATE(NODENR_L(0))
-         ALLOCATE(KXFENOD2ELC_L(0))
-         ALLOCATE(ENRTAG_L(0))
+         CALL MY_ALLOC(ELCUTC_L,0,
+     .              "ELCUTC_L")
+         CALL MY_ALLOC(ELCUTTG_L,0,
+     .              "ELCUTTG_L")
+         CALL MY_ALLOC(NODENR_L,0,
+     .              "NODENR_L")
+         CALL MY_ALLOC(KXFENOD2ELC_L,0,
+     .              "KXFENOD2ELC_L")
+         CALL MY_ALLOC(ENRTAG_L,0,
+     .              "ENRTAG_L")
        ENDIF
 C--------------------------------------
 C     ALEFVM WORKING ARRAY : MUST BE INIT. FOR CYCLE 0
@@ -3603,6 +3741,13 @@ C--------------------------------------------
      .  CALL W_PLY_INFO(PLY_INFO,NUMPLY)
 C
 C--------------------------------------------
+C Q1Np real restart
+C--------------------------------------------
+      IF (NUMELQ1NP_G  > 0) THEN
+        CALL W_Q1NP_REAL(Q1NP_WTAB,Q1NP_KTAB,Q1NP_CPTAB,LEN_AM)
+      ENDIF
+C
+C--------------------------------------------
 C Pressure & concentrated loads --> DISP & VEL saved
 C--------------------------------------------
 !      IF (LOADS%NLOAD_CLOAD > 0) THEN
@@ -3629,19 +3774,19 @@ C             which is the file size before close
 #ifdef DEBUG_RST
       IF(FLUSH_RST_TO_TXT) CLOSE(777+ITASK)
 #endif
-      IF(NUMNOD_L>0) DEALLOCATE(NODGLOB)
+      IF(NUMNOD_L>0) CALL MY_DEALLOC(NODGLOB)
 C Deallocate
-      DEALLOCATE(MONVOL_L)
+      CALL MY_DEALLOC(MONVOL_L)
 C--------------------------------------------
 C Array Deallocation
-      DEALLOCATE(NODLOCAL)
-      DEALLOCATE(IEPXFEM_L)
-      DEALLOCATE(INPXFEM_L)
-      DEALLOCATE(IELXFEMC_L)
-      DEALLOCATE(IELXFEMTG_L)
-      DEALLOCATE(INCRKXFEM_L)
-      DEALLOCATE(NUMLOCGROUP)
-      DEALLOCATE(NUMLOCCLUSTER)
+      CALL MY_DEALLOC(NODLOCAL)
+      CALL MY_DEALLOC(IEPXFEM_L)
+      CALL MY_DEALLOC(INPXFEM_L)
+      CALL MY_DEALLOC(IELXFEMC_L)
+      CALL MY_DEALLOC(IELXFEMTG_L)
+      CALL MY_DEALLOC(INCRKXFEM_L)
+      CALL MY_DEALLOC(NUMLOCGROUP)
+      CALL MY_DEALLOC(NUMLOCCLUSTER)
 
 C--------------------------------------------
 C Stats Domain Decomp
@@ -3737,13 +3882,13 @@ c      DDSTAT(25)= (LEN_AM*2+LEN_IA)/256
 C
 
 
-      DEALLOCATE(MULTI_FVM_VEL_L)
-      DEALLOCATE(IEBCS_LISTELEM_L)
-      DEALLOCATE(IEBCS_LISTFAC_L)
-      DEALLOCATE(IPARI_L)
-      DEALLOCATE(RDPARTSAV)
-      DEALLOCATE(DD_RBYM2)
-      DEALLOCATE(DD_RBY2)
+      CALL MY_DEALLOC(MULTI_FVM_VEL_L)
+      CALL MY_DEALLOC(IEBCS_LISTELEM_L)
+      CALL MY_DEALLOC(IEBCS_LISTFAC_L)
+      CALL MY_DEALLOC(IPARI_L)
+      CALL MY_DEALLOC(RDPARTSAV)
+      CALL MY_DEALLOC(DD_RBYM2)
+      CALL MY_DEALLOC(DD_RBY2)
 
 
       RETURN

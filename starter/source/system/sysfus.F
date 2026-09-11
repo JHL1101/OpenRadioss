@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    usr2sys                        ../starter/source/system/sysfus.F
 !||--- called by ------------------------------------------------------
@@ -29,9 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_preread_skw                 ../starter/source/tools/skew/hm_preread_skw.F90
 !||    hm_read_admas                  ../starter/source/tools/admas/hm_read_admas.F
 !||    hm_read_ale_link               ../starter/source/constraints/ale/hm_read_ale_link_vel.F
-!||    hm_read_bcs                    ../starter/source/constraints/general/bcs/hm_read_bcs.F
 !||    hm_read_beam                   ../starter/source/elements/reader/hm_read_beam.F
-!||    hm_read_convec                 ../starter/source/loads/thermic/hm_read_convec.F
 !||    hm_read_cyljoint               ../starter/source/constraints/general/cyl_joint/hm_read_cyljoint.F
 !||    hm_read_ebcs_cyclic            ../starter/source/boundary_conditions/ebcs/hm_read_ebcs_cyclic.F90
 !||    hm_read_eig                    ../starter/source/general_controls/computation/hm_read_eig.F
@@ -46,7 +45,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_inimap2d               ../starter/source/initial_conditions/inimap/hm_read_inimap2d.F
 !||    hm_read_initemp                ../starter/source/initial_conditions/thermic/hm_read_initemp.F
 !||    hm_read_inivel                 ../starter/source/initial_conditions/general/inivel/hm_read_inivel.F
-!||    hm_read_inject1                ../starter/source/properties/injector/hm_read_inject1.F
 !||    hm_read_inter_type12           ../starter/source/interfaces/int12/hm_read_inter_type12.F
 !||    hm_read_interfaces             ../starter/source/interfaces/reader/hm_read_interfaces.F
 !||    hm_read_lines                  ../starter/source/groups/hm_read_lines.F
@@ -60,10 +58,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_mpc                    ../starter/source/constraints/general/mpc/hm_read_mpc.F
 !||    hm_read_nbcs                   ../starter/source/constraints/general/bcs/hm_read_nbcs.F
 !||    hm_read_pblast                 ../starter/source/loads/pblast/hm_read_pblast.F
-!||    hm_read_pload                  ../starter/source/loads/general/pload/hm_read_pload.F
 !||    hm_read_prop15                 ../starter/source/properties/solid/hm_read_prop15.F
 !||    hm_read_quad                   ../starter/source/elements/reader/hm_read_quad.F
-!||    hm_read_radiation              ../starter/source/loads/thermic/hm_read_radiation.F
 !||    hm_read_rbe2                   ../starter/source/constraints/general/rbe2/hm_read_rbe2.F
 !||    hm_read_rbe3                   ../starter/source/constraints/general/rbe3/hm_read_rbe3.F
 !||    hm_read_rbody                  ../starter/source/constraints/general/rbody/hm_read_rbody.F
@@ -85,29 +81,23 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_spring                 ../starter/source/elements/reader/hm_read_spring.F
 !||    hm_read_surf                   ../starter/source/groups/hm_read_surf.F
 !||    hm_read_thgrne                 ../starter/source/output/th/hm_read_thgrne.F
-!||    hm_read_thgrou                 ../starter/source/output/th/hm_read_thgrou.F
 !||    hm_read_tria                   ../starter/source/elements/reader/hm_read_tria.F
 !||    hm_read_truss                  ../starter/source/elements/reader/hm_read_truss.F
 !||    hm_read_xref                   ../starter/source/loads/reference_state/xref/hm_read_xref.F
 !||    hm_setfxrbyon                  ../starter/source/constraints/fxbody/hm_setfxrbyon.F
 !||    hm_submodgrn                   ../starter/source/groups/hm_submodgr.F
-!||    hm_thgrki_vent                 ../starter/source/output/th/hm_thgrki_vent.F
-!||    i24surf_pxfem                  ../starter/source/interfaces/inter3d1/inintr2.F
 !||    ini_fxbody                     ../starter/source/constraints/fxbody/ini_fxbody.F
 !||    init_monvol                    ../starter/source/airbag/init_monvol.F
-!||    lec_inimap2d_file              ../starter/source/initial_conditions/inimap/lec_inimap2d_file.F
 !||    lecacc                         ../starter/source/tools/accele/lecacc.F
 !||    lecig3d                        ../starter/source/elements/ige3d/lecig3d.F
 !||    lecrefsta                      ../starter/source/loads/reference_state/refsta/lecrefsta.F
 !||    lecsec42                       ../starter/source/tools/sect/hm_read_sect.F
 !||    lecsec4bolt                    ../starter/source/tools/sect/lecsec4bolt.F
-!||    lecstamp                       ../starter/source/interfaces/interf1/lecstamp.F
 !||    nbadigemesh                    ../starter/source/elements/ige3d/nbadigemesh.F
 !||    nbadmesh                       ../starter/source/model/remesh/nbadmesh.F
 !||    prelecsec                      ../starter/source/tools/sect/prelecsec.F
 !||    prelecsec4bolt                 ../starter/source/tools/sect/prelecsec4bolt.F
 !||    preread_rbody_set              ../starter/source/model/sets/preread_rbody_set.F
-!||    printbcs                       ../starter/source/constraints/general/bcs/printbcs.F
 !||    r2r_domdec                     ../starter/source/coupling/rad2rad/r2r_domdec.F
 !||    r2r_monvol                     ../starter/source/coupling/rad2rad/r2r_prelec.F
 !||    r2r_prelec                     ../starter/source/coupling/rad2rad/r2r_prelec.F
@@ -129,11 +119,10 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    read_sensor_user               ../starter/source/tools/sensor/read_sensor_user.F
 !||    read_sensor_vel                ../starter/source/tools/sensor/read_sensor_vel.F
 !||    read_sensor_work               ../starter/source/tools/sensor/read_sensor_work.F
+!||    rpart_inivel_check             ../starter/source/constraints/general/rbody/rbody_part_modif.F90
 !||    sensor_user_convert_local_id   ../starter/source/tools/sensor/sensor_user_convert_local_id.F
 !||    set_user_window_nodes          ../starter/source/user_interface/user_windows_tools.F
 !||    setrb2on                       ../starter/source/constraints/general/rbe2/hm_read_rbe2.F
-!||    thprin                         ../starter/source/output/th/thprin.F
-!||    thprin_sub                     ../starter/source/output/th/thprin.F
 !||    uelt_spmd_additional_node      ../starter/source/user_interface/uaccess.F
 !||    w_itabm1                       ../starter/source/restart/ddsplit/w_itabm1.F
 !||--- calls      -----------------------------------------------------
@@ -432,18 +421,13 @@ C     >CASE IU>TABM
       END
 C
 !||====================================================================
-!||    ulist2s          ../starter/source/system/sysfus.F
+!||    ulist2s       ../starter/source/system/sysfus.F
 !||--- called by ------------------------------------------------------
-!||    hm_lecgrn        ../starter/source/groups/hm_lecgrn.F
-!||    hm_read_thgrne   ../starter/source/output/th/hm_read_thgrne.F
-!||    hm_read_thgrou   ../starter/source/output/th/hm_read_thgrou.F
-!||    hm_thgrki_vent   ../starter/source/output/th/hm_thgrki_vent.F
-!||    thprin           ../starter/source/output/th/thprin.F
-!||    thprin_sub       ../starter/source/output/th/thprin.F
+!||    hm_lecgrn     ../starter/source/groups/hm_lecgrn.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg           ../starter/source/output/message/message.F
+!||    ancmsg        ../starter/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod      ../starter/share/message_module/message_mod.F
+!||    message_mod   ../starter/share/message_module/message_mod.F
 !||====================================================================
       INTEGER FUNCTION ULIST2S(LIST,NLIST,ITABM1,MESS,INDEX,ID)
 C-----------------------------------------------
@@ -568,12 +552,14 @@ C
 !||    read_rwall            ../starter/source/constraints/general/rwall/read_rwall.F
 !||--- calls      -----------------------------------------------------
 !||    udoubl2               ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLE(LIST,ILIST,NLIST,MESS,IR,RLIST)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -600,13 +586,13 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL UDOUBL2(INDEX,NLIST,MESS,LIST,ILIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -616,14 +602,16 @@ C
       END
 
 !||====================================================================
-!||    udoublex   ../starter/source/system/sysfus.F
+!||    udoublex       ../starter/source/system/sysfus.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLEX(NLIST,ILIST,IXX,KXX)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -649,9 +637,9 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
       DO n=1,nlist
         IAD=KXX(4,N)
@@ -662,7 +650,7 @@ C-----------------------------------------------
         enddo
       enddo
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -737,12 +725,14 @@ C
 !||    hm_read_rbody   ../starter/source/constraints/general/rbody/hm_read_rbody.F
 !||--- calls      -----------------------------------------------------
 !||    newdbl2         ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE NEWDBL(LIST,ILIST,NLIST,TAB,ERRID,STATUS,NOM_OPT)
 C      TEST FOR DUPLICATE NODES IN LISTS OF NODE OR ELEMENT IDs, ETC.
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -766,13 +756,13 @@ C-----------------------------------------------
 #endif
       IF (INVERS>=40.AND.NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL NEWDBL2(INDEX,NLIST,LIST,ILIST,TAB,ERRID,STATUS,NOM_OPT) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -864,12 +854,14 @@ C
 !||    read_monvol          ../starter/source/airbag/read_monvol.F
 !||--- calls      -----------------------------------------------------
 !||    vdoubl2              ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE VDOUBLE(LIST,ILIST,NLIST,MESS,IR,RLIST)
 C      TEST LES N0 DOUBLES , TOUS FORMATS, ERREUR
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -892,13 +884,13 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
       CALL VDOUBL2(INDEX,NLIST,MESS,LIST,ILIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -969,12 +961,14 @@ C-----------------------
 !||    hm_read_unit       ../starter/source/general_controls/computation/hm_read_unit.F
 !||--- calls      -----------------------------------------------------
 !||    udoubl2_wo_title   ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLE_WO_TITLE(LIST,ILIST,NLIST,MESS,IR,RLIST)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1001,13 +995,13 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL UDOUBL2_WO_TITLE(INDEX,NLIST,MESS,LIST,ILIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -1080,12 +1074,14 @@ C-----------------------
 !||    hm_read_drape   ../starter/source/properties/composite_options/drape/hm_read_drape.F
 !||--- calls      -----------------------------------------------------
 !||    udoubl3         ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLE3(LIST,ILIST,NLIST,MESS,MESS2,IR,RLIST)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1112,13 +1108,13 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL UDOUBL3(INDEX,NLIST,MESS,MESS2,LIST,ILIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -1200,12 +1196,14 @@ C-----------------------
 !||    hm_read_surf       ../starter/source/groups/hm_read_surf.F
 !||--- calls      -----------------------------------------------------
 !||    udoubl2_igr        ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLE_IGR(LIST,NLIST,MESS,IR,RLIST)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1232,13 +1230,13 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL UDOUBL2_IGR(INDEX,NLIST,MESS,LIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif
@@ -1247,15 +1245,17 @@ C
       RETURN
       END
 !||====================================================================
-!||    udouble_set   ../starter/source/system/sysfus.F
+!||    udouble_set    ../starter/source/system/sysfus.F
 !||--- calls      -----------------------------------------------------
-!||    udoubl2_set   ../starter/source/system/sysfus.F
+!||    udoubl2_set    ../starter/source/system/sysfus.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE UDOUBLE_SET(LIST,NLIST,MESS,IR,RLIST)
 C      TEST FOR DUPLICATE NODES
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1282,13 +1282,13 @@ C-----------------------------------------------
       INTEGER I
       IF (NLIST>=2)THEN
 #if CPP_comp == f90
-         ALLOCATE(INDEX(3*NLIST))
+         call my_alloc(INDEX, 3*NLIST, "INDEX")
 #else
-        CALL MY_ALLOC(IINDEX,3*NLIST,0)
+        CALL MY_ALLOC(IINDEX,3*NLIST,0,"IINDEX")
 #endif
         CALL UDOUBL2_SET(INDEX,NLIST,MESS,LIST,IR,RLIST) 
 #if CPP_comp == f90
-         DEALLOCATE(INDEX)
+         CALL MY_DEALLOC(INDEX)
 #else
         CALL MY_FREE(IINDEX)
 #endif

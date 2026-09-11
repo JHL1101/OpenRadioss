@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    spmd_sd_xv            ../engine/source/mpi/nodes/spmd_sd_xv.F
+!||    spmd_sd_xv     ../engine/source/mpi/nodes/spmd_sd_xv.F
 !||--- called by ------------------------------------------------------
-!||    imp_tripi             ../engine/source/implicit/imp_int_k.F
-!||    resol                 ../engine/source/engine/resol.F
+!||    imp_tripi      ../engine/source/implicit/imp_int_k.F
+!||    resol          ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg         ../engine/source/output/message/message.F
+!||    arret          ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    ale_mod               ../common_source/modules/ale/ale_mod.F
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    output_mod            ../common_source/modules/output/output_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    ale_mod        ../common_source/modules/ale/ale_mod.F
+!||    message_mod    ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
+!||    output_mod     ../common_source/modules/output/output_mod.F90
+!||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_SD_XV(OUTPUT,
      1  X     ,D       ,V      ,VR    ,MS   ,
@@ -45,10 +47,12 @@ C-----------------------------------------------
       USE MESSAGE_MOD  
       USE OUTPUT_MOD   
       USE ALE_MOD
+      use my_alloc_mod
+
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -111,17 +115,17 @@ C-----------------------------------------------
         NEW_D = 0
       ENDIF
       E_LEN = 7 + IRODDL*3 + DT_CST*2 + NEW_D*3
-      ALLOCATE(SRBUF(ISIZXV * MAX(ILENXV,E_LEN)))
+      call my_alloc(SRBUF, ISIZXV * MAX(ILENXV,E_LEN), "SRBUF")
       LEN_DP = 3
       
       IF(IRESP==1)THEN
-        ALLOCATE(SRBUFDP(ISIZXV*LEN_DP),STAT=IERROR1)
+        call my_alloc(SRBUFDP, ISIZXV*LEN_DP, "SRBUFDP", stat=IERROR1)
           IF(IERROR1/=0) THEN
           CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
           CALL ARRET(2)
         ENDIF
       ELSE
-         ALLOCATE(SRBUFDP(1),STAT=IERROR1)
+         call my_alloc(SRBUFDP, 1, "SRBUFDP", stat=IERROR1)
       ENDIF
       
       IF(ISPMD==0) THEN
@@ -369,17 +373,15 @@ C----------------------------------------------------------------------------
          IF(IAD_ELEM(1,I+1)-IAD_ELEM(2,I)>0)THEN
            MSGTYP = MSGOFF
            SIZ = E_LEN*(IAD_ELEM(1,I+1)-IAD_ELEM(2,I))
-           CALL MPI_ISEND(
-     S       SRBUF(L),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G       SPMD_COMM_WORLD,REQ_S(I),IERROR)
+           CALL SPMD_ISEND(
+     S       SRBUF(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_S(I))
            L = L + SIZ
              
              IF(IRESP==1)THEN
                MSGTYP = MSGOFF2
              SIZDP = LEN_DP*(IAD_ELEM(1,I+1)-IAD_ELEM(2,I))
-             CALL MPI_ISEND(
-     S         SRBUFDP(L2),SIZDP,MPI_DOUBLE_PRECISION,IT_SPMD(I),MSGTYP,
-     G         SPMD_COMM_WORLD,REQ_S_DP(I),IERROR)
+             CALL SPMD_ISEND(
+     S         SRBUFDP(L2:L2+SIZDP-1),SIZDP,IT_SPMD(I),MSGTYP,REQ_S_DP(I))
              L2 = L2 + SIZDP
              ENDIF
          ENDIF
@@ -388,9 +390,9 @@ C----------------------------------------------------------------------------
 C   wait terminaison isend
        DO I = 1, NSPMD
          IF(IAD_ELEM(1,I+1)-IAD_ELEM(2,I)>0)THEN
-           CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+           CALL SPMD_WAIT(REQ_S(I),STATUS)
              IF(IRESP==1)THEN
-               CALL MPI_WAIT(REQ_S_DP(I),STATUS,IERROR)
+               CALL SPMD_WAIT(REQ_S_DP(I),STATUS)
              ENDIF
          END IF
        END DO
@@ -406,15 +408,13 @@ C
           IF(IRESP==1)SIZDP = LEN_DP*(IAD_ELEM(1,2)-IAD_ELEM(2,1))
         IF(SIZ/=0)THEN
           MSGTYP = MSGOFF
-          CALL MPI_RECV(
-     S      SRBUF(L),SIZ,REAL,IT_SPMD(1),MSGTYP,
-     G      SPMD_COMM_WORLD,STATUS,IERROR)
+          CALL SPMD_RECV(
+     S      SRBUF(L:L+SIZ-1),SIZ,IT_SPMD(1),MSGTYP,STATUS)
      
           IF(IRESP==1)THEN
             MSGTYP = MSGOFF2
-            CALL MPI_RECV(
-     S        SRBUFDP(L2),SIZDP,MPI_DOUBLE_PRECISION,IT_SPMD(1),MSGTYP,
-     G        SPMD_COMM_WORLD,STATUS,IERROR)
+            CALL SPMD_RECV(
+     S        SRBUFDP(L2:L2+SIZDP-1),SIZDP,IT_SPMD(1),MSGTYP,STATUS)
           ENDIF
             
           IF(NEW_D==0) THEN
@@ -649,7 +649,7 @@ Cfrom and w to receive
             ENDIF      
         END IF
       ENDIF
-      DEALLOCATE(SRBUF)
+      call my_dealloc(SRBUF)
 C
 #endif
       RETURN

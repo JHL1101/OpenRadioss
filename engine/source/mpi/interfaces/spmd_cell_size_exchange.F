@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_cell_size_exchange   ../engine/source/mpi/interfaces/spmd_cell_size_exchange.F
 !||--- called by ------------------------------------------------------
@@ -33,7 +34,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod             ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    inter_sorting_mod         ../engine/share/modules/inter_sorting_mod.F
 !||    message_mod               ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod       ../engine/source/mpi/spmd_comm_world.F90
+!||    my_alloc_mod              ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod                  ../engine/source/mpi/spmd_mod.F90
 !||    tri7box                   ../engine/share/modules/tri7box.F
 !||====================================================================
         SUBROUTINE SPMD_CELL_SIZE_EXCHANGE(IRCVFROM,ISENDTO,WEIGHT,
@@ -60,14 +62,16 @@ C-----------------------------------------------
         USE MESSAGE_MOD
         USE INTER_SORTING_MOD
         USE TRI7BOX
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
 C-----------------------------------------------
+
 #include "spmd.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -166,7 +170,7 @@ C-----------------------------------------------
 
                 SORT_COMM(NIN)%NB(P) = 0
                 NB = 0
-                ALLOCATE(INDEX(2*NUMNOD))
+                call my_alloc(INDEX, 2*NUMNOD, "INDEX")
                 !   --------------------------
                 IF(ITIED/=0.AND.ITYP==7) THEN
                     !   itied/=0 --> need to send all nodes 
@@ -232,9 +236,9 @@ C-----------------------------------------------
                 !   need to sort the secondary nodes
                 NB_SAVE = NB
                 IF(NB_SAVE>1600) THEN
-                    ALLOCATE( WORK(70000) )
-                    ALLOCATE( ITRI(NB_SAVE) )
-                    ALLOCATE( INDEX_2(2*NB_SAVE) )
+                    call my_alloc(WORK, 70000, "WORK")
+                    call my_alloc(ITRI, NB_SAVE, "ITRI")
+                    call my_alloc(INDEX_2, 2*NB_SAVE, "INDEX_2")
                     DO I=1,NB_SAVE
                        ITRI(I) = INDEX(I)
                        INDEX_2(I) = I
@@ -248,11 +252,11 @@ C-----------------------------------------------
                             INDEX(NB) = ITRI(INDEX_2(I))
                         ENDIF
                     ENDDO
-                    DEALLOCATE( WORK )
-                    DEALLOCATE( ITRI )
-                    DEALLOCATE( INDEX_2 )
+                    call my_dealloc(WORK)
+                    call my_dealloc(ITRI)
+                    call my_dealloc(INDEX_2)
                 ELSEIF(NB_SAVE>0) THEN
-                    ALLOCATE( INDEX_2(NB_SAVE) )
+                    call my_alloc(INDEX_2, NB_SAVE, "INDEX_2")
                     CALL MYQSORT_INT(NB_SAVE, INDEX, INDEX_2, ERROR_SORT)
                     INDEX_2(1:NB_SAVE) = INDEX(1:NB_SAVE)
                     NB = 1
@@ -263,7 +267,7 @@ C-----------------------------------------------
                         ENDIF
                     ENDDO
                     INDEX(1:NB) = INDEX_2(1:NB)
-                    DEALLOCATE( INDEX_2 )
+                    call my_dealloc(INDEX_2)
                 ENDIF
 
                 !   save the number of secondary nodes
@@ -282,8 +286,8 @@ C-----------------------------------------------
                 MSGTYP = MSGOFF3 
                 SORT_COMM(NIN)%NBSEND_NB=SORT_COMM(NIN)%NBSEND_NB+1
                 SORT_COMM(NIN)%SEND_NB(SORT_COMM(NIN)%NBSEND_NB)=P   !   proc with nmn>0
-                CALL MPI_ISEND(SORT_COMM(NIN)%NB(P),1,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     .                         SPMD_COMM_WORLD,SORT_COMM(NIN)%REQUEST_NB_S(SORT_COMM(NIN)%NBSEND_NB),IERROR)
+                CALL spmd_isend(SORT_COMM(NIN)%NB(P:P),1,IT_SPMD(P),MSGTYP,
+     .                          SORT_COMM(NIN)%REQUEST_NB_S(SORT_COMM(NIN)%NBSEND_NB))
 
                 !   --------------------------
                 !   buffer allocation & buffer initialization
@@ -417,7 +421,7 @@ C -- IDTMINS_INT /= 0
                         L2 = L2 + ISIZ
                     END DO  
                 ENDIF   !   if nb/=0
-                DEALLOCATE(INDEX)
+                call my_dealloc(INDEX)
                 !   ------------------------------
             ENDIF      
         ENDIF ! nsn>0 or nmn > 0

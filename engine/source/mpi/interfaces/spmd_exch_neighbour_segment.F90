@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_neighbour_segment_mod   ../engine/source/mpi/interfaces/spmd_exch_neighbour_segment.F90
 !||--- called by ------------------------------------------------------
 !||    get_neighbour_surface             ../engine/source/interfaces/interf/get_neighbour_surface.F90
 !||====================================================================
       module spmd_exch_neighbour_segment_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -58,8 +59,6 @@
 !||--- calls      -----------------------------------------------------
 !||    alloc_my_real_1d_array                       ../common_source/modules/array_mod.F
 !||    get_neighbour_surface_from_remote_proc       ../engine/source/interfaces/interf/get_neighbour_surface_from_remote_proc.F90
-!||    spmd_wait                                    ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany                                 ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    array_mod                                    ../common_source/modules/array_mod.F
 !||    get_neighbour_surface_from_remote_proc_mod   ../engine/source/interfaces/interf/get_neighbour_surface_from_remote_proc.F90
@@ -177,7 +176,7 @@
           recv_nb_2 = 0
           if(recv_nb_1>0) then
             do i=1,recv_nb_1
-              call spmd_waitany(recv_nb_1, request_r_1, my_index, status_mpi)
+              call spmd_waitany(request_r_1, recv_nb_1, my_index, status_mpi)
               proc_id = index_r_proc(my_index)
 
               r_buffer(proc_id)%size_my_real_array_1d = r_buffer_size(1,proc_id)
@@ -218,7 +217,7 @@
             end do
 
             do i=1,recv_nb_2
-              call spmd_waitany(recv_nb_2, request_r_2, my_index, status_mpi)
+              call spmd_waitany(request_r_2, recv_nb_2, my_index, status_mpi)
               proc_id = index_r_proc_2(my_index)
               call get_neighbour_surface_from_remote_proc( ninter,numnod,nspmd,  &
                 r_buffer_size(1,proc_id),r_buffer_size(2,proc_id),s_buffer_2_size, &
@@ -265,7 +264,7 @@
           recv_nb_4 = 0
           if(recv_nb_3>0) then
             do i=1,recv_nb_3
-              call spmd_waitany(recv_nb_3, request_r_3, my_index, status_mpi)
+              call spmd_waitany(request_r_3, recv_nb_3, my_index, status_mpi)
               proc_id = index_r_proc_3(my_index)
               r_buffer_2(proc_id)%size_my_real_array_1d = r_buffer_2_size(1,proc_id)
 
@@ -284,7 +283,7 @@
           ! ----------------
           ! wait the R comm "list of connected segment"
           do i=1,recv_nb_4
-            call spmd_waitany(recv_nb_4, request_r_4, my_index, status_mpi)
+            call spmd_waitany(request_r_4, recv_nb_4, my_index, status_mpi)
           end do
           ! ----------------
 

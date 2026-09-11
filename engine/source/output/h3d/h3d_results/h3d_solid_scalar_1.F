@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_solid_scalar_1             ../engine/source/output/h3d/h3d_results/h3d_solid_scalar_1.F
 !||--- called by ------------------------------------------------------
@@ -706,7 +707,7 @@ C--------------------------------------------------
                   ENDIF
                 ENDDO
 C--------------------------------------------------
-              ELSEIF(KEYWORD == 'SIZX')THEN
+              ELSEIF(KEYWORD == 'SIGZX')THEN
 C--------------------------------------------------
                 DO I=1,NEL
                   VALUE(I) = GBUF%SIG(JJ(6) + I)
@@ -1008,6 +1009,7 @@ C--------------------------------------------------
 C--------------------------------------------------
 C           EULER ANGLE : rotation of ORTHOTROPIC SYSTEM wrt GLOBAL SYSTEM
 c ILAYER=NULL NPT=NULL
+                IF(ILAY == -1) ILAY = 1
                 IF ( (ILAY <= NLAY .AND. ILAY > 0) .AND.
      .              IR <= NPTR .AND. IR > 0 .AND.  IS <= NPTS .AND. IS > 0 .AND. IT <= NPTT .AND. IT > 0) THEN
                   IF ( IGTYP == 6 .OR. IGTYP == 21 .OR. IGTYP == 22 ) THEN
@@ -1064,6 +1066,7 @@ C--------------------------------------------------
 C--------------------------------------------------
 C           EULER ANGLE : rotation of ORTHOTROPIC SYSTEM wrt GLOBAL SYSTEM
 c ILAYER=NULL NPT=NULL
+                IF(ILAY == -1) ILAY = 1
                 IF ( (ILAY <= NLAY .AND. ILAY > 0) .AND.
      .              IR <= NPTR .AND. IR > 0 .AND.  IS <= NPTS .AND. IS > 0 .AND. IT <= NPTT .AND. IT > 0) THEN
                   IF ( IGTYP == 6 .OR. IGTYP == 21 .OR. IGTYP == 22 ) THEN
@@ -1119,6 +1122,7 @@ C--------------------------------------------------
 C--------------------------------------------------
 C           EULER ANGLE : rotation of ORTHOTROPIC SYSTEM wrt GLOBAL SYSTEM
 c ILAYER=NULL NPT=NULL
+                IF(ILAY == -1) ILAY = 1
                 IF ( (ILAY <= NLAY .AND. ILAY > 0) .AND.
      .              IR <= NPTR .AND. IR > 0 .AND.  IS <= NPTS .AND. IS > 0 .AND. IT <= NPTT .AND. IT > 0) THEN
                   IF ( IGTYP == 6 .OR. IGTYP == 21 .OR. IGTYP == 22 ) THEN

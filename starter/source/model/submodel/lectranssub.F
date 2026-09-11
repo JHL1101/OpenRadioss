@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lectranssub             ../starter/source/model/submodel/lectranssub.F
 !||--- called by ------------------------------------------------------
@@ -53,6 +54,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARLINE, NCHARFIELD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -80,23 +82,20 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,I0,I1,I2,I3,I4,I5,I6,
      .          N0,N1,N2,N3,N4,N5,N6,IERROR,
-     .   J,IS,ID,UID,IGU,IGS,NN,NTRANS,STAT,ITRANSSUB,IBID,
-     .   NTAG,CTAG,ISU,IDU,IDNOD,
-     .   INUM,K,CPT,ID_TRANSSUB,NUMNUSR,ISK0,ISK,SUB_INDEX
+     .   J,ID,UID,IGU,IGS,NTRANS,ITRANSSUB,
+     .   ISU,K,ID_TRANSSUB,NUMNUSR,ISK0,ISK,SUB_INDEX
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAGNODSUB !NUMNOD
       INTEGER :: WORK(70000)
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX,INDEX1,TAGNODSUB_TMP,IDNODSUB
 !!      INTEGER, ALLOCATABLE, DIMENSION(:) :: ITG
       my_real
-     .   LX,LY,LZ,TX,TY,TZ,R,S,RX,RY,RZ,SX,SY,SZ,ANGLE,AT,FAC_L
+     .   TX,TY,TZ,S,SX,SY,SZ,ANGLE,AT,FAC_L
       my_real
-     .   VR(3),X0(3),X1(3),X2(3),X3(3),X4(3),X5(3),X6(3),
-     .   ROT(9),PP(3,3),QQ(3,3),P(3),NORM1, NORM2, NORM3, SCAL1, 
-     .   SCAL2, SCAL3, EPS,XC(3)
+     .   X0(3),X1(3),X2(3),X3(3),X4(3),X5(3),X6(3),
+     .   ROT(9),PP(3,3),QQ(3,3),NORM1, NORM2, NORM3, SCAL1,
+     .   SCAL2, SCAL3, EPS
       CHARACTER(LEN=NCHARFIELD) :: KEY
-      CHARACTER(LEN=NCHARLINE) ::CART,SOLVERKEYWORD
       CHARACTER(LEN=NCHARTITLE) :: TITR
-      CHARACTER(LEN=NCHARFIELD) ::VERS_IN,STRING
 !
       INTEGER, DIMENSION(:), POINTER :: INGR2USR
       LOGICAL IS_AVAILABLE,IS_FOUND
@@ -106,26 +105,26 @@ C-----------------------------------------------
       INTEGER  NGR2USR,USRTOS
       EXTERNAL NGR2USR,USRTOS
 C=======================================================================
-      ALLOCATE(TAGNODSUB(NUMNOD))
+      call my_alloc(TAGNODSUB, NUMNOD, "TAGNODSUB")
       ISU = 0
       TAGNODSUB = 0
       NUMNUSR = 0
 
       IF(IS_DYNA /= 0)THEN
         CALL CPP_NODE_COUNT(NUMNUSR)
-        ALLOCATE( INDEX(2*NUMNUSR) )
+        call my_alloc(INDEX, 2*NUMNUSR, "INDEX")
         DO I=1,2*NUMNUSR
          INDEX(I)=I
         ENDDO
-        ALLOCATE( INDEX1(2*NUMNOD) )
+        call my_alloc(INDEX1, 2*NUMNOD, "INDEX1")
         DO I=1,2*NUMNOD
          INDEX1(I)=I
         ENDDO
-        ALLOCATE( TAGNODSUB_TMP(NUMNUSR) )
+        call my_alloc(TAGNODSUB_TMP, NUMNUSR, "TAGNODSUB_TMP")
         DO I=1,NUMNUSR
          TAGNODSUB_TMP(I)=I
         ENDDO
-        ALLOCATE( IDNODSUB(NUMNUSR) )
+        call my_alloc(IDNODSUB, NUMNUSR, "IDNODSUB")
         DO I=1,NUMNUSR
          IDNODSUB(I)=I
         ENDDO 
@@ -241,7 +240,6 @@ C
           ENDIF
 c
           IF (N0 > 0 .OR. N1 > 0) THEN
-            ISK = 0
             I0 = USRTOS(N0,ITABM1)
             I1 = USRTOS(N1,ITABM1)
             IF (I0 == 0) THEN
@@ -296,6 +294,10 @@ C
           ROT(1) = ONE
           ROT(5) = ONE
           ROT(9) = ONE
+
+          DO K=1,9
+            RTRANS(I,K+2) = ROT(K)
+          ENDDO
 C
           WRITE(IOUT,500) ID,ID_TRANSSUB   
           IF (N0 > 0 .AND. N1 > 0) WRITE(IOUT,200) N0,N1
@@ -798,13 +800,13 @@ C----
       ENDDO
 C-------------------------
       IF(IS_DYNA /= 0)THEN
-        IF (ALLOCATED(INDEX)) DEALLOCATE(INDEX)
-        IF (ALLOCATED(INDEX1)) DEALLOCATE(INDEX1)
-        IF (ALLOCATED(TAGNODSUB_TMP)) DEALLOCATE(TAGNODSUB_TMP)
-        IF (ALLOCATED(IDNODSUB)) DEALLOCATE(IDNODSUB)
+        IF (ALLOCATED(INDEX)) CALL MY_DEALLOC(INDEX)
+        IF (ALLOCATED(INDEX1)) CALL MY_DEALLOC(INDEX1)
+        IF (ALLOCATED(TAGNODSUB_TMP)) CALL MY_DEALLOC(TAGNODSUB_TMP)
+        IF (ALLOCATED(IDNODSUB)) CALL MY_DEALLOC(IDNODSUB)
       ENDIF
 C-----------------------
-      DEALLOCATE(TAGNODSUB)
+      CALL MY_DEALLOC(TAGNODSUB)
       RETURN
 C-----------------------
  100  FORMAT(//
@@ -883,7 +885,6 @@ C-----------------------
      . '                             Y  . . . . . .= ',E20.13/,
      . '                             Z  . . . . . .= ',E20.13)
 
- 3500 FORMAT( 17X,I10,3(5X,E20.13))
 C-----------------------
       RETURN
       END SUBROUTINE LECTRANSSUB

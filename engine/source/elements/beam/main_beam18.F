@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,22 +15,25 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    main_beam18    ../engine/source/elements/beam/main_beam18.F
+!||    main_beam18      ../engine/source/elements/beam/main_beam18.F
 !||--- called by ------------------------------------------------------
-!||    pforc3         ../engine/source/elements/beam/pforc3.F
+!||    pforc3           ../engine/source/elements/beam/pforc3.F
 !||--- calls      -----------------------------------------------------
-!||    fail_beam18    ../engine/source/elements/beam/fail_beam18.F
-!||    m2lawpi        ../engine/source/materials/mat/mat002/m2lawpi.F
-!||    mulaw_ib       ../engine/source/elements/beam/mulaw_ib.F
+!||    fail_beam18      ../engine/source/elements/beam/fail_beam18.F
+!||    m2lawpi          ../engine/source/materials/mat/mat002/m2lawpi.F
+!||    mulaw_ib         ../engine/source/elements/beam/mulaw_ib.F
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    mat_elem_mod   ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    mat_elem_mod     ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE MAIN_BEAM18(ELBUF_STR,
      1                  NEL     ,NPT     ,MTN     ,IMAT    ,
@@ -52,6 +55,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -97,14 +102,16 @@ C-----------------------------------------------
       my_real ,DIMENSION(STF)  ,INTENT(IN)    :: TF
 C
       TYPE (ELBUF_STRUCT_) ,INTENT(INOUT) :: ELBUF_STR
-      TYPE (MATPARAM_STRUCT_) ,INTENT(IN) :: MAT_PARAM
+C     FAIL_BEAM18 declares FAIL as INTENT(INOUT).
+      TYPE (MATPARAM_STRUCT_) ,INTENT(INOUT) :: MAT_PARAM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER :: I,J,IPT,IPID,IPLA,ISRATE,IPY,IPZ,IPA,II(3)
       my_real :: ASRATE,EPSDI,FACT,AREA,
      .           DAMAGE_LOC,DFXX,DFXY,DFXZ,
-     .           SIGNXX,SIGNXY,SIGNXZ,SIGOXX,SIGOXY,SIGOXZ
+     .           SIGNXX,SIGNXY,SIGNXZ,SIGOXX,SIGOXY,SIGOXZ,
+     .           TORS_FACT
       my_real ,DIMENSION(NEL ):: DEGMB,DEGSH,DEGFX,YPT,ZPT,APT,OFF_OLD
       my_real ,DIMENSION(:,:) ,ALLOCATABLE :: DPLA,SIGY,VM,VM0
 C=======================================================================
@@ -113,6 +120,8 @@ C=======================================================================
       IPA  = 400        
       IPID = PID(1)
       AREA = GEO(1 ,IPID)
+      TORS_FACT = GEO(90,IPID)
+C      
       DO I=1,3
         II(I) = NEL*(I-1)
       ENDDO
@@ -164,10 +173,10 @@ C
 c
       ! Plasticity specific tables
       IPLA = ELBUF_STR%BUFLY(1)%L_PLA
-      ALLOCATE (DPLA(NEL*IPLA,NPT*IPLA))
-      ALLOCATE (SIGY(NEL*IPLA,NPT*IPLA)) 
-      ALLOCATE (VM0(NEL*IPLA,NPT*IPLA))   
-      ALLOCATE (VM(NEL*IPLA,NPT*IPLA))  
+      call my_alloc(DPLA, NEL*IPLA, NPT*IPLA, "DPLA")
+      call my_alloc(SIGY, NEL*IPLA, NPT*IPLA, "SIGY")
+      call my_alloc(VM0, NEL*IPLA, NPT*IPLA, "VM0")
+      call my_alloc(VM, NEL*IPLA, NPT*IPLA, "VM")
       IF (IPLA > 0) THEN
         DO J=1,NPT
           DO I = 1,NEL
@@ -188,7 +197,7 @@ c---------------------------
      1               NEL    ,NPT    ,GEO    ,EINT   ,OFF    ,
      3               PID    ,EPSD   ,EXX    ,EXY    ,EXZ    ,
      4               KXX    ,KYY    ,KZZ    ,AL     ,ASRATE ,
-     5               DTIME  ,JTHE   ,TEMPEL ,SIGY   )
+     5               DTIME  ,JTHE   ,TEMPEL ,SIGY   ,TORS_FACT)
 c
       ELSE
 c     
@@ -198,7 +207,8 @@ c
      3                GEO     ,OFF     ,
      4                EPSD    ,BUFMAT  ,NPF     ,TF      ,
      5                EXX     ,EXY     ,EXZ     ,KXX     ,
-     6                KYY     ,KZZ     ,JTHE    ,TEMPEL  ,SIGY  )
+     6                KYY     ,KZZ     ,JTHE    ,TEMPEL  ,SIGY  ,
+     7                TORS_FACT,MAT_PARAM,ASRATE)
       ENDIF
 !
 c---------------------------
@@ -332,7 +342,7 @@ c--------------------------------------------------------
         ENDIF
       ENDDO      
 c
-      DEALLOCATE (DPLA)
+      call my_dealloc(DPLA)
 C------------------------------------------
  1000 FORMAT(1X,'-- RUPTURE OF BEAM ELEMENT NUMBER ',I10)
  1100 FORMAT(1X,'-- RUPTURE OF BEAM ELEMENT :',I10,' AT TIME :',G11.4)

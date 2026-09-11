@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i20ini3                     ../starter/source/interfaces/inter3d1/i20ini3.F
 !||--- called by ------------------------------------------------------
@@ -70,6 +71,7 @@ C-----------------------------------------------
       USE INTER_CAND_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use element_mod , only :nixs,nixc,nixtg,nixt,nixp,nixr
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -90,7 +92,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER INTERFACE_ID, IWRN, NSNT, NMNT,SIXINT,
+      INTEGER INTERFACE_ID, IWRN, NSNT, NMNT,
      .   NSNET  ,NMNET, INPENE,IWPENTOT
       INTEGER IXS(NIXS,*), IXC(NIXC,*),
      .   IPARI(*), IXT(NIXT,*) ,IXP(NIXP,*) ,IXR(NIXR,*),
@@ -119,17 +121,17 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER NRTS, NRTM, NSN, NMN, NMN0, NTY, NST, MST, IBUC, NOINT,
      .   NSNE, NMNE,NLINS,NLINM,NLN,IWPENE,IWPENEDGE,
-     .   I, I_STOK,I_STOK_E,IRS,IRM,ILEV,IDEL2,
+     .   I_STOK,I_STOK_E,IRS,IRM,ILEV,IDEL2,
      .   NSEG, NGROUS, NG, INACTI,
      .   JLT_NEW,IGAP,MULTIMP,ISEARCH,ITIED,
-     .   IGN,IGE,NME,NMES,NAD,EAD,ISU1,ISU2,
-     .   INTTH,NLINSA,NLINMA,ISS2,IFS2,ISYM
+     .   ISU1,ISU2,
+     .   NLINSA,NLINMA,ISS2,IFS2,ISYM
       INTEGER
      .   N1(MVSIZ),N2(MVSIZ),M1(MVSIZ),M2(MVSIZ)
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAG
 C     REAL
       my_real
-     .   MAXBOX,MINBOX,GAP0,BID,TZINF,GAPINF,GAP_TRI,GAPSHMAX,GAPMAX0,
+     .   MAXBOX,MINBOX,GAP0,BID,GAPINF,GAP_TRI,GAPSHMAX,GAPMAX0,
      .   GAPINFS,GAPINFM,GAPE,GAPINPUT,FPENMAX,DRAD
       my_real :: GAP,GAPMIN,GAPMAX,DGAPLOAD
       my_real
@@ -145,10 +147,6 @@ C     REAL
       my_real, DIMENSION(MVSIZ) :: N11,N21,N31
       my_real, DIMENSION(MVSIZ) :: XI,YI,ZI
       my_real, DIMENSION(MVSIZ) :: X0,Y0,Z0
-      my_real, DIMENSION(MVSIZ) :: XX1,YY1,ZZ1
-      my_real, DIMENSION(MVSIZ) :: XX2,YY2,ZZ2
-      my_real, DIMENSION(MVSIZ) :: XX3,YY3,ZZ3
-      my_real, DIMENSION(MVSIZ) :: XX4,YY4,ZZ4
       my_real, DIMENSION(MVSIZ) :: XN1,YN1,ZN1
       my_real, DIMENSION(MVSIZ) :: XN2,YN2,ZN2
       my_real, DIMENSION(MVSIZ) :: XN3,YN3,ZN3
@@ -188,7 +186,7 @@ C
       ISYM  = IPARI(43)
       DRAD = ZERO
 
-      ALLOCATE(TAG(NUMNOD))
+      call my_alloc(TAG, NUMNOD, "TAG")
       TAG(1:NUMNOD)=0
 
       CALL I7ERR3(
@@ -284,7 +282,7 @@ c   IGAP/= 0 for solids (gap = 0)
 c----------------------------------------------------
 c      IF(ICURV==3.or.IGAP/=0)THEN
       IF(IGAP/=0)THEN
-        ALLOCATE(SOLIDN_NORMAL (3,NUMNOD))
+        call my_alloc(SOLIDN_NORMAL, 3, NUMNOD, "SOLIDN_NORMAL")
         CALL I20NORM(IPARI(4),INTBUF_TAB%IRECTM,NUMNOD,X,SOLIDN_NORMAL,
      .         IPARI(6),INTBUF_TAB%MSR,NLN,INTBUF_TAB%NLG,INTBUF_TAB%GAP_SH)
       ENDIF
@@ -548,11 +546,11 @@ c replace global node by local node in NSV,IRECT,NSVE,LINE...
 
 c      IF(ICURV==3.OR.IADM/=.OR.IGAP/=0)THEN
       IF(IGAP/=0)THEN
-          DEALLOCATE(SOLIDN_NORMAL)
+          CALL MY_DEALLOC(SOLIDN_NORMAL)
       END IF
 
       IWPENTOT = IWPENE + IWPENEDGE
-      DEALLOCATE(TAG)
+      CALL MY_DEALLOC(TAG)
 C-----------
       RETURN
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7--

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rbe3t1               ../engine/source/constraints/general/rbe3/rbe3f.F
 !||--- called by ------------------------------------------------------
@@ -264,6 +265,8 @@ C-----------
 !||    rbe3cl            ../engine/source/constraints/general/rbe3/rbe3f.F
 !||    rbe3f_pen         ../engine/source/constraints/general/rbe3/rbe3f_pen.F90
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    rbe3_mod          ../common_source/modules/constraints/rbe3_mod.F90
 !||    rbe3f_pen_mod     ../engine/source/constraints/general/rbe3/rbe3f_pen.F90
 !||====================================================================
@@ -283,6 +286,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -325,22 +330,22 @@ C     REAL
 C======================================================================|
       IADS = NMT0
       IF (MAX_M>0) THEN
-        ALLOCATE(FDSTNB(3,6,MAX_M))
+        call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
         IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
       END IF
-      ALLOCATE(AMP(3,MAX_M))
-      ALLOCATE(MSMP(MAX_M))
-      ALLOCATE(STIFNMP(MAX_M))
+      call my_alloc(AMP, 3, MAX_M, "AMP")
+      call my_alloc(MSMP, MAX_M, "MSMP")
+      call my_alloc(STIFNMP, MAX_M, "STIFNMP")
       IF (IROTG>0) THEN
-        ALLOCATE(ARMP(3,MAX_M))
-        ALLOCATE(INMP(MAX_M))
-        ALLOCATE(STIFRMP(MAX_M))
+        call my_alloc(ARMP, 3, MAX_M, "ARMP")
+        call my_alloc(INMP, MAX_M, "INMP")
+        call my_alloc(STIFRMP, MAX_M, "STIFRMP")
       END IF
       IF (IPARIT>0) THEN
         IF (MAX_M>0) THEN
-          ALLOCATE(RR_6(6,3,MAX_M))
-          ALLOCATE(R1_6(6,MAX_M))
-          ALLOCATE(R2_6(6,MAX_M))
+          call my_alloc(RR_6, 6, 3, MAX_M, "RR_6")
+          call my_alloc(R1_6, 6, MAX_M, "R1_6")
+          call my_alloc(R2_6, 6, MAX_M, "R2_6")
         END IF 
         DO N=1,NRBE3
           IAD = IRBE3(1,N)
@@ -541,9 +546,9 @@ C-----IMOD=4  STIFNM might be over_estimated but safe
             END IF 
           END IF ! (WEIGHT(NS)==1) T
         END DO
-        DEALLOCATE(RR_6)
-        DEALLOCATE(R1_6)
-        DEALLOCATE(R2_6)
+        call my_dealloc(RR_6)
+        call my_dealloc(R1_6)
+        call my_dealloc(R2_6)
       ELSE !P/OFF as before
       DO N=1,NRBE3
         IAD = IRBE3(1,N)
@@ -728,15 +733,15 @@ C  MS(NS) = ZERO
       ENDDO
       END IF !(IPARIT>0) THEN
 C
-      DEALLOCATE(FDSTNB)
-      IF (IROTG>0) DEALLOCATE(MDSTNB)
-      DEALLOCATE(AMP)
-      DEALLOCATE(MSMP)
-      DEALLOCATE(STIFNMP)
+      call my_dealloc(FDSTNB)
+      IF (IROTG>0) call my_dealloc(MDSTNB)
+      call my_dealloc(AMP)
+      call my_dealloc(MSMP)
+      call my_dealloc(STIFNMP)
       IF (IROTG>0) THEN
-        DEALLOCATE(ARMP)
-        DEALLOCATE(INMP)
-        DEALLOCATE(STIFRMP)
+        call my_dealloc(ARMP)
+        call my_dealloc(INMP)
+        call my_dealloc(STIFRMP)
       END IF
 C---
       RETURN
@@ -2272,13 +2277,14 @@ C---
       RETURN
       END
 !||====================================================================
-!||    prerbe3p0      ../engine/source/constraints/general/rbe3/rbe3f.F
+!||    prerbe3p0        ../engine/source/constraints/general/rbe3/rbe3f.F
 !||--- called by ------------------------------------------------------
-!||    resol          ../engine/source/engine/resol.F
+!||    resol            ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
-!||    rbe3_mod       ../common_source/modules/constraints/rbe3_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    rbe3_mod         ../common_source/modules/constraints/rbe3_mod.F90
 !||====================================================================
       SUBROUTINE PRERBE3P0(RBE3)
       use rbe3_mod
@@ -2286,6 +2292,7 @@ C---
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2304,7 +2311,7 @@ C-----------------------------------------------
       INTEGER,DIMENSION(:),ALLOCATABLE :: ITAG
 C NMT: number (no doublon) of main nodes,AD(M): index from NMT0->NMT
 C======================================================================|
-      CALL MY_ALLOC(ITAG,NUMNOD)
+      call my_alloc(ITAG, NUMNOD, "ITAG")
       DO N =1,NUMNOD
        ITAG(N) = 0
       END DO
@@ -2327,7 +2334,7 @@ C---
       IF (RBE3%irotg > 0)then
             RBE3%RRBE3_SZ=RBE3%RRBE3_SZ+5*RBE3%NMT
       endif
-      CALL MY_ALLOC(RBE3%RRBE3,RBE3%RRBE3_SZ)
+      call my_alloc(RBE3%RRBE3, RBE3%RRBE3_SZ, "RBE3%RRBE3")
       RBE3%RRBE3 = ZERO
 
       ! Size of RBE3%RRBE3_PON / ALLOCATION
@@ -2336,10 +2343,10 @@ C---
       IF (RBE3%irotg > 0)then
             RBE3%RRBE3_PON_SZ=RBE3%RRBE3_PON_SZ+5*NMP
       endif
-      CALL MY_ALLOC(RBE3%RRBE3_PON,RBE3%RRBE3_PON_SZ)
+      call my_alloc(RBE3%RRBE3_PON, RBE3%RRBE3_PON_SZ, "RBE3%RRBE3_PON")
       RBE3%RRBE3_PON=ZERO
 
-      DEALLOCATE(ITAG)
+      call my_dealloc(ITAG)
       RETURN
       END
 !||====================================================================

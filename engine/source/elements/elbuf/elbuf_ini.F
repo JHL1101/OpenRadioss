@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    elbuf_ini       ../engine/source/elements/elbuf/elbuf_ini.F
 !||--- called by ------------------------------------------------------
@@ -28,6 +29,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    allocbuf_auto   ../engine/source/elements/elbuf/allocbuf_auto.F
 !||--- uses       -----------------------------------------------------
 !||    mat_elem_mod    ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    my_alloc_mod    ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE ELBUF_INI(MAT_ELEM ,NGROUP ,IPARG)  
 C-----------------------------------------------
@@ -37,6 +39,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -53,7 +56,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER ERR,NG,BUFLEN,ITY,NPT,IXFEM,IXEL,ISNOD,NEWLEN,INLOC
-      INTEGER IDAMP_FREQ_RANGE
+      INTEGER IDAMP_FREQ_RANGE,IMID
 C=======================================================================
 c      Element Buffer Routine (Solid) 
 c------
@@ -61,13 +64,14 @@ c      1) size of elbuf array for restart
 c      2) allocation of elbuf_str structure
 C=======================================================================
       ERR = 0
-      ALLOCATE (MAT_ELEM%ELBUF(NGROUP), STAT=ERR)
+      call my_alloc(MAT_ELEM%ELBUF, NGROUP, "MAT_ELEM%ELBUF", stat=ERR)
       IF (ERR /= 0) THEN
       ENDIF 
 c-------------------------------------------------
       DO NG = 1,NGROUP                                                 
         ITY    = IPARG(5,NG)
-        NPT    = IPARG(6,NG)                                   
+        NPT    = IPARG(6,NG) 
+        IMID   = IPARG(18,NG)                                 
         BUFLEN = IPARG(66,NG)
         IXFEM  = IPARG(54,NG)
         INLOC  = IPARG(78,NG)
@@ -83,8 +87,8 @@ c          print*,'  NG =',ng
         IF (ITY==1 .or. ITY==2   .or. ITY==51 .or. ITY==3 .or.
      .      ITY==7 .or. ITY==101 .or. ITY==4  .or. ITY==5 .or.
      .      ITY==6 .or. ITY==100)THEN
-          CALL ALLOCBUF_AUTO(MAT_ELEM%ELBUF(NG),BUFLEN,NPT,ITY,ISNOD,NEWLEN,INLOC,
-     .                       IDAMP_FREQ_RANGE)
+          CALL ALLOCBUF_AUTO(MAT_ELEM%ELBUF(NG),MAT_ELEM,BUFLEN,NPT,ITY,ISNOD,NEWLEN,INLOC,
+     .                       IDAMP_FREQ_RANGE,IMID)
           IPARG(66,NG)=NEWLEN
         END IF
       ENDDO   ! NG = 1,NGROUP
@@ -98,6 +102,7 @@ c        ENDIF
           DO NG = 1,NGROUP
             ITY    = IPARG(5,NG)
             NPT    = IPARG(6,NG)
+            IMID   = IPARG(18,NG)
             BUFLEN = IPARG(66,NG)
             IXFEM  = IPARG(54,NG)
             INLOC  = IPARG(78,NG)
@@ -107,8 +112,8 @@ c----
 c      if xfem, count buffer's length only in the groups with xfem phantom elements  
 c----
             IF (IXFEM > 0 .and. (ITY==3 .or. ITY==7)) THEN
-              CALL ALLOCBUF_AUTO(MAT_ELEM%XFEM_TAB(NG,IXEL),BUFLEN,NPT,ITY,ISNOD,NEWLEN,INLOC,
-     .                           IDAMP_FREQ_RANGE)
+              CALL ALLOCBUF_AUTO(MAT_ELEM%XFEM_TAB(NG,IXEL),MAT_ELEM,BUFLEN,NPT,ITY,ISNOD,NEWLEN,INLOC,
+     .                           IDAMP_FREQ_RANGE,IMID)
               IPARG(66,NG)=NEWLEN
             ENDIF
           ENDDO

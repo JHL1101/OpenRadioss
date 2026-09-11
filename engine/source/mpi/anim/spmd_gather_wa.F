@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_gather_wa        ../engine/source/mpi/anim/spmd_gather_wa.F
+!||    spmd_gather_wa   ../engine/source/mpi/anim/spmd_gather_wa.F
 !||--- called by ------------------------------------------------------
-!||    dparrws               ../engine/source/output/anim/generate/dparrws.F
+!||    dparrws          ../engine/source/output/anim/generate/dparrws.F
 !||--- calls      -----------------------------------------------------
+!||    spmd_gatherv     ../engine/source/mpi/generic/spmd_gatherv.F
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
        SUBROUTINE SPMD_GATHER_WA(MODE,SIZE_BUFFER_S,SIZE_BUFFER_R,SINDEX,RINDEX_PROC,
      1                           BUFFER_S,BUFFER_R,SHIFT_R,NB_ELEM_R)
@@ -34,7 +36,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -49,7 +51,9 @@ C-----------------------------------------------
 !       MODE = 0 --> collect the index array for each proc
 !       MODE = 1 --> collect all the buffer arrays
 !       SIZE_BUFFER_S is the size of the local sended array
-        INTEGER, INTENT(IN) :: MODE,SIZE_BUFFER_S
+        INTEGER, INTENT(IN) :: MODE
+!       SPMD_GATHERV declares RECVBUF as INTENT(INOUT).
+        INTEGER, INTENT(INOUT) :: SIZE_BUFFER_S
 !       SIZE_BUFFER_R is the size of the global received array, proc 0 
         INTEGER, INTENT(INOUT) :: SIZE_BUFFER_R
 !       SINDEX : index buffer array, local on each proc                      
@@ -57,7 +61,8 @@ C-----------------------------------------------
 !       RINDEX_PROC : global index buffer array, only on proc 0
         INTEGER, DIMENSION(NSECT+1,3,NSPMD), INTENT(INOUT) :: RINDEX_PROC
 !       BUFFER_S : sended buffer
-        INTEGER, DIMENSION(SIZE_BUFFER_S), INTENT(IN) :: BUFFER_S
+!       SPMD_GATHERV declares SENDBUF as INTENT(INOUT).
+        INTEGER, DIMENSION(SIZE_BUFFER_S), INTENT(INOUT) :: BUFFER_S
 !       BUFFER_R : received buffer, size = SIZE_BUFFER_R on proc 0
         INTEGER, DIMENSION(*), INTENT(INOUT) :: BUFFER_R
         INTEGER, DIMENSION(NSPMD), INTENT(INOUT) :: SHIFT_R,NB_ELEM_R
@@ -65,20 +70,20 @@ C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER IERROR,MSGOFF
       INTEGER I
-
-C-----------------------------------------------
-      DATA MSGOFF/7069/
+      INTEGER, DIMENSION(:), ALLOCATABLE :: RINDEX_PROC_FLAT
 C-----------------------------------------------
         
         IF(MODE==0) THEN
         !       collect the local index arrays on the main processor
-                CALL MPI_GATHER(SINDEX,3*(NSECT+1),MPI_INTEGER,
-     .                   RINDEX_PROC,3*(NSECT+1),MPI_INTEGER,0,SPMD_COMM_WORLD,ierror)  
+                ALLOCATE(RINDEX_PROC_FLAT(3*(NSECT+1)*NSPMD))
+                CALL spmd_gather(SINDEX(1:NSECT+1,1:3),
+     .                           RINDEX_PROC_FLAT(1:3*(NSECT+1)*NSPMD),
+     .                           3*(NSECT+1),3*(NSECT+1),0)
         !       sum all the size of local sended arrays in order to get the size 
         !       of the global array on proc 0                  
                 IF(ISPMD==0) THEN
+                        RINDEX_PROC = RESHAPE(RINDEX_PROC_FLAT,SHAPE(RINDEX_PROC))
                         NB_ELEM_R(1:NSPMD) = RINDEX_PROC(NSECT+1,1,1:NSPMD)
                         SIZE_BUFFER_R = 0
                         DO I=1,NSPMD
@@ -92,11 +97,12 @@ C-----------------------------------------------
                 ELSE
                         SIZE_BUFFER_R = 0
                 ENDIF
+                DEALLOCATE(RINDEX_PROC_FLAT)
         ELSEIF(MODE==1) THEN
 
-                CALL MPI_GATHERV(BUFFER_S,SIZE_BUFFER_S,MPI_INTEGER,
-     .                           BUFFER_R,NB_ELEM_R,SHIFT_R,MPI_INTEGER,
-     .                           0,SPMD_COMM_WORLD,ierror)   
+                CALL spmd_gatherv(BUFFER_S(1:SIZE_BUFFER_S),SIZE_BUFFER_S,
+     .                            BUFFER_R(1:SIZE_BUFFER_R),NB_ELEM_R,
+     .                            SHIFT_R,0)
         ENDIF
 #endif
        RETURN

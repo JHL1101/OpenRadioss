@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rgrhead        ../starter/source/elements/spring/rgrhead.F
 !||--- called by ------------------------------------------------------
@@ -41,6 +42,7 @@ C-----------------------------------------------
       USE CLUSTER_MOD
       USE SEATBELT_MOD
       use element_mod , only : nixr
+      use my_alloc_mod
 C-----------------------------------------------
 C            A R G U M E N T S
 C-----------------------------------------------
@@ -87,8 +89,8 @@ C-----------------------------------------------
      .        II,JJ,II2,JJ2,II3,JJ3,II4,JJ4,II5,JJ5,
      .        IFLAG_GTYP,IPRLD,
      .        MSKMTN,MSKISN,MSKPID, MODE, WORK(70000)
-      EXTERNAL MY_SHIFTL,MY_SHIFTR,MY_AND
-      INTEGER MY_SHIFTL,MY_SHIFTR,MY_AND
+      EXTERNAL MY_AND
+      INTEGER MY_AND
       INTEGER :: CLUSTER_TYP,CLUSTER_NEL
       INTEGER, DIMENSION(:), ALLOCATABLE :: SAVE_CLUSTER
 
@@ -148,8 +150,8 @@ C
         END IF
 C       JSMS=MY_SHIFTL(JSMS,0)
 C       NEXT=MY_SHIFTL(NEXT,1)
-        ISSN=MY_SHIFTL(ISSN,6)
-        MTN=MY_SHIFTL(MTN,21)
+        ISSN=ISHFT(ISSN,6)
+        MTN=ISHFT(MTN,21)
 C
         ITRI(1,I)=JSMS + ISSN + MTN
  
@@ -212,12 +214,12 @@ C
         CLUSTER_TYP = CLUSTERS(I)%TYPE
         IF(CLUSTER_TYP==2.OR.CLUSTER_TYP==3) THEN
             CLUSTER_NEL = CLUSTERS(I)%NEL
-            ALLOCATE( SAVE_CLUSTER( CLUSTER_NEL ) )
+            call my_alloc(SAVE_CLUSTER, CLUSTER_NEL, "SAVE_CLUSTER")
             SAVE_CLUSTER( 1:CLUSTER_NEL ) = CLUSTERS(I)%ELEM( 1:CLUSTER_NEL )
             DO J=1,CLUSTER_NEL
                 CLUSTERS(I)%ELEM(J) = ITR1( SAVE_CLUSTER( J ) )
             ENDDO
-            DEALLOCATE( SAVE_CLUSTER )
+            CALL MY_DEALLOC(SAVE_CLUSTER)
         ENDIF
       ENDDO
 !   -----------------------

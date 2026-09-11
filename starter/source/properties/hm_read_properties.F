@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_properties     ../starter/source/properties/hm_read_properties.F
 !||--- called by ------------------------------------------------------
@@ -76,7 +77,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      .                  NPC   ,PLD   ,UNITAB ,RTRANS,LSUBMODEL  ,
      .                  PROP_TAG ,IPART ,KNOT,IDRAPEID,STACK_INFO,
      .                  NUMGEO_STACK,NPROP_STACK, MULTI_FVM,IADBUF,DEFAULTS,
-     .                  MAT_PARAM  )
+     .                  MAT_PARAM  ,ISMS )
 C============================================================================
 C-----------------------------------------------
 C   ROUTINE DESCRIPTION :
@@ -118,6 +119,7 @@ C-----------------------------------------------
      .        NPROP_STACK,IADBUF
       TYPE(SUBMODEL_DATA) LSUBMODEL(NSUBMOD)
       my_real GEO(NPROPG,NUMGEO), X(*), PM(NPROPM,NUMMAT),PLD(*),RTRANS(NTRANSF,*),KNOT(*)
+      INTEGER, INTENT(IN) :: ISMS
 
       DOUBLE PRECISION BUFGEO(*)
 
@@ -362,7 +364,8 @@ c------------------------------
              IGTYP=6
              CALL HM_READ_PROP06(GEO(1,I),IGEO(1,I),PROP_TAG ,MULTI_FVM,IGTYP  ,
      .                          PROP_ID  ,IDTITL   ,UNITAB   ,LSUBMODEL,RTRANS ,
-     .                          SUB_ID   ,ISKN     ,IPART    ,SUB_INDEX,DEFAULTS%SOLID)
+     .                          SUB_ID   ,ISKN     ,IPART    ,SUB_INDEX,DEFAULTS%SOLID,
+     .                          ISMS )
 
           CASE ('TYPE5','TYPE05','RIVET')
 c------------------------------
@@ -461,7 +464,7 @@ C--------------------------------------------------
             IGTYP=14
             IF (ALE%GLOBAL%ICAA == 0 .AND. IGFLU == 0) THEN
              CALL HM_READ_PROP14(GEO(1,I),IGEO(1,I),PROP_TAG ,MULTI_FVM,IGTYP,PROP_ID,IDTITL,UNITAB,LSUBMODEL,
-     .                          IPART ,DEFAULTS%SOLID)
+     .                          IPART ,DEFAULTS%SOLID,ISMS )
             ELSE
              CALL HM_READ_PROP14F(GEO(1,I),IGEO(1,I),PROP_TAG ,MULTI_FVM,IGTYP,PROP_ID,IDTITL,UNITAB,LSUBMODEL,
      .                            DEFAULTS%SOLID)

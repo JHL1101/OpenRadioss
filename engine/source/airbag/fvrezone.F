@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fvrezone0   ../engine/source/airbag/fvrezone.F
 !||--- called by ------------------------------------------------------
@@ -53,7 +54,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER K1, K2, KIBJET, KIBHOL, KIBALE, IADPOLH, IADPOLHO, N,
+      INTEGER K1, K2, KIBJET, KIBHOL, KIBALE, N,
      .        ITYP, NNS, NTG, NBRIC, KI1, KI2, NNFV1, NTRFV1, NPOLY1,
      .        NPOLH1, NNFV0, NTRFV0, NPOLY0, NPOLH0, IFV, IMESH, NSTEP,
      .        ILVOUT, NNA
@@ -118,15 +119,17 @@ C
       END
 C
 !||====================================================================
-!||    fvrezone1       ../engine/source/airbag/fvrezone.F
+!||    fvrezone1        ../engine/source/airbag/fvrezone.F
 !||--- called by ------------------------------------------------------
-!||    fvrezone0       ../engine/source/airbag/fvrezone.F
+!||    fvrezone0        ../engine/source/airbag/fvrezone.F
 !||--- calls      -----------------------------------------------------
-!||    pinpolh         ../engine/source/airbag/fvrezone.F
-!||    progbar_c       ../common_source/sortie/progbar_c.c
-!||    spmd_fvb_gath   ../engine/source/mpi/airbags/spmd_fvb_gath.F
+!||    pinpolh          ../engine/source/airbag/fvrezone.F
+!||    progbar_c        ../common_source/sortie/progbar_c.c
+!||    spmd_fvb_gath    ../engine/source/mpi/airbags/spmd_fvb_gath.F
 !||--- uses       -----------------------------------------------------
-!||    fvbag_mod       ../engine/share/modules/fvbag_mod.F
+!||    fvbag_mod        ../engine/share/modules/fvbag_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE FVREZONE1(
      1      IBUF    , ELEM    , X       , NEL   , IFVNOD1,
@@ -154,6 +157,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -180,9 +185,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, IEL, N1, N2, N3, NN1, NN2, NN3, J, JJ, K, KK, NNT,
-     .        L, NN, PNTR0(NNTR0), PNTR1(NNTR1), NNT1, NNT0, LL, NNTI,
-     .        INNER, INN(3), NTI, ICUT, NB, NNB, NBI, M, II, I1, I2,
+      INTEGER I, IEL, N1, N2, N3, J, JJ, K, KK, NNT,
+     .        L, NN, PNTR0(NNTR0), PNTR1(NNTR1), NNT1, NNT0, LL,
+     .        NB, NNB, NBI, II, I1, I2,
      .        NNSA
       my_real
      .        KSI, ETA, X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3, 
@@ -193,13 +198,12 @@ C-----------------------------------------------
      .        ZZ, BBOX0(6,NPOLH0), BBOX1(6,NPOLH1), CRIT, XMIN1, XMAX1,
      .        YMIN1, YMAX1, ZMIN1, ZMAX1, XMIN0, XMAX0, YMIN0,
      .        YMAX0, ZMIN0, ZMAX0, VOLU0(NPOLH0), DXB, DYB, DZB, VOLB,
-     .        VOL, VOLG, VOLT, RR, MASS0, QX0, QY0, QZ0, ENER0, MASS1,
+     .        VOL, VOLT, RR, MASS0, QX0, QY0, QZ0, ENER0, MASS1,
      .        QX1, QY1, QZ1, ENER1, GAMA, FAC, XXX(3,NNF), XXXA(3,NNA)
-      INTEGER, ALLOCATABLE :: PTRI1(:,:), PTRI0(:,:), TCUT(:), ITAGT(:),
+      INTEGER, ALLOCATABLE :: PTRI1(:,:), PTRI0(:,:),
      .                        BB(:,:), INB(:), INB_TMP(:), LISTB(:)
       my_real
      .       , ALLOCATABLE :: XB(:,:), XXXSA(:,:)
-      CHARACTER NAME*18
 C
       my_real
      .        DLAMCH
@@ -209,7 +213,7 @@ C 0 = Anciens polyhedres
 C 1 = new polyhedres
 C
       NNSA=FVSPMD(IFV)%NNSA
-      ALLOCATE(XXXSA(3,NNSA))
+      call my_alloc(XXXSA, 3, NNSA, "XXXSA")
       IF (NSPMD == 1) THEN
 C treatment necessary to stay p/we
          DO I=1,FVSPMD(IFV)%NN_L
@@ -339,7 +343,7 @@ c            ENDIF
             PX1(3,I)=FAC*PX1(3,I1)+(ONE-FAC)*PX1(3,I2)
          ENDIF
       ENDDO
-      DEALLOCATE(XXXSA)
+      call my_dealloc(XXXSA)
 C Normal and area of the triangles
       DO I=1,NNTR0
          N1=IFVTRI0(1,I)
@@ -554,7 +558,7 @@ C---------------------------------------------------
 C Rezone
 C---------------------------------------------------
       NB=NSTEP**3
-      ALLOCATE(BB(8,NB))
+      call my_alloc(BB, 8, NB, "BB")
       NN=0
       DO I=1,NSTEP
          DO J=1,NSTEP
@@ -595,7 +599,7 @@ C
          ZMAX1=BBOX1(6,I)
 C
          NNT1=PNTR1(I)
-         ALLOCATE(PTRI1(3,NNT1))
+         call my_alloc(PTRI1, 3, NNT1, "PTRI1")
          NNT=0
          DO J=IFVPADR1(I),IFVPADR1(I+1)-1
             JJ=IFVPOLH1(J)
@@ -618,7 +622,8 @@ C
             ENDDO
          ENDDO
 C 
-         ALLOCATE(XB(3,NNB), INB(NNB))
+         call my_alloc(XB, 3, NNB, "XB")
+         call my_alloc(INB, NNB, "INB")
          DXB=(XMAX1-XMIN1)/NSTEP
          DYB=(YMAX1-YMIN1)/NSTEP
          DZB=(ZMAX1-ZMIN1)/NSTEP
@@ -656,7 +661,7 @@ C
      .         CYCLE
 C
             NNT0=PNTR0(J)
-            ALLOCATE(PTRI0(3,NNT0))
+            call my_alloc(PTRI0, 3, NNT0, "PTRI0")
             NNT=0
             DO K=IFVPADR0(J),IFVPADR0(J+1)-1
                KK=IFVPOLH0(K)
@@ -679,14 +684,14 @@ C
                ENDDO
             ENDDO
 C
-            ALLOCATE(INB_TMP(NNB))
+            call my_alloc(INB_TMP, NNB, "INB_TMP")
             CALL PINPOLH(NNT0,    PTRI0, XB,    NNB,   PX0,
      .                   INB_TMP, CRIT,  XMIN0, XMAX0, YMIN0,
      .                   YMAX0,   ZMIN0, ZMAX0)
             DO K=1,NNB
                INB_TMP(K)=INB_TMP(K)*INB(K)
             ENDDO
-            ALLOCATE(LISTB(NB))
+            call my_alloc(LISTB, NB, "LISTB")
             NBI=0
             VOL=ZERO
             DO K=1,NB
@@ -716,14 +721,17 @@ C
 C
             VOLT=VOLT+VOL
 C
-            DEALLOCATE(PTRI0, INB_TMP)   
+            call my_dealloc(PTRI0)
+            call my_dealloc(INB_TMP)
          ENDDO
 C
-         DEALLOCATE(PTRI1, XB, INB)
+         call my_dealloc(PTRI1)
+         call my_dealloc(XB)
+         call my_dealloc(INB)
 C
          IF (ILVOUT<0) CALL PROGBAR_C(I,NPOLH1)
       ENDDO
-      DEALLOCATE(BB)
+      call my_dealloc(BB)
 C
       MASS0=ZERO
       QX0=ZERO
@@ -814,7 +822,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, IEL, N1, N2, N3, II
+      INTEGER I, IEL, N1, N2, N3
       my_real
      .        XX, YY, ZZ, ST, X1, Y1, Z1, X2, Y2, Z2, X3, Y3, Z3,
      .        VX1, VY1, VZ1, VX2, VY2, VZ2, VX3, VY3, VZ3, NX1, NY1,

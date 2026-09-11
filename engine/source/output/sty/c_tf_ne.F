@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,22 +15,25 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    c_tf_ne        ../engine/source/output/sty/c_tf_ne.F
+!||    c_tf_ne          ../engine/source/output/sty/c_tf_ne.F
 !||--- called by ------------------------------------------------------
-!||    outp_c_tf      ../engine/source/output/sty/outp_c_t.F
+!||    outp_c_tf        ../engine/source/output/sty/outp_c_t.F
 !||--- calls      -----------------------------------------------------
-!||    layini         ../engine/source/elements/shell/coque/layini.F
+!||    layini           ../engine/source/elements/shell/coque/layini.F
 !||--- uses       -----------------------------------------------------
-!||    drape_mod      ../engine/share/modules/drape_mod.F
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    element_mod    ../common_source/modules/elements/element_mod.F90
-!||    stack_mod      ../engine/share/modules/stack_mod.F
+!||    drape_mod        ../engine/share/modules/drape_mod.F
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    stack_mod        ../engine/share/modules/stack_mod.F
 !||====================================================================
       SUBROUTINE C_TF_NE(ELBUF_STR,IHBE     ,NEL  ,NPT   ,MLW   ,
      .                   ITY      ,ISTRAIN  ,JJ   ,WA    ,IW    ,
@@ -48,6 +51,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "mvsiz_p.inc"
 C-----------------------------------------------
@@ -134,8 +139,10 @@ C-----------------------------------------------
         ENDDO  
       ENDIF
       NLAY_MAX   = MAX(NLAY,NPT, ELBUF_STR%NLAY)
-      ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+      call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+      call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+      call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+      call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
        MATLY  = 0
        THKLY  = ZERO
        POSLY  = ZERO
@@ -735,7 +742,10 @@ c---
 C----error message------
         ENDIF ! IF (IHBE == 23)
       ENDIF ! IF (IW == 0)
-      DEALLOCATE(MATLY, THKLY, POSLY, THK_LY)
+      call my_dealloc(MATLY)
+      call my_dealloc(THKLY)
+      call my_dealloc(POSLY)
+      call my_dealloc(THK_LY)
 C-----------
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    inint0_8   ../starter/source/interfaces/interf1/inint0_8.F
+!||    inint0_8       ../starter/source/interfaces/interf1/inint0_8.F
 !||--- called by ------------------------------------------------------
-!||    inint3     ../starter/source/interfaces/inter3d1/inint3.F
+!||    inint3         ../starter/source/interfaces/inter3d1/inint3.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE ININT0_8(X      ,IRECT  ,NSEG   ,LCSEG  ,NSV   ,
      1                    MSR    ,ILOC   ,NMN    ,NSN    ,NRT   , NUMNOD )
@@ -35,6 +38,7 @@ C=======================================================================
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -56,6 +60,7 @@ C-----------------------------------------------
       INTEGER  LAST_NOD(NSN),NEXT_NOD(NSN)
       INTEGER  NBX,NBY,NBZ,NE,FOUND
       INTEGER  FIRST,LAST,IX1,IY1,IZ1,NN,IX,IY,IZ,IX2,IY2,IZ2
+      INTEGER  IX1_OLD,IY1_OLD,IZ1_OLD,IX2_OLD,IY2_OLD,IZ2_OLD
       INTEGER, DIMENSION(:,:,:),ALLOCATABLE :: VOXEL
       INTEGER, DIMENSION(:), ALLOCATABLE :: KNOD2SEG
       INTEGER, DIMENSION(:), ALLOCATABLE :: NOD2SEG
@@ -121,10 +126,14 @@ C
       NBX = MAX(NBX,1)
       NBY = MAX(NBY,1)
       NBZ = MAX(NBZ,1)
+
+      NBX = MIN(NBX,256)
+      NBY = MIN(NBY,256)
+      NBZ = MIN(NBZ,256)
 C=======================================================================
 C 1   placing of nodes in boxes
 C=======================================================================
-      ALLOCATE(VOXEL(NBX,NBY,NBZ))
+      call my_alloc(VOXEL, NBX, NBY, NBZ, "VOXEL")
       VOXEL=0
       DO I=1,NSN
         IIX(I)=0
@@ -182,10 +191,21 @@ C=======================================================================
         IZ2=IZ1
 
         FOUND = 0
+C       Initialize old bounds so that nothing is skipped on the first pass
+        IX1_OLD = 0
+        IX2_OLD = -1
+        IY1_OLD = 0
+        IY2_OLD = -1
+        IZ1_OLD = 0
+        IZ2_OLD = -1
         DO WHILE(FOUND == 0)
           DO IZ = IZ1,IZ2
             DO IY = IY1,IY2
               DO IX = IX1,IX2
+C               Skip voxels already searched in the previous iteration
+                IF (IX >= IX1_OLD .AND. IX <= IX2_OLD .AND.
+     .              IY >= IY1_OLD .AND. IY <= IY2_OLD .AND.
+     .              IZ >= IZ1_OLD .AND. IZ <= IZ2_OLD) CYCLE
 
                 JJ = VOXEL(IX,IY,IZ)
 
@@ -196,6 +216,8 @@ C=======================================================================
                   ZS = X(3,NN)
                   DIST = (X1-XS)**2+(Y1-YS)**2+(Z1-ZS)**2
                   IF( DIST < MINDIST )  THEN
+!                   write(6,"(A,F12.6,F12.6,F12.6,F12.6,F12.6,F12.6)") "DIST=",X1,Y1,Z1,XS,YS,ZS
+
                     ILOC(NE)=JJ
                     MINDIST = DIST
                   ENDIF
@@ -205,6 +227,13 @@ C=======================================================================
               ENDDO
             ENDDO
           ENDDO
+C         Save current bounds before expanding
+          IX1_OLD = IX1
+          IX2_OLD = IX2
+          IY1_OLD = IY1
+          IY2_OLD = IY2
+          IZ1_OLD = IZ1
+          IZ2_OLD = IZ2
           IX1 = IX1-1
           IY1 = IY1-1
           IZ1 = IZ1-1
@@ -261,12 +290,12 @@ C=======================================================================
           ENDDO
         ENDDO
       ENDDO
-      DEALLOCATE(VOXEL)
+      CALL MY_DEALLOC(VOXEL)
 C-----------------------------------------------
 c 3 Build inverse connectivity for segments
 C-----------------------------------------------
-      ALLOCATE(KNOD2SEG(NUMNOD+1))
-      ALLOCATE(NOD2SEG(4*NRT))
+      call my_alloc(KNOD2SEG, NUMNOD+1, "KNOD2SEG")
+      call my_alloc(NOD2SEG, 4*NRT, "NOD2SEG")
       NOD2SEG(1:4*NRT) = 0
       KNOD2SEG(1:NUMNOD+1) = 0
       DO I=1,NRT
@@ -315,7 +344,7 @@ C----------------------------------------------------------------
         ENDDO
       ENDDO
 C
-      DEALLOCATE(KNOD2SEG)
-      DEALLOCATE(NOD2SEG)
+      CALL MY_DEALLOC(KNOD2SEG)
+      CALL MY_DEALLOC(NOD2SEG)
       RETURN
       END

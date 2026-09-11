@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps42           ../starter/source/materials/mat/mat042/sigeps42.F
 !||--- called by ------------------------------------------------------
@@ -99,14 +100,14 @@ C----------------------------------------------------------------
 C----------------------------------------------------------------
 C  L O C A L  V A R I B L E S
 C----------------------------------------------------------------
-      INTEGER I,J,K,KFP,IFORM,NORDER
+      INTEGER I,J,KFP,IFORM,NORDER
       my_real :: TENSIONCUT,GMAX,FFAC
       my_real, DIMENSION(10) :: MU,AL
       my_real
      .  SIGPRV(3,MVSIZ),EV(3,MVSIZ),EVM(3,MVSIZ),DWDL(3,MVSIZ),
      .  T1(3,MVSIZ),SUMDWDL(MVSIZ),RV(MVSIZ),P(MVSIZ),
      .  DWDRV(MVSIZ),RBULK,DPDMU,AV(6,MVSIZ),EVV(3,MVSIZ),
-     .  DIRPRV(3,3,MVSIZ),A(3,3),DPRA(3,3),EIGEN(3)                
+     .  DIRPRV(3,3,MVSIZ)
 C----------------------------------------------------------------
       !=======================================================================
       ! - RECOVERING MATERIAL PARAMETERS

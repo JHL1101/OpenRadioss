@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dparrws          ../engine/source/output/anim/generate/dparrws.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    write_i_c        ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
 !||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE DPARRWS(NESBW,NSTRF,IXC   ,
      2                  IXTG ,X ,NODCUT,RWBUF,NPRW,
@@ -37,6 +40,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -57,12 +62,8 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER J, JJ, LEN, I, K, L, KK, K0, K5, K9, N, 
-     .   N0, N1, N2, N3, N4, N10, NSEG, NSEGC, NSEGTG, ITYP,
-     .   UNPACK(15,4), II(8), N5, N6, N7, N8, NSEGS, K3,OW,
-     .   WA(6*BUF+4)
-      my_real
-     .   XX1, YY1, ZZ1, XX2, YY2, ZZ2, XX3, YY3, ZZ3,
-     .   XX4, YY4, ZZ4, D13, XXC, YYC, ZZC
+     .   N0, N1, N2, N3, N4, N10, NSEGC, NSEGTG, ITYP,
+     .   UNPACK(15,4), II(8), N5, N6, N7, N8, NSEGS, K3
       INTEGER POWER2(8),IPACK
       INTEGER :: INDICE
       INTEGER :: MODE,SIZE_BUFFER_S,SIZE_BUFFER00_R
@@ -270,10 +271,10 @@ C brick, shell16, brick20
 !               ----------------------
 !               Allocate the sended buffer
 !               ----------------------
-                ALLOCATE( BUFFER_S(SIZE_BUFFER_S) )
+                call my_alloc(BUFFER_S, SIZE_BUFFER_S, "BUFFER_S")
                 MODE = 0
 
-                ALLOCATE( BUFFER00_R(0) )
+                call my_alloc(BUFFER00_R, 0, "BUFFER00_R")
 
                 IF(NSPMD>1) THEN
                         CALL SPMD_GATHER_WA(MODE,SIZE_BUFFER_S,SIZE_BUFFER00_R,SINDEX,RINDEX_PROC,
@@ -286,8 +287,8 @@ C brick, shell16, brick20
                 ENDIF    
 
                 IF(ISPMD==0) THEN                
-                        DEALLOCATE( BUFFER00_R )
-                        ALLOCATE( BUFFER00_R(SIZE_BUFFER00_R) )
+                        call my_dealloc(BUFFER00_R)
+                        call my_alloc(BUFFER00_R, SIZE_BUFFER00_R, "BUFFER00_R")
                 ENDIF
 
 !               ----------------------
@@ -511,7 +512,7 @@ C brick, shell16, brick20
                 ELSE
                         BUFFER00_R(1:SIZE_BUFFER00_R) = BUFFER_S(1:SIZE_BUFFER_S)
                 ENDIF
-                DEALLOCATE( BUFFER_S )
+                call my_dealloc(BUFFER_S)
         ENDIF
         
 !               ----------------------
@@ -639,7 +640,7 @@ C brick, shell16, brick20
                 ENDDO
         ENDIF
 
-        IF(ALLOCATED(BUFFER00_R)) DEALLOCATE( BUFFER00_R )
+        IF(ALLOCATED(BUFFER00_R)) call my_dealloc(BUFFER00_R)
 
         RETURN
         END SUBROUTINE DPARRWS

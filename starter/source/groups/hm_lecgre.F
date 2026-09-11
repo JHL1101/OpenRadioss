@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_lecgre                ../starter/source/groups/hm_lecgre.F
 !||--- called by ------------------------------------------------------
@@ -37,7 +38,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_option_start          ../starter/source/devtools/hm_reader/hm_option_start.F
 !||    hm_submodgre             ../starter/source/groups/hm_submodgr.F
 !||    hm_tagpart               ../starter/source/groups/hm_tagpart.F
-!||    nintlst                  ../starter/source/system/nintrr.F
 !||    nintlstn                 ../starter/source/system/nintrr.F
 !||    udouble_igr              ../starter/source/system/sysfus.F
 !||--- uses       -----------------------------------------------------
@@ -57,6 +57,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MY_ALLOC_MOD
+      use my_dealloc_mod, only : my_dealloc
       USE UNITAB_MOD
       USE SUBMODEL_MOD
       USE MESSAGE_MOD
@@ -95,22 +96,21 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,II,JJ,KK,ISU,ID,NEL,N1,N2,IGS,JREC,
-     .        IAD0,IADC,IADFIN,IT0,IT1,IT2,IT3,IT4,IT5,
-     .        KAD,UID,IFLAGUNIT,
-     .        ISK,BOXTYPE,J2(2),IT6,SUB_ID,IADBOX,NN,IADBOXMAX,
+      INTEGER I,J,K,JJ,KK,ID,NEL,N1,N2,IGS,
+     .        IADC,IT0,IT1,IT2,IT3,IT4,IT5,
+     .        UID,IFLAGUNIT,
+     .        IT6,IADBOX,NN,IADBOXMAX,
      .        IT7, IDB
       INTEGER NLIST,STAT,LIST_IGR(NGRELE)
       INTEGER IP, NLEV, MY_LEV,IDMIN,IDMAX,OFFSET,NLINES
       MY_REAL
-     .        XMIN,XMAX,YMIN,YMAX,ZMIN,ZMAX,BID,FAC_L,
-     .        DIAM,XP1,YP1,ZP1,XP2,YP2,ZP2
+     .        BID,FAC_L
       CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
       CHARACTER(LEN=NCHARKEY) :: KEY, KEY2
       CHARACTER MES*40
       INTEGER, DIMENSION(:),ALLOCATABLE :: BUFTMP
       INTEGER, DIMENSION(:),ALLOCATABLE :: BUFBOX
-      LOGICAL IS_AVAILABLE,IS_ENCRYPTED
+      LOGICAL IS_AVAILABLE
 C-----------------------------------------------
       INTEGER, DIMENSION(:), POINTER :: ELEM
       INTEGER,DIMENSION(:),ALLOCATABLE :: LIST_ENTITY
@@ -127,7 +127,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER NINTLST,NINTLSTN,LISTCNT
+      INTEGER NINTLSTN
 C-----------------------------------------------
 C    IGRELEM(IGS)%ID : GROUP identifier
 C    IGRELEM(IGS)%TITLE : GROUP title
@@ -161,7 +161,7 @@ C=======================================================================
       IT6 = 0
       IT7 = 0
       TITR1='ELEMENT GROUP'
-      ALLOCATE(BUFTMP(MAX(NUMEL*5,NPART)),STAT=stat)
+      call my_alloc(BUFTMP, MAX(NUMEL*5,NPART), "BUFTMP", stat=stat)
         IF (STAT /= 0) THEN
           CALL ANCMSG(MSGID=268,ANMODE=ANINFO,MSGTYPE=MSGERROR,C1='BUFTMP')
         ENDIF
@@ -294,7 +294,7 @@ C-------------------------------------
                 IF(FLAG == 0)THEN
                   CALL GROUPS_GET_NENTITY(NEL,LSUBMODEL)
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   
@@ -306,7 +306,7 @@ C-------------------------------------
                         IGRELEM(IGS)%ENTITY(NN) = JJ
                       ENDIF
                   ENDDO! NEXT KK
-                  IF(ALLOCATED(LIST_ENTITY))DEALLOCATE (LIST_ENTITY)
+                  IF(ALLOCATED(LIST_ENTITY)) call my_dealloc(LIST_ENTITY)
                   
                   IF ( NUMEL == 0 ) IGRELEM(IGS)%NENTITY = 0
                   NEL = IGRELEM(IGS)%NENTITY
@@ -344,7 +344,7 @@ C-------------------------------------
      .                         KK       ,NEL     ,ELKEY  ,IGRELEM(IGS)%ID,TITR,LSUBMODEL)
                   KK=1
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   NEL = IGRELEM(IGS)%NENTITY
@@ -411,7 +411,7 @@ C-------------------------
                     IF (BUFTMP(J) == 1) NEL=NEL+1
                   ENDDO!next J
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -434,7 +434,7 @@ C-------------------------
                     END IF
                   ENDDO!next J
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -473,10 +473,10 @@ C-------------------------
 C---
 C
         IF (FLAG == 0) THEN
-          ALLOCATE(BUFBOX(1))
+          call my_alloc(BUFBOX, 1, "BUFBOX")
           BUFBOX = 0
         ELSEIF (FLAG == 1) THEN
-          ALLOCATE(BUFBOX(IADBOXMAX))
+          call my_alloc(BUFBOX, IADBOXMAX, "BUFBOX")
           BUFBOX(1:IADBOXMAX) = 0
         ENDIF
 !
@@ -521,7 +521,7 @@ C---
              IADBOXMAX = MAX(IADBOX,IADBOXMAX)
               IF(FLAG == 0)THEN
                 IGRELEM(IGS)%NENTITY=NEL
-                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                 IGRELEM(IGS)%ENTITY = 0
               ELSE IF(FLAG == 1)THEN
                 IGRELEM(IGS)%NENTITY=NEL
@@ -530,7 +530,7 @@ C---
 
 
         ENDDO
-        IF(ALLOCATED(BUFBOX))DEALLOCATE(BUFBOX)
+        IF(ALLOCATED(BUFBOX))CALL MY_DEALLOC(BUFBOX)
       ENDIF ! IF(IT6 /= 0)
 C-------------------------
 C groups of subsets, share, mat, prop
@@ -560,7 +560,7 @@ C---
                     IF (BUFTMP(IPARTE(J)) == 1) NEL=NEL+1
                   ENDDO
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -582,7 +582,7 @@ C---
                     END IF
                   ENDDO
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -628,7 +628,7 @@ C-------------------------
      .             NN      ,IGS     )
               IF (FLAG == 0) THEN
                 IGRELEM(IGS)%NENTITY=NEL
-                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                 IGRELEM(IGS)%ENTITY = 0
               ENDIF
             ENDIF
@@ -674,7 +674,7 @@ C-------------------------
                     IF (BUFTMP(J) == 1) NEL=NEL+1
                   ENDDO
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -697,7 +697,7 @@ C-------------------------
                     END IF
                   ENDDO
                   IGRELEM(IGS)%NENTITY=NEL
-                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL)
+                  CALL MY_ALLOC(IGRELEM(IGS)%ENTITY,NEL,"IGRELEM(IGS)%ENTITY")
                   IGRELEM(IGS)%ENTITY = 0
                 ELSEIF (FLAG == 1) THEN
                   DO J=1,NUMEL
@@ -719,7 +719,7 @@ C-------------------------
         ENDDO!next I
       ENDIF
 C------------------------------ 
-      IF (ALLOCATED(BUFTMP)) DEALLOCATE(BUFTMP)
+      IF (ALLOCATED(BUFTMP)) CALL MY_DEALLOC(BUFTMP)
 C------------------------------
       RETURN
       END

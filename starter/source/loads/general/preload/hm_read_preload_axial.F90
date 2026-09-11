@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,26 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_preload_axial_mod   ../starter/source/loads/general/preload/hm_read_preload_axial.F90
 !||--- called by ------------------------------------------------------
 !||    lectur                      ../starter/source/starter/lectur.F
 !||====================================================================
       module hm_read_preload_axial_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   PROCEDURES
 ! ======================================================================================================================
 !
 !=======================================================================================================================
-!!\brief This subroutine do the dimensioning of hm-reader of /PRELOAD/AXIAL
+!!\brief This subroutine performs the dimensioning of hm-reader of /PRELOAD/AXIAL
 !=======================================================================================================================
 !||====================================================================
 !||    hm_pre_read_preload_axial   ../starter/source/loads/general/preload/hm_read_preload_axial.F90
@@ -110,7 +111,7 @@
                 end if
               end do
             end if
-            if (nn>0) np = np + 1
+            if ((iset+nn) > 0) np = np + 1
           end do
           npreload_a = np
 !
@@ -121,7 +122,7 @@
 ! ======================================================================================================================
 !
 !=======================================================================================================================
-!!\brief This subroutine do hm-reader of /PRELOAD/AXIAL
+!!\brief This subroutine performs hm-reader of /PRELOAD/AXIAL
 !=======================================================================================================================
 !||====================================================================
 !||    hm_read_preload_axial   ../starter/source/loads/general/preload/hm_read_preload_axial.F90
@@ -349,6 +350,8 @@
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use message_mod
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -379,21 +382,21 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate (itris(nx) ,stat=stat)
+          call my_alloc(itris,nx,"itris",stat=stat)
           if (stat /= 0) then
             call ancmsg(msgid=268,anmode=aninfo,                                 &
               msgtype=msgerror,                           &
               c1="preload_a_itris")
             return
           end if
-          allocate (indexs(2*nx) ,stat=stat)
+          call my_alloc(indexs,2*nx,"indexs",stat=stat)
           if (stat /= 0) then
             call ancmsg(msgid=268,anmode=aninfo,                                 &
               msgtype=msgerror,                           &
               c1="preload_a_indexs")
             return
           end if
-          allocate (ksysusrs(2*nx),stat=stat)
+          call my_alloc(ksysusrs,2*nx,"ksysusrs",stat=stat)
           if (stat /= 0) then
             call ancmsg(msgid=268,anmode=aninfo,                                 &
               msgtype=msgerror,                           &
@@ -427,7 +430,9 @@
             end if
           end do
 !-----------
-          deallocate(ksysusrs,indexs,itris)
+          call my_dealloc(ksysusrs)
+          call my_dealloc(indexs)
+          call my_dealloc(itris)
 !---
 
         end subroutine initag_preload_a

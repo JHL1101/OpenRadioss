@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    xfem_crack_init   ../starter/source/elements/xfem/xfem_crack_init.F
 !||--- called by ------------------------------------------------------
 !||    lectur            ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE XFEM_CRACK_INIT(
@@ -34,6 +36,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE XFEM2DEF_MOD
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -139,8 +142,8 @@ C-------------------------------
 C       CRACK Shells Post treatments
 C-------------------------------
         SHCOUNT = CRKSHELL(ILEV)%CRKNUMSHELL
-        ALLOCATE (CRKSHELL(ILEV)%PHANTOML(SHCOUNT))
-        ALLOCATE (CRKSHELL(ILEV)%ELTYPE(SHCOUNT))
+        call my_alloc(CRKSHELL(ILEV)%PHANTOML, SHCOUNT, "CRKSHELL(ILEV)%PHANTOML")
+        call my_alloc(CRKSHELL(ILEV)%ELTYPE, SHCOUNT, "CRKSHELL(ILEV)%ELTYPE")
 C
         SHCOUNT=0
         DO I=1, NUMELC
@@ -166,7 +169,7 @@ C     Global shell crack numbers (by level)
 C-------------------------------
       NCOUNT = 0
       DO ILEV=1,NLEVMAX
-        ALLOCATE(CRKSHELL(ILEV)%PHANTOMG(CRKSHELL(ILEV)%CRKNUMSHELL))
+        call my_alloc(CRKSHELL(ILEV)%PHANTOMG, CRKSHELL(ILEV)%CRKNUMSHELL, "CRKSHELL(ILEV)%PHANTOMG")
 C
         DO I=1,CRKSHELL(ILEV)%CRKNUMSHELL
           NCOUNT=NCOUNT+1
@@ -192,8 +195,8 @@ C-------------------------------
 C
       NCOUNTG = 0
       DO ILEV=1,NLEVMAX
-        ALLOCATE(CRKSHELL(ILEV)%XNODEG(4,CRKSHELL(ILEV)%CRKNUMSHELL))
-        ALLOCATE(CRKSHELL(ILEV)%XNODEL(4,CRKSHELL(ILEV)%CRKNUMSHELL))
+        call my_alloc(CRKSHELL(ILEV)%XNODEG, 4, CRKSHELL(ILEV)%CRKNUMSHELL, "CRKSHELL(ILEV)%XNODEG")
+        call my_alloc(CRKSHELL(ILEV)%XNODEL, 4, CRKSHELL(ILEV)%CRKNUMSHELL, "CRKSHELL(ILEV)%XNODEL")
 C
         NCOUNT = 0
         DO I=1,CRKSHELL(ILEV)%CRKNUMSHELL

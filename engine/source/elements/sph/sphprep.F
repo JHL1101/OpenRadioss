@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sphprep              ../engine/source/elements/sph/sphprep.F
 !||--- called by ------------------------------------------------------
@@ -38,7 +39,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sphtri               ../engine/source/elements/sph/sphtri.F
 !||    sphtri0              ../engine/source/elements/sph/sphtri0.F
 !||    spmd_allglob_isum9   ../engine/source/mpi/generic/spmd_allglob_isum9.F
-!||    spmd_barrier         ../engine/source/mpi/spmd_mod.F90
 !||    spmd_spamaj          ../engine/source/mpi/sph/spmd_spamaj.F
 !||    spmd_sphgat          ../engine/source/mpi/sph/spmd_sphgat.F
 !||    spmd_sphgetisph      ../engine/source/mpi/elements/spmd_sph.F
@@ -55,6 +55,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
 !||    groupdef_mod         ../common_source/modules/groupdef_mod.F
 !||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
 !||    sph_crit_voxel_mod   ../engine/source/elements/sph/sph_crit_voxel.F90
 !||    sph_struct_mod       ../engine/share/modules/sph_struct_mod.F
 !||    sph_work_mod         ../common_source/modules/mat_elem/sph_work.F90
@@ -89,6 +90,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -142,16 +144,16 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,N,NG,JFT,JLT,K,NELEM,NEL,OFFSET,
-     .   ISORTSP,INOD,JNOD,J,NVOIS,M,IREDUCE,NS,
+      INTEGER N,K,
+     .   ISORTSP,INOD,IREDUCE,NS,
      .   KVNORM,IPRT,NSP2SORTF,NSP2SORTL,
      .   ISORTSPG,IERROR,NBK,VOXSIZ,IRUNN_BISG
       my_real
      .       DX,DY,DZ,
      .       DXMIN,DXMAX,DYMIN,DYMAX,DZMIN,DZMAX,MAJORD,
      .       DXMINL,DXMAXL,DYMINL,DYMAXL,DZMINL,DZMAXL,
-     .       DSX,DSY,DSZ,MAXDS,MAJORDS,SPALINR,MYSPATRUE,
-     .       XMAX,YMAX,ZMAX, DMAX, BUFTMP(6),DBUC, BMINMA
+     .       SPALINR,MYSPATRUE,
+     .       XMAX,YMAX,ZMAX, DMAX, DBUC, BMINMA
       my_real   
      .       XMIN,YMIN,ZMIN,DIAM_MAX,MAJORD_VOX,
      .       XMINL,YMINL,ZMINL,XMAXL,YMAXL,ZMAXL,DIAM_MAXL,
@@ -178,7 +180,7 @@ C      /---------------/
 
       IF(ITASK==0)THEN
         IF(.NOT.ALLOCATED(BOOL_SPH_SORT)) THEN
-            ALLOCATE( BOOL_SPH_SORT(NUMSPH) )
+            call my_alloc(BOOL_SPH_SORT, NUMSPH, "BOOL_SPH_SORT")
             BOOL_SPH_SORT(1:NUMSPH) = .FALSE.
         ENDIF
 
@@ -657,15 +659,15 @@ C  Alloc SPSYM arrays in case of RESTART or /RERUN
         IF ((NCYCLE==0).OR.(IRUNN_BIS>1).OR.(MCHECK/=0)) THEN
           IF (ITASK==0) THEN
             IF(.NOT. ASSOCIATED(XSPSYM%BUF)) THEN
-              ALLOCATE(XSPSYM%BUF(3*NSPHSYM),STAT=IERROR)
+              call my_alloc(XSPSYM%BUF, 3*NSPHSYM, "XSPSYM%BUF", stat=IERROR)
               IF(IERROR==0) XSPSYM%BUF = 0
             ENDIF 
             IF(.NOT. ASSOCIATED(VSPSYM%BUF)) THEN
-              ALLOCATE(VSPSYM%BUF(3*NSPHSYM),STAT=IERROR)
+              call my_alloc(VSPSYM%BUF, 3*NSPHSYM, "VSPSYM%BUF", stat=IERROR)
               IF(IERROR==0) VSPSYM%BUF = 0
             ENDIF
             IF(.NOT. ASSOCIATED(WSMCOMP%BUF)) THEN
-              ALLOCATE(WSMCOMP%BUF(6*NSPHSYM),STAT=IERROR)
+              call my_alloc(WSMCOMP%BUF, 6*NSPHSYM, "WSMCOMP%BUF", stat=IERROR)
               IF(IERROR==0) WSMCOMP%BUF = 0
             ENDIF
             IRUNN_BISG = 0

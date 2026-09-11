@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    timer_mod                        ../engine/source/system/timer_mod.F90
 !||--- called by ------------------------------------------------------
@@ -80,6 +81,7 @@
 !||    inter_sort_07                    ../engine/source/interfaces/int07/inter_sort_07.F
 !||    intfop2                          ../engine/source/interfaces/interf/intfop2.F
 !||    inttri                           ../engine/source/interfaces/intsort/inttri.F
+!||    ists_mainf                       ../engine/source/interfaces/ists/ists_mainf.F90
 !||    mmain                            ../engine/source/materials/mat_share/mmain.F90
 !||    mmain8                           ../engine/source/materials/mat_share/mmain8.F
 !||    mulaw                            ../engine/source/materials/mat_share/mulaw.F90
@@ -89,6 +91,7 @@
 !||    multi_timeevolution              ../engine/source/multifluid/multi_timeevolution.F
 !||    print_summary                    ../engine/source/system/timer.F
 !||    printime                         ../engine/source/system/printime.F
+!||    q1np_forc3                       ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2                          ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    qforc2                           ../engine/source/elements/solid_2d/quad/qforc2.F
 !||    radioss2                         ../engine/source/engine/radioss2.F
@@ -146,13 +149,14 @@
         integer, parameter :: TIMER_EXRBYV    =     12
         integer, parameter :: TIMER_EXSPMDV   =     13
         integer, parameter :: TIMER_MADYMO    =     14
-        integer, parameter :: TIMER_CONT_CRIT =     15  
+        integer, parameter :: TIMER_CONT_CRIT =     15
         integer, parameter :: TIMER_COMM_CRIT =     16
         integer, parameter :: TIMER_CONT_BUK  =     17
         integer, parameter :: TIMER_CONT_GFRONT=    18
         integer, parameter :: TIMER_CONT_OPT  =     19
+        integer, parameter :: TIMER_GPU_SHELL     =   153
         integer, parameter :: TIMER_AMS       =     39
-        integer, parameter :: TIMER_BEG_CRIT  =     56        
+        integer, parameter :: TIMER_BEG_CRIT  =     56
         integer, parameter :: TIMER_EOF_CRIT  =     57
         integer, parameter :: TIMER_EOF_SORT  =     58
         integer, parameter :: TIMER_TMP1      =    150
@@ -183,7 +187,8 @@
         integer, parameter :: TIMER_T25BUC    =      136
         integer, parameter :: TIMER_T25BUCE2E =      137
         integer, parameter :: TIMER_T25TRCE   =      138
-        integer, parameter :: timer_ale_elm   =      151       
+        integer, parameter :: timer_ale_elm   =      151
+        integer, parameter :: timer_sfem      =      152
         type timer_
           real, dimension(:,:), allocatable :: timer
           real, dimension(:), allocatable :: cputime
@@ -205,6 +210,8 @@
 !||--- called by ------------------------------------------------------
 !||    radioss2       ../engine/source/engine/radioss2.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
         subroutine initime(t)
 !     initialization of timers
@@ -317,6 +324,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
           type(timer_), intent(inout) :: T
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
@@ -327,12 +335,12 @@
 #endif
           integer :: j
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(T%timer(4,max_nb_timer))
-          allocate(T%cputime(max_nb_timer))
-          allocate(T%systime(max_nb_timer))
-          allocate(T%realtime(max_nb_timer))
-          allocate(T%omp_initime(max_nb_timer))
-          allocate(T%clockini(max_nb_timer))
+          call my_alloc(T%timer, 4, max_nb_timer, "T%timer")
+          call my_alloc(T%cputime, max_nb_timer, "T%cputime")
+          call my_alloc(T%systime, max_nb_timer, "T%systime")
+          call my_alloc(T%realtime, max_nb_timer, "T%realtime")
+          call my_alloc(T%omp_initime, max_nb_timer, "T%omp_initime")
+          call my_alloc(T%clockini, max_nb_timer, "T%clockini")
           do j = 1, max_nb_timer
             t%cputime(j) = 0
             t%systime(j) = 0
@@ -397,6 +405,7 @@
 !||    intcrit                          ../engine/source/interfaces/intsort/intcrit.F
 !||    inter_sort_07                    ../engine/source/interfaces/int07/inter_sort_07.F
 !||    inttri                           ../engine/source/interfaces/intsort/inttri.F
+!||    ists_mainf                       ../engine/source/interfaces/ists/ists_mainf.F90
 !||    mmain                            ../engine/source/materials/mat_share/mmain.F90
 !||    mmain8                           ../engine/source/materials/mat_share/mmain8.F
 !||    mulaw                            ../engine/source/materials/mat_share/mulaw.F90
@@ -504,6 +513,7 @@
 !||    intcrit                          ../engine/source/interfaces/intsort/intcrit.F
 !||    inter_sort_07                    ../engine/source/interfaces/int07/inter_sort_07.F
 !||    inttri                           ../engine/source/interfaces/intsort/inttri.F
+!||    ists_mainf                       ../engine/source/interfaces/ists/ists_mainf.F90
 !||    mmain                            ../engine/source/materials/mat_share/mmain.F90
 !||    mmain8                           ../engine/source/materials/mat_share/mmain8.F
 !||    mulaw                            ../engine/source/materials/mat_share/mulaw.F90
@@ -576,6 +586,7 @@
           secs = secs/clockrate
 #endif
           t%realtime(event)=t%realtime(event)+secs
+
           return
         end subroutine stoptime
 

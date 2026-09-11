@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_ifront           ../engine/source/mpi/interfaces/spmd_ifront.F
+!||    spmd_ifront     ../engine/source/mpi/interfaces/spmd_ifront.F
 !||--- called by ------------------------------------------------------
-!||    imp_tripi             ../engine/source/implicit/imp_int_k.F
-!||    inttri                ../engine/source/interfaces/intsort/inttri.F
+!||    imp_tripi       ../engine/source/implicit/imp_int_k.F
+!||    inttri          ../engine/source/interfaces/intsort/inttri.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    ifront_mod            ../engine/share/modules/ifront_mod.F
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    sensor_mod            ../common_source/modules/sensor_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25ebox             ../engine/share/modules/tri25ebox.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    ifront_mod      ../engine/share/modules/ifront_mod.F
+!||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod     ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod    ../common_source/tools/memory/my_alloc.F90
+!||    sensor_mod      ../common_source/modules/sensor_mod.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
+!||    tri25ebox       ../engine/share/modules/tri25ebox.F
+!||    tri7box         ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_IFRONT(
      1   IPARI   ,NEWFRONT,ISENDTO   ,IRCVFROM,
@@ -50,10 +52,11 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD
       USE SENSOR_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -139,15 +142,21 @@ C
 
       ! Allocation done once for all
       IF(.NOT. ALLOCATED(PROC_LIST)) THEN
-        ALLOCATE(PROC_LIST(NSPMD) )
-        ALLOCATE(ICOMM2(NSPMD), REQ_SEND_SIZ(NSPMD), REQ_SEND_MSG(NSPMD))
-        ALLOCATE(REQ_RECV_SIZ(NSPMD), REQ_RECV_MSG(NSPMD))
-        ALLOCATE(IRCOM(NSPMD), ISCOM(NSPMD), ISCOMS(NSPMD))
+        call my_alloc(PROC_LIST, NSPMD, "PROC_LIST")
+        call my_alloc(ICOMM2, NSPMD, "ICOMM2")
+        call my_alloc(REQ_SEND_SIZ, NSPMD, "REQ_SEND_SIZ")
+        call my_alloc(REQ_SEND_MSG, NSPMD, "REQ_SEND_MSG")
+        call my_alloc(REQ_RECV_SIZ, NSPMD, "REQ_RECV_SIZ")
+        call my_alloc(REQ_RECV_MSG, NSPMD, "REQ_RECV_MSG")
+        call my_alloc(IRCOM, NSPMD, "IRCOM")
+        call my_alloc(ISCOM, NSPMD, "ISCOM")
+        call my_alloc(ISCOMS, NSPMD, "ISCOMS")
         ALLOCATE(SIZBUF_R(NSPMD))
         ALLOCATE(SIZBUF_S(NSPMD))
         ALLOCATE(MSGBUF_R(NSPMD))
         ALLOCATE(MSGBUF_S(NSPMD))
-        ALLOCATE(ICOMM2_SEND(NSPMD),ICOMM2_RCV(NSPMD))
+        call my_alloc(ICOMM2_SEND, NSPMD, "ICOMM2_SEND")
+        call my_alloc(ICOMM2_RCV, NSPMD, "ICOMM2_RCV")
 c       ALLOCATE(MSGBUF_S_LEN(NSPMD))
 c       MSGBUF_S_LEN(1:NSPMD) = 0
 c       ALLOCATE(MSGBUF_R_LEN(NSPMD))
@@ -161,8 +170,8 @@ c       MSGBUF_R_LEN(1:NSPMD) = 0
       ENDIF
 
       !Initialization
-      REQ_RECV_SIZ(1:NSPMD) = MPI_REQUEST_NULL 
-      REQ_RECV_MSG(1:NSPMD) = MPI_REQUEST_NULL 
+      REQ_RECV_SIZ(1:NSPMD) = SPMD_REQUEST_NULL 
+      REQ_RECV_MSG(1:NSPMD) = SPMD_REQUEST_NULL 
       PROC_LIST(1:NSPMD) = 0
       ISCOM(1:NSPMD) = 0
       ISCOMS(1:NSPMD) = 0
@@ -283,9 +292,9 @@ C
         IF (ICOMM2_SEND(P)==1)THEN
           MSGTYP = MSGOFF
           L  = 2*NBINTC
-          CALL MPI_ISEND(
-     S      SIZBUF_S(P)%P(1),L,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_SEND_SIZ(P),IERROR)
+          CALL spmd_isend(
+     S      SIZBUF_S(P)%P(1:L),L,IT_SPMD(P),MSGTYP,
+     G      REQ_SEND_SIZ(P))
         ENDIF
       ENDDO
 
@@ -298,9 +307,9 @@ C
           NB_TO_RECV = NB_TO_RECV + 1
           PROC_LIST(NB_TO_RECV) = P
           L = 2 * NBINTC
-          CALL MPI_IRECV(SIZBUF_R(P)%P(1),L,
-     .                  MPI_INTEGER,IT_SPMD(P),
-     .                  MSGTYP,SPMD_COMM_WORLD,REQ_RECV_SIZ(NB_TO_RECV),IERROR)
+          CALL spmd_irecv(SIZBUF_R(P)%P(1:L),L,
+     .                  IT_SPMD(P),
+     .                  MSGTYP,REQ_RECV_SIZ(NB_TO_RECV))
 
         ENDIF
       ENDDO
@@ -347,9 +356,9 @@ C                 WRITE(6,*) __FILE__,ISPMD,"RECV",P-1,LEN
             ENDIF
           ENDDO
           MSGTYP = MSGOFF2
-          CALL MPI_ISEND(
-     S        MSGBUF_S(P)%P(1),IDEB,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_SEND_MSG(P),IERROR)
+          CALL spmd_isend(
+     S        MSGBUF_S(P)%P(1:IDEB),IDEB,IT_SPMD(P),MSGTYP,
+     G        REQ_SEND_MSG(P))
         ENDIF   
       ENDDO  
       ENDIF ! ICOMM /= 0)
@@ -371,7 +380,7 @@ C RECEPTION OF sizes
 !      CALL MPI_WAITALL(NB_TO_RECV,REQ_RECV_SIZ(1:NB_TO_RECV),MPI_STATUSES_IGNORE,IERROR)
 
       DO I = 1, NB_TO_RECV
-        CALL MPI_WAITANY(NB_TO_RECV,REQ_RECV_SIZ,INDEX_PROC,STATUS,IERROR)
+        CALL spmd_waitany(REQ_RECV_SIZ,NB_TO_RECV,INDEX_PROC,STATUS)
         P = PROC_LIST(INDEX_PROC)
 !        P = PROC_LIST(I)
 
@@ -397,8 +406,8 @@ C RECEPTION OF sizes
         IF(LEN>0) THEN
           ALLOCATE(MSGBUF_R(P)%P(LEN))
           MSGTYP = MSGOFF2
-          CALL MPI_IRECV(MSGBUF_R(P)%P(1),LEN,MPI_INTEGER,IT_SPMD(P),
-     .                MSGTYP,SPMD_COMM_WORLD,REQ_RECV_MSG(I),IERROR)
+           CALL spmd_irecv(MSGBUF_R(P)%P(1:LEN),LEN,IT_SPMD(P),
+     .                MSGTYP,REQ_RECV_MSG(I))
 
         ENDIF
       ENDDO
@@ -410,11 +419,11 @@ C RECEPTION OF sizes
 
 C RECEPTION of messages
       DO P = 1, NB_TO_RECV
-        CALL MPI_WAIT(REQ_RECV_MSG(P),STATUS,IERROR)
+        CALL spmd_wait(REQ_RECV_MSG(P),STATUS)
       ENDDO
       DO P = 1, NSPMD
         IF (ICOMM2_SEND(P)==1) THEN
-          CALL MPI_WAIT(REQ_SEND_SIZ(P),STATUS,IERROR)
+          CALL spmd_wait(REQ_SEND_SIZ(P))
         ENDIF
       ENDDO
 
@@ -429,7 +438,7 @@ C MAJ STRUCTURES D ECHANGES
 C interface retriee ?
         IF(NEWFRONT(NIN)==2) THEN
           IDEB = 0
-          IF(ASSOCIATED(NSVSI(NIN)%P))DEALLOCATE(NSVSI(NIN)%P)
+          IF(ASSOCIATED(NSVSI(NIN)%P)) call my_dealloc(NSVSI(NIN)%P)
           LEN = 0
           DO P = 1, NSPMD
             LEN = LEN + NSNSI(NIN)%P(P)
@@ -451,7 +460,7 @@ C test if proc has sent something
 C
           IF(IPARI(7,NIN) == 20 .OR. (IPARI(7,NIN) == 25.AND. IPARI(58,NIN) > 0) )THEN
             IDEB = 0
-            IF(ASSOCIATED(NSVSIE(NIN)%P))DEALLOCATE(NSVSIE(NIN)%P)
+            IF(ASSOCIATED(NSVSIE(NIN)%P)) call my_dealloc(NSVSIE(NIN)%P)
             LEN = 0
             DO P = 1, NSPMD
               LEN = LEN + NSNSIE(NIN)%P(P)
@@ -478,11 +487,11 @@ C               WRITE(6,*) __FILE__,ISPMD,"SEND",P-1,LEN
 C Waiting for message reception
       DO P = 1, NSPMD
         IF(IRCOM(P)>0) THEN
-          DEALLOCATE(MSGBUF_R(P)%P)
+          call my_dealloc(MSGBUF_R(P)%P)
         ENDIF
         IF(ISCOM(P)>0) THEN
-          CALL MPI_WAIT(REQ_SEND_MSG(P),STATUS,IERROR)
-          DEALLOCATE(MSGBUF_S(P)%P)
+          CALL spmd_wait(REQ_SEND_MSG(P))
+          call my_dealloc(MSGBUF_S(P)%P)
         ENDIF   
       ENDDO
 
@@ -569,9 +578,9 @@ C allocate communication structure
               ALLOCATE(MSGBUF_S(P)%P(LENOUT))
               MSGTYP = MSGOFF3
               SIZ = NINTER * 2
-              CALL MPI_ISEND(
-     S          ISUBTMP(1,1,P),SIZ,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G          SPMD_COMM_WORLD,REQ_S(P),IERROR)
+              CALL spmd_isend(
+     S          ISUBTMP(:,:,P),SIZ,IT_SPMD(P),MSGTYP,
+     G          REQ_S(P))
             END IF
           END IF
         END DO
@@ -584,8 +593,8 @@ C
             LENOUT = 0
             SIZ = NINTER * 2
 C received in the unused part of the isubtmp buffer
-            CALL MPI_RECV(ISUBTMP2(1,1,P),SIZ,MPI_INTEGER,IT_SPMD(P),
-     .                    MSGTYP,SPMD_COMM_WORLD,STATUS,IERROR)
+            CALL spmd_recv(ISUBTMP2(:,:,P),SIZ,IT_SPMD(P),
+     .                    MSGTYP,STATUS)
             DO II = 1, NBINTC
               NIN = INTLIST(II)
 C interface stripped with sub-interfaces ?
@@ -620,7 +629,7 @@ C Comm Save length in Iscom
 C
         DO P = 1, NSPMD
           IF(IRCOM(P)>0) THEN
-            CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_S(P))
           END IF
         END DO
 C
@@ -705,9 +714,9 @@ C Comm Save length in IRCOM
           IF(IRCOM(P)>0) THEN
             MSGTYP = MSGOFF4        
 C           WRITE(6,*) "SEND",IRCOM(P) ,"TO",P-1
-            CALL MPI_ISEND(
-     S         MSGBUF_S(P)%P(1),IRCOM(P),MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G         SPMD_COMM_WORLD,REQ_S(P),IERROR)
+            CALL spmd_isend(
+     S         MSGBUF_S(P)%P(1:IRCOM(P)),IRCOM(P),IT_SPMD(P),MSGTYP,
+     G         REQ_S(P))
           END IF
         END DO  
 C
@@ -719,8 +728,8 @@ C Comm Save length in Iscom
             MSGTYP = MSGOFF4
 C           WRITE(6,*) "RECV",ISCOM(P) ,"FROM",P-1
 
-            CALL MPI_RECV(MSGBUF_R(P)%P(1),ISCOM(P),MPI_INTEGER,IT_SPMD(P),
-     .                    MSGTYP,SPMD_COMM_WORLD,STATUS,IERROR)
+            CALL spmd_recv(MSGBUF_R(P)%P(1:ISCOM(P)),ISCOM(P),IT_SPMD(P),
+     .                    MSGTYP,STATUS)
 C            DO II = 1,ISCOM(P)
 C               WRITE(6,*) "MSGBUF_R(",P-1,")%P(",II,")=",MSGBUF_R(P)%P(II)
 C            ENDDO
@@ -737,7 +746,7 @@ C
 C interface stripped with sub-interfaces ?
           IF(NEWFRONT(NIN)==2.AND.IPARI(36,NIN)>0.AND.
      +       IPARI(7,NIN)/=17) THEN
-            IF(ASSOCIATED(LISUBSFI(NIN)%P))DEALLOCATE(LISUBSFI(NIN)%P)
+            IF(ASSOCIATED(LISUBSFI(NIN)%P)) call my_dealloc(LISUBSFI(NIN)%P)
             LEN = 0
             DO P = 1, NSPMD
               LEN = LEN + NISUBSFI(NIN)%P(P)
@@ -746,12 +755,11 @@ C interface stripped with sub-interfaces ?
             IF(.TRUE.) THEN
               ALLOCATE(LISUBSFI(NIN)%P(LEN))
               IF(IPARI(7,NIN) == 7.OR.IPARI(7,NIN) == 11.OR.IPARI(7,NIN) == 24.OR.IPARI(7,NIN) == 25) THEN
-                IF(ASSOCIATED(INFLG_SUBSFI(NIN)%P))DEALLOCATE(INFLG_SUBSFI(NIN)%P)
+                IF(ASSOCIATED(INFLG_SUBSFI(NIN)%P)) call my_dealloc(INFLG_SUBSFI(NIN)%P)
                 ALLOCATE(INFLG_SUBSFI(NIN)%P(LEN))
               END IF
               LEN = 1
-              IF(ASSOCIATED(ADDSUBSFI(NIN)%P))
-     .          DEALLOCATE(ADDSUBSFI(NIN)%P)
+              IF(ASSOCIATED(ADDSUBSFI(NIN)%P)) call my_dealloc(ADDSUBSFI(NIN)%P)
               DO P = 1, NSPMD
                 LEN = LEN + NSNFI(NIN)%P(P)
               END DO
@@ -788,7 +796,7 @@ C interface stripped with sub-interfaces ?
             END IF
             IF(IPARI(7,NIN) == 25 .AND. IPARI(58,NIN) > 0) THEN
               !type 25 edge part
-              IF(ASSOCIATED(LISUBSFIE(NIN)%P))DEALLOCATE(LISUBSFIE(NIN)%P)
+              IF(ASSOCIATED(LISUBSFIE(NIN)%P)) call my_dealloc(LISUBSFIE(NIN)%P)
               LEN = 0
               DO P = 1, NSPMD
                 LEN = LEN + NISUBSFIE(NIN)%P(P)
@@ -798,11 +806,11 @@ C             WRITE(6,*) NIN,"SIZE LISUBSFIE=",LEN
               IF(.TRUE.) THEN
                 ALLOCATE(LISUBSFIE(NIN)%P(LEN))
                 IF(IPARI(7,NIN)==25)THEN
-                  IF(ASSOCIATED(INFLG_SUBSFIE(NIN)%P))DEALLOCATE(INFLG_SUBSFIE(NIN)%P)
+                  IF(ASSOCIATED(INFLG_SUBSFIE(NIN)%P)) call my_dealloc(INFLG_SUBSFIE(NIN)%P)
                   ALLOCATE(INFLG_SUBSFIE(NIN)%P(LEN))
                 END IF
                 LEN = 1
-                IF(ASSOCIATED(ADDSUBSFIE(NIN)%P))  DEALLOCATE(ADDSUBSFIE(NIN)%P)
+                IF(ASSOCIATED(ADDSUBSFIE(NIN)%P)) call my_dealloc(ADDSUBSFIE(NIN)%P)
                 DO P = 1, NSPMD
                   LEN = LEN + NSNFIE(NIN)%P(P)
                 END DO
@@ -845,11 +853,11 @@ C                     WRITE(6,*) P-1,"INFLG --- MSGBUF_R(",IDEB2+J,")=", MSGBUF_
 C
         DO P = 1, NSPMD
           IF(IRCOM(P)>0) THEN
-            CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
-            DEALLOCATE(MSGBUF_S(P)%P)
+            CALL spmd_wait(REQ_S(P))
+            call my_dealloc(MSGBUF_S(P)%P)
           END IF
           IF(ISCOM(P)>0) THEN
-            DEALLOCATE(MSGBUF_R(P)%P)
+            call my_dealloc(MSGBUF_R(P)%P)
           END IF
         END DO
 C

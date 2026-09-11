@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_brick_spmd       ../engine/source/output/sta/stat_brick_spmd.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod          ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod           ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE STAT_BRICK_SPMD(ITAB,IPART,IGEO,IXS,IPARTS,
      .                     IPART_STATE,NODTAG,STAT_INDXS,
@@ -45,6 +47,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -82,11 +85,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C     8 NODES BRICK
 C-----------------------------------------------
-      CALL MY_ALLOC(IADG,NSPMD,NPART)
-      CALL MY_ALLOC(IADD,NPART+1)
-      CALL MY_ALLOC(NP,24*NUMELSG)
-      CALL MY_ALLOC(NPGLOB,24*NUMELSG)
-      CALL MY_ALLOC(CLEF,2,NUMELSG)
+      call my_alloc(IADG, NSPMD, NPART, "IADG")
+      call my_alloc(IADD, NPART+1, "IADD")
+      call my_alloc(NP, 24*NUMELSG, "NP")
+      call my_alloc(NPGLOB, 24*NUMELSG, "NPGLOB")
+      call my_alloc(CLEF, 2, NUMELSG, "CLEF")
 C-----------------------------------------------
       IADD = 0
       NPGLOB(1:24*NUMELSG) = 0
@@ -483,11 +486,11 @@ C-----
         END DO
       ENDIF
 C-----------------------------------------------
-      DEALLOCATE(IADG)
-      DEALLOCATE(IADD)
-      DEALLOCATE(NP)
-      DEALLOCATE(NPGLOB)
-      DEALLOCATE(CLEF)
+      call my_dealloc(IADG)
+      call my_dealloc(IADD)
+      call my_dealloc(NP)
+      call my_dealloc(NPGLOB)
+      call my_dealloc(CLEF)
 C-----------------------------------------------
       RETURN
       END

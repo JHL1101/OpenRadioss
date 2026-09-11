@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sh_offset_jonct_chk_mod   ../starter/source/elements/shell/shell_offset/sh_offset_jonkt_chk.F90
 !||--- called by ------------------------------------------------------
@@ -55,6 +56,8 @@
           use constant_mod, only : zero,one,fourth
           use same_shellori_mod, only:same_shellori
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
@@ -81,8 +84,8 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(index(8*nshel))
-          allocate(lineix(2,4*nshel))
+          call my_alloc(index,8*nshel,"index")
+          call my_alloc(lineix,2,4*nshel,"lineix")
           ll = 0
           do j=1,nshel
             do k=1,4
@@ -224,7 +227,7 @@
 !---------------------------------------
 !       remove one more element line for high thikness case
 !---------------------------------------
-            allocate(icmore(nshel))
+            call my_alloc(icmore,nshel,"icmore")
             icmore = 0
             l = 1
             li  = index(l)
@@ -275,10 +278,10 @@
             do j=1,nshel
               if (icmore(j)==1.and.ichange(j)>0) ichange(j) = -ichange(j)
             end do
-            deallocate(icmore)
+            call my_dealloc(icmore)
           end if !(nl_max>=3) then
-          deallocate(index)
-          deallocate(lineix)
+          call my_dealloc(index)
+          call my_dealloc(lineix)
 !
         end subroutine sh_offset_jonct_chk
       end module sh_offset_jonct_chk_mod

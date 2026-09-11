@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inint3_thkvar          ../starter/source/interfaces/inter3d1/inint3_thkvar.F
 !||--- called by ------------------------------------------------------
@@ -57,6 +58,7 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use element_mod , only :nixs,nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -99,9 +101,9 @@ C-----------------------------------------------
       INTEGER NRTS, NRTM, NSN, NMN, NTY, NST, MST, NOINT,
      .   I, I_STOK,IRS,IRM,
      .   NSEG, NGROUS, NG, INACTI,IWPENE,
-     .   JLT_NEW,IGAP,MULTIMP,IADM,INTTH,
+     .   IGAP,MULTIMP,IADM,INTTH,
      .   ISU1, ISU2,
-     .   ISK, IROT, J, MSR, IRB, K, NSL, N
+     .   IROT, J, MSR, IRB, K, NSL, N
       INTEGER, DIMENSION(MVSIZ) ::PROV_N,PROV_E
       INTEGER, DIMENSION(MVSIZ) :: IX1,IX2,IX3,IX4,NSVG
       my_real, DIMENSION(MVSIZ) :: X1,X2,X3,X4
@@ -124,12 +126,12 @@ C     REAL
       my_real
      .   MAXBOX,MINBOX
       my_real
-     .   GAPV(MVSIZ), PENE(MVSIZ),GAP0
+     .   PENE(MVSIZ),GAP0
       CHARACTER MESS*40
       DATA MESS/'/INTER/TYPE21 INITIALIZATIONS           '/
 C-----------------------------------------------
 C
-      ALLOCATE(TAGNOD(NUMNOD))
+      call my_alloc(TAGNOD, NUMNOD, "TAGNOD")
       IWPENE = 0
       NRTS  =IPARI(3)
       NRTM  =IPARI(4)
@@ -345,26 +347,14 @@ C----------------------------------------------------------------
      3   INTBUF_TAB%VARIABLES(28),INTBUF_TAB%VARIABLES(29),NSN,INTBUF_TAB%XSAV)
 C=======================================================================
       ENDIF
-      DEALLOCATE(TAGNOD)
+      CALL MY_DEALLOC(TAGNOD)
 C
       RETURN
 C---+----1----+----2----+----3----+----4----+----5----+----6----+----7--
  2001 FORMAT(//,1X,'INTERFACE NUMBER. . . . . . . . . . . . . .',I10/
      +      ,1X,'INTERFACE TYPE. . . . . . . . . . . . . . .',I6/)
- 2002 FORMAT(//
-     +'   SECONDARY NEAREST  NEAREST        MAIN NODES            SECONDARY '/
-     +'   NODE   MAIN  SEGMENT                               S     T')
- 2022 FORMAT(//
-     +'   SECONDARY  NEAREST        MAIN NODES            SECONDARY '/
-     +'   NODE   SEGMENT                               ',
-     +'      S      T     DIST')
- 2003 FORMAT(//
-     +'  MAIN NEAREST  NEAREST        SECONDARY  NODES            MAIN'/
-     +'   NODE    SECONDARY  SEGMENT                               S     T')
  2007 FORMAT(//'    IMPACT CANDIDATES',/,
      +'  MAIN        SECONDARY  NODES '/
      +'   NODE ')
- 2011 FORMAT(//'    IMPACT CANDIDATES',/,
-     +'  MAIN   NODES     SECONDARY  NODES ')
 C-----
       END

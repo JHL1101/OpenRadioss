@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dim_s10edg   ../starter/source/elements/solid/solide10/dim_s10edg.F
 !||--- called by ------------------------------------------------------
@@ -113,8 +114,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,NG, NEL, NFT,NF1, NF2, N, ITY,ISOLNOD,ISROT,NC(4)
-      INTEGER IPERM1(6),IPERM2(6),N1,N2,NEDG,ND,II,JJ
+      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N, ITY,ISOLNOD,ISROT,NC(4)
+      INTEGER IPERM1(6),IPERM2(6),N1,N2,NEDG,II,JJ
 C     REAL
       DATA IPERM1/1,2,3,1,2,3/
       DATA IPERM2/2,3,1,4,4,4/
@@ -188,7 +189,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ICND_CP(3,NS10E),IE,N
+      INTEGER J,ICND_CP(3,NS10E),IE,N
 C     REAL
 C------reordering for P/ON----------------------------
       ICND_CP(1:3,1:NS10E)=ICNDS10(1:3,1:NS10E)
@@ -230,7 +231,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N,ND
+      INTEGER I,N,ND
 C     REAL
 C------remove tagged nodes in INN(*)----------------------------
       ND = 0
@@ -262,7 +263,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N,ND
+      INTEGER I,N,ND
 C     REAL
 C------remove tagged nodes in INN(*) and will be degenerated-----------
       ND = 0
@@ -316,7 +317,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N,ND,N1,N2,NNEW,ID,IER1,IER2
+      INTEGER I,N,ND,N1,N2,NNEW,ID,IER1,IER2
       LOGICAL IS1,IS2
 C     REAL
 C------treatment for tagged nodes in INN(*) first passe-
@@ -420,7 +421,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,N,K,KK,NSL,NSL_N,K_N,NN
+      INTEGER N,K,KK,NSL,NSL_N,K_N,NN
 C     REAL
 C------removing Nd from LPBY(*)--degenerating--
       K = 0
@@ -480,7 +481,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N,ND,N1,N2,NNEW,IER1,ID,IER2,M_1,M_2
+      INTEGER I,N,ND,N1,N2,NNEW,IER1,ID,IER2,M_1,M_2
       LOGICAL IS1,IS2
 C     REAL
 C----- IER >0 warning; <0 error out 
@@ -627,7 +628,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,N,K,KK,NSL,NSL_N,K_N,NS
+      INTEGER I,J,K,NSL,NSL_N,NS
       INTEGER ITAG(NUMNOD)
 C     REAL
 C-----
@@ -652,19 +653,20 @@ C
       RETURN
       END
 !||====================================================================
-!||    bcsmodif_nd   ../starter/source/elements/solid/solide10/dim_s10edg.F
+!||    bcsmodif_nd    ../starter/source/elements/solid/solide10/dim_s10edg.F
 !||--- called by ------------------------------------------------------
-!||    lectur        ../starter/source/starter/lectur.F
+!||    lectur         ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../starter/source/output/message/message.F
+!||    ancmsg         ../starter/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod   ../starter/share/message_module/message_mod.F
+!||    message_mod    ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE BCSMODIF_ND(ICODE, ITAGND,ICNDS10,ITAB  ,
      .                       NNPBY,SLRBODY,NRBE2L ,SLRBE2,
      .                       NPBY ,LPBY   ,IRBE2  ,LRBE2 )
 C=======================================================================
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -687,13 +689,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, NFT,NF1, NF2, N,ND,N1,N2,ID,IPR
+      INTEGER N,ND,N1,N2,ID,IPR,IPR1
       INTEGER IS1,IS2,ISMIN,NSL,M,K,KK
       INTEGER, ALLOCATABLE, DIMENSION(:) :: ICODEM
 C     REAL
 C------treatment for /BCS ----------------------------
 ! case of BCS by RBODY or RBE2
-      ALLOCATE(ICODEM(NUMNOD))
+      call my_alloc(ICODEM, NUMNOD, "ICODEM")
       ICODEM(1:NUMNOD) = ICODE(1:NUMNOD)
       K = 0
       DO N = 1, NRBYKIN
@@ -717,8 +719,9 @@ C------treatment for /BCS ----------------------------
         ENDDO
       ENDDO
       IPR = 0
+      IPR1 = 0
       DO N=1,NUMNOD
-       IF (ICODEM(N)>0 .AND. ITAGND(N) /=0 ) THEN
+       IF (ITAGND(N) /=0 ) THEN
          ID = IABS(ITAGND(N))
          ND = ICNDS10(1,ID)
          N1 = ICNDS10(2,ID)
@@ -726,7 +729,8 @@ C------treatment for /BCS ----------------------------
          IS1 = ICODEM(N1)
          IS2 = ICODEM(N2)
          ISMIN = MIN(IS1,IS2)
-         IF (IS1/=ICODEM(N).AND.IS2/=ICODEM(N).AND.ISMIN<ICODEM(N)) THEN
+         IF (ICODEM(N)>0) THEN
+           IF (IS1/=ICODEM(N).AND.IS2/=ICODEM(N).AND.ISMIN<ICODEM(N)) THEN
 C----error out  ND has more /BCS than edge node
             CALL ANCMSG(MSGID=1208,
      .                MSGTYPE=MSGERROR,
@@ -734,29 +738,44 @@ C----error out  ND has more /BCS than edge node
      .                I1=ITAB(ND),
      .                C1='Boundary conditions ',
      .                C2='Boundary conditions')
-         ELSE
+           ELSE
 C----remove Nd from /BCS +degenerating
-           ICODE(N) = 0
-           IPR = 1
-           IF (ITAGND(N)>0)ITAGND(N) = -ITAGND(N) 
-           IF (IPRI>=5)
-     .     CALL ANCMSG(MSGID=1207,
+             ICODE(N) = 0
+             IPR = 1
+             IF (ITAGND(N)>0)ITAGND(N) = -ITAGND(N) 
+             IF (IPRI>=5)
+     .       CALL ANCMSG(MSGID=1207,
      .                MSGTYPE=MSGINFO,
      .                ANMODE=ANINFO_BLIND_1,
      .                I1=ITAB(ND),
      .                PRMOD=MSG_CUMU)
-         END IF
+           END IF
+         ELSEIF (ISMIN>0) THEN   ! case w/ Itetra4=10
+             IPR1 = 1
+             IF (ITAGND(N)>0)ITAGND(N) = -ITAGND(N) 
+             IF (IPRI>=5)
+     .       CALL ANCMSG(MSGID=3162,
+     .                MSGTYPE=MSGINFO,
+     .                ANMODE=ANINFO_BLIND_1,
+     .                I1=ITAB(ND),
+     .                PRMOD=MSG_CUMU)
+         END IF !(ICODEM(N)>0) THEN
        END IF
       ENDDO 
-      IF (IPR >0.AND.IPRI>=5) THEN
-          CALL ANCMSG(MSGID=1207,
+      IF (IPRI>=5) THEN
+        IF (IPR>0)  CALL ANCMSG(MSGID=1207,
      .                MSGTYPE=MSGINFO,
      .                ANMODE=ANINFO_BLIND_1,
      .                C1='Boundary conditions ',
      .                C2='Boundary conditions',
      .                PRMOD=MSG_PRINT)
+        IF (IPR1>0)  CALL ANCMSG(MSGID=3162,
+     .                MSGTYPE=MSGINFO,
+     .                ANMODE=ANINFO_BLIND_1,
+     .                C1='Boundary conditions ',
+     .                PRMOD=MSG_PRINT)
       END IF 
-      DEALLOCATE(ICODEM)
+      CALL MY_DEALLOC(ICODEM)
 C
       RETURN
       END
@@ -770,7 +789,7 @@ C
 !||--- uses       -----------------------------------------------------
 !||    message_mod   ../starter/share/message_module/message_mod.F
 !||====================================================================
-      SUBROUTINE FIXMODIF_ND(IBFV, ITAGND,ICNDS10,ITAB)
+      SUBROUTINE FIXMODIF_ND(IBFV, ITAGND,ICNDS10,ITAB,IKINE)
 C=======================================================================
       USE MESSAGE_MOD
 C-----------------------------------------------
@@ -787,11 +806,12 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER IBFV(NIFV,*), ITAGND(*),ICNDS10(3,*),ITAB(*)
+      INTEGER, DIMENSION(NUMNOD)      ,INTENT (IN) :: IKINE
 C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NG, NEL, DIR, N,ND,N1,N2,K,ID,IPR
+      INTEGER I,N,ND,N1,N2,K,ID,IPR,IPR1
       LOGICAL IS1,IS2
 C-----------------------------------------------
 C   External function
@@ -846,6 +866,30 @@ C
      .                C2='Imposed VEL/DISP/ACC',
      .                PRMOD=MSG_PRINT)
        END IF 
+! add degenerating nd for special case of kinematic two edge nodes including Itetra4=10
+      IPR1 = 0
+       DO I = 1,NS10E
+         N = IABS(ICNDS10(1,I))
+         N1 = ICNDS10(2,I)
+         N2 = ICNDS10(3,I)
+         IF (IKINE(N1)/=0.AND.IKINE(N2)==IKINE(N1).AND.ITAGND(N)>0) THEN 
+            ITAGND(N) = -ITAGND(N)
+            IPR1 = 1
+            IF (IPRI>=5)
+     .       CALL ANCMSG(MSGID=3162,
+     .                   MSGTYPE=MSGINFO,
+     .                   ANMODE=ANINFO_BLIND_1,
+     .                   I1=ITAB(N),
+     .                   PRMOD=MSG_CUMU)
+         END IF  !(IS1/=0.AND.IS2/=0.AND.ITAGND(N)>0) THEN 
+       END DO 
+       IF (IPR1 >0.AND.IPRI>=5) THEN
+          CALL ANCMSG(MSGID=3162,
+     .                MSGTYPE=MSGINFO,
+     .                ANMODE=ANINFO_BLIND_1,
+     .                C1='Kinematic conditions',
+     .                PRMOD=MSG_PRINT)
+       END IF 
 C
       RETURN
       END
@@ -871,7 +915,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NI,K
+      INTEGER I,NI,K
 C----6---------------------------------------------------------------7---------8
        SAMEFVID=.FALSE.
        DO I =1,NFXVEL
@@ -886,14 +930,14 @@ C
       RETURN
       END
 !||====================================================================
-!||    int2modif_nd           ../starter/source/elements/solid/solide10/dim_s10edg.F
+!||    int2modif_nd    ../starter/source/elements/solid/solide10/dim_s10edg.F
 !||--- called by ------------------------------------------------------
-!||    inintr2                ../starter/source/interfaces/inter3d1/inintr2.F
+!||    inintr2         ../starter/source/interfaces/inter3d1/inintr2.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                 ../starter/source/output/message/message.F
-!||    intab                  ../starter/source/interfaces/inter3d1/i24tools.F
+!||    ancmsg          ../starter/source/output/message/message.F
+!||    intab           ../starter/source/interfaces/inter3d1/i24tools.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod            ../starter/share/message_module/message_mod.F
+!||    message_mod     ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE INT2MODIF_ND(IPARI,INTBUF_TAB,ITAGND,ICNDS10,ITAB)
 C-----------------------------------------------
@@ -901,7 +945,6 @@ C   M o d u l e s
 C----------------------------------------------- 
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD
-      USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -925,11 +968,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,N,NTY,NSN,NMN,ISL,NKIN,NOINT,IMODI,II,N1,N2,ND
+      INTEGER I,N,NTY,NSN,NMN,ISL,NOINT,IMODI,II,N1,N2
       INTEGER K,ILEV,NUVAR,IDEL7N,INTTH,IPR,IML,ICOM
       INTEGER, DIMENSION(NUMNOD) :: ITAGS,ITAGMD
-      CHARACTER(LEN=NCHARTITLE):: TITR
-      LOGICAL IS1,IS2,ISD
 C=======================================================================
 C--------done before : switch to penalty if only ND is secnd (N1,N2 not)
 C-----------NOT necessary after tests---------------
@@ -1200,7 +1241,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER K, I, IS,IAD, J, KK,  N, NL,NIR,NL_L,P,NI,ICOMP(NSPMD)
+      INTEGER K, I, J, KK,  N, NIR,P,NI,ICOMP(NSPMD)
 C-----------------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------------
@@ -1309,8 +1350,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, L, K, N, OFF, NTY, NRTS, NRTM, NSN, NMN,
-     .        KK, NIR,ADSKY(NUMNOD+1)
+      INTEGER I, J, K, KK, NIR,ADSKY(NUMNOD+1)
 C-----------------------------------------------
 C   CALCULATION OF CNE ADDCNE
 C-----------------------------------------------
@@ -1357,7 +1397,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ND
+      INTEGER I,ND
 C     REAL
 C------put STIFN(ND)=0 for mscalling dt estimation
       DO I=1,NS10E
@@ -1392,7 +1432,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ND,N1,N2
+      INTEGER I,ND,N1,N2
 C     REAL
       my_real
      .   STIF 
@@ -1437,7 +1477,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,N,K,KK,NSL,NSL_N,K_N,NS,ID,N1,N2
+      INTEGER I,J,K,KK,NSL,NSL_N,ID,N1,N2
 C     REAL
 C------removing Nd from LBCSCYC(*)--
       DO I = 1, NBCSCYC

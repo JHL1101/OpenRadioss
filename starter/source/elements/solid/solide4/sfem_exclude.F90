@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sfem_exclude_mod   ../starter/source/elements/solid/solide4/sfem_exclude.F90
 !||--- called by ------------------------------------------------------
@@ -27,11 +28,11 @@
 !||====================================================================
       module sfem_exclude_mod
 
-      implicit none
+        implicit none
 
       contains
 !=======================================================================================================================
-!!\brief This subroutine get number of nodes excluded for nodal pressure
+!!\brief This subroutine gets number of nodes excluded for nodal pressure
 !=======================================================================================================================
 !||====================================================================
 !||    sfem_exclude_dim   ../starter/source/elements/solid/solide4/sfem_exclude.F90
@@ -41,13 +42,14 @@
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine sfem_exclude_dim(                                             &
-                   numnod,  nparg,  ngroup,  iparg,      ixs,                    &
-                   numels, ne_sfem)
+          numnod,  nparg,  ngroup,  iparg,      ixs,                    &
+          numels, ne_sfem)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use element_mod,            only: nixs
           use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -57,7 +59,7 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: numnod           !< number node
-          integer, intent (in   )                          :: nparg            !< 1er dim of iparg
+          integer, intent (in   )                          :: nparg            !< first dimension of iparg
           integer, intent (in   )                          :: ngroup           !< number of element groups
           integer, intent (in   )                          :: numels           !< number solid element
           integer, intent (in   ) ,dimension(nparg,ngroup) :: iparg            !< element group data
@@ -72,7 +74,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          call my_alloc(imid,numnod)
+          call my_alloc(imid,numnod,"imid")
           imid = 0
           ne_sfem = 0
           do ng=1,ngroup
@@ -86,27 +88,27 @@
             isfem =0
             if(isolnod==4.and.isrot == 3) isfem=1
             if(icpre>0.and.(isolnod==10.or.(isolnod==4.and.isrot == 1))) isfem=1
-            if (isfem==1) then 
+            if (isfem==1) then
               mid = ixs(1,nft + 1)
               do i = 1, nel
                 ii = nft + i
                 do j = 1, 4
                   n = ixs(1+j,ii)
-                  if (imid(n)==0) then 
-                      imid(n) = mid
+                  if (imid(n)==0) then
+                    imid(n) = mid
                   else if (imid(n) /= mid.and.imid(n) >0) then
-                      ne_sfem = ne_sfem + 1
-                      imid(n) = -mid
+                    ne_sfem = ne_sfem + 1
+                    imid(n) = -mid
                   end if
                 end do
               end do
-            end if !(isfem==1) then 
+            end if !(isfem==1) then
           end do !ng=1,ngroup
-          deallocate(imid)
+          call my_dealloc(imid)
 !
         end subroutine sfem_exclude_dim
 !=======================================================================================================================
-!!\brief This subroutine do the initialization of list of nodes excluded for nodal pressure
+!!\brief This subroutine performs the initialization of list of nodes excluded for nodal pressure
 !=======================================================================================================================
 !||====================================================================
 !||    sfem_exclude_ini   ../starter/source/elements/solid/solide4/sfem_exclude.F90
@@ -116,13 +118,14 @@
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine sfem_exclude_ini(                                             &
-                   numnod,  nparg,  ngroup,  iparg,      ixs,                    &
-                   numels,in_sfem, ne_sfem)
+          numnod,  nparg,  ngroup,  iparg,      ixs,                    &
+          numels,in_sfem, ne_sfem)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use element_mod,            only: nixs
           use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -132,7 +135,7 @@
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: numnod           !< number node
-          integer, intent (in   )                          :: nparg            !< 1er dim of iparg
+          integer, intent (in   )                          :: nparg            !< first dimension of iparg
           integer, intent (in   )                          :: ngroup           !< number of rwall groups
           integer, intent (in   )                          :: numels           !< number solid element
           integer, intent (in   ) ,dimension(nparg,ngroup) :: iparg            !< element group data
@@ -148,7 +151,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          call my_alloc(imid,numnod)
+          call my_alloc(imid,numnod,"imid")
           imid = 0
           ne = 0
           do ng=1,ngroup
@@ -162,24 +165,24 @@
             isfem =0
             if (isolnod==4.and.isrot == 3) isfem=1
             if (icpre>0.and.(isolnod==10.or.(isolnod==4.and.isrot == 1))) isfem=1
-            if (isfem==1) then 
-                mid = ixs(1,nft + 1)
-                do i = 1, nel
-                  ii = nft + i
-                  do j = 1, 4
-                    n = ixs(1+j,ii)
-                    if (imid(n)==0) then 
-                      imid(n) = mid
-                    else if (imid(n) /= mid .and. imid(n) >0) then
-                      ne = ne + 1
-                      in_sfem(ne) = n
-                      imid(n) = -mid
-                    end if
-                  end do
+            if (isfem==1) then
+              mid = ixs(1,nft + 1)
+              do i = 1, nel
+                ii = nft + i
+                do j = 1, 4
+                  n = ixs(1+j,ii)
+                  if (imid(n)==0) then
+                    imid(n) = mid
+                  else if (imid(n) /= mid .and. imid(n) >0) then
+                    ne = ne + 1
+                    in_sfem(ne) = n
+                    imid(n) = -mid
+                  end if
                 end do
-            end if !(isfem==1) then 
-           end do !ng=1,ngroup
-          deallocate(imid)
+              end do
+            end if !(isfem==1) then
+          end do !ng=1,ngroup
+          call my_dealloc(imid)
 !
         end subroutine sfem_exclude_ini
 !

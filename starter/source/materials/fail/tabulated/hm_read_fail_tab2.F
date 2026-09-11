@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_fail_tab2        ../starter/source/materials/fail/tabulated/hm_read_fail_tab2.F
 !||--- called by ------------------------------------------------------
@@ -49,6 +50,7 @@ C-----------------------------------------------
       USE HM_OPTION_READ_MOD
       USE ELBUFTAG_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -190,35 +192,26 @@ C-------------------------------------------------------------------------------
 C--------------------------------------------------------------------------------
 C     Filling buffer tables
     !     NUVAR fields
-    !          NUVAR( 1) : 
-    !          NUVAR( 2) : 
-    !          NUVAR( 3) : 
-    !          NUVAR( 4) : Stores position1 of table interpolation "Compute the element size regularization factor"
-    !          NUVAR( 5) : Stores position2 
-    !          NUVAR( 6) : Stores position3
-    !          NUVAR( 7) : Stores position if interpolation function Compute the strain rate dependency factor
-    !          NUVAR( 8) : Stores position 1 of table interpolation "COMPUTATION OF PLASTIC STRAIN AT FAILURE
-    !          NUVAR( 9) : Stores position 2
-    !          NUVAR(10) : Stores position 3
-    !          NUVAR(11) : Stores position 1 of table interpolation "COMPUTATION OF NECKING PLASTIC STRAIN
-    !          NUVAR(12) : Stores position 2
-    !          NUVAR(13) : Stores position 3
+    !          NUVAR( 1) : cumulated instability damage
+    !          NUVAR( 2) : cumulated necking critical damage
+    !          NUVAR( 3) : saved initial element size
 C--------------------------------------------------------------------------------
       FAIL%KEYWORD = 'TAB2' 
       FAIL%IRUPT   = IRUPT 
       FAIL%FAIL_ID = FAIL_ID 
       FAIL%NUPARAM = 25
       FAIL%NIPARAM = 1
-      FAIL%NUVAR   = 13
+      FAIL%NUVAR   = 3     !< state variables
+      FAIL%NVARTMP = 11    !< tmp variables to store last position used in function interpolation
       FAIL%NFUNC   = 4
       FAIL%NTABLE  = 3
       FAIL%NMOD    = 0
       FAIL%PTHK    = PTHKFAIL
 c            
-      ALLOCATE (FAIL%UPARAM(FAIL%NUPARAM))
-      ALLOCATE (FAIL%IPARAM(FAIL%NIPARAM))
-      ALLOCATE (FAIL%IFUNC (FAIL%NFUNC))
-      ALLOCATE (FAIL%TABLE (FAIL%NTABLE))
+      call my_alloc(FAIL%UPARAM, FAIL%NUPARAM, "FAIL%UPARAM")
+      call my_alloc(FAIL%IPARAM, FAIL%NIPARAM, "FAIL%IPARAM")
+      call my_alloc(FAIL%IFUNC, FAIL%NFUNC, "FAIL%IFUNC")
+      call my_alloc(FAIL%TABLE, FAIL%NTABLE, "FAIL%TABLE")
 c
       FAIL%IPARAM(1)  = MIDFAIL
 c

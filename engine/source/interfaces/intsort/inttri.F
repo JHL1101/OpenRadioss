@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inttri                       ../engine/source/interfaces/intsort/inttri.F
 !||--- called by ------------------------------------------------------
@@ -71,7 +72,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intmass_update               ../engine/source/interfaces/interf/intmass_update.F
 !||    my_barrier                   ../engine/source/system/machine.F
 !||    spmd_allglob_isum9           ../engine/source/mpi/generic/spmd_allglob_isum9.F
-!||    spmd_barrier                 ../engine/source/mpi/spmd_mod.F90
 !||    spmd_exch_sorting_efric      ../engine/source/mpi/interfaces/spmd_exch_sorting_efric.F
 !||    spmd_get_inacti_global       ../engine/source/mpi/interfaces/spmd_get_inacti_global.F
 !||    spmd_get_stif25_edg          ../engine/source/mpi/interfaces/spmd_getstif25_edg.F
@@ -98,6 +98,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intstamp_mod                 ../engine/share/modules/intstamp_mod.F
 !||    metric_mod                   ../common_source/modules/interfaces/metric_mod.F
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod             ../common_source/modules/nodal_arrays.F90
 !||    output_mod                   ../common_source/modules/output/output_mod.F90
 !||    sensor_mod                   ../common_source/modules/sensor_mod.F90
@@ -161,6 +163,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 #include      "macro.inc"
@@ -210,15 +214,15 @@ C-----------------------------------------------
       TYPE(INTSTAMP_DATA) INTSTAMP(*)
       my_real 
      .   WAG(*),
-     .   DT2T,DIST, DRETRI(*), EMINX(*),
+     .   DT2T, DRETRI(*), EMINX(*),
      .        THKNOD(*),DELTA_PMAX_GAP(NINTER),
      .        XSLV(18,NINTER),XMSR(12,NINTER),X21MSR(3,NINTSTAMP),
      .        VSLV(6,NINTER),VMSR(6,NINTER),V21MSR(3,NINTSTAMP),
      .        SIZE_T(NINTER),DXANCG(3,*), DIAG_SMS(*),
      .        FORNEQS(*), MAXDGAP(NINTER), T2FAC_SMS(*)
-      my_real, dimension(3*numnod), target, intent(in) :: X !< nodal position
-      my_real, dimension(3*numnod), target, intent(in) :: V !< velocity
-      my_real, dimension(3*numnod), target, intent(in) :: W !< velocity (interface 22)
+      my_real, dimension(3*numnod), target, intent(inout) :: X !< nodal position (modified in i22subvol.F)
+      my_real, dimension(3*numnod), target, intent(inout) :: V !< velocity
+      my_real, dimension(3*numnod), target, intent(inout) :: W !< velocity (interface 22)
       REAL*4 FSKYN25(3,*)
 
       TYPE(INTBUF_STRUCT_),DIMENSION(NINTER) :: INTBUF_TAB
@@ -240,11 +244,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER N, KK,LL, RETRI, NBLIST,NSENSOR,
-     .        IAD17, IGN, IGE, NME, NMES,I,J,K,
-     .        IDUM, IADI, ISTAMP, NRTM_T, NME_T, NEDGE_T, ESHIFT, SSHIFT, MULTIMP,
-     .        ISENS,NBF,NBL,IB, NIN,NSNE_MAX,NFIC,L_FIC,NNOD3,NSNE3,
-     .        NBINTC21, SIZE, NRTM_FE_T, NRTM_IGE_T, ITHK
+      INTEGER N, KK, RETRI, NSENSOR,
+     .        IAD17, IGN, IGE, NME, NMES,J,K,
+     .        IDUM, IADI, NRTM_T, NME_T, NEDGE_T, ESHIFT, SSHIFT,
+     .        ISENS,NBF,NBL,IB, NIN,NSNE_MAX,L_FIC,NNOD3,NSNE3,
+     .        NBINTC21, ITHK
       my_real PCT1, TS,DELTA_PMAX_DGAP(NINTER),LEN
       INTEGER NB_STOK_N(PARASIZ),NB_JLT(PARASIZ),RETRI21(NINTER),NBCUT,
      .        INTLIST21(NINTSTAMP)
@@ -253,10 +257,9 @@ C-----------------------------------------------
       my_real, DIMENSION(:),ALLOCATABLE, TARGET :: X_IGE,V_IGE
       my_real, DIMENSION(:),POINTER, contiguous :: PTR_X,PTR_V,PTR_MS
       INTEGER, DIMENSION(:),POINTER, contiguous :: PTR_KINET
-      my_real :: BID
-      INTEGER :: IBRIC, NBRIC, II, INOD, NODEID, ISU1, IAD, INACTI
-      LOGICAL :: M151_ALLOC, TYPE18
-      SAVE XE,VE,M151_ALLOC
+      INTEGER :: INACTI
+      LOGICAL :: TYPE18
+      SAVE XE,VE
       SAVE X_IGE,V_IGE,MAX_IGE,SIZE_X_IGE
       INTEGER :: MAX_IGE,SIZE_X_IGE
       INTEGER :: NB_INTER_SORTED        !   number of interfaces that need to be sorted
@@ -385,20 +388,21 @@ C        Look if interface is activated
       IF (NSNE_MAX>0 ) THEN
        L_FIC=3*(NSNE_MAX+NUMNOD)
        NNOD3 =3*NUMNOD
-       ALLOCATE(XE(L_FIC),VE(L_FIC))
+       call my_alloc(XE, L_FIC, "XE")
+       call my_alloc(VE, L_FIC, "VE")
        XE(1:NNOD3) = X(1:NNOD3)
        VE(1:NNOD3) = V(1:NNOD3)
       END IF
 
       IF(MAX_IGE>0) THEN
-        ALLOCATE( X_IGE(3*(NUMNOD+MAX_IGE)) )
-        ALLOCATE( V_IGE(3*(NUMNOD+MAX_IGE)) )
+        call my_alloc(X_IGE, 3*(NUMNOD+MAX_IGE), "X_IGE")
+        call my_alloc(V_IGE, 3*(NUMNOD+MAX_IGE), "V_IGE")
         X_IGE(1:3*NUMNOD) = X(1:3*NUMNOD)
         V_IGE(1:3*NUMNOD) = V(1:3*NUMNOD)
         SIZE_X_IGE = 3*(NUMNOD+MAX_IGE)
       ELSE
-        ALLOCATE( X_IGE(0) )
-        ALLOCATE( V_IGE(0) )
+        call my_alloc(X_IGE, 0, "X_IGE")
+        call my_alloc(V_IGE, 0, "V_IGE")
         SIZE_X_IGE = 0
       ENDIF
 
@@ -439,6 +443,7 @@ C
 C interface resorting criterion
 C
       DO KK=1,NBINTC
+        call my_barrier( ) ! add an omp barrier to avoid a data race due to !$omp end do nowait with armflang
         N      = INTLIST(KK)
         NTY    = IPARI(7,N)
         INACTI = IPARI(22,N)        
@@ -675,9 +680,10 @@ C End non -parallel part SMT
       ! ------------------------
       ! new sorting algorithm     
       IF(ITASK==0) NEED_TO_SORT = 0
-      ! find the list of interface (for the moment : type7) that needs to be sorted
-      CALL INTER_CHECK_SORT( ITASK,NEED_TO_SORT,NBINTC,INTLIST,IPARI,NSENSOR,
-     .     INTBUF_TAB,SENSORS%SENSOR_TAB,NB_INTER_SORTED,LIST_INTER_SORTED,INTER_STRUCT)
+      ! find the list of interface that needs to be sorted
+      CALL INTER_CHECK_SORT( ITASK,NEED_TO_SORT,NBINTC,INTLIST,
+     .     IPARI,NSENSOR,NCYCLE,INTBUF_TAB,SENSORS%SENSOR_TAB,
+     .     NB_INTER_SORTED,LIST_INTER_SORTED,INTER_STRUCT)
       ! globalize NEED_TO_SORT : 1= one or several interface(s) must be sorted 
       IF(NSPMD>1.AND.ITASK==0) CALL SPMD_ALLGLOB_ISUM9(NEED_TO_SORT,1)
       CALL MY_BARRIER()
@@ -881,7 +887,7 @@ c-----------------------------------------------------------------------
 
           CALL MY_BARRIER
           IF(ITASK==0)THEN            
-            DEALLOCATE(IRECT_L)
+            call my_dealloc(IRECT_L)
           END IF
           !--------------------------------------------------------------
           !    CINEMATIC TIME STEP (MINIMUM LENGTH)
@@ -975,7 +981,8 @@ c-----------------------------------------------------------------------
      4      nodes%ITAB    ,nodes%KINET        ,nodes%TEMP         ,RENUM     ,
      5      NSNFIOLD,IDUM         ,IDUM         ,NODNX_SMS ,
      6      H3D_DATA,ESHIFT       ,NEDGE_T      ,SSHIFT    ,NRTM_T ,
-     7      nodes%icodt   ,nodes%iskew        ,INTERFACES%PARAMETERS,GLOB_THERM%NODADT_THERM)
+     7      nodes%icodt   ,nodes%iskew        ,INTERFACES%PARAMETERS,GLOB_THERM%NODADT_THERM,
+     .                                                              INCONV)
 C-----------------------------------------------------------------------
         ENDIF
         IF(IMONM > 0) THEN
@@ -1111,7 +1118,8 @@ C-------  KINET,MS used for commu remot second, for the moment no need.
      4      nodes%ITAB    ,nodes%KINET        ,nodes%TEMP         ,RENUM     ,
      5      NSNFIOLD,NUM_IMP(N)   ,IND_IMP(IADI),NODNX_SMS ,
      6      H3D_DATA,ESHIFT,NEDGE_T ,SSHIFT     ,NRTM_T    ,
-     7      nodes%icodt   ,nodes%iskew        ,INTERFACES%PARAMETERS,GLOB_THERM%NODADT_THERM)
+     7      nodes%icodt   ,nodes%iskew        ,INTERFACES%PARAMETERS,GLOB_THERM%NODADT_THERM,
+     .                                                              INCONV)
             IADI = IADI+NUM_IMP(N)
 C-----------------------------------------------------------------------
         ELSEIF(NTY == 10)THEN
@@ -1599,7 +1607,8 @@ C Fin Partie non parallele
 
       ENDIF
 
-      DEALLOCATE(X_IGE,V_IGE)
+      call my_dealloc(X_IGE)
+      call my_dealloc(V_IGE)
 !$OMP END SINGLE
 
       RETURN

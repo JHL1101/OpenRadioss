@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_set_array     ../starter/source/model/sets/create_set_clause.F
 !||--- called by ------------------------------------------------------
@@ -129,6 +130,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE MESSAGE_MOD
       USE HM_OPTION_READ_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -158,10 +160,10 @@ C=======================================================================
 
       CALL HM_GET_INT_ARRAY_INDEX('idsmax' ,IDS_MAX ,JCLAUSE,IS_AVAILABLE,LSUBMODEL)
 
-      ALLOCATE(SET_READ_TMP(IDS_MAX))
+      call my_alloc(SET_READ_TMP, IDS_MAX, "SET_READ_TMP")
       SET_READ_TMP(1:IDS_MAX) = 0
 
-      ALLOCATE(INDEX(2*IDS_MAX))
+      call my_alloc(INDEX, 2*IDS_MAX, "INDEX")
       INDEX = 0
 
       NINDX = 0
@@ -210,8 +212,8 @@ C=======================================================================
 !---
 
 C-------------------------
-       DEALLOCATE(SET_READ_TMP)
-       DEALLOCATE(INDEX)
+       CALL MY_DEALLOC(SET_READ_TMP)
+       CALL MY_DEALLOC(INDEX)
 C-------------------------
       RETURN
       END
@@ -254,6 +256,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE MESSAGE_MOD
       USE HM_OPTION_READ_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -271,20 +274,18 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,IDS,NINDX,LIST_SIZE,IDS_MAX,PARTM,GENE_MAX,K,P,P1
+      INTEGER GENE_MAX,K,P,P1
       INTEGER START_GENE,END_GENE,INCR_GENE,PSTART,PSTOP,STACK,STACK_ONE,NB_RESULT
-      INTEGER IWORK(70000)
-!-
-      INTEGER, ALLOCATABLE, DIMENSION(:) :: SET_READ_TMP,SET_READ_ONE,IDEX,RESULT
+      INTEGER, ALLOCATABLE, DIMENSION(:) :: SET_READ_TMP,SET_READ_ONE,RESULT
 C
       INTEGER  SET_USRTOS_NEAREST
       EXTERNAL SET_USRTOS_NEAREST
 C=======================================================================
       CALL HM_GET_INT_ARRAY_INDEX('genemax' ,GENE_MAX ,JCLAUSE,IS_AVAILABLE,LSUBMODEL)
 
-      ALLOCATE(SET_READ_TMP(NSETS))
-      ALLOCATE(SET_READ_ONE(NSETS))
-      ALLOCATE(RESULT(NSETS))
+      call my_alloc(SET_READ_TMP, NSETS, "SET_READ_TMP")
+      call my_alloc(SET_READ_ONE, NSETS, "SET_READ_ONE")
+      call my_alloc(RESULT, NSETS, "RESULT")
 
       STACK=0
 
@@ -330,9 +331,9 @@ C=======================================================================
       ARRAY_SIZE = STACK
       ARRAY(1:STACK) = SET_READ_TMP(1:STACK)
 
-      DEALLOCATE (SET_READ_ONE)
-      DEALLOCATE (SET_READ_TMP)
-      DEALLOCATE (RESULT)
+      CALL MY_DEALLOC(SET_READ_ONE)
+      CALL MY_DEALLOC(SET_READ_TMP)
+      CALL MY_DEALLOC(RESULT)
       END
 !||====================================================================
 !||    create_set_clause      ../starter/source/model/sets/create_set_clause.F

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,22 +15,25 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    eosmain_mod        ../common_source/eos/eosmain.F
+!||    eosmain_mod           ../common_source/eos/eosmain.F
 !||--- called by ------------------------------------------------------
-!||    ebcs8_inlet        ../engine/source/boundary_conditions/ebcs/ebcs8_inlet.F90
-!||    inigrav_eos        ../starter/source/initial_conditions/inigrav/inigrav_eos.F
-!||    m12law             ../engine/source/materials/mat/mat012/m12law.F
-!||    m51init            ../starter/source/materials/mat/mat051/m51init.F
-!||    mmain              ../engine/source/materials/mat_share/mmain.F90
-!||    multi_solve_eint   ../engine/source/multifluid/multi_solve_eint.F90
-!||    multi_submatlaw    ../engine/source/multifluid/multi_submatlaw.F
-!||    sigeps75           ../engine/source/materials/mat/mat075/sigeps75.F
+!||    ebcs8_inlet           ../engine/source/boundary_conditions/ebcs/ebcs8_inlet.F90
+!||    eossolve              ../starter/source/initial_conditions/inigrav/inigrav_m51_any_eos.F90
+!||    inigrav_eos           ../starter/source/initial_conditions/inigrav/inigrav_eos.F
+!||    inigrav_m51_any_eos   ../starter/source/initial_conditions/inigrav/inigrav_m51_any_eos.F90
+!||    m12law                ../engine/source/materials/mat/mat012/m12law.F
+!||    m51init               ../starter/source/materials/mat/mat051/m51init.F
+!||    mmain                 ../engine/source/materials/mat_share/mmain.F90
+!||    multi_solve_eint      ../engine/source/multifluid/multi_solve_eint.F90
+!||    multi_submatlaw       ../engine/source/multifluid/multi_submatlaw.F
+!||    sigeps75              ../engine/source/materials/mat/mat075/sigeps75.F
 !||====================================================================
       MODULE EOSMAIN_MOD
       contains
@@ -38,6 +41,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    eosmain              ../common_source/eos/eosmain.F
 !||--- called by ------------------------------------------------------
 !||    ebcs8_inlet          ../engine/source/boundary_conditions/ebcs/ebcs8_inlet.F90
+!||    eossolve             ../starter/source/initial_conditions/inigrav/inigrav_m51_any_eos.F90
 !||    inigrav_eos          ../starter/source/initial_conditions/inigrav/inigrav_eos.F
 !||    m12law               ../engine/source/materials/mat/mat012/m12law.F
 !||    m51init              ../starter/source/materials/mat/mat051/m51init.F
@@ -219,7 +223,7 @@ C-----------------------------------------------
             !COLLOCATED SCHEME (LAW151 ONLY)
             DO I = 1, NEL
               IF (VNEW(I) > ZERO) THEN
-                MU2(I)=MAX(ZERO,MU(I))**2
+                MU2(I)=MAX(ZERO,MU(I))*MU(I)
               ENDIF
               ESPE(I) =  DF(I) * EINT(I)                   !law151 : EINT=rho.e
             ENDDO

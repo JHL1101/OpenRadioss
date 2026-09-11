@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lec_inistate_yfile   ../starter/source/initial_conditions/inista/lec_inistate_yfile.F
 !||--- called by ------------------------------------------------------
@@ -125,7 +126,7 @@ C------------------
          REWIND(IIN4)
          GOTO 130
        ENDIF
-  122  IF(LINE(1:27)/='/SOLID     /SCALAR    /EPSP')GOTO 120
+       IF(LINE(1:27)/='/SOLID     /SCALAR    /EPSP')GOTO 120
        READ(IIN4,FMT='(A)',END=199,ERR=199)LINE
        I = 0
   125  READ(IIN4,FMT='(A)',END=130,ERR=199)LINE
@@ -425,7 +426,7 @@ C--------------------------------------
          REWIND(IIN4)
          GOTO 199
        ENDIF
-  182  IF(LINE(1:33)/='/SOLID     /TENSOR    /STRAIN_FUL')GOTO 180
+       IF(LINE(1:33)/='/SOLID     /TENSOR    /STRAIN_FUL')GOTO 180
        READ(IIN4,FMT='(A)',END=199,ERR=199)LINE
 C
        I = 0
@@ -525,7 +526,7 @@ C----------------------------------------------
          REWIND(IIN4)
          GOTO 350
        ENDIF
-  322  IF(LINE(1:33)/='/SHELL     /TENSOR    /STRESS_FUL')GOTO 320
+       IF(LINE(1:33)/='/SHELL     /TENSOR    /STRESS_FUL')GOTO 320
        READ(IIN4,FMT='(A)',END=399,ERR=399)LINE
        ISIGSH =1
 C
@@ -675,7 +676,7 @@ C--------------------------------
           REWIND(IIN4)
           GO TO 520
         ENDIF
-  422   IF(LINE(1:27)/='/SHELL     /SCALAR    /EPSP')GOTO 420
+        IF(LINE(1:27)/='/SHELL     /SCALAR    /EPSP')GOTO 420
         READ(IIN4,FMT='(A)',END=399,ERR=399)LINE
         ISIGSH =1
 C
@@ -904,7 +905,7 @@ C
          REWIND(IIN4)
          GOTO 630
        ENDIF
-  622  IF(LINE(1:27)/='/SPHCEL    /SCALAR    /EPSP')GOTO 620
+       IF(LINE(1:27)/='/SPHCEL    /SCALAR    /EPSP')GOTO 620
        READ(IIN4,FMT='(A)',END=699,ERR=699)LINE
 C
        I = 0
@@ -1109,7 +1110,7 @@ C
           REWIND(IIN4)
           GOTO 740
         ENDIF
-  722   IF (LINE(1:16) /= '/SPRING    /FULL') GOTO 720
+        IF (LINE(1:16) /= '/SPRING    /FULL') GOTO 720
         READ(IIN4,FMT='(A)',END=740,ERR=899)LINE
 C
         I = 0

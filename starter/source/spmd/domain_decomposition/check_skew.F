@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    check_skew                   ../starter/source/spmd/domain_decomposition/check_skew.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,7 @@ C-----------------------------------------------
         USE SKEW_MOD
         USE SUBMODEL_MOD , ONLY : NSUBMOD
         use element_mod , only : nixr
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -153,8 +155,8 @@ C
         ENDDO
 
 !       allocation and initialization of local array
-        ALLOCATE(SKEW_PER_SP(NUMBER_SKEW_SP))
-        ALLOCATE(LOCAL_P(NUMBER_SKEW_SP))
+        call my_alloc(SKEW_PER_SP, NUMBER_SKEW_SP, "SKEW_PER_SP")
+        call my_alloc(LOCAL_P, NUMBER_SKEW_SP, "LOCAL_P")
 
 
 
@@ -196,12 +198,14 @@ C
         DO I=1,NUMSKW+1
                 SIZE_SKEW = TAG_SKN(I)
                 IF(SIZE_SKEW>1) THEN
-                        IF(.NOT.ALLOCATED(MULTIPLE_SKEW(I)%PLIST)) ALLOCATE( MULTIPLE_SKEW(I)%PLIST(SIZE_SKEW) )
+                        IF(.NOT.ALLOCATED(MULTIPLE_SKEW(I)%PLIST))
+     .                      call my_alloc(MULTIPLE_SKEW(I)%PLIST, SIZE_SKEW,
+     .                        "MULTIPLE_SKEW(I)%PLIST")
                         MULTIPLE_SKEW(I)%PLIST(1:SIZE_SKEW) = 0
                 ENDIF
         ENDDO    
 
-        ALLOCATE(P_SKEW(NUMSKW+1))
+        call my_alloc(P_SKEW, NUMSKW+1, "P_SKEW")
         P_SKEW(1:NUMSKW+1) = 0
                 
 !       stick a SKEW on a given processor
@@ -243,8 +247,9 @@ C
         ENDDO
 
 !       deallocation of local arrais
-        DEALLOCATE(SKEW_PER_SP,LOCAL_P)
-        DEALLOCATE(P_SKEW)
+        CALL MY_DEALLOC(SKEW_PER_SP)
+        CALL MY_DEALLOC(LOCAL_P)
+        CALL MY_DEALLOC(P_SKEW)
 
         RETURN
         END SUBROUTINE CHECK_SKEW

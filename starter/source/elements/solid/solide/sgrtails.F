@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sgrtails               ../starter/source/elements/solid/solide/sgrtails.F
 !||--- called by ------------------------------------------------------
@@ -63,6 +64,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE ALE_MOD , ONLY : ALE
       use element_mod , only : nixs
+      USE Q1NP_RESTART_MOD
 C-----------------------------------------------
 C            A R G U M E N T S
 C-----------------------------------------------
@@ -111,7 +113,7 @@ C-----------------------------------------------
       INTEGER, INTENT(IN) :: IDDLEVEL
       INTEGER, INTENT(IN) :: PRINT_FLAG                 !< flag to print the element group data
       INTEGER, INTENT(IN) :: DAMP_RANGE_PART(NPART)     !< flag to compute the damping range
-      TYPE(MATPARAM_STRUCT_) , TARGET, DIMENSION(NUMMAT),INTENT(IN) :: MATPARAM_TAB
+      TYPE(MATPARAM_STRUCT_) , TARGET, DIMENSION(NUMMAT),INTENT(INOUT) :: MATPARAM_TAB
       MY_REAL  PM(NPROPM,NUMMAT), GEO(NPROPG,NUMGEO), RNOISE(NPERTURB,NUMELS)
       INTEGER, DIMENSION(2,NUMPRELOAD),INTENT(IN) :: IPRELOAD_FUN
 C-----------------------------------------------
@@ -126,13 +128,15 @@ C-----------------------------------------------
      .   NGR1, MLN, NG, ISSN, ISSN_, N, MID, PID, II,ILOC,IL,NEL, NE1,IREP,IINT,
      .   P, NEL_PREC, IGT, JHBE, I, IKSNOD0,NB,IEOS,NLAY,
      .   MODE, WORK(70000), NN, J, NPTR,NPTS,NPTT,NPG,
-     .   IPLAST,NUVARP, INEG, JIVF,ICPRE,ICSTR,
+     .   IPLAST,NUVARP, INEG, JIVF,ICPRE,ICSTR,ISCTL,
      .   IFAIL,IMATVIS,NLY,NL,ILAW,IM,IPMAT,ITET4,ITET10,
      .   NGP(NSPMD+1),JJ,IFAILMODEL,NFAIL,ISVIS,IVISC,IMAT,
      .   INUM_R2R(1+R2R_SIU*NUMELS),IPARTSPH,IPARTR2R,MFT,IBOLTP,ICP0,ISM0,
      .   IPERT,STAT,ITSH,IT10,ICPT10,JALE_FROM_MAT,JALE_FROM_PROP,IDAMP_FREQ_RANGE
-       DATA IPMAT /100/
-       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEXS2
+      INTEGER :: I_Q1NP_GROUP
+      DATA IPMAT /100/
+      INTEGER, DIMENSION(:), ALLOCATABLE :: INDEXS2
+      INTEGER, DIMENSION(:), ALLOCATABLE :: INUM_Q1NP
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE)::TITR
       INTEGER :: CLUSTER_TYP,CLUSTER_NEL
@@ -144,18 +148,23 @@ C-----------------------------------------------
 C--------------------------------------------------------------
 C         GROUPING BY MVSIZ GROUPS
 C--------------------------------------------------------------
-      CALL MY_ALLOC(INDEXS2,NUMELS)
+      CALL MY_ALLOC(INDEXS2,NUMELS,"INDEXS2")
       nullify(MATPARAM)
       INDEXS2(1:NUMELS)=PERMUTATION%SOLID(1:NUMELS)
       NGR1 = NGROUP + 1
 C
       IF (NPERTURB > 0) THEN
-        ALLOCATE(XNUM_RNOISE(NPERTURB,NUMELS),STAT=stat)
+        call my_alloc(XNUM_RNOISE, NPERTURB, NUMELS, "XNUM_RNOISE", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
      .                           C1='XNUM_RNOISE')
       ELSE
-        ALLOCATE(XNUM_RNOISE(0,0))
+        call my_alloc(XNUM_RNOISE, 0, 0, "XNUM_RNOISE")
+      ENDIF
+C
+      IF (NUMELQ1NP_G > 0) THEN
+        CALL MY_ALLOC(INUM_Q1NP,NUMELS,"INUM_Q1NP")
+        INUM_Q1NP(1:NUMELS) = 0
       ENDIF
 C
 C Phase 1: Domain Decomposition
@@ -208,6 +217,12 @@ C
             INUM(16,I)=SOL2SPH_TYP(NFT+I)
           ENDDO
         END IF
+
+        IF (NUMELQ1NP_G > 0) THEN
+          DO I=1, NEL
+            INUM_Q1NP(I) = KQ1NP_TAB_INV(NFT+I)  
+          ENDDO
+        ENDIF
       
         IF(DOQA .NE. 0 .OR. IDDLEVEL == 0) THEN
           MODE=0
@@ -353,6 +368,19 @@ C rebuild SOL2SPH
           END DO
         END IF
 C
+!   Update KQ1NP_TAB based on the new order after sorting
+        IF (NUMELQ1NP_G > 0 .AND. ALLOCATED(KQ1NP_TAB_INV)) then
+          DO I=1,NEL
+            KQ1NP_TAB_INV(NFT+I)=INUM_Q1NP(INDEX(I))
+          ENDDO
+          DO  I=1,NEL
+            II = KQ1NP_TAB_INV(NFT+I)
+            IF (II > 0) THEN
+              KQ1NP_TAB(10,II) = NFT + I
+            ENDIF
+          ENDDO
+        ENDIF
+C
         P = CEP(NFT+INDEX(1))
         NB = 1
         DO I = 2, NEL
@@ -426,12 +454,12 @@ C
         CLUSTER_TYP = CLUSTERS(I)%TYPE
         IF(CLUSTER_TYP==1) THEN
             CLUSTER_NEL = CLUSTERS(I)%NEL
-            ALLOCATE( SAVE_CLUSTER( CLUSTER_NEL ) )
+            call my_alloc(SAVE_CLUSTER, CLUSTER_NEL, "SAVE_CLUSTER")
             SAVE_CLUSTER( 1:CLUSTER_NEL ) = CLUSTERS(I)%ELEM( 1:CLUSTER_NEL )
             DO J=1,CLUSTER_NEL
                 CLUSTERS(I)%ELEM(J) = ITR1( SAVE_CLUSTER( J ) )
             ENDDO
-            DEALLOCATE( SAVE_CLUSTER )
+            CALL MY_DEALLOC(SAVE_CLUSTER)
         ENDIF
       ENDDO
 !   -----------------------
@@ -494,6 +522,7 @@ C moreover ISOLNOD reset to 0 real in lectur
           IT10 = 0
           ITET4 = 0
           ITET10 = 0
+          ISCTL = 0
 C-------------------------
 C         GROUP PARAMETER
           IF (PID/=0) THEN
@@ -508,6 +537,7 @@ C         GROUP PARAMETER
             ISTRAIN= IGEO(12,PID)
             ITET4  = IGEO(20,PID)
             ITET10  = IGEO(50,PID)
+            ISCTL  = IGEO(97,PID)
 c
             ISVIS  = IGEO(33,PID)                       
             IPARTSPH=IGEO(38,PID)          
@@ -627,6 +657,8 @@ c
             END IF
           ENDIF
 C
+          IF (MLN == 68) ITET4 = 1
+C
           ! Compatibility with /MAT/LAW115 statistic formulation
           IF ((MLN == 115).AND.(((JHBE>2).AND.(JHBE<21)).OR.((ITET4>0).AND.(ITET4<3)))) THEN
             CALL ANCMSG(MSGID=1905,
@@ -638,17 +670,16 @@ C
      .                  PRMOD=MSG_CUMU)
           ENDIF
 C
-          !< Compatibility of ITET4 = 3 with /MAT/LAW88 is not supported
-    !       IF ((MLN == 88).AND.(ITET4 == 3)) THEN
-    !         ITET4 = 0
-    !         CALL ANCMSG(MSGID=3123,
-    !  .                  MSGTYPE=MSGWARNING,
-    !  .                  ANMODE=ANINFO_BLIND_2,
-    !  .                  I1=ID,
-    !  .                  C1=TITR,
-    !  .                  I2=MLN,
-    !  .                  PRMOD=MSG_CUMU)
-    !       ENDIF
+          !< Choose default value for ITET4 according to the material law
+          IF ((IGEO(29,PID) /= 1) .AND. (ITET4 == 0) .AND. 
+     .        ((IGT == 14) .OR. (IGT == 6))) THEN
+            IF (MATPARAM_TAB(MID)%ITETRA4 == 1) THEN
+              ITET4 = 1000
+            ELSEIF (MATPARAM_TAB(MID)%ITETRA4 == 2) THEN
+              ITET4 = 3
+            ENDIF
+          ENDIF
+          IF (ITET4 == 1000) ITET4 = 0
 C
           IFAIL = 0
           NFAIL = 0
@@ -657,6 +688,8 @@ C
             DO IL=1,NLAY                        
               IMAT  = IGEO(100+IL,PID)           
               NFAIL = MAX(NFAIL,MATPARAM_TAB(IMAT)%NFAIL)
+              ILAW = IPM(2,IMAT)
+              IF(MATPARAM_TAB(IMAT)%NFAIL>0.AND.ILAW==25) MATPARAM_TAB(IMAT)%IPARAM(2)=1000   !IOFF
             ENDDO
           ELSE
             NFAIL = MATPARAM_TAB(MID)%NFAIL
@@ -670,7 +703,9 @@ c
                   IF  (IFAILMODEL == 10 .OR. IFAILMODEL == 4 
      .             .OR.IFAILMODEL == 5  .OR. IFAILMODEL == 6)ISTRAIN = 1
                 ENDDO
-             ENDIF   
+            ELSEIF( MLN == 25 ) THEN
+              MATPARAM_TAB(MID)%IPARAM(2) = 1000   !IOFF
+            ENDIF   
           ENDIF
           IF(IKSNOD0 == 10.OR.
      .      (IKSNOD0 == 4.AND.ITET4 == 1))THEN
@@ -679,14 +714,29 @@ c
           ELSEIF(IKSNOD0 == 4)THEN
             NPT=1
           ENDIF
-          IF ((JHBE/=1 .AND. JHBE/=2) .AND. MLN==68 ) THEN
-            CALL ANCMSG(MSGID=672,
-     .                  MSGTYPE=MSGERROR,
-     .                  ANMODE=ANINFO_BLIND_1,
+          IF (MLN==68 ) THEN
+            IF (IKSNOD0/=8 ) THEN      ! error out
+              CALL ANCMSG(MSGID=672,
+     .                    MSGTYPE=MSGERROR,
+     .                    ANMODE=ANINFO_BLIND_1,
      .                    I1=ID,
      .                    C1=TITR,     
-     .                  I2=IGEO(1,PID))
-          ENDIF
+     .                    I2=IGEO(1,PID))
+            ELSE
+              IF (JHBE/=1 .AND. JHBE/=2 .OR. JCVT>0 ) THEN ! warning out
+                CALL ANCMSG(MSGID=3150,
+     .                      MSGTYPE=MSGWARNING,
+     .                      ANMODE=ANINFO_BLIND_1,
+     .                      I1=ID,
+     .                      C1=TITR,     
+     .                      I2=IGEO(1,PID))
+                JHBE = 1
+                JCVT = 0 
+                NPT = 1
+                IGEO(4,PID) =NPT
+              END IF
+            END IF
+          END IF
           IF (JHBE ==  2) JHBE=0     ! Hourglass Halquist
           IF(MLN == 1 .AND.IGT /= 22) THEN
             IF ((JHBE == 14 .AND. NPT /= 222).OR.(JHBE == 15 .AND. NPT /= 2) ) THEN
@@ -879,7 +929,7 @@ C-------compressible
 C------       
               CASE(2)                                             
                ICPRE = 1
-               IF (MLN == 1.OR.MLN == 92) ICPRE = 3
+               IF (MLN == 1.OR.MLN == 92.OR.ISCTL>0) ICPRE = 3
 C--------elasto-plastic       
               CASE(3)                                             
                ICPRE = 2
@@ -1004,7 +1054,7 @@ C
           JCVT = 0       
           ENDIF
 c          IF (JHBE == 14 .AND. (IKSNOD0 == 16 .OR. IKSNOD0 == 20)) THEN
-          IF (JHBE /= 16 .AND. IKSNOD0 == 20) THEN
+          IF (JHBE /= 16 .AND. (IKSNOD0 == 16 .OR. IKSNOD0 == 20)) THEN
             CALL ANCMSG(MSGID=860,
      .                  MSGTYPE=MSGWARNING,
      .                  ANMODE=ANINFO_BLIND_2,
@@ -1242,7 +1292,7 @@ C
      .         MLN /= 42 .AND. MLN /= 44 .AND. MLN /= 45 .AND.
      .         MLN /= 48 .AND. MLN /= 50 .AND. MLN /= 52 .AND.  
      .         MLN /= 53 .AND. MLN /= 56 .AND. MLN /= 60 .AND.
-     .         MLN /= 62 )THEN
+     .         MLN /= 62 .AND. MLN /= 68)THEN
                JHBE = 17  
                ICPRE = 1
                IGEO(10, PID) = 17  
@@ -1316,6 +1366,9 @@ C---------- no warning message as ICPRE = 11 is the internal flag
      .                      C1=TITR)
             END IF
           END IF
+C
+          !< Default distortion control for /MAT/LAW100
+          IF (MLN == 100) IGEO(97,PID) = 1
 C
           IF (JHBE == 16.AND.MLN == 25)THEN
              CALL ANCMSG(MSGID=855,
@@ -1444,6 +1497,14 @@ C-------
      .                      C1=TITR)
         ENDIF
 C-------------------------------------------------
+C Q1NP element group detection
+C-------------------------------------------------
+          I_Q1NP_GROUP = 0
+          IF (NUMELQ1NP_G > 0) THEN
+            IF (KQ1NP_TAB_INV(EADD(N)+NFT) > 0) I_Q1NP_GROUP = 1
+          ENDIF
+C
+C-------------------------------------------------
 C IPARG STORAGE
 C-------------------------------------------------
           IPARG(1,NGROUP) = MLN
@@ -1482,11 +1543,7 @@ C group/processor identification
           IPARG(42,NGROUP)= ISORTH
           IPARG(40,NGROUP)= ISRAT
           IPARG(43,NGROUP)= IFAIL
-          IF(MLN == 68)THEN
-            IPARG(41,NGROUP)=1
-          ELSE
-            IPARG(41,NGROUP)=ITET4
-          ENDIF
+          IPARG(41,NGROUP)= ITET4
           IF(MLN/=25.AND.MLN<28)THEN
             IPARG(44,NGROUP)= ISTRAIN
           ELSEIF(MLN>=28)THEN
@@ -1541,6 +1598,8 @@ c         non-local variable regularization flag for failure models
           IPARG(78,NGROUP) = MATPARAM%NLOC   ! NLOC_FAIL
 c         id of damping frequency range apply to group
           IPARG(93,NGROUP) = IDAMP_FREQ_RANGE
+c         tag for group of q1np elements
+          IPARG(94,NGROUP) = I_Q1NP_GROUP 
 C------------------------------------------------------
 C BUFFER LENGTH
 C------------------------------------------------------
@@ -1671,8 +1730,9 @@ C-----------
      .                  ANMODE=ANINFO_BLIND_2,
      .                  PRMOD=MSG_PRINT)
 c-----
-      DEALLOCATE(INDEXS2)
-      IF (ALLOCATED(XNUM_RNOISE)) DEALLOCATE(XNUM_RNOISE) 
+      CALL MY_DEALLOC(INDEXS2)
+      IF (ALLOCATED(XNUM_RNOISE)) CALL MY_DEALLOC(XNUM_RNOISE)
+      IF (ALLOCATED(INUM_Q1NP)) CALL MY_DEALLOC(INUM_Q1NP)
 c------------------------------------------------------------
  1010 FORMAT(//,
      + 7X,'8-NODE ELEMENT GROUPS'/

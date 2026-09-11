@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ini_inimap1d           ../starter/source/initial_conditions/inimap/ini_inimap1d.F
 !||--- called by ------------------------------------------------------
@@ -50,6 +51,7 @@ C-----------------------------------------------
       USE MULTIMAT_PARAM_MOD , ONLY : M51_N0PHAS, M51_NVPHAS
       USE MULTI_SOLVE_EINT_MOD , ONLY : MULTI_SOLVE_EINT
       use element_mod , only : nixs,nixq,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C     I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -87,21 +89,19 @@ C-----------------------------------------------
 C     L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real,  TARGET :: PLD_INV(NPTS/2,2)
-      INTEGER :: JJ, KK, IAD, NELEM, NG, NFT, NEL, IFIRST, ILAST, IAD1, IAD2, IMID, FUNC,
-     .     FUNC1, FUNC2, MATID, MLW
-      LOGICAL :: CONT
-      INTEGER :: II, IFUNC, NPT, FIRST, LAST, ICOOR, INODE, NODEID, IND, SHIFT,
+      INTEGER :: JJ, KK, NELEM, NG, NFT, NEL, IFIRST, ILAST,
+     .     MATID, MLW
+      INTEGER :: II, IFUNC, NPT, FIRST, INODE, NODEID, IND, SHIFT,
      .     NODE1, NODE2, NODE3, NODE4, NODE5, NODE6, NODE7, NODE8,
      .     ELEMID
       my_real :: X0, Y0, Z0, RADIUS, XC, YC, ZC, VALUE1, VALUE2, NX, NY, NZ, VALUE, 
      .     XNODE, YNODE, ZNODE, RAD1, RAD2, X1, Y1, Z1, XP, YP, ZP
       INTEGER, DIMENSION(:), ALLOCATABLE :: ELEM_LIST
-      INTEGER :: LOCAL_ELEM_LIST(MVSIZ)
       my_real, DIMENSION(:, :), ALLOCATABLE :: PRES, EINT
-      my_real ::  TT, RES, RHO
+      my_real ::  TT, RES
       TYPE(G_BUFEL_), POINTER :: GBUF
       INTEGER :: NBNODE, NODELIST(8), ITY, ISOLNOD,
-     .     GRBRICID,GRQUADID,GRSH3NID, NBMAT, NBMAT_TARGET, IMAT, KPHASE, NUVAR, IADBUF, NPAR, IFORM, 
+     .     GRBRICID,GRQUADID,GRSH3NID, NBMAT, NBMAT_TARGET, IMAT, KPHASE, NUVAR, IADBUF, IFORM, 
      .     M51_SUBMAT_ID(4),TAG_MAT(NUMMAT)
       my_real, POINTER, DIMENSION(:) :: PTRx, PTRy 
 
@@ -128,10 +128,10 @@ C-----------------------------------------------
       ENDDO
 
       IF (N2D  ==  0) THEN
-         ALLOCATE(ELEM_LIST(NUMELS))
+         call my_alloc(ELEM_LIST, NUMELS, "ELEM_LIST")
          ELEM_LIST(1:NUMELS)=0
       ELSE
-         ALLOCATE(ELEM_LIST(NUMELQ + NUMELTG))
+         call my_alloc(ELEM_LIST, NUMELQ + NUMELTG, "ELEM_LIST")
          ELEM_LIST(1:NUMELQ+NUMELTG)=0
       ENDIF
       
@@ -145,7 +145,8 @@ C-----------------------------------------------
          IF(.NOT.INIMAP1D(KK)%CORRECTLY_READ)CYCLE
          NBMAT = INIMAP1D(KK)%NBMAT
          IF(NBMAT==0)CYCLE !something went wrong with reader
-         ALLOCATE(PRES(MVSIZ, NBMAT), EINT(MVSIZ, NBMAT))
+         call my_alloc(PRES, MVSIZ, NBMAT, "PRES")
+         call my_alloc(EINT, MVSIZ, NBMAT, "EINT")
          PRES(:,:)=ZERO
          EINT(:,:)=ZERO
          IF (INIMAP1D(KK)%GRBRICID  /=  0) THEN
@@ -592,7 +593,7 @@ C     PRES
                           VALUE1 = PTRy(IND - 1)                                                                       
                           VALUE2 = PTRy(IND)                                                                           
                           PRES(ELEMID - NFT, IMAT) = (VALUE1 + (VALUE2 - VALUE1) / (RAD2 - RAD1) * (RADIUS - RAD1)) *  
-     .                         * INIMAP1D(KK)%FAC_PRES_ENER(IMAT)                                                      
+     .                          INIMAP1D(KK)%FAC_PRES_ENER(IMAT)                                                      
                        ELSE                                                                                            
                           VALUE1 = PTRy(FIRST + NPT - 1)                                                               
                           PRES(ELEMID - NFT, IMAT) = VALUE1 * INIMAP1D(KK)%FAC_PRES_ENER(IMAT)                         
@@ -936,12 +937,13 @@ C     Compute EINT from pressure
               
             ENDIF
          ENDDO                  ! NG = 1, NGROUP
-         DEALLOCATE(PRES, EINT)
+         CALL MY_DEALLOC(PRES)
+         CALL MY_DEALLOC(EINT)
       ENDDO
 C     ===================
 C     Memory deallocation
 C     ===================
-      DEALLOCATE(ELEM_LIST)
+      CALL MY_DEALLOC(ELEM_LIST)
 
       END SUBROUTINE INI_INIMAP1D
 

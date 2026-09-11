@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_state_inimap1d_exch_data   ../engine/source/output/sta/spmd_state_inimap1d_exch_data.F
 !||--- called by ------------------------------------------------------
@@ -27,6 +28,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    stat_inimap1d_spmd              ../engine/source/output/sta/stat_inimap1d_spmd.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod                    ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                  ../common_source/tools/memory/my_dealloc.F90
 !||    spmd_comm_world_mod             ../engine/source/mpi/spmd_comm_world.F90
 !||    state_inimap_mod                ../engine/share/modules/state_inimap_mod.F
 !||====================================================================
@@ -39,6 +42,8 @@ C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
         USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include "spmd.inc"
 C-----------------------------------------------
@@ -71,7 +76,7 @@ C-----------------------------------------------
       IF (ISPMD/=0) THEN                                                                    
         NCELL = STATE_INIMAP_BUF(1)%NUM_CENTROIDS                                             
         NBMAT = STATE_INIMAP_BUF(1)%NSUBMAT                                                   
-        ALLOCATE (BUFF_R(NCELL, 1 + 4*NBMAT))                                                 
+        call my_alloc(BUFF_R, NCELL, 1 + 4*NBMAT, "BUFF_R")
         !1:abscissa   ;   2,3,4 vfrac_i, rho_i, E_i   ;  ...Etc                               
         DO I=1,NCELL                                                                          
           BUFF_R(I,1) = STATE_INIMAP_BUF(1)%POS_CENTROIDS(I)
@@ -90,7 +95,7 @@ C-----------------------------------------------
         MSGTYP = MSGOFF                                                                       
         SIZ = NCELL*(1+4*NBMAT)                                                               
         CALL MPI_SEND(BUFF_R, SIZ, REAL,IT_SPMD(1),MSGTYP,SPMD_COMM_WORLD,ierror)  
-        IF(ALLOCATED(BUFF_R))DEALLOCATE(BUFF_R)          
+        IF(ALLOCATED(BUFF_R)) call my_dealloc(BUFF_R)
       ELSE                                                                                    
         NCELL = STATE_INIMAP_BUF(1)%NUM_CENTROIDS                                             
         DO I=2,NSPMD                                                                          
@@ -99,7 +104,7 @@ C-----------------------------------------------
           NCELL = STATE_INIMAP_BUF(I)%NUM_CENTROIDS                                           
           NBMAT = STATE_INIMAP_BUF(I)%NSUBMAT                                                 
           SIZ = NCELL*(1+4*NBMAT) 
-          ALLOCATE (BUFF_R(NCELL, 1 + 4*NBMAT ))                                              
+          call my_alloc(BUFF_R, NCELL, 1 + 4*NBMAT, "BUFF_R")
           CALL MPI_RECV(BUFF_R,SIZ,REAL,IT_SPMD(I),MSGTYP,SPMD_COMM_WORLD,STATUS,ierror)       
           ALLOCATE(STATE_INIMAP_BUF(I)%POS_CENTROIDS(NCELL))                                  
           ALLOCATE(STATE_INIMAP_BUF(I)%SUBMAT(NBMAT))                                         
@@ -123,7 +128,7 @@ C-----------------------------------------------
               STATE_INIMAP_BUF(I)%SUBMAT(J)%PRES(L) = BUFF_R(L,K)                             
             ENDDO                                                                          
           ENDDO    
-          IF(ALLOCATED(BUFF_R))DEALLOCATE (BUFF_R)                                                                        
+          IF(ALLOCATED(BUFF_R)) call my_dealloc(BUFF_R)
         ENDDO !next I=2,NSPMD                                                              
       ENDIF       
                                                                                
@@ -132,7 +137,7 @@ C-----------------------------------------------
       !------------------------!                                                     
       IF (ISPMD /= 0) THEN                                                 
         NPTS = STATE_INIMAP_BUF(1)%NUM_POINTS                             
-        ALLOCATE (BUFF_R(NPTS,2))                           
+        call my_alloc(BUFF_R, NPTS, 2, "BUFF_R")
         DO I=1,NPTS                                        
           BUFF_R(I,1) = STATE_INIMAP_BUF(1)%POS_NODES(I)
           BUFF_R(I,2) = STATE_INIMAP_BUF(1)%VEL_NODES(I)       
@@ -140,19 +145,19 @@ C-----------------------------------------------
         MSGTYP = MSGOFF                                            
         SIZ = 2*NPTS                                            
         CALL MPI_SEND(BUFF_R, SIZ, REAL,IT_SPMD(1),MSGTYP,SPMD_COMM_WORLD,ierror)
-        IF(ALLOCATED(BUFF_R))DEALLOCATE (BUFF_R)    
+        IF(ALLOCATED(BUFF_R)) call my_dealloc(BUFF_R)
       !deallocate useless data once sent
         NBMAT=STATE_INIMAP_BUF(1)%NSUBMAT
         DO J=1,NBMAT
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%VFRAC))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(J)%VFRAC)
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%RHO  ))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(J)%RHO)        
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%E    ))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(J)%E)
-          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%PRES))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT(J)%PRES)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%VFRAC)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(J)%VFRAC)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%RHO  )) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(J)%RHO)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%E    )) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(J)%E)
+          IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT(J)%PRES)) call my_dealloc(STATE_INIMAP_BUF(1)%SUBMAT(J)%PRES)
         ENDDO
         IF(ALLOCATED(STATE_INIMAP_BUF(1)%SUBMAT       ))DEALLOCATE(STATE_INIMAP_BUF(1)%SUBMAT)
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_NODES    ))DEALLOCATE(STATE_INIMAP_BUF(1)%POS_NODES)   
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%VEL_NODES    ))DEALLOCATE(STATE_INIMAP_BUF(1)%VEL_NODES)   
-        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_CENTROIDS))DEALLOCATE(STATE_INIMAP_BUF(1)%POS_CENTROIDS)                      
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_NODES    )) call my_dealloc(STATE_INIMAP_BUF(1)%POS_NODES)
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%VEL_NODES    )) call my_dealloc(STATE_INIMAP_BUF(1)%VEL_NODES)
+        IF(ALLOCATED(STATE_INIMAP_BUF(1)%POS_CENTROIDS)) call my_dealloc(STATE_INIMAP_BUF(1)%POS_CENTROIDS)
       ELSE                                                 
         NPTS = STATE_INIMAP_BUF(1)%NUM_POINTS                                         
         DO I=1,NPTS                                           
@@ -163,7 +168,7 @@ C-----------------------------------------------
           MSGTYP = MSGOFF                                                
           NPTS = STATE_INIMAP_BUF(I)%NUM_POINTS                                            
           SIZ = 2*NPTS                                         
-          ALLOCATE (BUFF_R(NPTS, 2 ))                                              
+          call my_alloc(BUFF_R, NPTS, 2, "BUFF_R")
           CALL MPI_RECV(BUFF_R,SIZ,REAL,IT_SPMD(I),MSGTYP,SPMD_COMM_WORLD,STATUS,ierror)    
           ALLOCATE(STATE_INIMAP_BUF(I)%POS_NODES(NPTS))                 
           ALLOCATE(STATE_INIMAP_BUF(I)%VEL_NODES(NPTS))                                  
@@ -171,7 +176,7 @@ C-----------------------------------------------
             STATE_INIMAP_BUF(I)%POS_NODES(L) = BUFF_R(L,1)  
             STATE_INIMAP_BUF(I)%VEL_NODES(L) = BUFF_R(L,2)  
           ENDDO   
-          IF(ALLOCATED(BUFF_R))DEALLOCATE (BUFF_R)                                             
+          IF(ALLOCATED(BUFF_R)) call my_dealloc(BUFF_R)
         ENDDO !next I=2,NSPMD                                                
       ENDIF                                               
                  

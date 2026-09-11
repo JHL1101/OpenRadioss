@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25sti3                 ../starter/source/interfaces/inter3d1/i25sti3.F
 !||--- called by ------------------------------------------------------
@@ -136,7 +137,7 @@ C           A BRICK AND A SHELL, WE CHOOSE THE STIFFNESS OF THE SHELL
 C           OF THE SHELL UNLESS THE SHELL MATERIAL IS NULL.
 C---------------------------------------------------------------
 C      NRT->NRT0
-      ALLOCATE(TAGB(NUMNOD))
+      call my_alloc(TAGB, NUMNOD, "TAGB")
       SLSFAC = STFAC
 C
       IF(IGAP==3)THEN
@@ -166,7 +167,7 @@ C-----
       IF(INTTH > 0)THEN
         NELEM = NUMELC+NUMELTG+NUMELS+NUMELR
      +      + NUMELP+NUMELT+NUMELQ+NUMELR+NUMELX+NUMELIG3D
-        ALLOCATE(INRTIE(NELEM),STAT=stat)
+        call my_alloc(INRTIE, NELEM, "INRTIE", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='INRTIE')
@@ -709,12 +710,11 @@ C
         END IF
       END IF
 
-      IF(INTTH > 0) DEALLOCATE(INRTIE)
+      IF(INTTH > 0) CALL MY_DEALLOC(INRTIE)
 
-      DEALLOCATE(TAGB)
+      CALL MY_DEALLOC(TAGB)
 
       RETURN
- 1300 FORMAT(2X,'GAP MIN = ',1PG20.13)
  1400 FORMAT(2X,'MIN,MAX OF SECONDARY GAP: ',2(1PG20.13))
  1500 FORMAT(2X,'MIN,MAX OF MAIN GAP: ',2(1PG20.13)/)
  2001 FORMAT(2X,'Maximum distance for radiation computation = ',
@@ -799,7 +799,7 @@ C-----------------------------------------------
       INTEGER  , INTENT(INOUT) :: IDEL_SOLID
       INTEGER, DIMENSION(NUMELS), INTENT(INOUT):: ELEM_LINKED_TO_SEGMENT !< working array, dim=numels
       INTEGER, INTENT(IN) :: NIN25
-      INTEGER, INTENT(INOUT) :: FLAG_ELEM_INTER25(NINTER25,NUMELS)
+      INTEGER, INTENT(IN) :: FLAG_ELEM_INTER25(NINTER25,NUMELS)
       my_real, INTENT(IN) :: THK_M   ,THK_M_SCALE
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -826,9 +826,9 @@ C
 C
 
       IF(NUMELS > 0) THEN
-        CALL MY_ALLOC(TAGELEMS,NUMELS)
+        CALL MY_ALLOC(TAGELEMS,NUMELS,"TAGELEMS")
         TAGELEMS = 0
-        CALL MY_ALLOC(INDEXE,NUMELS)
+        CALL MY_ALLOC(INDEXE,NUMELS,"INDEXE")
         INDEXE = 0
       ENDIF
 
@@ -1178,7 +1178,8 @@ C      In SPMD you need an element associated with the edge otherwise error
         ENDIF
       END DO
 C
-      IF(NUMELS > 0) DEALLOCATE(TAGELEMS,INDEXE)
+      IF(NUMELS > 0) CALL MY_DEALLOC(TAGELEMS)
+      IF(NUMELS > 0) CALL MY_DEALLOC(INDEXE)
 C
       CALL ANCMSG(MSGID=3022,
      .             MSGTYPE=MSGWARNING,
@@ -1226,20 +1227,20 @@ C   Update option erosion solid : only if /SURF/PART/ALL is defined on solid par
 
 C-----------------------------------------------
       RETURN
- 1400 FORMAT(I10,' MAIN SEGMENTS',' OF INTERFACE',I10,
-     +                      ' ARE REVERSED THE NORMAL DIRECTION')
       END
 !||====================================================================
-!||    i25bord     ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i25bord        ../starter/source/interfaces/inter3d1/i25sti3.F
 !||--- called by ------------------------------------------------------
-!||    i25sti3     ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i25sti3        ../starter/source/interfaces/inter3d1/i25sti3.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE I25BORD(NRTM   ,IRECT ,TAGB    )
 C============================================================================
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -1260,7 +1261,7 @@ C-----------------------------------------------
 C=======================================================================
       NLMAX = 4*NRTM
 
-      ALLOCATE (LINEIX(2,NLMAX)    ,STAT=stat)
+      call my_alloc(LINEIX, 2, NLMAX, "LINEIX", stat=stat)
       ALLOCATE (INDEX(2*NLMAX)     ,STAT=stat)
 c---------------------------------------
 c       search for all lines on the surface
@@ -1338,8 +1339,7 @@ c         last edge is an edge
 
 
       DEALLOCATE (INDEX)
-      DEALLOCATE (LINEIX)
+      CALL MY_DEALLOC(LINEIX)
 C-----------
       RETURN
       END
-

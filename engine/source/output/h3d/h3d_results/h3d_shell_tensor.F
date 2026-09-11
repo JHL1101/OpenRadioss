@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_shell_tensor            ../engine/source/output/h3d/h3d_results/h3d_shell_tensor.F
 !||--- called by ------------------------------------------------------
@@ -39,6 +40,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod                ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod                 ../common_source/modules/elements/element_mod.F90
 !||    matparam_def_mod            ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod        ../common_source/modules/names_and_titles_mod.F
 !||    stack_mod                   ../engine/share/modules/stack_mod.F
 !||====================================================================
@@ -61,6 +64,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -294,8 +299,10 @@ c
               ENDDO  
             ENDIF
              NLAY_MAX   = MAX(NLAY,NPT)
-             ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+             call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+             call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+             call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+             call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
                MATLY = 0
                THKLY = ZERO
                POSLY = ZERO
@@ -348,7 +355,7 @@ C--------------------------------------------------
 C--------------------------------------------------
 c
               ISELECT = 0
-              ALLOCATE (SIGE(NEL,3))
+              call my_alloc(SIGE, NEL, 3, "SIGE")
               SIGE(1:NEL,1:3) = ZERO
 c
               IF (MPT == 0) THEN !  ILAYER=NULL, NPT=NULL
@@ -380,6 +387,7 @@ c
               ELSEIF (ILAY == -1 .AND. IPLY > 0 .AND. IPT > 0) THEN 
 c               /TENS/STRESS/PLY=.../NPT=...
                 DO J=1,NLAY                          ! shells type 17,19,51 and 52 only
+                  ID_PLY = 0
                   IF (IGTYP == 17 .OR. IGTYP == 19 .OR. IGTYP == 51) THEN
                     ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
                   ELSE IF (IGTYP == 52) THEN
@@ -515,17 +523,18 @@ c---
      .               IS_WRITTEN_SHELL,SHELL_TENSOR,SIGE     ) 
               END IF       
 c
-              DEALLOCATE (SIGE)
+              call my_dealloc(SIGE)
 c--------------------------------------------------
             ELSEIF (KEYWORD == 'TENS/MSTRESS') THEN    ! stress output in material (orthotropic) coordinates
 c--------------------------------------------------
               ISELECT = 0
-              ALLOCATE (SIGM(NEL,3))
+              call my_alloc(SIGM, NEL, 3, "SIGM")
               SIGM(1:NEL,1:3) = ZERO
 c
               IF (ILAY == -1 .AND. IPLY > 0 .AND. IPT > 0) THEN 
 c               /TENS/MSTRESS/PLY=.../NPT=...
                 DO J=1,NLAY                          ! shells type 17,19,51 and 52 only
+                  ID_PLY = 0
                   IF (IGTYP == 17 .OR. IGTYP == 19 .OR. IGTYP == 51) THEN
                     ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
                   ELSE IF (IGTYP == 52) THEN
@@ -632,7 +641,7 @@ c---
      .             IOK_PART  ,ISELECT   ,NEL    ,OFFSET   ,NFT     ,        
      .             IS_WRITTEN_SHELL,SHELL_TENSOR,SIGM     )
 
-              DEALLOCATE (SIGM)
+              call my_dealloc(SIGM)
 C--------------------------------------------------
             ELSE IF (KEYWORD == 'TENS/STRAIN/MEMB') THEN
 C--------------------------------------------------
@@ -701,6 +710,7 @@ c               PLY=IPLY NPT=IPT
                   DO J=1,NLAY
                     BUFLY => ELBUF_TAB(NG)%BUFLY(J)
                     NPTT = BUFLY%NPTT
+                    ID_PLY = 0
                     IF (IGTYP == 17 .OR. IGTYP == 51) THEN
                       ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
                     ELSEIF (IGTYP == 52) THEN
@@ -822,11 +832,14 @@ c               NPT=IPT    PLY=NULL ILAYER=NULL
                  ENDIF ! NPG
                 ENDIF
               ENDIF
-              DEALLOCATE(MATLY, THKLY,POSLY,THK_LY)
+              call my_dealloc(MATLY)
+              call my_dealloc(THKLY)
+              call my_dealloc(POSLY)
+              call my_dealloc(THK_LY)
 C--------------------------------------------------
             ELSEIF (KEYWORD == 'TENS/MSTRAIN') THEN  ! strain tensor output in material coordinate system
 C--------------------------------------------------
-              ALLOCATE (EPSM(NEL,3))
+              call my_alloc(EPSM, NEL, 3, "EPSM")
               EPSM(:,:) = ZERO
 c
               IF (IPLY > 0 .AND. IPT > 0) THEN     
@@ -839,6 +852,7 @@ c
                   DO J=1,NLAY
                     BUFLY => ELBUF_TAB(NG)%BUFLY(J)
                     NPTT = BUFLY%NPTT
+                    ID_PLY = 0
                     IF (IGTYP == 17 .OR. IGTYP == 19 .OR. IGTYP == 51) THEN
                       ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
                     ELSEIF (IGTYP == 52) THEN
@@ -978,8 +992,11 @@ c---
      .             IOK_PART  ,ISELECT   ,NEL    ,OFFSET   ,NFT     ,        
      .             IS_WRITTEN_SHELL,SHELL_TENSOR,EPSM     )
 
-              DEALLOCATE (EPSM)
-              DEALLOCATE(MATLY, THKLY,POSLY,THK_LY)
+              call my_dealloc(EPSM)
+              call my_dealloc(MATLY)
+              call my_dealloc(THKLY)
+              call my_dealloc(POSLY)
+              call my_dealloc(THK_LY)
 C--------------------------------------------------
             ELSEIF (KEYWORD == 'TENS/EPSDOT/MEMB') THEN  
 C--------------------------------------------------
@@ -1026,8 +1043,9 @@ c                 PLY=IPLY NPT=IPT
                   IPTHK  = IPANG + NLAY
                   IPPOS  = IPTHK + NLAY
                   DO J=1,NLAY
+                    ID_PLY = 0
                     IF (IGTYP == 17 .OR. IGTYP == 51) THEN
-                        ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
+                      ID_PLY = IGEO(1,STACK%IGEO(2+J,ISUBSTACK))
                     ELSEIF (IGTYP == 52) THEN
                       ID_PLY = PLY_INFO(1,STACK%IGEO(2+J,ISUBSTACK)-NUMSTACK) 
                     ENDIF
@@ -2139,7 +2157,7 @@ C-----------------------------------------------
           ENDIF ! IF (MLW /= 13)
         ENDIF ! IF(ITY == 2)
  490  CONTINUE
- 500  CONTINUE
+ !500  CONTINUE
 C-----------------------------------------------
 C
       RETURN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    table_mod                    ../starter/share/modules1/table_mod.F
 !||--- called by ------------------------------------------------------
@@ -37,19 +38,31 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    func_maxy                    ../starter/source/tools/curve/func_maxy.F
 !||    func_slope                   ../starter/source/tools/curve/func_slope.F
 !||    get_u_numtable               ../starter/source/user_interface/utable.F
+!||    hm_read_elasto_plastic       ../starter/source/materials/mat/mat131/hm_read_elasto_plastic.F90
 !||    hm_read_eos                  ../starter/source/materials/eos/hm_read_eos.F
 !||    hm_read_eos_compaction_tab   ../starter/source/materials/eos/hm_read_eos_compaction_tab.F90
 !||    hm_read_fail                 ../starter/source/materials/fail/hm_read_fail.F
+!||    hm_read_fail_biquad          ../starter/source/materials/fail/biquad/hm_read_fail_biquad.F
+!||    hm_read_fail_energy          ../starter/source/materials/fail/energy/hm_read_fail_energy.F
+!||    hm_read_fail_fld             ../starter/source/materials/fail/fld/hm_read_fail_fld.F
+!||    hm_read_fail_gene1           ../starter/source/materials/fail/gene1/hm_read_fail_gene1.F
+!||    hm_read_fail_nxt             ../starter/source/materials/fail/nxt/hm_read_fail_nxt.F
+!||    hm_read_fail_orthbiquad      ../starter/source/materials/fail/orthbiquad/hm_read_fail_orthbiquad.F
+!||    hm_read_fail_orthstrain      ../starter/source/materials/fail/orthstrain/hm_read_fail_orthstrain.F
 !||    hm_read_fail_tab1            ../starter/source/materials/fail/tabulated/hm_read_fail_tab1.F
+!||    hm_read_fail_tensstrain      ../starter/source/materials/fail/tensstrain/hm_read_fail_tensstrain.F
 !||    hm_read_funct                ../starter/source/tools/curve/hm_read_funct.F
 !||    hm_read_funct_python         ../starter/source/tools/curve/hm_read_funct_python.F90
 !||    hm_read_mat                  ../starter/source/materials/mat/hm_read_mat.F90
 !||    hm_read_mat106               ../starter/source/materials/mat/mat106/hm_read_mat106.F90
+!||    hm_read_mat117               ../starter/source/materials/mat/mat117/hm_read_mat117.F90
 !||    hm_read_mat123               ../starter/source/materials/mat/mat123/hm_read_mat123.F90
 !||    hm_read_mat128               ../starter/source/materials/mat/mat128/hm_read_mat128.F90
 !||    hm_read_mat129               ../starter/source/materials/mat/mat129/hm_read_mat129.F90
 !||    hm_read_mat132               ../starter/source/materials/mat/mat132/hm_read_mat132.F90
 !||    hm_read_mat133               ../starter/source/materials/mat/mat133/hm_read_mat133.F90
+!||    hm_read_mat135               ../starter/source/materials/mat/mat135/hm_read_mat135.F90
+!||    hm_read_mat137               ../starter/source/materials/mat/mat137/hm_read_mat137.F90
 !||    hm_read_mat163               ../starter/source/materials/mat/mat163/hm_read_mat163.F90
 !||    hm_read_mat190               ../starter/source/materials/mat/mat190/hm_read_mat190.F
 !||    hm_read_mat50                ../starter/source/materials/mat/mat050/hm_read_mat50.F90

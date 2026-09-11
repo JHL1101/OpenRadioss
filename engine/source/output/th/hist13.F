@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hist13                 ../engine/source/output/th/hist13.F
 !||--- called by ------------------------------------------------------
@@ -34,6 +35,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    element_mod            ../common_source/modules/elements/element_mod.F90
 !||    inoutfile_mod          ../common_source/modules/inoutfile_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||====================================================================
       SUBROUTINE HIST13(IPARG ,IXS  ,IXQ  ,IXC    ,IXT    ,
@@ -49,6 +52,8 @@ C=======================================================================
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -172,8 +177,8 @@ C
 C
       IF(NSMAT/=0.AND.INVSTR<40) THEN
 C  009        DO N=1,NPART
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NUMMAT))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NUMMAT, "IWA")
         DO N=1,NUMMAT-1
            IWA(N)=0
         ENDDO
@@ -207,8 +212,8 @@ C      NELV=22
       NELURV=12
 C
 C
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-      ALLOCATE(IWA(35))
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+      call my_alloc(IWA, 35, "IWA")
       IWA(1) =NGLV
       IWA(2) =NSMAT
       IWA(3) =NMTV
@@ -247,8 +252,8 @@ C
       IWA(35)=NACCELV
       IUNIT=IUHIS
       CALL WRTDES(IWA,IWA,35,ITFORM,0)
-      IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-      ALLOCATE(IWA(2*NUMMAT + NPART))
+      IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+      call my_alloc(IWA, 2*NUMMAT + NPART, "IWA")
       IF(NSMAT/=0) THEN
         IF(INVSTR<40) THEN
 C  009          DO N=1,NPART
@@ -281,9 +286,9 @@ C
         CALL WRTDES(IWA,IWA,NSMAT,ITFORM,0)
       ENDIF
 C--------------------------------
-       IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
+       IF(ALLOCATED(IWA)) call my_dealloc(IWA)
        IF(NINTERS/=0) THEN
-        ALLOCATE(IWA(NINTERS))
+        call my_alloc(IWA, NINTERS, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -301,21 +306,21 @@ C--------------------------------
        ENDIF
 C
        IF(NRWALL /= 0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NRWALL))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NRWALL, "IWA")
         II=0
         DO I=1,NRWALL
             II=II+1
             IWA(II)=II
         ENDDO
         CALL WRTDES(IWA,IWA,NRWALL,ITFORM,0)
-        DEALLOCATE(IWA)
+        call my_dealloc(IWA)
        ENDIF
 C
 C--------------------------------
       IF(NSRBY/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NSRBY))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NSRBY, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -335,8 +340,8 @@ c              IWA(II)=ITHBUF(J)
 C--------------------------------
 C
        IF(NSECT/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NSECT))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NSECT, "IWA")
         II=0
         DO I=1,NSECT
             II=II+1
@@ -344,8 +349,8 @@ C
         ENDDO
         CALL WRTDES(IWA,IWA,NSECT,ITFORM,0)
        ELSEIF(NSFLSW/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NSFLSW))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NSFLSW, "IWA")
         II=0
         DO I=1,NSFLSW
             II=II+1
@@ -355,8 +360,8 @@ C
        ENDIF
 C
        IF(NJOINT/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NJOINT))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NJOINT, "IWA")
         II=0
         DO I=1,NJOINT
             II=II+1
@@ -366,8 +371,8 @@ C
        ENDIF
 C
        IF(NRBAG+NVOLU/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NRBAG+NVOLU))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NRBAG+NVOLU, "IWA")
         II=0
         DO I=1,NRBAG+NVOLU
             II=II+1
@@ -378,8 +383,8 @@ C
 C
 C--------------------------------
       IF(NACCELM/=0) THEN
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(NACCELM))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, NACCELM, "IWA")
        DO N=1,NACCELM
          IWA(N)=LACCELM(2,N)
        ENDDO
@@ -400,8 +405,8 @@ c             IWA(II)=ITAB(I)
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -434,8 +439,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -472,8 +477,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -509,8 +514,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -547,8 +552,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -584,8 +589,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -620,8 +625,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)
@@ -662,8 +667,8 @@ C
             ENDDO
           ENDIF
         ENDDO
-        IF(ALLOCATED(IWA)) DEALLOCATE(IWA)
-        ALLOCATE(IWA(II))
+        IF(ALLOCATED(IWA)) call my_dealloc(IWA)
+        call my_alloc(IWA, II, "IWA")
         II=0
         DO N=1,NTHGRP
           ITYP=ITHGRP(2,N)

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_exchange           ../engine/source/coupling/rad2rad/r2r_exchange.F
 !||--- called by ------------------------------------------------------
@@ -419,11 +420,14 @@ C-----------------------------------------------------------------
       END SUBROUTINE GET_STIFF_SPMD
 C
 !||====================================================================
-!||    r2r_tagel   ../engine/source/coupling/rad2rad/r2r_exchange.F
+!||    r2r_tagel        ../engine/source/coupling/rad2rad/r2r_exchange.F
 !||--- called by ------------------------------------------------------
-!||    tagoff3n    ../engine/source/interfaces/interf/chkstfn3.F
+!||    tagoff3n         ../engine/source/interfaces/interf/chkstfn3.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    rad2r_mod   ../engine/share/modules/rad2r.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    rad2r_mod        ../engine/share/modules/rad2r.F
 !||====================================================================
       SUBROUTINE R2R_TAGEL(NTAGEL_R2R_SEND,ID_EL,ID_NODE,ITY,OFUR,TAGEL_SIZE)
 C-----------------------------------------------
@@ -433,6 +437,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -452,7 +458,7 @@ C----------Reallocation of tagel----------------------------------
         IF (3*NTAGEL_R2R_SEND>TAGEL_SIZE) THEN
 C
           IF (TAGEL_SIZE>0) THEN
-            ALLOCATE(TAGEL_TEMP(TAGEL_SIZE))
+            call my_alloc(TAGEL_TEMP, TAGEL_SIZE, "TAGEL_TEMP")
             DO I=1,TAGEL_SIZE
               TAGEL_TEMP(I) = TAGEL_R2R_SEND(I)
             END DO
@@ -460,8 +466,8 @@ C
 C
           TAGEL_SIZE_OLD = TAGEL_SIZE
           TAGEL_SIZE = TAGEL_SIZE + 150
-          IF (ALLOCATED(TAGEL_R2R_SEND)) DEALLOCATE(TAGEL_R2R_SEND)
-          ALLOCATE(TAGEL_R2R_SEND(TAGEL_SIZE))
+          IF (ALLOCATED(TAGEL_R2R_SEND)) call my_dealloc(TAGEL_R2R_SEND)
+          call my_alloc(TAGEL_R2R_SEND, TAGEL_SIZE, "TAGEL_R2R_SEND")
           DO I=1,TAGEL_SIZE_OLD
             TAGEL_R2R_SEND(I) = TAGEL_TEMP(I)
           END DO

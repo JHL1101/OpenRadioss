@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    transform_translate_in_local_skew_mod   ../starter/source/model/transformation/transform_translate_in_local_skew.F90
 !||--- called by ------------------------------------------------------
@@ -41,16 +42,18 @@
 !||--- called by ------------------------------------------------------
 !||    lecsubmod                           ../starter/source/model/submodel/lecsubmod.F
 !||    lectrans                            ../starter/source/model/transformation/lectrans.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         subroutine transform_translate_in_local_skew( &
-        &   nodes  ,n_nodes ,x    ,numnod ,isk   ,&
-        &   tx     ,ty      ,tz   ,skew   ,lskew ,&
-        &   sskew  )
+        &   nodes  ,n_nodes ,x    ,numnod    ,isk   ,&
+        &   tx     ,ty      ,tz   ,skew_trans)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use precision_mod, only : WP
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -65,10 +68,8 @@
           real(kind=WP),                             intent(in) :: tx                           !< Translation distance in X direction
           real(kind=WP),                             intent(in) :: ty                           !< Translation distance in Y direction
           real(kind=WP),                             intent(in) :: tz                           !< Translation distance in Z direction
-          integer,                                   intent(in) :: lskew                        !< Length of skew
-          integer,                                   intent(in) :: sskew                        !< Sum of skews
           real(kind=WP),                             intent(inout) :: x(3, numnod)              !< Coordinates of all nodes in model
-          real(kind=WP),                             intent(in) :: skew(lskew,sskew/lskew)      !< Skew matrices
+          real(kind=WP),                             intent(in) :: skew_trans(12)               !< Skew translation vector
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -81,24 +82,24 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(xn(3, n_nodes))
+          call my_alloc(xn, 3, n_nodes, "xn")
           xn(:,:) = 0.0_WP
           orig(:) = HUGE(0.0_WP)
 
           if (isk > 0) then
-            orig(1)=skew(10,isk)
-            orig(2)=skew(11,isk)
-            orig(3)=skew(12,isk)
+            orig(1)=skew_trans(10)
+            orig(2)=skew_trans(11)
+            orig(3)=skew_trans(12)
 
             ! group nodes coordinates in skew system
             do i=1, n_nodes
               igrnod = nodes(i)
-              xn(1,i) = skew(1,isk)*(x(1,igrnod) - orig(1)) + skew(2,isk)*(x(2,igrnod) - orig(2)) + &
-              &  skew(3,isk)*(x(3,igrnod) - orig(3))
-              xn(2,i) = skew(4,isk)*(x(1,igrnod) - orig(1)) + skew(5,isk)*(x(2,igrnod) - orig(2)) + &
-              &  skew(6,isk)*(x(3,igrnod) - orig(3))
-              xn(3,i) = skew(7,isk)*(x(1,igrnod) - orig(1)) + skew(8,isk)*(x(2,igrnod) - orig(2)) + &
-              &  skew(9,isk)*(x(3,igrnod) - orig(3))
+              xn(1,i) = skew_trans(1)*(x(1,igrnod) - orig(1)) + skew_trans(2)*(x(2,igrnod) - orig(2)) + &
+              &  skew_trans(3)*(x(3,igrnod) - orig(3))
+              xn(2,i) = skew_trans(4)*(x(1,igrnod) - orig(1)) + skew_trans(5)*(x(2,igrnod) - orig(2)) + &
+              &  skew_trans(6)*(x(3,igrnod) - orig(3))
+              xn(3,i) = skew_trans(7)*(x(1,igrnod) - orig(1)) + skew_trans(8)*(x(2,igrnod) - orig(2)) + &
+              &  skew_trans(9)*(x(3,igrnod) - orig(3))
             end do
           else
             do i=1, n_nodes
@@ -118,27 +119,28 @@
           ! skew_Z = (skew(7,isk), skew(8,isk), skew(9,isk)) ! - Z axis direction
 
           if (isk > 0) then
-            detskew = (skew(1,isk)*skew(5,isk)*skew(9,isk)) + (skew(4,isk)*skew(8,isk)*skew(3,isk))&
-            & + (skew(7,isk)*skew(2,isk)*skew(6,isk)) &
-            & - (skew(7,isk)*skew(5,isk)*skew(3,isk)) - (skew(8,isk)*skew(6,isk)*skew(1,isk))&
-            & - (skew(9,isk)*skew(2,isk)*skew(4,isk))
+
+            detskew = (skew_trans(1)*skew_trans(5)*skew_trans(9)) + (skew_trans(4)*skew_trans(8)*skew_trans(3))&
+            & + (skew_trans(7)*skew_trans(2)*skew_trans(6)) &
+            & - (skew_trans(7)*skew_trans(5)*skew_trans(3)) - (skew_trans(8)*skew_trans(6)*skew_trans(1))&
+            & - (skew_trans(9)*skew_trans(2)*skew_trans(4))
 
             detskew = max(detskew, 1e-20)
 
             ! Compute inverse using formula for 3x3 matrix
             ! inv(A) = 1/det(A) * adj(A)
 
-            invertskew_x(1) = (skew(5,isk)*skew(9,isk)-skew(6,isk)*skew(8,isk))/detskew
-            invertskew_x(2) = (skew(8,isk)*skew(3,isk)-skew(2,isk)*skew(9,isk))/detskew
-            invertskew_x(3) = (skew(2,isk)*skew(6,isk)-skew(5,isk)*skew(3,isk))/detskew
+            invertskew_x(1) = (skew_trans(5)*skew_trans(9)-skew_trans(6)*skew_trans(8))/detskew
+            invertskew_x(2) = (skew_trans(8)*skew_trans(3)-skew_trans(2)*skew_trans(9))/detskew
+            invertskew_x(3) = (skew_trans(2)*skew_trans(6)-skew_trans(5)*skew_trans(3))/detskew
 
-            invertskew_Y(1) = (skew(7,isk)*skew(6,isk)-skew(4,isk)*skew(9,isk))/detskew
-            invertskew_Y(2) = (skew(1,isk)*skew(9,isk)-skew(7,isk)*skew(3,isk))/detskew
-            invertskew_Y(3) = (skew(4,isk)*skew(3,isk)-skew(1,isk)*skew(6,isk))/detskew
+            invertskew_Y(1) = (skew_trans(7)*skew_trans(6)-skew_trans(4)*skew_trans(9))/detskew
+            invertskew_Y(2) = (skew_trans(1)*skew_trans(9)-skew_trans(7)*skew_trans(3))/detskew
+            invertskew_Y(3) = (skew_trans(4)*skew_trans(3)-skew_trans(1)*skew_trans(6))/detskew
 
-            invertskew_Z(1) = (skew(4,isk)*skew(8,isk)-skew(7,isk)*skew(5,isk))/detskew
-            invertskew_Z(2) = (skew(7,isk)*skew(2,isk)-skew(1,isk)*skew(8,isk))/detskew
-            invertskew_Z(3) = (skew(1,isk)*skew(5,isk)-skew(4,isk)*skew(2,isk))/detskew
+            invertskew_Z(1) = (skew_trans(4)*skew_trans(8)-skew_trans(7)*skew_trans(5))/detskew
+            invertskew_Z(2) = (skew_trans(7)*skew_trans(2)-skew_trans(1)*skew_trans(8))/detskew
+            invertskew_Z(3) = (skew_trans(1)*skew_trans(5)-skew_trans(4)*skew_trans(2))/detskew
 
             ! normalize the inverse vectors to ensure they are unit vectors
             norm(1) = sqrt(invertskew_x(1)**2 + invertskew_x(2)**2 + invertskew_x(3)**2)
@@ -201,7 +203,7 @@
             end do
           end if
 
-          if(allocated(xn)) deallocate(xn)
+          if(allocated(xn)) call my_dealloc(xn)
 ! ----------------------------------------------------------------------------------------------------------------------
         end subroutine transform_translate_in_local_skew
       end module transform_translate_in_local_skew_mod

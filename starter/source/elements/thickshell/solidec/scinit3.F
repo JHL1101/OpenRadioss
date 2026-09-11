@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    scinit3                ../starter/source/elements/thickshell/solidec/scinit3.F
 !||--- called by ------------------------------------------------------
@@ -121,7 +122,7 @@ C-----------------------------------------------
       my_real
      .   BID, FV, STI, ZI,WI
       my_real
-     .   V8LOC(51,MVSIZ),VOLU(MVSIZ),DTX(MVSIZ),VZL(MVSIZ),VZQ(MVSIZ),
+     .   VOLU(MVSIZ),DTX(MVSIZ),VZL(MVSIZ),VZQ(MVSIZ),
      .   X1(MVSIZ),X2(MVSIZ),X3(MVSIZ),X4(MVSIZ),X5(MVSIZ),X6(MVSIZ),
      .   X7(MVSIZ),X8(MVSIZ),Y1(MVSIZ),Y2(MVSIZ),Y3(MVSIZ),Y4(MVSIZ),
      .   Y5(MVSIZ),Y6(MVSIZ),Y7(MVSIZ),Y8(MVSIZ),Z1(MVSIZ),Z2(MVSIZ),
@@ -131,7 +132,7 @@ C-----------------------------------------------
      .   TZ(MVSIZ) ,E1X(MVSIZ),E1Y(MVSIZ),E1Z(MVSIZ),E2X(MVSIZ),
      .   E2Y(MVSIZ),E2Z(MVSIZ),E3X(MVSIZ),E3Y(MVSIZ),E3Z(MVSIZ),
      .   F1X(MVSIZ) ,F1Y(MVSIZ) ,F1Z(MVSIZ) ,
-     .   F2X(MVSIZ) ,F2Y(MVSIZ) ,F2Z(MVSIZ) ,GAMA(6,MVSIZ),
+     .   F2X(MVSIZ) ,F2Y(MVSIZ) ,F2Z(MVSIZ) ,
      .   RHOCP(MVSIZ) ,TEMP0(MVSIZ),ANGLE(MVSIZ),DTX0(MVSIZ),
      .   DELTAX(MVSIZ), AIRE(MVSIZ),LLSH(MVSIZ)
       my_real, DIMENSION(8,MVSIZ) :: BID8MVSIZ
@@ -595,7 +596,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N
+      INTEGER I
       my_real
      .   RX(MVSIZ),RY(MVSIZ),RZ(MVSIZ),SX(MVSIZ),SY(MVSIZ),SZ(MVSIZ),
      .   VQ(MVSIZ,3,3), LXYZ0(3),DETA1(MVSIZ),XX,YY,ZZ,
@@ -603,10 +604,10 @@ C-----------------------------------------------
      .   YL3(MVSIZ),YL4(MVSIZ),ZL1(MVSIZ),AREA(MVSIZ),
      .   XN(MVSIZ,4) , YN(MVSIZ,4) , ZN(MVSIZ,4) 
       my_real
-     .   AL1,AL2,LL(MVSIZ),COREL(2,4)
+     .   AL1,AL2,COREL(2,4)
       my_real
-     .   X13,X24,Y13,Y24,L13,L24,C1,C2,THKLY,POSLY,
-     .   FAC,VISCE,RX1,RY1,SX1,SY1,S1,FAC1,FAC2,FACI,FAC11,FACDT
+     .   X13,X24,Y13,Y24,L13,L24,C1,C2,
+     .   FAC,RX1,RY1,SX1,SY1,S1,FAC1,FAC2,FACI,FACDT
 C=======================================================================
         DO I=1,NEL
           XN(I,1) = HALF*(X1(I)+X5(I))
@@ -754,7 +755,7 @@ C
      .   E1X(NEL), E1Y(NEL), E1Z(NEL),
      .   E2X(NEL), E2Y(NEL), E2Z(NEL),
      .   E3X(NEL), E3Y(NEL), E3Z(NEL), 
-     .   C1,C2,CC,C1C1,C2C2,C1_1,C2_1
+     .   C1,C1C1,C2C2,C1_1,C2_1
 C~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       DO I=1,NEL
 C---------E3------------

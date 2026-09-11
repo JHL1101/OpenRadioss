@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,24 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    gps_solid      ../engine/source/output/outmaxsubr.F
+!||    gps_solid        ../engine/source/output/outmaxsubr.F
 !||--- called by ------------------------------------------------------
-!||    upd_tmax       ../engine/source/output/upd_outmax.F
+!||    upd_tmax         ../engine/source/output/upd_outmax.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_exch_v    ../engine/source/mpi/generic/spmd_exch_v.F
-!||    tensgps3       ../engine/source/output/anim/generate/tensor6.F
+!||    spmd_exch_v      ../engine/source/mpi/generic/spmd_exch_v.F
+!||    tensgps3         ../engine/source/output/anim/generate/tensor6.F
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    element_mod    ../common_source/modules/elements/element_mod.F90
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE GPS_SOLID(ELBUF_TAB,IPARG   ,GEO     ,PM   ,
      .           IXS  ,IXS10   ,IXS16   ,IXS20   ,IXQ     ,
@@ -44,6 +47,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -88,7 +93,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C
       NSIZ = 7
-      ALLOCATE(VCOM(NSIZ,NUMNOD))
+      call my_alloc(VCOM, NSIZ, NUMNOD, "VCOM")
       AFLU=>VCOM(1:3,1:NUMNOD)
       VFLU=>VCOM(4:6,1:NUMNOD)
       VCOM = ZERO
@@ -112,7 +117,7 @@ C
            SIG_N(N,4:6)=FAC*AFLU(1:3,N)
          ENDDO
 
-      DEALLOCATE(VCOM)
+      call my_dealloc(VCOM)
 
       RETURN
       END
@@ -127,6 +132,8 @@ C
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod         ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE GPSTRA_SOLID(ELBUF_TAB,IPARG   ,GEO     ,PM   ,
      .           IXS  ,IXS10   ,IXS16   ,IXS20   ,IXQ     ,
@@ -141,6 +148,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -182,8 +191,8 @@ C-----------------------------------------------
      .       , DIMENSION(:,:), ALLOCATABLE :: AFLU, VFLU
 C-----------------------------------------------
 C
-      ALLOCATE(AFLU(3,NUMNOD))
-      ALLOCATE(VFLU(3,NUMNOD))
+      call my_alloc(AFLU, 3, NUMNOD, "AFLU")
+      call my_alloc(VFLU, 3, NUMNOD, "VFLU")
 
 
        STR_N(1:NUMNOD,1:6) = ZERO
@@ -209,8 +218,8 @@ C
            STR_N(N,4:6)=FAC*AFLU(1:3,N)
          ENDDO
 
-      DEALLOCATE(AFLU)
-      DEALLOCATE(VFLU)
+      call my_dealloc(AFLU)
+      call my_dealloc(VFLU)
 
       RETURN
       END
@@ -237,7 +246,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     .   S1,T1,DET,R
+     .   T1,DET,R
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     
@@ -274,7 +283,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     .   S1,T1,T2,T3,S(6),P1,DETB,DETS,R,ALPHA
+     .   S1,T1,T2,S(6),P1,DETB,DETS,R,ALPHA
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     
@@ -476,8 +485,6 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IL, IR, IS, IT
-      my_real
-     .   S(6),S1,S2,S3,VONM
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     
       TYPE(L_BUFEL_)  ,POINTER :: LBUF  
 C-----------------------------------------------
@@ -584,7 +591,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IL, IR, IS, IT, JJ(6)
       my_real
-     .   S(NEL,6),S1,S2,S3,SP2(NEL,2)
+     .   S(NEL,6),SP2(NEL,2)
       TYPE(L_BUFEL_)  ,POINTER :: LBUF  
 C-----------------------------------------------
 C   S o u r c e   L i n e s
@@ -654,7 +661,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IL, IR, IS, IT, JJ(6)
       my_real
-     .   S(NEL,6),S1,S2,S3,SP2(NEL,2)
+     .   S(NEL,6),SP2(NEL,2)
       TYPE(L_BUFEL_)  ,POINTER :: LBUF  
 C-----------------------------------------------
 C   S o u r c e   L i n e s
@@ -713,7 +720,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     .   S(3),S1,S2,S12,VONM2,VONM
+     .   S1,S2,S12,VONM2,VONM
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     
@@ -756,8 +763,6 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IL, IR, IS, IT
-      my_real
-     .   S(3),S1,S2,S3,VONM
       TYPE(BUF_LAY_) ,POINTER :: BUFLY
       TYPE(L_BUFEL_)  ,POINTER :: LBUF  
 C-----------------------------------------------
@@ -813,7 +818,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IL, IR, IS, IT, JJ(3)
       my_real
-     .   S(NEL,3),S1,S2,S3,SP2(NEL,2)
+     .   S(NEL,3),SP2(NEL,2)
       TYPE(BUF_LAY_) ,POINTER :: BUFLY
       TYPE(L_BUFEL_)  ,POINTER :: LBUF  
 C-----------------------------------------------
@@ -879,7 +884,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, IR, IS, JJ(3), NPG, LENS, NG, PTS
       my_real
-     .   S(NEL,3),S1,S2,S3,SP2(NEL,2)
+     .   S(NEL,3),SP2(NEL,2)
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     
 C-----------------------------------------------
 C   S o u r c e   L i n e s
@@ -1016,7 +1021,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER  I,J,IL,IR,IS,IT,NFAIL,IIR,IPT,IADR,JJ(3)
       my_real
-     .   VG(5),VLY(5),VE(5)
+     .   VG(5),VLY(5)
       my_real,
      .  DIMENSION(MVSIZ) :: DMAX,WPMAX,EPST1,EPST2,EPSF1,EPSF2
       my_real,
@@ -1157,8 +1162,6 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
-      my_real
-     .   S(3),NORM2
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     
@@ -1202,7 +1205,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     .   S1,T1,T2,T3,S(6),P1,DETB,DETS,R,ALPHA
+     .   S1,T1,T2,S(6),P1,DETB,DETS,R,ALPHA
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------     

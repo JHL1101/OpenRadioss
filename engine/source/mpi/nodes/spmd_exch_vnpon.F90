@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_vnpon_mod   ../engine/source/mpi/nodes/spmd_exch_vnpon.F90
 !||--- called by ------------------------------------------------------
@@ -27,10 +28,10 @@
 !||    offset_nproj          ../engine/source/interfaces/shell_offset/offset_nproj.F90
 !||====================================================================
       module spmd_exch_vnpon_mod
-      implicit none
+        implicit none
       contains
 !=======================================================================================================================
-!!\brief This subroutine do nodal exchange vn6 in P/ON; ndim1=6*3,ndim2=numnod for vn6->nodal normal
+!!\brief This subroutine performs nodal exchange vn6 in P/ON; ndim1=6*3,ndim2=numnod for vn6->nodal normal
 !=======================================================================================================================
 !||====================================================================
 !||    spmd_exch_vnpon       ../engine/source/mpi/nodes/spmd_exch_vnpon.F90
@@ -38,8 +39,8 @@
 !||    inter_sh_offset_ini   ../engine/source/interfaces/shell_offset/inter_offset_ini.F90
 !||    offset_nproj          ../engine/source/interfaces/shell_offset/offset_nproj.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_wait             ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
 !||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         subroutine spmd_exch_vnpon(ndim1,ndim2,vn6,iad_offset,fr_offset,nspmd,lenr )
@@ -48,6 +49,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           use spmd_mod
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -58,7 +60,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                           :: nspmd            !< number of spmd domain
           integer, intent (in   )                           :: lenr             !< toal number of front node
-          integer, intent (in   )                           :: ndim1            !< 1er dim of vn6
+          integer, intent (in   )                           :: ndim1            !< first dimension of vn6
           integer, intent (in   )                           :: ndim2            !< 2nd dim of vn6
           integer, intent (in   ) ,dimension(2,nspmd+1)     :: iad_offset       !< index array for comm
           integer, intent (in   ) ,dimension(lenr)          :: fr_offset        !< front node array
@@ -82,8 +84,8 @@
 #ifndef MPI
           return
 #endif
-          allocate(rbuf(ndim1,lenr))
-          allocate(sbuf(ndim1,lenr))
+          call my_alloc(rbuf, ndim1, lenr, "rbuf")
+          call my_alloc(sbuf, ndim1, lenr, "sbuf")
 
           siz6 = ndim1
 

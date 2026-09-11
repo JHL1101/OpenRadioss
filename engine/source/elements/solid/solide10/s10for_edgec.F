@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s10for_edgec    ../engine/source/elements/solid/solide10/s10for_edgec.F
 !||--- called by ------------------------------------------------------
@@ -222,12 +223,12 @@ C----
               FN(I,J) = KTS*(LAM-LAM0)*LENG
               FACT = F_T*(THREE*FAC+ONE)
               STIF(I) = MAX(STIF(I),FACT*STI_C(I)) ! will be added to STI not max()
-!			  
+!  
               DDX = VX(I,JJ) - VXM(I,J)
               DDY = VY(I,JJ) - VYM(I,J)
               DDZ = VZ(I,JJ) - VZM(I,J)
               DDN = DT1*(DDX*NJX(I,J)+DDY*NJY(I,J)+DDZ*NJZ(I,J))
-              E_DISTOR(I) = E_DISTOR(I) - FN(I,J)*DDN
+              E_DISTOR(I) = E_DISTOR(I) + FN(I,J)*DDN
             END IF 
           ENDDO
          ENDDO
@@ -367,7 +368,7 @@ C----10(3,4)
          ENDDO
          DO I=1,NEL
            IF (STI_C(I)==ZERO) CYCLE
-           STI(I) = MAX(STI(I),STIF(I))
+           IF (STIF(I)>STI_C(I)) STI(I) = STI(I)+STIF(I)
          ENDDO
         END IF !(IFF >0) THEN
        

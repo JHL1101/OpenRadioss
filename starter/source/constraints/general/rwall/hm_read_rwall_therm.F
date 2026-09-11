@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_rwall_therm    ../starter/source/constraints/general/rwall/hm_read_rwall_therm.F
 !||--- called by ------------------------------------------------------
@@ -92,14 +93,13 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER N, ITYP, ITIED, NSL, NUSER, MSR, J, I,
-     .   L, IGU,IGU2, IGRS, NOSYS, IFQ, JC, UID,
+     .   L, IGU,IGU2, IGRS, NOSYS, IFQ, UID,
      .   IFLAGUNIT,SUB_ID, SUB_INDEX,IFUNC,NE,KK,ND,K0,NN,NF
       my_real
-     .   DIST, FRIC, DIAM, XMAS, VX, VY, VZ, XM1, YM1, ZM1,
-     .   XN, X1, Y1, Z1, DISN, X2, Y2, Z2, X3, FREQ, ALPHA, FAC_M_R2R,
+     .   DIST, FRIC, DIAM, XM1, YM1, ZM1,
+     .   XN, X1, Y1, Z1, DISN, X2, X3, FREQ, ALPHA,
      .   TEMP,TSTIF,FHEAT,FACX,FAC_TSTIF
       CHARACTER MESS*40
-      CHARACTER(LEN=NCHARKEY) :: OPT
       CHARACTER(LEN=NCHARTITLE)::TITR
       LOGICAL :: IS_AVAILABLE
 C-----------------------------------------------

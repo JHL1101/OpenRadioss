@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    st_qaprint_element     ../starter/source/output/qaprint/st_qaprint_element.F
 !||--- called by ------------------------------------------------------
@@ -70,10 +71,9 @@ C-----------------------------------------------
 C--------------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, MY_ID, TEMP_INT, NS, MY_MID, MY_PID, MY_NOD, MY_SKEW,NC
+      INTEGER I, J, MY_ID, NS, MY_MID, MY_PID, MY_NOD, MY_SKEW,NC
       INTEGER :: WORK(70000),NUMEL_KJ
       INTEGER, ALLOCATABLE, DIMENSION(:) :: INDEX,ITR1
-      CHARACTER(LEN=NCHARTITLE)::TITR
       CHARACTER (LEN=255) :: VARNAME
       DOUBLE PRECISION TEMP_DOUBLE
       INTEGER ITETRA4(4),IPENTA6(6)
@@ -88,8 +88,8 @@ C-----------------------------------------------
 C       Solid elements
 C-----------------------------------------------
 C
-        CALL MY_ALLOC(INDEX,2*NUMELS)
-        CALL MY_ALLOC(ITR1,NUMELS)
+        CALL MY_ALLOC(INDEX,2*NUMELS,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELS,"ITR1")
 C
         DO I=1,NUMELS8
           ITR1(I)=IXS(NIXS,I)
@@ -231,14 +231,15 @@ C
 C
         END DO ! DO I=1,NUMELS16
 
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C
 C-----------------------------------------------
 C       Spring elements
 C-----------------------------------------------
 C
-        CALL MY_ALLOC(INDEX,2*NUMELR)
-        CALL MY_ALLOC(ITR1,NUMELR)
+        CALL MY_ALLOC(INDEX,2*NUMELR,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELR,"ITR1")
 C
         DO I=1,NUMELR
           ITR1(I)=IXR(NIXR,I)
@@ -287,15 +288,16 @@ C
 C
         END DO ! DO I=1,NUMELR
 C
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C
 C-----  Additional output of IXR_KJ for kjoints
 C
         IF (NUMELR > 0) THEN
 C
           NUMEL_KJ = IXR_KJ(1,NUMELR+1)
-          CALL MY_ALLOC(INDEX,2*NUMEL_KJ)
-          CALL MY_ALLOC(ITR1,NUMEL_KJ)
+          CALL MY_ALLOC(INDEX,2*NUMEL_KJ,"INDEX")
+          CALL MY_ALLOC(ITR1,NUMEL_KJ,"ITR1")
 C
           DO I=1,NUMEL_KJ
             ITR1(I)=IXR_KJ(4,I)
@@ -315,7 +317,8 @@ C
 C
           ENDDO
 C
-          DEALLOCATE(INDEX,ITR1)
+          CALL MY_DEALLOC(INDEX)
+          CALL MY_DEALLOC(ITR1)
 C
         ENDIF
 C
@@ -323,8 +326,8 @@ C-----------------------------------------------
 C       Beam elements
 C-----------------------------------------------
 C
-        CALL MY_ALLOC(INDEX,2*NUMELP)
-        CALL MY_ALLOC(ITR1,NUMELP)
+        CALL MY_ALLOC(INDEX,2*NUMELP,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELP,"ITR1")
 C
         DO I=1,NUMELP
           ITR1(I)=IXP(NIXP,I)
@@ -373,14 +376,15 @@ C
 C
         END DO ! DO I=1,NUMELP
 C
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C
 C-----------------------------------------------
 C       Truss elements
 C-----------------------------------------------
 C
-        CALL MY_ALLOC(INDEX,2*NUMELT)
-        CALL MY_ALLOC(ITR1,NUMELT)
+        CALL MY_ALLOC(INDEX,2*NUMELT,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELT,"ITR1")
 C
         DO I=1,NUMELT
           ITR1(I)=IXT(NIXT,I)
@@ -409,13 +413,14 @@ C
 C
         END DO ! DO I=1,NUMELT
 C
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C
 C-----------------------------------------------
 C       SHELL elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NUMELC)
-        CALL MY_ALLOC(ITR1,NUMELC)
+        CALL MY_ALLOC(INDEX,2*NUMELC,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELC,"ITR1")
 C
         DO I=1,NUMELC
           ITR1(I)=IXC(NIXC,I)
@@ -449,12 +454,13 @@ C
           CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),0,TEMP_DOUBLE) 
 
         ENDDO 
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C-----------------------------------------------
 C       QUAD elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NUMELQ)
-        CALL MY_ALLOC(ITR1,NUMELQ)
+        CALL MY_ALLOC(INDEX,2*NUMELQ,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELQ,"ITR1")
 C
         DO I=1,NUMELQ
           ITR1(I)=IXQ(NIXQ,I)
@@ -480,12 +486,13 @@ C
           END DO
 C
         ENDDO 
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C-----------------------------------------------
 C       SH3N elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NUMELTG)
-        CALL MY_ALLOC(ITR1,NUMELTG)
+        CALL MY_ALLOC(INDEX,2*NUMELTG,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELTG,"ITR1")
 C
         DO I=1,NUMELTG
           ITR1(I)=IXTG(NIXTG,I)
@@ -519,13 +526,14 @@ C
           CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),0,TEMP_DOUBLE) 
 
         ENDDO 
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C
 C-----------------------------------------------
 C       Sph elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NUMSPH)
-        CALL MY_ALLOC(ITR1,NUMSPH)
+        CALL MY_ALLOC(INDEX,2*NUMSPH,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMSPH,"ITR1")
 C
         DO I=1,NUMSPH
           ITR1(I)=KXSP(NISP,I)
@@ -557,12 +565,13 @@ C
           ENDDO
 C
         ENDDO
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C-----------------------------------------------
 C       Xelem elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NUMELX)
-        CALL MY_ALLOC(ITR1,NUMELX)
+        CALL MY_ALLOC(INDEX,2*NUMELX,"INDEX")
+        CALL MY_ALLOC(ITR1,NUMELX,"ITR1")
 C
         DO I=1,NUMELX
           ITR1(I)=KXX(NIXX,I)
@@ -588,12 +597,13 @@ C
           ENDDO
 C
         ENDDO
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C-----------------------------------------------
 C       Rivet elements
 C-----------------------------------------------
-        CALL MY_ALLOC(INDEX,2*NRIVET)
-        CALL MY_ALLOC(ITR1,NRIVET)
+        CALL MY_ALLOC(INDEX,2*NRIVET,"INDEX")
+        CALL MY_ALLOC(ITR1,NRIVET,"ITR1")
 C
         DO I=1,NRIVET
           ITR1(I)=IXRI(4,I)
@@ -619,7 +629,8 @@ C
           ENDDO
 C
         ENDDO
-        DEALLOCATE(INDEX,ITR1)
+        CALL MY_DEALLOC(INDEX)
+        CALL MY_DEALLOC(ITR1)
 C-----------------------------------------------
       END IF
 C-----------------------------------------------

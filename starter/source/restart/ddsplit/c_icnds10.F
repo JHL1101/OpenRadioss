@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    c_icnds10   ../starter/source/restart/ddsplit/c_icnds10.F
+!||    c_icnds10      ../starter/source/restart/ddsplit/c_icnds10.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit     ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
-!||    nlocal      ../starter/source/spmd/node/ddtools.F
+!||    nlocal         ../starter/source/spmd/node/ddtools.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE C_ICNDS10(ICNDS10,ITAGND,PROC,NS10E_L,NBDDCNDM,MS,MS_ND)
 C-----------------------------------------------
@@ -35,6 +37,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -80,12 +83,11 @@ c        ENDDO
         N1 = ICNDS10(2,N)
         N2 = ICNDS10(3,N)
         NS10E_L = NS10E_L + 1
- 100    CONTINUE         
        ENDIF
       ENDDO
       IF (NS10E_L==0) RETURN
 !     allocate 1d array
-      ALLOCATE( TAGI(NUMNOD) )
+      call my_alloc(TAGI, NUMNOD, "TAGI")
       TAGI(1:NUMNOD) = 0 
 C-------------for main nodes---------
       DO N = 1, NS10E
@@ -131,7 +133,7 @@ c                IF (NF > 1) NBDDCNDM = NBDDCNDM + 1
             ENDIF
       END DO
 C ----------------------------
-      DEALLOCATE( TAGI )
+      CALL MY_DEALLOC(TAGI)
 C ----------------------------
 C
       RETURN

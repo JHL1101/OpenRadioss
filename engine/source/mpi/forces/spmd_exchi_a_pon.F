@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    spmd_exchi_a_pon      ../engine/source/mpi/forces/spmd_exchi_a_pon.F
+!||    spmd_exchi_a_pon   ../engine/source/mpi/forces/spmd_exchi_a_pon.F
 !||--- called by ------------------------------------------------------
-!||    spmd_exch2_a_pon      ../engine/source/mpi/forces/spmd_exch2_a_pon.F
+!||    spmd_exch2_a_pon   ../engine/source/mpi/forces/spmd_exch2_a_pon.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    plyxfem_mod           ../engine/share/modules/plyxfem_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    plyxfem_mod        ../engine/share/modules/plyxfem_mod.F
+!||    spmd_mod           ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCHI_A_PON(
      1   IAD_ELEM,FR_ELEM ,SIZI   ,ISKY   ,FSKYI ,
@@ -37,10 +39,12 @@ C
      4   CONDNSKYIF,FSKYIF_PXFEM,INTHEAT,NODADT_THERM)
 C
        USE PLYXFEM_MOD       
+       use my_alloc_mod
+
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -69,11 +73,10 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER MSGTYP,I,J,NOD,LOC_PROC,IERROR,INDEX,IDEB,
+      INTEGER MSGTYP,I,J,NOD,LOC_PROC,INDEX,IDEB,
      .        SIZ,L,NB_NOD,CC,NBIRECV, II, JJ, L0,MSGOFF,
      .        IAD_RECV(NSPMD+1),
-     .        REQ_R(NSPMD),REQ_S(NSPMD),IRINDEX(NSPMD),
-     .        STATUS(MPI_STATUS_SIZE),LSAV
+     .        REQ_R(NSPMD),REQ_S(NSPMD),IRINDEX(NSPMD),LSAV
       my_real, DIMENSION(:), ALLOCATABLE :: RBUF,SBUF
       DATA MSGOFF/170/
 C-----------------------------------------------
@@ -81,8 +84,8 @@ C   S o u r c e  L i n e s
 C-----------------------------------------------
       LOC_PROC = ISPMD + 1
 C
-      ALLOCATE(RBUF((SIZI)*NBIRCT))
-      ALLOCATE(SBUF((SIZI)*NBISDT))
+      call my_alloc(RBUF, (SIZI)*NBIRCT, "RBUF")
+      call my_alloc(SBUF, (SIZI)*NBISDT, "SBUF")
       NBIRECV = 0
       L = 1
       IAD_RECV(1) = 1
@@ -92,9 +95,8 @@ C
           MSGTYP = MSGOFF 
           NBIRECV = NBIRECV + 1
           IRINDEX(NBIRECV) = I
-          CALL MPI_IRECV(
-     S      RBUF(L),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(NBIRECV),IERROR)
+          CALL spmd_irecv(
+     S      RBUF(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_R(NBIRECV))
           L = L + SIZ
         ENDIF
         IAD_RECV(I+1) = L
@@ -359,9 +361,8 @@ C
 C
          SIZ = NBISDP(I)*(SIZI)
          MSGTYP = MSGOFF
-         CALL MPI_ISEND(
-     S      SBUF(L0),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_S(I),IERROR)
+         CALL spmd_isend(
+     S      SBUF(L0:L0+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_S(I))
        END IF
       END DO
 C
@@ -369,7 +370,7 @@ C COMPACTING PART INTERFACE
 C
       NBIRCT = 0
       DO II=1,NBIRECV
-        CALL MPI_WAITANY(NBIRECV,REQ_R,INDEX,STATUS,IERROR)
+        CALL spmd_waitany(REQ_R,NBIRECV,INDEX)
         I = IRINDEX(INDEX)
         L = IAD_RECV(I)
         NB_NOD = NBIRCP(I)
@@ -606,10 +607,10 @@ C   wait terminaison isend
 C
       DO I = 1, NSPMD
         IF(NBISDP(I)>0)
-     .    CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+     .    CALL spmd_wait(REQ_S(I))
       ENDDO
-      DEALLOCATE(RBUF)
-      DEALLOCATE(SBUF)
+      call my_dealloc(RBUF)
+      call my_dealloc(SBUF)
 C
 #endif
       RETURN

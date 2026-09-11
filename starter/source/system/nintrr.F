@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    nintri                 ../starter/source/system/nintrr.F
 !||--- called by ------------------------------------------------------
@@ -38,7 +39,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    read_dfs_detcord       ../starter/source/initial_conditions/detonation/read_dfs_detcord.F
 !||    read_dfs_detline       ../starter/source/initial_conditions/detonation/read_dfs_detline.F
 !||    read_dfs_detplan       ../starter/source/initial_conditions/detonation/read_dfs_detplan.F
-!||    read_dfs_detpoint      ../starter/source/initial_conditions/detonation/read_dfs_detpoint.F
 !||    read_dfs_wave_shaper   ../starter/source/initial_conditions/detonation/read_dfs_wave_shaper.F
 !||====================================================================
       INTEGER FUNCTION NINTRI(IEXT,ANTN,M,N,M1)
@@ -68,7 +68,6 @@ C
 !||====================================================================
 !||    nintlst                ../starter/source/system/nintrr.F
 !||--- called by ------------------------------------------------------
-!||    hm_lecgre              ../starter/source/groups/hm_lecgre.F
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                 ../starter/source/output/message/message.F
 !||--- uses       -----------------------------------------------------
@@ -248,7 +247,6 @@ C
 !||    ngr2usr                       ../starter/source/system/nintrr.F
 !||--- called by ------------------------------------------------------
 !||    hm_preread_bcscyc             ../starter/source/constraints/general/bcs/lecbcscyc.F
-!||    hm_preread_load_centri        ../starter/source/loads/general/load_centri/hm_preread_load_centri.F
 !||    hm_preread_pblast             ../starter/source/loads/pblast/hm_preread_pblast.F
 !||    hm_read_ale_link              ../starter/source/constraints/ale/hm_read_ale_link_vel.F
 !||    hm_read_alebcs                ../starter/source/constraints/ale/hm_read_alebcs.F
@@ -297,7 +295,6 @@ C
 !||    hm_read_inter_type25          ../starter/source/interfaces/int25/hm_read_inter_type25.F
 !||    hm_read_intsub                ../starter/source/output/subinterface/hm_read_intsub.F
 !||    hm_read_link                  ../starter/source/constraints/rigidlink/hm_read_rlink.F
-!||    hm_read_nbcs                  ../starter/source/constraints/general/bcs/hm_read_nbcs.F
 !||    hm_read_pblast                ../starter/source/loads/pblast/hm_read_pblast.F
 !||    hm_read_pcyl                  ../starter/source/loads/general/load_pcyl/hm_read_pcyl.F
 !||    hm_read_rand                  ../starter/source/general_controls/computation/hm_read_rand.F
@@ -312,7 +309,6 @@ C
 !||    hm_read_spcnd                 ../starter/source/constraints/sph/hm_read_spcnd.F
 !||    lectrans                      ../starter/source/model/transformation/lectrans.F
 !||    lectranssub                   ../starter/source/model/submodel/lectranssub.F
-!||    printbcs                      ../starter/source/constraints/general/bcs/printbcs.F
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                        ../starter/source/output/message/message.F
 !||    hm_get_current_option         ../starter/source/devtools/hm_reader/hm_get_current_option.F
@@ -384,15 +380,11 @@ C
 !||    fail_windshield_init     ../starter/source/materials/fail/windshield_alter/fail_windshield_init.F
 !||    hm_pre_read_link         ../starter/source/constraints/rigidlink/hm_pre_read_rlink.F
 !||    hm_preread_cload         ../starter/source/loads/general/cload/hm_preread_cload.F
-!||    hm_preread_convec        ../starter/source/loads/thermic/hm_preread_convec.F
 !||    hm_preread_grav          ../starter/source/loads/general/grav/hm_preread_grav.F
 !||    hm_preread_impacc        ../starter/source/constraints/general/impvel/hm_preread_impacc.F
 !||    hm_preread_impdisp       ../starter/source/constraints/general/impvel/hm_preread_impdisp.F
-!||    hm_preread_impflux       ../starter/source/constraints/thermic/hm_preread_impflux.F
-!||    hm_preread_imptemp       ../starter/source/constraints/thermic/hm_preread_imptemp.F
 !||    hm_preread_impvel        ../starter/source/constraints/general/impvel/hm_preread_impvel.F
 !||    hm_preread_load_centri   ../starter/source/loads/general/load_centri/hm_preread_load_centri.F
-!||    hm_preread_radiation     ../starter/source/loads/thermic/hm_preread_radiation.F
 !||    hm_preread_rbe2          ../starter/source/constraints/general/rbe2/hm_read_rbe2.F
 !||    hm_preread_xelem         ../starter/source/elements/reader/hm_preread_xelem.F
 !||    prelecdet                ../starter/source/initial_conditions/detonation/prelecdet.F
@@ -486,6 +478,7 @@ C-----------
 !||    hm_prelecjoi           ../starter/source/constraints/general/cyl_joint/hm_prelecjoi.F
 !||    hm_preread_merge       ../starter/source/constraints/general/merge/hm_preread_merge.F
 !||    hm_preread_rbody       ../starter/source/constraints/general/rbody/hm_preread_rbody.F
+!||    lecsec42               ../starter/source/tools/sect/hm_read_sect.F
 !||    prelecsec              ../starter/source/tools/sect/prelecsec.F
 !||    prelecsec4bolt         ../starter/source/tools/sect/prelecsec4bolt.F
 !||    preread_rbody_lagmul   ../starter/source/constraints/general/rbody/preread_rbody_lagmul.F
@@ -615,9 +608,9 @@ C-----------
       RETURN
       END
 !||====================================================================
-!||    sortgroup     ../starter/source/system/nintrr.F
+!||    sortgroup      ../starter/source/system/nintrr.F
 !||--- called by ------------------------------------------------------
-!||    lectur        ../starter/source/starter/lectur.F
+!||    lectur         ../starter/source/starter/lectur.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
@@ -627,6 +620,7 @@ C-----------
      3 IXTG_S,IXTG_S_IND,IXS,IXQ,IXC,IXT,IXP,IXR,IXTG,LENI)
 C      GROUP SORTING vs USER ID
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -652,7 +646,7 @@ C-----------------------------------------------
      .        IWORK(70000)
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX ! LENI*2
 C-----------------------
-        ALLOCATE(INDEX(LENI*2))
+        call my_alloc(INDEX, LENI*2, "INDEX")
         DO I=1,NUMELS  
           IXS_S_IND(I) = IXS(NIXS,I)  
         ENDDO  
@@ -729,7 +723,7 @@ C-----------------------
         DO I=1,NUMELTG  
           IXTG_S_IND(I) = INDEX(I)  
         ENDDO  
-        DEALLOCATE(INDEX) 
+        CALL MY_DEALLOC(INDEX)
         RETURN
         END
 

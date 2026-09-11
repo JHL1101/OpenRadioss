@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    shellthk_upd   ../starter/source/properties/composite_options/drape/shellthk_upd.F
 !||--- called by ------------------------------------------------------
@@ -176,12 +177,11 @@ C  re-set the thickness of shell according to /DRAPE layer thinning
                        NSLICE = DRAPE_PLY%NSLICE
                        IF(IINT == 1) THEN
                         DO K=1,NSLICE
-                          THK_IT = THKLY/NSLICE
                           THINNING = DRAPE_PLY%RDRAPE(K,1)
-                          THK_IT = THK_IT*THINNING
+                          THK_IT = THKLY*THINNING
                           THICKC = THICKC + THK_IT
                         ENDDO
-                       ELSEIF(IINT == 2) THEN  
+                       ELSEIF(IINT == 2) THEN ! only available with old definition Ithinning=1 
                         DO K=1,NSLICE
                           THK_IT = HALF*THKLY*W_GAUSS(K,NSLICE)
                           THINNING = DRAPE_PLY%RDRAPE(K,1)
@@ -255,9 +255,8 @@ C
                        NSLICE = DRAPE_PLY%NSLICE
                        IF(IINT == 1) THEN
                         DO K=1,NSLICE
-                          THK_IT = THKLY/NSLICE
                           THINNING = DRAPE_PLY%RDRAPE(K,1)
-                          THK_IT = THK_IT*THINNING
+                          THK_IT = THKLY*THINNING
                           THICKC = THICKC + THK_IT
                         ENDDO
                        ELSEIF(IINT == 2) THEN  

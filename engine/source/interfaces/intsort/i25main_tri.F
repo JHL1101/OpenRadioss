@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25main_tri                  ../engine/source/interfaces/intsort/i25main_tri.F
 !||--- called by ------------------------------------------------------
@@ -33,7 +34,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i25gapmsave                  ../engine/source/interfaces/intsort/i25gapmsave.F
 !||    i25trc_e2s                   ../engine/source/interfaces/intsort/i25trc_e2s.F
 !||    i25trc_edg                   ../engine/source/interfaces/intsort/i25trc_edg.F
-!||    i7xsave                      ../engine/source/interfaces/intsort/i7xsave.F
+!||    i25xsave                     ../engine/source/interfaces/intsort/i25xsave.F90
 !||    my_barrier                   ../engine/source/system/machine.F
 !||    spmd_rnum25                  ../engine/source/mpi/interfaces/spmd_i7tool.F
 !||    spmd_rnum25_edge             ../engine/source/mpi/interfaces/spmd_rnum25_edge.F
@@ -50,9 +51,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    check_sorting_criteria_mod   ../engine/source/interfaces/intsort/check_sorting_criteria.F90
 !||    h3d_mod                      ../engine/share/modules/h3d_mod.F
+!||    i25xsave_mod                 ../engine/source/interfaces/intsort/i25xsave.F90
 !||    imp_intbuf                   ../engine/share/modules/imp_mod_def.F90
 !||    intbufdef_mod                ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod                  ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    parameters_mod               ../common_source/modules/interfaces/parameters_mod.F
 !||    timer_mod                    ../engine/source/system/timer_mod.F90
 !||    tri25ebox                    ../engine/share/modules/tri25ebox.F
@@ -65,7 +69,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      4                  ITAB    ,KINET   ,TEMP    ,RENUM   ,
      5                  NSNFIOLD,NUM_IMP ,IND_IMP ,NODNX_SMS,
      6                  H3D_DATA,ESHIFT  ,NEDGE_T ,SSHIFT   ,NRTM_T ,
-     7                  ICODT   ,ISKEW   ,PARAMETERS,NODADT_THERM)
+     7                  ICODT   ,ISKEW   ,PARAMETERS,NODADT_THERM,INCONV)
 C============================================================================
 C   M o d u l e s
 C-----------------------------------------------
@@ -78,9 +82,12 @@ C-----------------------------------------------
       USE H3D_MOD
       USE PARAMETERS_MOD
       use check_sorting_criteria_mod , only : check_sorting_criteria
+      USE i25xsave_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -108,6 +115,7 @@ C-----------------------------------------------
      .        WEIGHT(*), IAD_ELEM(2,*) ,FR_ELEM(*),
      .        RENUM(*), NSNFIOLD(NSPMD), NODNX_SMS(*), ICODT(*), ISKEW(*)
       INTEGER , INTENT(IN) :: NODADT_THERM
+      INTEGER , INTENT(IN) :: INCONV
 C     REAL
       my_real 
      .    X(3,*), V(*), MS(*),TEMP(*)
@@ -118,22 +126,22 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER LOC_PROC,IEDGE,NEDGE,IGSTI,ITIED,
-     .        I,J, IP0, IP1, IP2, IP21, K11_T, I_SK_OLD, I_SK_OLD_E, I_STOK1, 
-     .        ADD1, NOINT, INACTI, MULTIMP, IGAP, IFQ,
-     .        N, NSNF, NSNL, NSNRF, NSNRL,NMN_L, IVIS2, IGAP0, IFSUB_CAREA
+     .        I_SK_OLD, I_SK_OLD_E,
+     .        NOINT, INACTI, MULTIMP, IGAP, IFQ,
+     .        NMN_L, IVIS2, IGAP0, IFSUB_CAREA
       INTEGER 
-     .        NCONT, NCONTE, MULNSN, MULNSNE, MULNSNS, INACTII, INACIMP, INTTH,
+     .        NCONT, NCONTE, MULNSN, MULNSNE, MULNSNS, INTTH,
      .        I_MEM,I_MEME(2),CAND_N_OLD,CAND_E_OLD(2),ILEV,FLAGREMN, LREMNORMAX,
-     .        IDUM1(1), ITHK
+     .        ITHK
 
       INTEGER NEDGE_TOTAL,NEDGE_LOCAL
-      INTEGER :: ISENS
+C
 C     REAL
       my_real
      .   GAP,
      .   XMAXL, YMAXL, ZMAXL, XMINL, YMINL, ZMINL, GAPMIN, GAPMAX,DRAD,
      .   C_MAXL,PMAX_GAP,VMAXDT,MARGE,TZINF,SX,SY,SZ,SX2,SY2,SZ2,DGAPLOAD,
-     .   BMINMA_OLD(6),BGAPEMX,BSAV(6)
+     .   BGAPEMX,BSAV(6)
       my_real, dimension(:), allocatable :: CURV_MAX
       INTEGER :: NMN,NRTM,NSN,NTY
       logical :: need_computation
@@ -143,7 +151,7 @@ C-----------------------------------------------
       call check_sorting_criteria( need_computation,nin,npari,nspmd,  
      .                             itask,ipari(1,nin),tt,intbuf_tab )
       if( .not.need_computation ) return
-      allocate(curv_max(nrtm_t)     )
+      call my_alloc(curv_max, nrtm_t, "curv_max")
       ! --------------
       I_MEM = 0
 !$OMP SINGLE
@@ -229,7 +237,8 @@ C
 
 
           NEDGE_TOTAL = NEDGE + NEDGE_REMOTE_OLD
-          ALLOCATE(INTBUF_TAB%I25_CAND_A(NEDGE_TOTAL + 3)) ! attention SPMD : NEDGE + NEDGEROLD + 3 
+          call my_alloc(INTBUF_TAB%I25_CAND_A, NEDGE_TOTAL + 3, "INTBUF_TAB%I25_CAND_A")
+! attention SPMD : NEDGE + NEDGEROLD + 3
 
           I_SK_OLD_E = INTBUF_TAB%I_STOK_E(1)
           CALL I25TRC_EDG(
@@ -239,7 +248,8 @@ C
      4      INTBUF_TAB%PENE_OLD_E  ,INTBUF_TAB%STIF_OLD_E   ,INTBUF_TAB%S_PENE_OLD_E )
           INTBUF_TAB%I_STOK_E(1)=I_SK_OLD_E
 
-          ALLOCATE(INTBUF_TAB%I25_CAND_B(NEDGE_TOTAL + 3)) ! attention SPMD : NEDGE + NEDGEROLD + 3 
+          call my_alloc(INTBUF_TAB%I25_CAND_B, NEDGE_TOTAL + 3, "INTBUF_TAB%I25_CAND_B")
+! attention SPMD : NEDGE + NEDGEROLD + 3
 
           I_SK_OLD_E = INTBUF_TAB%I_STOK_E(2)
           CALL I25TRC_E2S(
@@ -265,13 +275,15 @@ C
 C -------------------------------------------------------------
 C     Bounds of the domains                                         
 C -------------------------------------------------------------
-      
-      CALL I7XSAVE(
+     
+      CALL I25XSAVE(
      1       X            ,INTBUF_TAB%NSV,INTBUF_TAB%MSR,NSN ,NMN     ,
      2       ITASK        ,INTBUF_TAB%XSAV,XMINL      ,YMINL ,ZMINL   ,
      3       XMAXL        ,YMAXL        ,ZMAXL        ,C_MAXL,CURV_MAX,
      4       IPARI(39,NIN),INTBUF_TAB%IRECTM(1+4*SSHIFT),NRTM_T       ,SX    ,SY      ,
-     5       SZ           ,SX2          ,SY2          ,SZ2            ,NMN_L)
+     5       SZ           ,SX2          ,SY2          ,SZ2            ,NMN_L,
+     6       IPARI(104,NIN),INTBUF_TAB%MSR_1D,NRTM    ,NUMNOD         ,INCONV,
+     7       NTHREAD      )
 C ITHK == 1 : main gap should be updated with change in thickness
       IF(ITHK == 1) THEN
         CALL I25GAPMSAVE(
@@ -333,6 +345,7 @@ C
 
         IF(ITASK==0) THEN 
           ALLOCATE(CRVOXEL25(0:LRVOXEL25,0:LRVOXEL25,1:2,1:NSPMD))
+! TODO: non-default lower bound, convert manually
           CRVOXEL25(0:LRVOXEL25,0:LRVOXEL25,1:2,LOC_PROC) = 0
         ENDIF
 
@@ -341,7 +354,7 @@ C
         BGAPEMX=INTBUF_TAB%VARIABLES(bgapemx_index)
 
         CALL SPMD_TRI25VOX0(
-     1      X           ,BMINMA  ,NRTM_T,INTBUF_TAB%STFM(1+SSHIFT),MARGE ,
+     1      X           ,BMINMA  ,NRTM_T,INTBUF_TAB%STFM(1+SSHIFT)      ,MARGE ,
      2      CURV_MAX,INTBUF_TAB%GAP_M(1+SSHIFT),INTBUF_TAB%IRECTM(1+4*SSHIFT),GAP,
      +                                                    INTBUF_TAB%VARIABLES(bgapsmx_index),
      3      PMAX_GAP,VMAXDT,BGAPEMX,IEDGE,
@@ -360,7 +373,6 @@ C
         IF (IMONM > 0 .AND. ITASK == 0) CALL STOPTIME(TIMERS,26)
 
         IF(ITASK==0)THEN
-
 C
 C Get Remote Nodes in Xrem/Irem
 C
@@ -418,7 +430,7 @@ C     NCONT additional candidates (if all secondary nodes are already impacted, 
      2 NMN    ,NRTM_T      ,NSN            ,INTBUF_TAB%CAND_E,INTBUF_TAB%CAND_N,
      3 GAP    ,NOINT       ,INTBUF_TAB%I_STOK(1)   ,MULNSN     ,BMINMA       ,
      4 MARGE  ,CURV_MAX    ,PMAX_GAP       ,VMAXDT       ,
-     5 SSHIFT ,NIN         ,INTBUF_TAB%STFM(1+SSHIFT) ,INTBUF_TAB%GAP_S,
+     5 SSHIFT ,NIN         ,INTBUF_TAB%STFM(1+SSHIFT)         ,INTBUF_TAB%GAP_S,
      6 NSNR   ,NCONT       ,INTBUF_TAB%GAP_M(1+SSHIFT)   ,ITASK      ,INTBUF_TAB%VARIABLES(bgapsmx_index),
      7 I_MEM  ,INTBUF_TAB%PENE_OLD,ITAB          ,INTBUF_TAB%NBINFLG,INTBUF_TAB%MBINFLG,
      8 ILEV   ,INTBUF_TAB%MSEGTYP24,
@@ -578,18 +590,18 @@ C
 C
         IF (IMONM > 0) CALL STOPTIME(TIMERS,26)
         IF(IEDGE /= 0) THEN
-            DEALLOCATE(RENUM_EDGE)
-            DEALLOCATE(OLDNUM_EDGE)
+            call my_dealloc(RENUM_EDGE)
+            call my_dealloc(OLDNUM_EDGE)
         ENDIF
 !$OMP END SINGLE
       END IF
         IF(IEDGE /= 0) THEN
 !$OMP SINGLE
-            DEALLOCATE(NSNFIEOLD)
+            call my_dealloc(NSNFIEOLD)
 !$OMP END SINGLE
         ENDIF
 C
       CALL MY_BARRIER
-      if(allocated(curv_max)) deallocate(curv_max)
+      if(allocated(curv_max)) call my_dealloc(curv_max)
       RETURN
       END

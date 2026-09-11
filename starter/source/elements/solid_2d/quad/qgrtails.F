@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    qgrtails               ../starter/source/elements/solid_2d/quad/qgrtails.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inivol_def_mod         ../starter/share/modules1/inivol_mod.F
 !||    message_mod            ../starter/share/message_module/message_mod.F
 !||    r2r_mod                ../starter/share/modules1/r2r_mod.F
+!||    reorder_mod            ../starter/share/modules1/reorder_mod.F
 !||====================================================================
       SUBROUTINE QGRTAILS(
      1       IXQ    ,PM      ,IPARG  ,GEO    ,
@@ -50,6 +52,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE ALE_MOD , ONLY : ALE
       use element_mod , only : nixq
+      use reorder_mod
 C-----------------------------------------------
 C            A R G U M E N T S
 C-----------------------------------------------
@@ -67,6 +70,8 @@ C     ITR1(NSELQ)        TABLEAU DE TRAVAIL                         E/S
 C-----------------------------------------------
 C   I M P L I C I T   T Y P E S
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C O M M O N   B L O C K S
@@ -107,9 +112,12 @@ C-----------------------------------------------
       INTEGER ID,MFT,ILOC,JJ
       CHARACTER(LEN=NCHARTITLE)::TITR
       LOGICAL lFOUND
+      integer, dimension(:), allocatable :: index2
 C--------------------------------------------------------------
 C         bounding of MVSIZ groups
 C--------------------------------------------------------------
+      call my_alloc(index2, numelq, "index2")
+      index2(1:numelq) = permutation%quad(1:numelq)
       NGR1 = NGROUP + 1
 C
 C Phase 1: Domain Decomposition
@@ -157,6 +165,7 @@ C
           IXQ(7,I+NFT)=INUM(8,INDEX(I))
           IQUAOFF(I+NFT)=INUM(9,INDEX(I))
           ITR1(NFT+INDEX(I)) = NFT+I
+          permutation%quad(i+nft)=index2(index(i)+nft)
         ENDDO
 
 C dd-iad
@@ -364,7 +373,11 @@ C
           ISRAT=IPM(3,MID)
           IFAIL = 0
           NFAIL = MAT_PARAM(MID)%NFAIL
-          ISTRAIN = 1
+          IF(MLN/=24.AND.MLN/=25.AND.MLN<28)THEN
+            ISTRAIN = 1
+          ELSE
+            ISTRAIN=2
+          ENDIF
           IEOS=IPM(4,MID)
 
 C
@@ -489,5 +502,6 @@ C
      +'       MID    MEDIUM      FLAG      FLAG      TYPE   '/)
  1001 FORMAT(17(I10))
 C
+      call my_dealloc(index2)
       RETURN
       END

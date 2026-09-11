@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,25 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 
 !||====================================================================
-!||    spmd_exch_i25         ../engine/source/mpi/interfaces/spmd_exch_i25.F
+!||    spmd_exch_i25   ../engine/source/mpi/interfaces/spmd_exch_i25.F
 !||--- called by ------------------------------------------------------
-!||    resol                 ../engine/source/engine/resol.F
+!||    resol           ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg          ../engine/source/output/message/message.F
+!||    arret           ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod     ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod    ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
+!||    tri7box         ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_EXCH_I25(IPARI    ,INTBUF_TAB     ,ITAB,
      *                         IAD_ELEM ,FR_ELEM,INTLIST,NBINTC,
@@ -44,10 +46,11 @@ C-----------------------------------------------
       USE TRI7BOX
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD 
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : spmd_irecv, spmd_isend, spmd_wait
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -123,14 +126,14 @@ C      WRITE(6,*) __FILE__,__LINE__ ; CALL FLUSH(6)
        ASSERT(.NOT.(ALLOCATED(IADR)))
        ASSERT(.NOT.(ALLOCATED(IADS)))
 
-       ALLOCATE(REQ_SI(NSPMD))
-       ALLOCATE(REQ_RI(NSPMD))
-       ALLOCATE(REQ_S(NSPMD))
-       ALLOCATE(REQ_S2(NSPMD))
-       ALLOCATE(REQ_R(NSPMD))
-       ALLOCATE(REQ_R2(NSPMD))
-       ALLOCATE(IADR(NSPMD+1))
-       ALLOCATE(IADS(NSPMD+1))
+       call my_alloc(REQ_SI, NSPMD, "REQ_SI")
+       call my_alloc(REQ_RI, NSPMD, "REQ_RI")
+       call my_alloc(REQ_S, NSPMD, "REQ_S")
+       call my_alloc(REQ_S2, NSPMD, "REQ_S2")
+       call my_alloc(REQ_R, NSPMD, "REQ_R")
+       call my_alloc(REQ_R2, NSPMD, "REQ_R2")
+       call my_alloc(IADR, NSPMD+1, "IADR")
+       call my_alloc(IADS, NSPMD+1, "IADS")
 
 C--------------------------------------------------------
 
@@ -168,7 +171,7 @@ C counting buffer sizes for reception and sending
 
 C preparation of send
       IF(LENSD>0)THEN
-          ALLOCATE(BBUFS(LENSD),STAT=IERROR)
+          call my_alloc(BBUFS, LENSD, "BBUFS", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -178,7 +181,7 @@ C preparation of send
 C ---------------------------------------------
 C preparation of receive
       IF(LENRV>0)THEN
-          ALLOCATE(BBUFR(LENRV),STAT=IERROR)
+          call my_alloc(BBUFR, LENRV, "BBUFR", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -189,8 +192,8 @@ C preparation of receive
           SIZ=IADR(P+1)-IADR(P)
           IF (SIZ > 0) THEN
             MSGTYP = MSGOFF2
-            CALL MPI_IRECV( BBUFR(IADR(P)),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     *                     SPMD_COMM_WORLD,REQ_R(P),IERROR )
+            CALL spmd_irecv(BBUFR(IADR(P):IADR(P)+SIZ-1),SIZ,
+     *                      IT_SPMD(P),MSGTYP,REQ_R(P))
           ENDIF
       ENDDO
 
@@ -221,9 +224,9 @@ C Send
          SIZ = L-IADS(P)
          IF(SIZ>0)THEN
               MSGTYP = MSGOFF2
-              CALL MPI_ISEND(
-     .          BBUFS(IADS(P)),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+              CALL spmd_isend(
+     .          BBUFS(IADS(P):IADS(P)+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,
+     .          REQ_SI(P))
          ENDIF
        ENDIF ! ENDIF P/= LOC_PROC
       ENDDO  ! DO P=1, NSPMD
@@ -250,7 +253,7 @@ C Recieve
             MSGTYP = MSGOFF2
 
 C WAIT
-           CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+           CALL spmd_wait(REQ_R(P),STATUS)
 
            DO NI=1,NBINTC
              NIN = INTLIST(NI)
@@ -386,12 +389,12 @@ C end of send
              SIZ=IADS(P+1)-IADS(P)
           ENDIF
           IF(SIZ>0) THEN
-            CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_SI(P),STATUS)
           ENDIF
       ENDDO
 
-      IF (ALLOCATED(BBUFS)) DEALLOCATE(BBUFS)
-      IF (ALLOCATED(BBUFR)) DEALLOCATE(BBUFR)
+      IF (ALLOCATED(BBUFS)) call my_dealloc(BBUFS)
+      IF (ALLOCATED(BBUFR)) call my_dealloc(BBUFR)
 C-----------------------------------------------------------
 C Second part - exchanges on the secondary boundary nodes
 C               for all interface type 25.
@@ -409,10 +412,10 @@ C preparation of send
       ILEN=5
       RLEN=2
       ASSERT(SFR_I25 >= 0) 
-      ALLOCATE(ISENDBUF(ILEN,SFR_I25))
-      ALLOCATE(IRECBUF(ILEN*SFR_I25))
-      ALLOCATE(RSENDBUF(RLEN,SFR_I25))
-      ALLOCATE(RRECBUF(RLEN*SFR_I25))
+      call my_alloc(ISENDBUF, ILEN, SFR_I25, "ISENDBUF")
+      call my_alloc(IRECBUF, ILEN*SFR_I25, "IRECBUF")
+      call my_alloc(RSENDBUF, RLEN, SFR_I25, "RSENDBUF")
+      call my_alloc(RRECBUF, RLEN*SFR_I25, "RRECBUF")
 
 C implementation of the IRECIEVE
       DO P=1,NSPMD
@@ -424,16 +427,16 @@ C implementation of the IRECIEVE
           MSGTYP = MSGOFF3
           LEN = SIZ*ILEN
 c           print *,'recept attend entier',ispmd+1,p,len
-          CALL MPI_IRECV(
-     S      IRECBUF(LI),LEN,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(P),IERROR)
+          CALL spmd_irecv(
+     S      IRECBUF(LI:LI+LEN-1),LEN,IT_SPMD(P),MSGTYP,
+     G      REQ_R(P))
 
           MSGTYP = MSGOFF4 
           LEN = SIZ*RLEN
 c           print *,'recept attend reel',ispmd+1,p,len
-          CALL MPI_IRECV(
-     S      RRECBUF(LR),LEN,REAL,IT_SPMD(P),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R2(P),IERROR)
+          CALL spmd_irecv(
+     S      RRECBUF(LR:LR+LEN-1),LEN,IT_SPMD(P),MSGTYP,
+     G      REQ_R2(P))
 
         ENDIF
        ENDDO
@@ -474,15 +477,15 @@ C
          IF (SIZ >0)THEN
            MSGTYP = MSGOFF3
            L = IADS(P)
-           CALL MPI_ISEND(
-     S        ISENDBUF(1,L),SIZ*ILEN,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_S(P),IERROR)
+           CALL spmd_isend(
+     S        ISENDBUF(1:ILEN,L:L+SIZ-1),SIZ*ILEN,IT_SPMD(P),MSGTYP,
+     G        REQ_S(P))
 c           print *,'envoi entier',ispmd+1,p,siz*2
      
            MSGTYP = MSGOFF4
-           CALL MPI_ISEND(
-     S        RSENDBUF(1,L),SIZ*RLEN,REAL,IT_SPMD(P),MSGTYP,
-     G        SPMD_COMM_WORLD,REQ_S2(P),IERROR)
+           CALL spmd_isend(
+     S        RSENDBUF(1:RLEN,L:L+SIZ-1),SIZ*RLEN,IT_SPMD(P),MSGTYP,
+     G        REQ_S2(P))
 c           print *,'envoi reel',ispmd+1,p,siz*8
          ENDIF   ! IF (SIZ >0)
       ENDDO      ! DO P=1,NSPMD
@@ -503,10 +506,10 @@ C Reception
         SIZ = IADS(P+1)-IADS(P)
         IF(SIZ/=0)THEN
           IDB = IADS(P)
-          CALL MPI_WAIT(REQ_R (P),STATUS,IERROR)
+          CALL spmd_wait(REQ_R (P),STATUS)
 c           print *,'recept recu entiers',ispmd+1,p
 
-          CALL MPI_WAIT(REQ_R2(P),STATUS,IERROR)
+          CALL spmd_wait(REQ_R2(P),STATUS)
 c           print *,'recept recu reels',ispmd+1,p
 
 C Treatments
@@ -642,15 +645,15 @@ C Fin send
       DO P=1,NSPMD
         SIZ = IADS(P+1)-IADS(P)
         IF(SIZ/=0)THEN
-          CALL MPI_WAIT(REQ_S(P),STATUS,IERROR)
-          CALL MPI_WAIT(REQ_S2(P),STATUS,IERROR)
+          CALL spmd_wait(REQ_S(P),STATUS)
+          CALL spmd_wait(REQ_S2(P),STATUS)
         ENDIF
       ENDDO
 
-      IF(ALLOCATED(ISENDBUF))DEALLOCATE(ISENDBUF)
-      IF(ALLOCATED(IRECBUF))DEALLOCATE(IRECBUF)
-      IF(ALLOCATED(RSENDBUF))DEALLOCATE(RSENDBUF)
-      IF(ALLOCATED(RRECBUF))DEALLOCATE(RRECBUF)
+      IF(ALLOCATED(ISENDBUF)) call my_dealloc(ISENDBUF)
+      IF(ALLOCATED(IRECBUF)) call my_dealloc(IRECBUF)
+      IF(ALLOCATED(RSENDBUF)) call my_dealloc(RSENDBUF)
+      IF(ALLOCATED(RRECBUF)) call my_dealloc(RRECBUF)
 
 C ------------------------------------------------------------------
 C Third part we send back the globalized values to the remote procs
@@ -677,7 +680,7 @@ C counting buffer sizes for reception and sending
       IADR(NSPMD+1)=LENRV+1
 
       IF(LENSD>0)THEN
-          ALLOCATE(BBUFS(LENSD),STAT=IERROR)
+          call my_alloc(BBUFS, LENSD, "BBUFS", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -686,7 +689,7 @@ C counting buffer sizes for reception and sending
 
 C preparation of receive
       IF(LENRV>0)THEN
-          ALLOCATE(BBUFR(LENRV),STAT=IERROR)
+          call my_alloc(BBUFR, LENRV, "BBUFR", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
@@ -698,8 +701,8 @@ C preparation of receive
           SIZ=IADR(P+1)-IADR(P)
           IF (SIZ > 0) THEN
             MSGTYP = MSGOFF5
-            CALL MPI_IRECV( BBUFR(IADR(P)),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     *                     SPMD_COMM_WORLD,REQ_R(P),IERROR )
+            CALL spmd_irecv(BBUFR(IADR(P):IADR(P)+SIZ-1),SIZ,
+     *                      IT_SPMD(P),MSGTYP,REQ_R(P))
          ENDIF
       ENDDO
       
@@ -735,9 +738,9 @@ c        if(itab(sn)==29376)print *,'broadcast nsnsi',loc_proc,p,INTBUF_TAB(NIN)
          IF(SIZ>0)THEN
               MSGTYP = MSGOFF5
 C Send
-              CALL MPI_ISEND(
-     .          BBUFS(IADS(P)),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+              CALL spmd_isend(
+     .          BBUFS(IADS(P):IADS(P)+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,
+     .          REQ_SI(P))
          ENDIF
        ENDIF
       ENDDO
@@ -761,7 +764,7 @@ C Recieve
           SIZ=IADR(P+1)-IADR(P)
           IF (SIZ > 0) THEN
            
-           CALL MPI_WAIT(REQ_R(P),STATUS,IERROR)
+           CALL spmd_wait(REQ_R(P),STATUS)
            DO NI=1,NBINTC
              NIN=INTLIST(NI)
              NTY   =IPARI(7,NIN)
@@ -796,22 +799,22 @@ C end of send
              SIZ=IADS(P+1)-IADS(P)
           ENDIF
           IF(SIZ>0) THEN
-            CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+            CALL spmd_wait(REQ_SI(P),STATUS)
           ENDIF
       ENDDO
 
 
 C     WRITE(6,*) __FILE__,__LINE__
-      IF(ALLOCATED(BBUFS)) DEALLOCATE(BBUFS)
-      IF(ALLOCATED(BBUFR)) DEALLOCATE(BBUFR)
-      IF(ALLOCATED( REQ_SI )) DEALLOCATE(REQ_SI)
-      IF(ALLOCATED( REQ_RI )) DEALLOCATE(REQ_RI)
-      IF(ALLOCATED( REQ_S  )) DEALLOCATE(REQ_S)
-      IF(ALLOCATED( REQ_S2 )) DEALLOCATE(REQ_S2)
-      IF(ALLOCATED( REQ_R  )) DEALLOCATE(REQ_R)
-      IF(ALLOCATED( REQ_R2 )) DEALLOCATE(REQ_R2)
-      IF(ALLOCATED( IADR   )) DEALLOCATE(IADR)
-      IF(ALLOCATED( IADS   )) DEALLOCATE(IADS)
+      IF(ALLOCATED(BBUFS)) call my_dealloc(BBUFS)
+      IF(ALLOCATED(BBUFR)) call my_dealloc(BBUFR)
+      IF(ALLOCATED( REQ_SI )) call my_dealloc(REQ_SI)
+      IF(ALLOCATED( REQ_RI )) call my_dealloc(REQ_RI)
+      IF(ALLOCATED( REQ_S  )) call my_dealloc(REQ_S)
+      IF(ALLOCATED( REQ_S2 )) call my_dealloc(REQ_S2)
+      IF(ALLOCATED( REQ_R  )) call my_dealloc(REQ_R)
+      IF(ALLOCATED( REQ_R2 )) call my_dealloc(REQ_R2)
+      IF(ALLOCATED( IADR   )) call my_dealloc(IADR)
+      IF(ALLOCATED( IADS   )) call my_dealloc(IADS)
 
       ENDIF    ! fi iflag=4
 #endif

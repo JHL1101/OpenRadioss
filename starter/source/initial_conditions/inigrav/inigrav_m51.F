@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inigrav_m51            ../starter/source/initial_conditions/inigrav/inigrav_m51.F
 !||--- called by ------------------------------------------------------
@@ -29,7 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE INIGRAV_M51(NELG, NEL , NG   , MATID, IPM, GRAV0, DEPTH, PM,     BUFMAT, ELBUF_TAB,
-     .                       PSURF,LIST, ALE_CONNECTIVITY, NV46 , IX , NIX  , NFT  , BUFMATG, IPARG)
+     .                       PSURF,LIST, ALE_CONNECTIVITY, NV46 , IX , NIX  , NFT  , BUFMATG, IPARG, R0)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -55,6 +56,7 @@ C-----------------------------------------------
       my_real, INTENT(IN) :: GRAV0, DEPTH(*), PM(NPROPM, *), BUFMAT(*),PSURF,BUFMATG(*)
       TYPE(ELBUF_STRUCT_), DIMENSION(NGROUP), TARGET, INTENT(IN) :: ELBUF_TAB
       TYPE(t_ale_connectivity), INTENT(INOUT) :: ALE_CONNECTIVITY
+      my_real,INTENT(IN) :: R0
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -64,13 +66,15 @@ C-----------------------------------------------
      .     C01, C11, C21, C31, C41, C51, 
      .     C02, C12, C22, C32, C42, C52, 
      .     C03, C13, C23, C33, C43, C53, 
-     .     C04, PEXT,
-     .     RHO10, RHO20, RHO30, RHO40, RHO1, RHO2, RHO3, MU, 
-     .     EINT1, EINT2, EINT3, EINT4, VOL, VOL1, VOL2, VOL3,
+     .     C04, C14, C24, C34, C44, C54,
+     .     PEXT,
+     .     RHO10, RHO20, RHO30, RHO40, RHO1, RHO2, RHO3, RHO4, MU,
+     .     EINT1, EINT2, EINT3, EINT4, VOL, VOL1, VOL2, VOL3,VOL4,
      .     EINT10, EINT20, EINT30, EINT40
       TYPE(G_BUFEL_), POINTER :: GBUF
       TYPE(BUF_MAT_) ,POINTER :: MBUF  , MBUFv
       INTEGER :: IAD
+      my_real :: ABS_GRAV0
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
@@ -78,6 +82,8 @@ C-----------------------------------------------
 C LIST IS SUBGROUP TO TREAT : ONLY ELEM WITH RELEVANT PARTS ARE KEPT
 C NEL IS ISEZ OF LIST
 C NELG IS SIZE OF ORIGINAL GROUP : needed to shift indexes in GBUF%SIG & MBUF%VAR
+
+      ABS_GRAV0=ABS(GRAV0)
 
       !Global buffer
       GBUF => ELBUF_TAB(NG)%GBUF
@@ -190,6 +196,11 @@ C NELG IS SIZE OF ORIGINAL GROUP : needed to shift indexes in GBUF%SIG & MBUF%VA
            C53 = BUFMATG(IADBUF-1+27)
            !Material 4
            C04 = BUFMATG(IADBUF-1+49)
+           C14 = BUFMATG(IADBUF-1+50)
+           C24 = ZERO
+           C34 = ZERO
+           C44 = ZERO
+           C54 = ZERO
            !vol frac
            ALPHA1 = MBUFv%VAR(IS + (K1 + 23 - 1) * NELGv)
            ALPHA2 = MBUFv%VAR(IS + (K2 + 23 - 1) * NELGv)
@@ -208,31 +219,58 @@ C NELG IS SIZE OF ORIGINAL GROUP : needed to shift indexes in GBUF%SIG & MBUF%VA
          ENDIF
 
       !Mean initial density
-         RHO0 = ALPHA1 * RHO10 + ALPHA2 * RHO20 + ALPHA3 * RHO30 + ALPHA4 * RHO40        
+         RHO0 = ALPHA1 * RHO10 + ALPHA2 * RHO20 + ALPHA3 * RHO30 + ALPHA4 * RHO40
+         IF(R0 > ZERO) RHO0=R0
       !Hydrostatic pressure
-         PGRAV = PSURF - RHO0  * GRAV0 * DEPTH(K)
+         PGRAV = PSURF + RHO0  * ABS_GRAV0 * DEPTH(K)
       !Solve for partial densities
          VOL  = GBUF%VOL(I)
          VOL1 = ALPHA1*VOL
          VOL2 = ALPHA2*VOL
          VOL3 = ALPHA3*VOL
+         VOL4 = ALPHA4*VOL
 C
-         CALL POLYSOLVE(C01, C11, C21, C31, C41, C51, PGRAV, EINT1, MU, RHO10, VOL1,PEXT,IX(11,I+NFT))
-         RHO1 = RHO10 * (MU + ONE)
-         CALL POLYSOLVE(C02, C12, C22, C32, C42, C52, PGRAV, EINT2, MU, RHO20, VOL2,PEXT,IX(11,I+NFT))
-         RHO2 = RHO20 * (MU + ONE)
-         CALL POLYSOLVE(C03, C13, C23, C33, C43, C53, PGRAV, EINT3, MU, RHO30, VOL3,PEXT,IX(11,I+NFT))
-         RHO3 = RHO30 * (MU + ONE)
+         IF(RHO10 > ZERO .AND. VOL1 >  EM20)THEN
+           CALL POLYSOLVE(C01, C11, C21, C31, C41, C51, PGRAV, EINT1, MU, RHO10, VOL1,PEXT,IX(NIX,I+NFT))
+           RHO1 = RHO10 * (MU + ONE)
+         ELSE
+           RHO1 = RHO10
+         ENDIF
+
+         IF(RHO20 > ZERO .AND. VOL2 >  EM20)THEN
+           CALL POLYSOLVE(C02, C12, C22, C32, C42, C52, PGRAV, EINT2, MU, RHO20, VOL2,PEXT,IX(NIX,I+NFT))
+           RHO2 = RHO20 * (MU + ONE)
+         ELSE
+           RHO2 = RHO20
+         ENDIF
+
+         IF(RHO30 > ZERO .AND. VOL3 >  EM20)THEN
+           CALL POLYSOLVE(C03, C13, C23, C33, C43, C53, PGRAV, EINT3, MU, RHO30, VOL3,PEXT,IX(NIX,I+NFT))
+           RHO3 = RHO30 * (MU + ONE)
+         ELSE
+           RHO3 = RHO30
+         ENDIF
+
+         IF(RHO40 > ZERO .AND. VOL4 >  EM20)THEN
+           CALL POLYSOLVE(C04, C14, C24, C34, C44, C54, PGRAV, EINT4, MU, RHO40, VOL4,PEXT,IX(NIX,I+NFT))
+           RHO4 = RHO40 * (MU + ONE)
+         ELSE
+           RHO4 = RHO40
+         ENDIF
+
       !Store partial densities
          MBUF%VAR(I + (K1 + 09 - 1) * NELG) = RHO1  !initialize rho(t=0)
          MBUF%VAR(I + (K2 + 09 - 1) * NELG) = RHO2
          MBUF%VAR(I + (K3 + 09 - 1) * NELG) = RHO3
+         MBUF%VAR(I + (K4 + 09 - 1) * NELG) = RHO4
          MBUF%VAR(I + (K1 + 12 - 1) * NELG) = RHO1  !initialize rhoOLD(t=0)
          MBUF%VAR(I + (K2 + 12 - 1) * NELG) = RHO2
          MBUF%VAR(I + (K3 + 12 - 1) * NELG) = RHO3
+         MBUF%VAR(I + (K4 + 12 - 1) * NELG) = RHO4
          MBUF%VAR(I + (K1 + 20 - 1) * NELG) = RHO1  !keep rho0 (initial state is element dependent)
          MBUF%VAR(I + (K2 + 20 - 1) * NELG) = RHO2
          MBUF%VAR(I + (K3 + 20 - 1) * NELG) = RHO3
+         MBUF%VAR(I + (K4 + 20 - 1) * NELG) = RHO4
       !Store pressures
          MBUF%VAR(I + (K1 + 18 - 1) * NELG) = PGRAV !P(t=0)
          MBUF%VAR(I + (K2 + 18 - 1) * NELG) = PGRAV

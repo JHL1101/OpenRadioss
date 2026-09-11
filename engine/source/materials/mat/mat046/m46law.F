@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    m46law           ../engine/source/materials/mat/mat046/m46law.F
 !||--- called by ------------------------------------------------------
@@ -100,20 +101,19 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real 
-     .  E1,E2,E3,E4,E5,E6,P2,BID1,BID2,BID3,C1(MVSIZ),
+     .  E1,E2,E3,E4,E5,E6,P2,BID1,BID2,BID3,
      .  EP1(MVSIZ),EP2(MVSIZ),EP3(MVSIZ),EP4(MVSIZ),EP5(MVSIZ),EP6(MVSIZ),
      .  S1(MVSIZ) ,S2(MVSIZ) ,S3(MVSIZ) ,S4(MVSIZ) ,S5(MVSIZ) ,S6(MVSIZ),
      .  DE1(MVSIZ),DE2(MVSIZ),DE3(MVSIZ),DE4(MVSIZ),DE5(MVSIZ),DE6(MVSIZ),
      .  SV1(MVSIZ),SV2(MVSIZ),SV3(MVSIZ),SV4(MVSIZ),SV5(MVSIZ),SV6(MVSIZ),
      .  SO1(MVSIZ),SO2(MVSIZ),SO3(MVSIZ),SO4(MVSIZ),SO5(MVSIZ),SO6(MVSIZ)
-      INTEGER NPAR,IADBUF,I,IBID,MX
+      INTEGER NPAR,I,MX
       my_real  FACQ0
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
       MX = MAT(1)
       NPAR   = IPM(9,MX)
-      IADBUF = IPM(7,MX)
       FACQ0 = ONE
       
 C

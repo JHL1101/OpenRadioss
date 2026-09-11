@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    noise             ../engine/source/general_controls/computation/noise.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    wrtdes            ../engine/source/output/th/wrtdes.F
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod      ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE NOISE(
      1   DT2R  ,IN,J     ,BUF  ,V     ,
@@ -45,6 +47,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -69,11 +72,10 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER , DIMENSION(:), ALLOCATABLE :: ELNOI,ELG,NOIADD
       my_real,DIMENSION(:),ALLOCATABLE ::  C
-      INTEGER IPELNOI,IPNOIADD,IPTC
       INTEGER IFIRST,I,K,L,NE,NC,KK,IAD, LEN
-      my_real PI1,PI2,TOL,TE,TC,FNE,FAC,DEC,TO,TRANS,XI,W,CC,TTN
+      my_real PI2,TOL,TE,TC,FAC,DEC,TO,TRANS,XI,W,CC,TTN
       INTEGER LENGTH, ITAG(0:NUMNOD)
-      SAVE IFIRST,TE,IPTC,C,NC,TO,IPELNOI,ELNOI,ELG,IPNOIADD,NOIADD
+      SAVE IFIRST,TE,C,NC,TO,ELNOI,ELG,NOIADD
       DATA IFIRST/0/
       my_real WA(NNOISE)
 C-----------------------------------------------
@@ -101,10 +103,10 @@ C
 C initialization of the arrays of elements by saved nodes
 C
         IF(NOISEP/=0)THEN
-          ALLOCATE (NOIADD(NNOISE+1))
+          call my_alloc(NOIADD, NNOISE+1, "NOIADD")
           CALL INITNOISE(IN,NOIADD,IXS,ITAG(0),LENGTH,IXQ)
-          ALLOCATE(ELNOI(LENGTH))        
-          ALLOCATE(ELG(LENGTH))
+          call my_alloc(ELNOI, LENGTH, "ELNOI")
+          call my_alloc(ELG, LENGTH, "ELG")
           CALL INITNOISE2(IN,ELNOI,ELG,NOIADD,IXS,ITAG(1),IPARG,IXQ)
         ENDIF
 C tc cutoff period
@@ -116,7 +118,7 @@ C number of coefficients and allocation; phase shift
         DEC=FLOAT(3*NE) - HALF
         TO=FLOAT(3*NE)*TE
         IF(NC>0)THEN
-          ALLOCATE(C(NC))
+          call my_alloc(C, NC, "C")
         ENDIF
 C
 C perfect filter coefficients with hamming window

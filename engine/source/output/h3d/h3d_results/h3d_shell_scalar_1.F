@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_shell_scalar_1             ../engine/source/output/h3d/h3d_results/h3d_shell_scalar_1.F
 !||--- called by ------------------------------------------------------
@@ -116,14 +117,13 @@ C-----------------------------------------------
      .          VONM2,S1,S2,S12,DMGMX,A1,A2,A3,A4,DIR1_1,DIR1_2,AA,BB,V1,V2,V3,X21,X32,X34,
      .          X41,Y21,Y32,Y34,Y41,Z21,Z32,Z34,Z41,SUMA,VR,VS,X31,Y31,Z31,E11,E12,E13,E21,E22,E23,SUM_,AREA,X2L,
      .          E1X,E1Y,E1Z,E2X,E2Y,E2Z,E3X,E3Y,E3Z,RX,RY,RZ,S_X,S_Y,S_Z,RHO0(MVSIZ),THK0,XX1,XX2,XX3,YY1,YY2,YY3,ZZ1,ZZ2,ZZ3,A0,
-     .          RINDX,VFRAC(MVSIZ,1:21),TMP(3,3),CUMUL(3),VX,VY,VZ,SURF,NX,NY,NZ,PHI,ERR,PRES(MVSIZ),VEL(0:3),MAXDAMINI,
-     .          VOLFRAC,BFRAC
+     .          RINDX,VFRAC(MVSIZ,1:21),TMP(3,3),CUMUL(3),VX,VY,VZ,SURF,NX,NY,NZ,PHI,ERR,PRES(MVSIZ),VEL(0:3),MAXDAMINI
         INTEGER I,I1,II,J,NEL,NPTR,NPTS,NPTT,NLAY,L,IFAIL,ILAY,
      .          IR,IS,IT,IL,MLW, NUVAR,NFAIL,
-     .          N,K,K1,K2,JTURB,
+     .          N,K1,K2,JTURB,
      .          OFFSET,IHBE,NPG, MPT,IPT,IADR,IPMAT,
      .          ISUBSTACK,ITHK,ID_PLY,IOK,N1,N2,N3,N4,
-     .          IMAT,IU(4),NFRAC,IPOS,ITRIMAT,NS,IAD2,IDRAPE,NLAY_FAIL,ILAY0,SUBMATLAW,
+     .          IMAT,IU(4),NFRAC,IPOS,NS,IAD2,IDRAPE,NLAY_FAIL,ILAY0,
      .          TAG, MLW_LAY
         INTEGER PID(MVSIZ),MAT(MVSIZ),MATLY(MVSIZ*100),FAILG(100,MVSIZ),
      .          IPLY,NLAY_COUNT,
@@ -1107,10 +1107,21 @@ C--------------------------------------------------
 C--------------------------------------------------
             ELSEIF(KEYWORD == 'THIN')THEN
 C--------------------------------------------------
-              DO I=1,NEL
-                VALUE(I) = HUNDRED *(GBUF%THK_I(I)-GBUF%THK(I))/GBUF%THK_I(I)
-                IS_WRITTEN_VALUE(I) = 1
-              ENDDO
+              IF (ITY == 3) THEN
+                DO I=1,NEL
+                  N = I + NFT
+                  THK0 = GEO(1,IXC(NIXC-1,N))
+                  VALUE(I) = HUNDRED *(THK0-GBUF%THK(I))/THK0
+                  IS_WRITTEN_VALUE(I) = 1
+                ENDDO
+              ELSEIF (ITY == 7) THEN
+                DO I=1,NEL
+                  N = I + NFT
+                  THK0 = GEO(1,IXTG(NIXTG-1,N))
+                  VALUE(I) = HUNDRED *(THK0-GBUF%THK(I))/THK0
+                  IS_WRITTEN_VALUE(I) = 1
+                ENDDO
+              ENDIF
 C--------------------------------------------------
             ELSEIF (KEYWORD == 'USER' .OR. KEYWORD == 'MDS') THEN
 C--------------------------------------------------
@@ -4271,6 +4282,22 @@ c
                           ENDDO
                         ENDIF
                       ENDIF
+                    ELSE
+                      IF (ELBUF_TAB(NG)%BUFLY(1)%L_DMG > 0) THEN
+                        IMAT = ELBUF_TAB(NG)%BUFLY(1)%IMAT
+                        MAT_ID = MATPARAM(IMAT)%MAT_ID
+                        IF ((ID == -1) .OR. ((ID > 0).AND.(MAT_ID == ID))) THEN 
+                          DO I = 1,NEL
+                            DO IR = 1,NPTR
+                              DO IS = 1,NPTS
+                                LBUF => ELBUF_TAB(NG)%BUFLY(1)%LBUF(IR,IS,1)
+                                VALUE(I) = VALUE(I) + LBUF%DMG(I)/(NPTR*NPTS)
+                              ENDDO
+                            ENDDO
+                            IS_WRITTEN_VALUE(I) = 1
+                          ENDDO
+                        ENDIF
+                      ENDIF                      
                     ENDIF
 c  
                     ! If ply and int. point input: PLY=IPLY LAYER=null NPT=IPT
@@ -4508,6 +4535,23 @@ c
                           ENDDO
                         ENDIF
                       ENDIF
+                    ELSE
+                      IMAT = ELBUF_TAB(NG)%BUFLY(1)%IMAT
+                      NMOD = MATPARAM(IMAT)%NMOD
+                      MAT_ID = MATPARAM(IMAT)%MAT_ID
+                      IF ((NMOD > 0 .AND. MODE <= NMOD) .AND. (MAT_ID == ID)) THEN 
+                        IF (ELBUF_TAB(NG)%BUFLY(1)%L_DMG > 0) THEN
+                          DO I = 1,NEL
+                            DO IR = 1,NPTR
+                              DO IS = 1,NPTS
+                                LBUF => ELBUF_TAB(NG)%BUFLY(1)%LBUF(IR,IS,1)
+                                VALUE(I) = VALUE(I) + LBUF%DMG(NEL*MODE+I)/(NPTR*NPTS)
+                              ENDDO
+                            ENDDO
+                            IS_WRITTEN_VALUE(I) = 1
+                          ENDDO
+                        ENDIF
+                      ENDIF                      
                     ENDIF
 c  
                   ! If ply and int. point input: PLY=IPLY LAYER=null NPT=IPT

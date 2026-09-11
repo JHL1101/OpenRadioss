@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    alethe                           ../engine/source/ale/alethe.F
 !||--- called by ------------------------------------------------------
@@ -57,6 +58,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i22bufbric_mod                   ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    i22tri_mod                       ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    matparam_def_mod                 ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    my_alloc_mod                     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                   ../common_source/tools/memory/my_dealloc.F90
 !||    precision_mod                    ../common_source/modules/precision_mod.F90
 !||    segvar_mod                       ../engine/share/modules/segvar_mod.F
 !||    timer_mod                        ../engine/source/system/timer_mod.F90
@@ -100,6 +103,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -139,7 +144,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ITRIMAT,NVAR,I, LENCOMN,LENCOM
+      INTEGER ITRIMAT,I, LENCOMN,LENCOM
       integer :: n_entity,n_neighbor,s_alpha_mat
       integer :: s_lesdvois,s_lercvois,s_bhole
       integer :: phi_data_s
@@ -156,7 +161,7 @@ C-----------------------------------------------
       if(n2d/=0) s_bhole = max(1,nmult)*numelq
 
       if(itask==0) then
-        ALLOCATE(FLUX_SAV(s_flux,NV46))
+        call my_alloc(FLUX_SAV, s_flux, NV46, "FLUX_SAV")
       endif    
       if(n2d==0) then
         n_entity = numels
@@ -271,7 +276,7 @@ C-----------------------
      5                    s_flux,s_qmv)
         ENDIF
         if(itask==0) then
-          allocate(phi_arezon(ale%rezon%phi_dim1,ale%rezon%phi_dim2(1)))
+          call my_alloc(phi_arezon, ale%rezon%phi_dim1, ale%rezon%phi_dim2(1), "phi_arezon")
         endif
         call my_barrier()
         call arezon(n2d,numelq, 
@@ -318,10 +323,10 @@ C----------------------
 
         if(trimat>0) then
           if(itask==0) then
-            allocate(flux_mat(s_flux,NV46,trimat))
-            allocate(qmv_mat(s_qmv,2*nv46,trimat))
-            allocate(alpha_mat(s_alpha_mat,trimat))
-            allocate(val2_mat(s_flux,trimat))
+            call my_alloc(flux_mat, s_flux, NV46, trimat, "flux_mat")
+            call my_alloc(qmv_mat, s_qmv, 2*nv46, trimat, "qmv_mat")
+            call my_alloc(alpha_mat, s_alpha_mat, trimat, "alpha_mat")
+            call my_alloc(val2_mat, s_flux, trimat, "val2_mat")
           endif         
 
           call my_barrier
@@ -346,7 +351,7 @@ C----------------------
           call my_barrier()
          endif
 
-        if(itask==0) deallocate(phi_arezon)
+        if(itask==0) call my_dealloc(phi_arezon)
 
         if(trimat>0) then
           if(int22/=0) then
@@ -382,13 +387,13 @@ C----------------------
       call my_barrier
       if(itask==0) then      
         if(trimat>0) then
-            deallocate(flux_mat)
-            deallocate(qmv_mat)
-            deallocate(alpha_mat)
-            deallocate(val2_mat)
+            call my_dealloc(flux_mat)
+            call my_dealloc(qmv_mat)
+            call my_dealloc(alpha_mat)
+            call my_dealloc(val2_mat)
         endif
-        deallocate(flux_sav)
-        deallocate(phi_conv)
+        call my_dealloc(flux_sav)
+        call my_dealloc(phi_conv)
       endif
 
       RETURN

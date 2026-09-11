@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !! \brief duplicates nodes used by python functions to all processors
 !||====================================================================
 !||    python_duplicate_nodes_mod   ../starter/source/spmd/domain_decomposition/python_duplicate_nodes.F90
@@ -43,6 +44,7 @@
 !                                                     Modules
 ! ----------------------------------------------------------------------------------------------------------------------
           use python_funct_mod, only : python_get_number_of_nodes, python_get_nodes
+          use MY_ALLOC_MOD
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -63,7 +65,7 @@
 
           call python_get_number_of_nodes(number_of_nodes_in_python)
           !write(6,*) "number of nodes = ", number_of_nodes_in_python, " numnod = ", numnod
-          allocate(nodes_global_ids(number_of_nodes_in_python))
+          call my_alloc(nodes_global_ids, number_of_nodes_in_python, "nodes_global_ids")
           call python_get_nodes(nodes_global_ids)
 
           ! the number of nodes in python should be very small, so we can do a double loop

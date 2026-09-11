@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i21buce             ../engine/source/interfaces/intsort/i21buce.F
 !||--- called by ------------------------------------------------------
@@ -66,7 +67,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NRTM, NSN, NOINT,IDT,INACTI,NIN,NRTM_L,NMN, IFORM
+      INTEGER NRTM, NSN, NOINT,INACTI,NIN,NRTM_L,NMN, IFORM
       INTEGER IRECT(4,*), NSV(*), NUM_IMP,MSR_L(*),MNDD(*)
       INTEGER CAND_E(*),CAND_N(*)
       INTEGER NCONTACT,ESHIFT,ILD,INIT,NB_N_B, IGAP,ICURV,
@@ -87,10 +88,8 @@ C-----------------------------------------------
       INTEGER I_ADD_MAX
       PARAMETER (I_ADD_MAX = 1001)
 C
-      INTEGER I, J, I_MEM, I_ADD, IP0, IP1, MAXSIZ,II,
-     .        ADD(2,I_ADD_MAX), N,L,PP,J_STOK,IAD(NSPMD),
-     .        TAG(NMN),NM(4), IERROR1,NODFI,PTR, IERROR2, IERROR3,
-     .        IERROR4,LSKYFI
+      INTEGER I, J, I_MEM, I_ADD, IP0, IP1, MAXSIZ,
+     .        ADD(2,I_ADD_MAX)
 C     REAL
       my_real
      .        XYZM(6,I_ADD_MAX-1)

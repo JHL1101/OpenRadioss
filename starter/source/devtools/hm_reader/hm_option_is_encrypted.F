@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_option_is_encrypted       ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_ebcs_valvin          ../starter/source/boundary_conditions/ebcs/hm_read_ebcs_valvin.F
 !||    hm_read_ebcs_valvout         ../starter/source/boundary_conditions/ebcs/hm_read_ebcs_valvout.F
 !||    hm_read_ebcs_vel             ../starter/source/boundary_conditions/ebcs/hm_read_ebcs_vel.F
+!||    hm_read_elasto_plastic       ../starter/source/materials/mat/mat131/hm_read_elasto_plastic.F90
 !||    hm_read_eos_compaction       ../starter/source/materials/eos/hm_read_eos_compaction.F90
 !||    hm_read_eos_compaction2      ../starter/source/materials/eos/hm_read_eos_compaction2.F90
 !||    hm_read_eos_compaction_tab   ../starter/source/materials/eos/hm_read_eos_compaction_tab.F90
@@ -131,7 +133,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_mat114               ../starter/source/materials/mat/mat114/hm_read_mat114.F
 !||    hm_read_mat115               ../starter/source/materials/mat/mat115/hm_read_mat115.F
 !||    hm_read_mat116               ../starter/source/materials/mat/mat116/hm_read_mat116.F
-!||    hm_read_mat117               ../starter/source/materials/mat/mat117/hm_read_mat117.F
+!||    hm_read_mat117               ../starter/source/materials/mat/mat117/hm_read_mat117.F90
 !||    hm_read_mat119               ../starter/source/materials/mat/mat119/hm_read_mat119.F
 !||    hm_read_mat11_k_eps          ../starter/source/materials/mat/mat011/hm_read_mat11_k_eps.F
 !||    hm_read_mat12                ../starter/source/materials/mat/mat012/hm_read_mat12.F
@@ -150,6 +152,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    hm_read_mat132               ../starter/source/materials/mat/mat132/hm_read_mat132.F90
 !||    hm_read_mat133               ../starter/source/materials/mat/mat133/hm_read_mat133.F90
 !||    hm_read_mat134               ../starter/source/materials/mat/mat134/hm_read_mat134.F90
+!||    hm_read_mat135               ../starter/source/materials/mat/mat135/hm_read_mat135.F90
+!||    hm_read_mat136               ../starter/source/materials/mat/mat136/hm_read_mat136.F90
+!||    hm_read_mat137               ../starter/source/materials/mat/mat137/hm_read_mat137.F90
 !||    hm_read_mat14                ../starter/source/materials/mat/mat014/hm_read_mat14.F
 !||    hm_read_mat15                ../starter/source/materials/mat/mat015/hm_read_mat15.F
 !||    hm_read_mat158               ../starter/source/materials/mat/mat158/hm_read_mat158.F

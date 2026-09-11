@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    check_mat_elem_prop_compatibility   ../starter/source/materials/mat/check_mat_elem_prop_compatibility.F
 !||--- called by ------------------------------------------------------
@@ -246,6 +247,37 @@ c
               CASE (34)
                 IF (MAT_PARAM(IMAT)%PROP_SPH /= 1) COMPAT_PROP = .FALSE.
             END SELECT   
+c
+            ! ==============================================================
+            ! CHECK LAW131 YIELD CRITERION COMPATIBILITY WITH INTEGRATED BEAM
+            ! ==============================================================
+            ! For integrated beams (/PROP/TYPE18) the stress state is limited
+            ! to one axial and two transverse shear components. Anisotropic
+            ! yield criteria are therefore only partially effective (Hill,
+            ! Hershey) or not supported at all (Barlat, BBC2005 which are
+            ! plane-stress formulations). IPARAM(6) holds the yield criterion
+            ! type (1=von Mises, 2=Hershey, 3=Hill, 4=Barlat89, 5=Barlat2000,
+            ! 6=BBC2005).
+            IF (ILAW == 131 .AND. IGTYP == 18) THEN
+              SELECT CASE (MAT_PARAM(IMAT)%IPARAM(6))
+                ! Hershey and Hill : reduced anisotropy -> warning
+                CASE (2,3)
+                  CALL ANCMSG(MSGID=3147,
+     .                        MSGTYPE=MSGWARNING,
+     .                        ANMODE=ANINFO_BLIND_1,
+     .                        I1=PROP_ID,
+     .                        I2=MAT_ID,
+     .                        PRMOD=MSG_CUMU)
+                ! Barlat and BBC2005 : plane stress only -> error
+                CASE (4,5,6)
+                  CALL ANCMSG(MSGID=3148,
+     .                        MSGTYPE=MSGERROR,
+     .                        ANMODE=ANINFO_BLIND_1,
+     .                        I1=PROP_ID,
+     .                        I2=MAT_ID,
+     .                        PRMOD=MSG_CUMU)
+              END SELECT
+            ENDIF
 c
             ! ==============================================================
             ! CHECK MATERIAL LAW COMPATIBILITY WITH /EOS option

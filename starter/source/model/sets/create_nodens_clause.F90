@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_nodens_clause_mod   ../starter/source/model/sets/create_nodens_clause.F90
 !||--- called by ------------------------------------------------------
@@ -58,6 +59,8 @@
           use MESSAGE_MOD
           use HM_OPTION_READ_MOD
           use OPTIONDEF_MOD
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -88,7 +91,7 @@
 !
           call hm_get_int_array_index("idsmax" ,ids_max ,jclause,is_available,lsubmodel)
 
-          allocate(nodens_read_tmp(ids_max))
+          call my_alloc(nodens_read_tmp, ids_max, "nodens_read_tmp")
           nodens_read_tmp(1:ids_max) = 0
 
           nindx = 0
@@ -114,13 +117,13 @@
 !         Copy in final SET
 !         ------------------
           clause%nb_nodens = list_size
-          allocate(clause%nodens(list_size))
+          call my_alloc(clause%nodens, list_size, "clause%nodens")
 
           do i=1,list_size
             clause%nodens(i) = nodens_read_tmp(i)
           end do
 !
-          deallocate(nodens_read_tmp)
+          call my_dealloc(nodens_read_tmp)
 ! ----------------------------------------------------------------------------------------------------------------------
         end subroutine create_nodens_clause
       end module create_nodens_clause_mod

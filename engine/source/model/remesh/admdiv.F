@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,27 +15,29 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    admdiv         ../engine/source/model/remesh/admdiv.F
+!||    admdiv           ../engine/source/model/remesh/admdiv.F
 !||--- called by ------------------------------------------------------
-!||    resol          ../engine/source/engine/resol.F
+!||    resol            ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    admmap3        ../engine/source/model/remesh/admmap3.F
-!||    admmap4        ../engine/source/model/remesh/admmap4.F
-!||    admnorm3       ../engine/source/model/remesh/admnorm.F
-!||    admnorm4       ../engine/source/model/remesh/admnorm.F
-!||    my_barrier     ../engine/source/system/machine.F
-!||    my_orders      ../common_source/tools/sort/my_orders.c
+!||    admmap3          ../engine/source/model/remesh/admmap3.F
+!||    admmap4          ../engine/source/model/remesh/admmap4.F
+!||    admnorm3         ../engine/source/model/remesh/admnorm.F
+!||    admnorm4         ../engine/source/model/remesh/admnorm.F
+!||    my_barrier       ../engine/source/system/machine.F
+!||    my_orders        ../common_source/tools/sort/my_orders.c
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
-!||    element_mod    ../common_source/modules/elements/element_mod.F90
-!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
-!||    remesh_mod     ../engine/share/modules/remesh_mod.F
+!||    elbufdef_mod     ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    element_mod      ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    remesh_mod       ../engine/share/modules/remesh_mod.F
 !||====================================================================
       SUBROUTINE ADMDIV(IXC  ,IPARTC  ,IXTG   ,IPARTTG,IPART,
      .                  ITASK,ICONTACT,IPARG  ,X      ,MS   ,
@@ -55,6 +57,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -105,10 +108,10 @@ C-----------------------------------------------
       my_real
      .   TN1,TN2,TN3,TN4,UNT,ERR
 C-----------------------------------------------
-      CALL MY_ALLOC(NELT,2*(4**LEVELMAX))
-      CALL MY_ALLOC(LNOD,NUMNOD)
-      CALL MY_ALLOC(ITRI,MAX(NUMELC,NUMELTG))
-      CALL MY_ALLOC(INDEX1,2*MAX(NUMELC,NUMELTG))
+      call my_alloc(NELT, 2*(4**LEVELMAX), "NELT")
+      call my_alloc(LNOD, NUMNOD, "LNOD")
+      call my_alloc(ITRI, MAX(NUMELC,NUMELTG), "ITRI")
+      call my_alloc(INDEX1, 2*MAX(NUMELC,NUMELTG), "INDEX1")
 C-----------------------------------------------
       IF(ICHKADM /= 0)THEN
 
@@ -841,10 +844,10 @@ C     compaction of LSH4ACT
         END IF
       END IF
 C
-      DEALLOCATE(NELT)
-      DEALLOCATE(LNOD)
-      DEALLOCATE(ITRI)
-      DEALLOCATE(INDEX1)
+      call my_dealloc(NELT)
+      call my_dealloc(LNOD)
+      call my_dealloc(ITRI)
+      call my_dealloc(INDEX1)
 C----6---------------------------------------------------------------7---------8
       RETURN
       END     

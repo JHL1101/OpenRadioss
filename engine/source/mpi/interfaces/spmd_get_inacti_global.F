@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_get_inacti_global     ../engine/source/mpi/interfaces/spmd_get_inacti_global.F
 !||--- called by ------------------------------------------------------
@@ -29,11 +30,13 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    inter_sorting_mod          ../engine/share/modules/inter_sorting_mod.F
 !||    inter_struct_mod           ../engine/share/modules/inter_struct_mod.F
+!||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         SUBROUTINE SPMD_GET_INACTI_GLOBAL(IPARI,NB_INTER_SORTED,LIST_INTER_SORTED,INTER_STRUCT)
 
         USE INTER_STRUCT_MOD
         USE INTER_SORTING_MOD
+        USE SPMD_MOD, ONLY : spmd_wait
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -62,7 +65,6 @@ C-----------------------------------------------
         INTEGER, DIMENSION(NB_INTER_7_INACTI) :: S_BUFFER
         INTEGER, DIMENSION(NB_INTER_7_INACTI) :: R_BUFFER
         CHARACTER(len=4) :: MY_OPERATION
-        INTEGER :: CODE
         INTEGER :: STATUT(MPI_STATUS_SIZE)
 C-----------------------------------------------
         IF(NB_INTER_7_INACTI>0) THEN
@@ -83,7 +85,7 @@ C-----------------------------------------------
         CALL SPMD_IALLREDUCE_INT_COMM(S_BUFFER,R_BUFFER,NB_INTER_7_INACTI,
      .                                MY_OPERATION,COMM_INACTI,REQUEST_INACTI)
 
-        CALL MPI_WAIT(REQUEST_INACTI,STATUT,CODE)
+        CALL spmd_wait(REQUEST_INACTI,STATUT)
 
         IF(NB_INTER_SORTED>0) THEN
             DO I=1,NB_INTER_SORTED

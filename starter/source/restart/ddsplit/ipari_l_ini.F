@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ipari_l_ini               ../starter/source/restart/ddsplit/ipari_l_ini.F
 !||--- called by ------------------------------------------------------
@@ -43,9 +44,11 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD  
       USE MULTI_FVM_MOD
       USE GROUPDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -85,23 +88,23 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NI, NP, ITY, NRTS, NRTM, NSN, NMN,NMT,NMT_L,
+      INTEGER NI, ITY, NRTS, NRTM, NSN, NMN,NMT,NMT_L,
      .        NLINS, NLINM,NLINSA,NLINMA,NSNE,  NMNE, NLN, NLN_L,
      .        I_STOK_L, NSN_L, NMN_L, NRTM_L, NRTS_L, NLINS_L,
      .        NLINM_L, NSNE_L, NMNE_L, N1L, N2L, N3L, N4L, NL,
-     .        NIR, N, L, K, JJ, M, N1, N2, N3, N4, KK, P, E, I, J,
+     .        N, L, K, JJ, M, N1, N2, N3, N4, P, E, I,
      .        INACTI,L24ADD,L24ADD_L,
      .        MULTIMP, IGAP, IFQ, IFORM, IOK, IEDGE, NCONTE, MULTIMPE, MULTIMPS,
      .        I_STOK, NCONT, NISUB, NISUBS_L, NISUBM_L,NISUBS, NISUBM, NISUBE_L,
-     .        IE, IGN, IGE, NAD, EAD,NUVAR,ILEV,INTTH,NCONT1,NCONT2,
-     .        MTYP,NSNR,ICURV,NRTM0,NRTM_SH,NRTM_SH_L,
+     .        IE, IGN, IGE, NUVAR,ILEV,INTTH,NCONT1,NCONT2,
+     .        MTYP,NSNR,ICURV,NRTM_SH_L,
      .        II_STOK,II_STOK_L,NREMNODE_L,FLAGREMNODE, 
-     .        KD_L(50),JD_L(50),KFI_L,JFI_L,NLINSA_L,NLINMA_L,I22LEN1,
+     .        NLINSA_L,NLINMA_L,I22LEN1,
      .        NRTSE,NRTSE_L,NSN0,NADMSR,NADMSR_L,SE1,NN,
-     .        NRTM_FE,NRTS_FE, NSN_FE ,NMN_FE ,NREMNOR_L,
+     .        NRTM_FE, NSN_FE ,NMN_FE ,NREMNOR_L,
      .        NEDGE, NEDGE_L, II_STOK_E, II_STOK_EL, K1, K2,
-     .        INTNITSCHE, MY_NODE,NREMNODE_E2S_L,
-     .        NSN_IGE,SIZ,NREMNODE_EDG_L,EM1,EM2,ES1,ES2,IK,KM1,KM2,KS1,KS2
+     .        INTNITSCHE, MY_NODE,NREMNODE_E2S_L,NEDGE_1D,NEDGE_1D_L,
+     .        NSN_IGE,SIZ,NREMNODE_EDG_L,EM1,EM2,ES1,ES2,IK,KM1,KM2,KS1,KS2,NMN_1D_L
       INTEGER, DIMENSION(:),ALLOCATABLE :: TAGE, TAGE2
       INTEGER, DIMENSION(:),ALLOCATABLE :: TAGI2,TAGG
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAG_SM
@@ -121,8 +124,8 @@ C-----------------------------------------------
 !         ALLOCATE(INDEX0(NUMNOD+I24MAXNSNE))
 !         TAG(1:NUMNOD+I24MAXNSNE) = 0
 !      ENDIF
-      ALLOCATE(TAGI2(NUMNOD))
-      ALLOCATE(TAGG(NUMNOD))
+      call my_alloc(TAGI2, NUMNOD, "TAGI2")
+      call my_alloc(TAGG, NUMNOD, "TAGG")
 C-----------------------------------------------
 C Construction of iPari_L - Initial copy
 C-----------------------------------------------
@@ -178,7 +181,7 @@ C calculation IMAXIMP_L according to interface
           NMN    = IPARI(6,NI)
           ILEV   = IPARI(20,NI)
 
-          ALLOCATE(TAGE(NRTM))
+          call my_alloc(TAGE, NRTM, "TAGE")
           DO I = 1, NRTM
             TAGE(I) = 0
           ENDDO
@@ -235,7 +238,7 @@ C
           ENDDO
           IPARI_L(4,NI) = NRTM_L
 C
-          DEALLOCATE(TAGE)
+          CALL MY_DEALLOC(TAGE)
 C
           NSNT2_L = NSNT2_L + NSN_L
           NMNT2_L = NMNT2_L + NMN_L
@@ -281,6 +284,7 @@ C
           NSNE   = IPARI(55,NI)
           NADMSR = IPARI(67,NI)
           NEDGE  = IPARI(68,NI)
+          NEDGE_1D  = IPARI(101,NI)
           INTNITSCHE = IPARI(86,NI)
           MULTIMPE   = IPARI(87,NI)
           MULTIMPS   = IPARI(89,NI)
@@ -314,7 +318,7 @@ C
             NMN_FE = NMN
           ENDIF
 C
-          ALLOCATE(TAGE(NRTM))
+          call my_alloc(TAGE, NRTM, "TAGE")
 C
           DO K=1,NRTM
 C Flag tage used for inactive
@@ -647,7 +651,7 @@ C compute IPARI_L(42,NI) = NRTM_SH_L
             ENDDO
             IPARI_L(42,NI)= NRTM_SH_L
 
-            ALLOCATE(TAG_SM(NADMSR))
+            call my_alloc(TAG_SM, NADMSR, "TAG_SM")
             TAG_SM(1:NADMSR)=0
             DO K=1,NRTM
               IF(INTERCEP(1,NI)%P(K)==PROC+1)THEN
@@ -676,6 +680,7 @@ C compute IPARI_L(42,NI) = NRTM_SH_L
 
             TAG_SM(1:NADMSR)=0
             DO N=1,NEDGE
+              IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+7)/=3) THEN
               IS_LOCAL = .FALSE.
               K1=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)
               K2=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+3)
@@ -692,8 +697,39 @@ C compute IPARI_L(42,NI) = NRTM_SH_L
               IF(IS_LOCAL) THEN
                 NEDGE_L=NEDGE_L+1
               END IF
+              ENDIF
             ENDDO 
-            DEALLOCATE(TAG_SM)
+            NEDGE_1D_L = 0
+            NMN_1D_L = 0
+            DO I=1,NUMNOD
+              TAGG(I) = 0
+            END DO
+            DO N=1,NEDGE
+              IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+7)==3) THEN
+              IS_LOCAL = .FALSE.
+              K1=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+15)
+              IF(K1 /= 0) THEN
+                IF(CEP(K1)==PROC) THEN
+                  IS_LOCAL = .TRUE.
+                ENDIF
+              ENDIF
+              IF(IS_LOCAL) THEN
+                NEDGE_L=NEDGE_L+1
+                NEDGE_1D_L=NEDGE_1D_L+1
+                N1 = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+5)
+                IF(TAGG(N1)==0)THEN
+                  NMN_1D_L=NMN_1D_L+1
+                  TAGG(N1)=1
+                END IF             
+                N2 = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+6)
+                IF(TAGG(N2)==0)THEN
+                  NMN_1D_L=NMN_1D_L+1
+                  TAGG(N2)=1
+                END IF
+              END IF
+              ENDIF
+            ENDDO 
+            CALL MY_DEALLOC(TAG_SM)
 
 C
             NCONTE   = 0
@@ -710,9 +746,18 @@ C
               IF(NEDGE_L>0.AND.NEDGE>0) NCONTE = MAX(NCONTE,1)
               DO K = 1, II_STOK_E
                 N = INTBUF_TAB(NI)%CANDM_E2E(K)
-                E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)
-                IF (TAGE(E)/=0) THEN ! Candidate on the proc where 1st segment sharing the main edge, belongs
-                  II_STOK_EL = II_STOK_EL + 1
+                IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+7)/=3) THEN
+                  E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)
+                  IF (TAGE(E)/=0) THEN ! Candidate on the proc where 1st segment sharing the main edge, belongs
+                    II_STOK_EL = II_STOK_EL + 1
+                  ENDIF
+                ELSE
+                  K1=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+15)
+                  IF(K1 /= 0) THEN
+                   IF(CEP(K1)==PROC) THEN
+                      II_STOK_EL = II_STOK_EL + 1 
+                   ENDIF
+                  ENDIF
                 ENDIF
               ENDDO
               IF(NCONTE > 0 .AND.II_STOK_EL > MULTIMPE*NCONTE) THEN
@@ -737,11 +782,21 @@ C
 C
               IF(NISUB/=0)THEN
                 DO K=1,NEDGE
-                  E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+1)
-                  IF (TAGE(E)/=0) THEN
-                    NISUBE_L = NISUBE_L + INTBUF_TAB(NI)%ADDSUBE(1+K) -
-     .                 INTBUF_TAB(NI)%ADDSUBE(K)
-                  END IF
+                  IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+7)/=3) THEN
+                    E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+1)
+                    IF (TAGE(E)/=0) THEN
+                      NISUBE_L = NISUBE_L + INTBUF_TAB(NI)%ADDSUBE(1+K) -
+     .                   INTBUF_TAB(NI)%ADDSUBE(K)
+                    END IF
+                  ELSE
+                    K1=INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+15)
+                    IF(K1 /= 0) THEN
+                     IF(CEP(K1)==PROC) THEN
+                      NISUBE_L = NISUBE_L + INTBUF_TAB(NI)%ADDSUBE(1+K) -
+     .                   INTBUF_TAB(NI)%ADDSUBE(K)
+                     ENDIF
+                    ENDIF
+                  ENDIF
                 END DO
               END IF
 
@@ -751,6 +806,7 @@ C-- Iremgap/IremI2 - computation of NREMNODE_EDG_L /NREMNODE_E2S_L-
              IF (FLAGREMNODE == 2) THEN
               ! NREMNODE_EDG_L
                 DO K=1,NEDGE
+                 IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+7)/=3) THEN
                    EM1 = INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+1)
                    KM1 = 0
                    IF(EM1/=0) KM1=TAGE(EM1)
@@ -777,6 +833,44 @@ C--                 Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
                          ENDIF
                       END DO
                    ENDIF
+                 ELSE
+                   K1=INTBUF_TAB(NI)%LEDGE(NLEDGE*(K-1)+15)
+                   IF(K1 /= 0) THEN
+                     IF(CEP(K1)==PROC) THEN
+                        SIZ = INTBUF_TAB(NI)%KREMNODE_EDG(K+1)-INTBUF_TAB(NI)%KREMNODE_EDG(K)
+                        IK = INTBUF_TAB(NI)%KREMNODE_EDG(K)
+                        DO M=1,SIZ
+                          N = INTBUF_TAB(NI)%REMNODE_EDG(IK+M-1)
+                          IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+7)==3) THEN
+                             K2=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+15)
+                             IF(K2 /=0) THEN
+                                IF(CEP(K2) ==PROC) THEN
+C--                                Local segment - local id is stored
+                                   NREMNODE_EDG_L = NREMNODE_EDG_L + 1
+                                ELSE
+C--                                Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
+                                   NREMNODE_EDG_L = NREMNODE_EDG_L + 2
+                                ENDIF
+                             ENDIF
+                          ELSE
+                             ES1 = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)
+                             KS1 = 0
+                             IF(ES1/=0) KS1=TAGE(ES1)
+                             ES2 = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+3)
+                             KS2 = 0
+                             IF(ES2/=0) KS2=TAGE(ES2)
+                             IF(KS1/=0.AND.KS2/=0)THEN
+C--                             Local segment - local id is stored
+                                NREMNODE_EDG_L = NREMNODE_EDG_L + 1
+                             ELSE
+C--                            Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
+                               NREMNODE_EDG_L = NREMNODE_EDG_L + 2
+                             ENDIF
+                          ENDIF
+                       ENDDO
+                     ENDIF
+                    ENDIF
+                  ENDIF
                  ENDDO
               ! NREMNODE_E2S_L
                  DO K=1,NRTM
@@ -785,14 +879,27 @@ C--                 Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
                       IK = INTBUF_TAB(NI)%KREMNODE_E2S(K)
                       DO M=1,SIZ
                          N = INTBUF_TAB(NI)%REMNODE_E2S(IK+M-1)
-                         E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)  
-                         IF (TAGE(E)/=0) THEN ! Candidate on the proc where 1st segment sharing the master edge, belongs
+                         IF(INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+7)/=3) THEN
+                           E = INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+1)  
+                           IF (TAGE(E)/=0) THEN ! Candidate on the proc where 1st segment sharing the master edge, belongs
 C--                 Local segment - local id is stored
-                            NREMNODE_E2S_L = NREMNODE_E2S_L + 1
-                         ELSE
+                               NREMNODE_E2S_L = NREMNODE_E2S_L + 1
+                           ELSE
 C--                 Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
-                            NREMNODE_E2S_L = NREMNODE_E2S_L + 2
-                         ENDIF
+                              NREMNODE_E2S_L = NREMNODE_E2S_L + 2
+                           ENDIF
+                         ELSE
+                           K2=INTBUF_TAB(NI)%LEDGE(NLEDGE*(N-1)+15)
+                           IF(K2 /=0) THEN
+                              IF(CEP(K2) ==PROC) THEN
+C--                              Local segment - local id is stored
+                                 NREMNODE_E2S_L = NREMNODE_E2S_L + 1
+                              ELSE
+C--                              Remote segment - line is stored as ITAB1 / ITAB2 (2 values)
+                                 NREMNODE_E2S_L = NREMNODE_E2S_L + 2
+                              ENDIF
+                           ENDIF
+                        ENDIF
                       ENDDO
                    ENDIF
                  ENDDO
@@ -806,11 +913,12 @@ C
             IPARI_L(90,NI)= NISUBE_L
             IPARI_L(94,NI)= NREMNODE_EDG_L
             IPARI_L(96,NI)= NREMNODE_E2S_L
-
+            IPARI_L(101,NI)=NEDGE_1D_L
+            IPARI_L(104,NI)=NMN_1D_L
 
           END IF ! ELSEIF(ITY==25)THEN
 C
-          DEALLOCATE(TAGE)
+          CALL MY_DEALLOC(TAGE)
 C
           NSN_L = NSN_L + NSNE_L
               
@@ -923,7 +1031,7 @@ C
             ENDIF
           ENDDO
 C
-          ALLOCATE(TAGE(NRTM))
+          call my_alloc(TAGE, NRTM, "TAGE")
 C
           DO K=1,NRTM
 C Flag tage used for inactive
@@ -1022,7 +1130,7 @@ C
             END DO
           END IF
 C
-          DEALLOCATE(TAGE)
+          CALL MY_DEALLOC(TAGE)
 
           IF(NMN/=0) THEN
             RCONT = NMN_L
@@ -1140,7 +1248,7 @@ C
             TAGG(I) = 0
           END DO
 C
-          ALLOCATE(TAGE(NRTM))
+          call my_alloc(TAGE, NRTM, "TAGE")
 
           DO K=1,NRTM
             TAGE(K) = 0
@@ -1228,7 +1336,7 @@ C
             END DO
           END IF
 C
-          DEALLOCATE(TAGE)
+          CALL MY_DEALLOC(TAGE)
 C
 c          IF(NMN/=0) THEN
 C            NCONT = NSN*NMN_L/NMN
@@ -1293,7 +1401,7 @@ C
             ENDIF
           ENDDO
 C
-          ALLOCATE(TAGE2(NLINM))
+          call my_alloc(TAGE2, NLINM, "TAGE2")
 C
           NLINMA_L= 0
           NINDEX0 = 0
@@ -1358,7 +1466,7 @@ c              ENDIF
 c            ENDDO
 c          ENDIF
 C
-          DEALLOCATE(TAGE2)
+          CALL MY_DEALLOC(TAGE2)
 C
 C Calculation of NCONT by taking the max of edge and non-edge
 C
@@ -1547,7 +1655,7 @@ C
         ENDIF
       ENDDO
 C
-      DEALLOCATE(TAGI2)
-      DEALLOCATE(TAGG)
+      CALL MY_DEALLOC(TAGI2)
+      call my_dealloc(TAGG)
       RETURN
       END

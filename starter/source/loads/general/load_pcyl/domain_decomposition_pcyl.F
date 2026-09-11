@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    domain_decomposition_pcyl   ../starter/source/loads/general/load_pcyl/domain_decomposition_pcyl.F
 !||--- called by ------------------------------------------------------
@@ -47,6 +48,7 @@ C   M o d u l e s
 C-----------------------------------------------
         USE LOADS_MOD
         USE ARRAY_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -85,11 +87,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-        ALLOCATE( BOOL(NUMNOD) )
+        call my_alloc(BOOL, NUMNOD, "BOOL")
         BOOL(1:NUMNOD) = .true.
         NB_LOCAL_ARRAY = 0
-        ALLOCATE( INDEX_LOCAL_ARRAY(NUMNOD) )
-        ALLOCATE( LOCAL_ARRAY(NUMNOD) )
+        call my_alloc(INDEX_LOCAL_ARRAY, NUMNOD, "INDEX_LOCAL_ARRAY")
+        allocate(LOCAL_ARRAY(NUMNOD))
         LOCAL_ARRAY(1:NUMNOD)%SIZE_INT_ARRAY_1D = 0
 
         IF(.NOT.ALLOCATED(LOADS%CYL_RESTART)) ALLOCATE( LOADS%CYL_RESTART(LOADS%NLOAD_CYL) )
@@ -101,7 +103,8 @@ C-----------------------------------------------
             ! loop over the segments of the surface to find where the node id are defined 
             DO J=1,NUMBER_SEGMENT ! loop over the segments of the surface
                 DO K=1,4
-                    NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K) ! get the node id (if the segment is a triangle, NODE_ID(node 4) = 0))
+                    NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K)
+! get the node id (if the segment is a triangle, NODE_ID(node 4) = 0))
                     NUMBER_PROC = 0
                     IF(NODE_ID/=0) THEN
                         IF(BOOL(NODE_ID)) THEN
@@ -120,7 +123,7 @@ C-----------------------------------------------
             
             ! ------------
             IF(.NOT.ALLOCATED(LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC)) THEN
-                ALLOCATE( LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC(NUMBER_SEGMENT) )
+      call my_alloc(LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC, NUMBER_SEGMENT, "LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC")
             ENDIF
             IF(.NOT.ALLOCATED(LOADS%CYL_RESTART(I)%PROC)) ALLOCATE( LOADS%CYL_RESTART(I)%PROC(NSPMD) )
             DO J=1,NSPMD
@@ -128,9 +131,9 @@ C-----------------------------------------------
                 LOADS%CYL_RESTART(I)%PROC(J)%S_LOCAL_SEGMENT = NUMBER_SEGMENT / NSPMD + 4
                 MY_SIZE = LOADS%CYL_RESTART(I)%PROC(J)%S_LOCAL_SEGMENT
                 IF(ALLOCATED(LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT)) THEN
-                    DEALLOCATE( LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT )
+                    CALL MY_DEALLOC(LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT)
                 ENDIF
-                ALLOCATE( LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT(MY_SIZE) )
+      call my_alloc(LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT, MY_SIZE, "LOADS%CYL_RESTART(I)%PROC(J)%LOCAL_SEGMENT")
             ENDDO
 
             DO J=1,NUMBER_SEGMENT
@@ -186,16 +189,17 @@ C-----------------------------------------------
         
                 MY_SIZE = LOADS%CYL_RESTART(I)%PROC(MY_PROC)%S_LOCAL_SEGMENT
                 IF(MY_SIZE< LOCAL_NUMBER_SEG + 1 ) THEN
-                    ALLOCATE(TEMP_ARRAY(LOCAL_NUMBER_SEG))
+                    call my_alloc(TEMP_ARRAY, LOCAL_NUMBER_SEG, "TEMP_ARRAY")
                     TEMP_ARRAY(1:LOCAL_NUMBER_SEG) = 
      .               LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT(1:LOCAL_NUMBER_SEG)
-                    DEALLOCATE( LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT )
+                    CALL MY_DEALLOC(LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT)
                     LOADS%CYL_RESTART(I)%PROC(MY_PROC)%S_LOCAL_SEGMENT = MY_SIZE *1.2 + 4
                     MY_SIZE = LOADS%CYL_RESTART(I)%PROC(MY_PROC)%S_LOCAL_SEGMENT
-                    ALLOCATE( LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT(MY_SIZE) )
+      call my_alloc(LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT, MY_SIZE,
+     &"LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT")
                     LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT(1:LOCAL_NUMBER_SEG) = 
      .               TEMP_ARRAY(1:LOCAL_NUMBER_SEG)
-                    DEALLOCATE(TEMP_ARRAY)
+                    CALL MY_DEALLOC(TEMP_ARRAY)
                 ENDIF
                 LOCAL_NUMBER_SEG = LOCAL_NUMBER_SEG + 1
                 LOADS%CYL_RESTART(I)%PROC(MY_PROC)%LOCAL_SEGMENT_NUMBER = LOCAL_NUMBER_SEG
@@ -227,7 +231,7 @@ C-----------------------------------------------
         ENDDO
         ! ------------
 
-        DEALLOCATE( BOOL )
+        CALL MY_DEALLOC(BOOL)
         DEALLOCATE( LOCAL_ARRAY )
         RETURN
         END SUBROUTINE DOMAIN_DECOMPOSITION_PCYL

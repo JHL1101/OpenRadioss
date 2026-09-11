@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lectrans                                ../starter/source/model/transformation/lectrans.F
 !||--- called by ------------------------------------------------------
@@ -68,6 +69,7 @@ C-----------------------------------------------
       USE min_dist_grnod_to_surface_mod, ONLY : min_dist_grnod_to_surface
       USE min_dist_grnod_to_xyzpos_mod, ONLY : min_dist_grnod_to_xyzpos
       USE transform_translate_in_local_skew_mod, ONLY : transform_translate_in_local_skew
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -99,21 +101,19 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,I0,I1,I2,I3,I4,I5,I6,
      .          N0,N1,N2,N3,N4,N5,N6,IERROR,
-     .   J,IS,ID,UID,IGU,IGS,NN,NTRANS,STAT,
-     .   IFLAGUNIT,ITRANSSUB,SUB_ID,K,
-     .   IBID,CPT,IGSURF,ISURF,ISKEW,IDIR,PFLAG,PFLAG0,XYZFLAG(3),
+     .   J,IS,ID,UID,IGU,IGS,NTRANS,
+     .   ITRANSSUB,SUB_ID,K,
+     .   IGSURF,ISURF,IDIR,PFLAG,PFLAG0,XYZFLAG(3),
      .    NSEG,NNO,SURFNOD,SUB_INDEX,ISK,ISK0,XYZFLAG0(3)
       my_real
-     .   LX,LY,LZ,TX,TY,TZ,R,S,RX,RY,RZ,SX,SY,SZ,ANGLE,AT,FAC_L,
+     .   TX,TY,TZ,S,SX,SY,SZ,ANGLE,AT,FAC_L,
      .   XP,YP,ZP,GAP
       my_real
-     .   VR(3),X0(3),X1(3),X2(3),X3(3),X4(3),X5(3),X6(3),
-     .   ROT(9),PP(3,3),QQ(3,3),P(3),NORM1, NORM2, NORM3, SCAL1, 
-     .   SCAL2, SCAL3, EPS,XYZPOS(3),XYZPOS0(3)
+     .   X0(3),X1(3),X2(3),X3(3),X4(3),X5(3),X6(3),
+     .   ROT(9),PP(3,3),QQ(3,3),NORM1, NORM2, NORM3, SCAL1, 
+     .   SCAL2, SCAL3, EPS,XYZPOS(3),XYZPOS0(3),SKEW_TRANS(12)
       CHARACTER(LEN=NCHARFIELD) :: KEY
-      CHARACTER(LEN=NCHARFIELD) :: MOT1
       CHARACTER(LEN=NCHARTITLE) :: TITR
-      CHARACTER(LEN=NCHARLINE) ::SOLVERKEYWORD
       CHARACTER(LEN=NCHARFIELD) :: DIR
 !
       INTEGER, DIMENSION(:), POINTER :: INGR2USR
@@ -204,7 +204,6 @@ c---------------------
               ENDIF
           ENDIF
           IF (N0 > 0 .OR. N1 > 0) THEN
-            ISK = 0
             I0 = USRTOS(N0,ITABM1)
             I1 = USRTOS(N1,ITABM1)
             IF (I0 == 0) THEN
@@ -232,10 +231,17 @@ c---------------------
             TZ = TZ * FAC_L 
           ENDIF
 
+          DO J=1,12
+            SKEW_TRANS(J)=ZERO
+          ENDDO
+          IF(ISK > 0) THEN
+            DO J=1,12
+              SKEW_TRANS(J)=SKEW(J,ISK)
+            ENDDO
+          ENDIF
           CALL transform_translate_in_local_skew(
-     .                 IGRNOD(IGS)%ENTITY ,IGRNOD(IGS)%NENTITY ,X    ,NUMNOD   , ISK  ,
-     .                 TX                 ,TY                  ,TZ   ,SKEW     , LSKEW,
-     .                 SSKEW              )
+     .                 IGRNOD(IGS)%ENTITY ,IGRNOD(IGS)%NENTITY ,X    ,NUMNOD    , ISK  ,
+     .                 TX                 ,TY                  ,TZ   ,SKEW_TRANS)
 
           S = SQRT(TX*TX + TY*TY + TZ*TZ)
 C
@@ -933,9 +939,9 @@ C
           !
           ! create a list of nodes from the surface group
           !
-            ALLOCATE(INO(1:4*IGRSURF(ISURF)%NSEG))
+            call my_alloc(INO, 4*IGRSURF(ISURF)%NSEG, "INO")
             INO(1:4*IGRSURF(ISURF)%NSEG)=0
-            ALLOCATE(TAGNODE(1:NUMNOD))
+            call my_alloc(TAGNODE, NUMNOD, "TAGNODE")
             TAGNODE(1:NUMNOD)=0
           !
             DO J=1,IGRSURF(ISURF)%NSEG
@@ -974,8 +980,8 @@ C
           !
           !---------------------------
           !
-          IF(ALLOCATED(INO)) DEALLOCATE(INO)
-          IF(ALLOCATED(TAGNODE)) DEALLOCATE(TAGNODE)
+          IF(ALLOCATED(INO)) CALL MY_DEALLOC(INO)
+          IF(ALLOCATED(TAGNODE)) CALL MY_DEALLOC(TAGNODE)
           !
           WRITE(IOUT,2000) ID,IGU   
           WRITE(IOUT,2100) IGSURF,ISK0,DIR(1:1),GAP,PFLAG0,

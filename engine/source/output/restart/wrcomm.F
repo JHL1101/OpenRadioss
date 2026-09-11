@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,40 +15,42 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    wrcomi           ../engine/source/output/restart/wrcomm.F
+!||    wrcomi             ../engine/source/output/restart/wrcomm.F
 !||--- called by ------------------------------------------------------
-!||    wrrestp          ../engine/source/output/restart/wrrestp.F
+!||    wrrestp            ../engine/source/output/restart/wrrestp.F
 !||--- calls      -----------------------------------------------------
-!||    write_array      ../common_source/comm/write_array.F
+!||    write_array        ../common_source/comm/write_array.F
 !||--- uses       -----------------------------------------------------
-!||    ale_mod          ../common_source/modules/ale/ale_mod.F
-!||    alefvm_mod       ../common_source/modules/ale/alefvm_mod.F
-!||    alemuscl_mod     ../common_source/modules/ale/alemuscl_mod.F
-!||    damp_mod         ../engine/share/modules/damp_mod.F
-!||    drape_mod        ../engine/share/modules/drape_mod.F
-!||    element_mod      ../common_source/modules/elements/element_mod.F90
-!||    eos_param_mod    ../common_source/modules/mat_elem/eos_param_mod.F90
-!||    glob_therm_mod   ../common_source/modules/mat_elem/glob_therm_mod.F90
-!||    h3d_mod          ../engine/share/modules/h3d_mod.F
-!||    intbufdef_mod    ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    loads_mod        ../common_source/modules/loads/loads_mod.F90
-!||    multi_fvm_mod    ../common_source/modules/ale/multi_fvm_mod.F90
-!||    outmax_mod       ../common_source/modules/outmax_mod.F
-!||    output_mod       ../common_source/modules/output/output_mod.F90
-!||    parameters_mod   ../common_source/modules/interfaces/parameters_mod.F
-!||    pblast_mod       ../common_source/modules/loads/pblast_mod.F90
-!||    pinchtype_mod    ../common_source/modules/pinchtype_mod.F
-!||    seatbelt_mod     ../common_source/modules/seatbelt_mod.F
-!||    sensor_mod       ../common_source/modules/sensor_mod.F90
-!||    sfem_mod         ../common_source/modules/elements/sfem_mod.F90
-!||    state_mod        ../common_source/modules/state_mod.F
-!||    th_mod           ../engine/share/modules/th_mod.F
+!||    ale_mod            ../common_source/modules/ale/ale_mod.F
+!||    alefvm_mod         ../common_source/modules/ale/alefvm_mod.F
+!||    alemuscl_mod       ../common_source/modules/ale/alemuscl_mod.F
+!||    damp_mod           ../engine/share/modules/damp_mod.F
+!||    drape_mod          ../engine/share/modules/drape_mod.F
+!||    element_mod        ../common_source/modules/elements/element_mod.F90
+!||    eos_param_mod      ../common_source/modules/mat_elem/eos_param_mod.F90
+!||    glob_therm_mod     ../common_source/modules/mat_elem/glob_therm_mod.F90
+!||    h3d_mod            ../engine/share/modules/h3d_mod.F
+!||    intbufdef_mod      ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    loads_mod          ../common_source/modules/loads/loads_mod.F90
+!||    multi_fvm_mod      ../common_source/modules/ale/multi_fvm_mod.F90
+!||    outmax_mod         ../common_source/modules/outmax_mod.F
+!||    output_mod         ../common_source/modules/output/output_mod.F90
+!||    parameters_mod     ../common_source/modules/interfaces/parameters_mod.F
+!||    pblast_mod         ../common_source/modules/loads/pblast_mod.F90
+!||    pinchtype_mod      ../common_source/modules/pinchtype_mod.F
+!||    q1np_restart_mod   ../common_source/modules/q1np_restart_mod.F90
+!||    seatbelt_mod       ../common_source/modules/seatbelt_mod.F
+!||    sensor_mod         ../common_source/modules/sensor_mod.F90
+!||    sfem_mod           ../common_source/modules/elements/sfem_mod.F90
+!||    state_mod          ../common_source/modules/state_mod.F
+!||    th_mod             ../engine/share/modules/th_mod.F
 !||====================================================================
       SUBROUTINE WRCOMI(OUTPUT,LMXVINT,LVARINT,TABVINT,ISP,MULTI_FVM,H3D_DATA,DYNAIN_DATA,
      .           INTER_PARAMETERS,SENSORS,LOADS,GLOB_THERM,PBLAST,SFEM)
@@ -68,6 +70,7 @@ C-----------------------------------------------
       USE ALEFVM_MOD , only:ALEFVM_Param
       USE ALE_MOD
       USE PARAMETERS_MOD
+      USE Q1NP_RESTART_MOD
       USE SENSOR_MOD
       USE DAMP_MOD
       USE glob_therm_mod
@@ -94,7 +97,7 @@ C-----------------------------------------------
       TYPE (LOADS_)          ,INTENT(IN) :: LOADS
       type (glob_therm_)     ,intent(in) :: GLOB_THERM
       type (PBLAST_)         ,intent(in) :: PBLAST
-      type (SFEM_)           ,intent(in) :: SFEM
+      type (global_sfem_)    ,intent(in) :: SFEM
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
 C-----------------------------------------------
@@ -266,7 +269,7 @@ C   sizes of integer arrays
       TABVINT(106) = SMADSH3
       TABVINT(107) = SMADSOL
       TABVINT(108) = SMADNOD
-      TABVINT(109) = SMADFAIL
+      TABVINT(109) = 0
       TABVINT(110) = SNPBY
       TABVINT(111) = SNPBYL
       TABVINT(112) = SLPBY
@@ -1395,6 +1398,21 @@ C
 C
       LVARINT=LVARINT+1
       TABVINT(LVARINT) = SENSORS%STABSEN
+C Q1NP element counts (7 entries, matching rdcomm.F read and wrcommp.F write)
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=NUMELQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SKQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SIQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPBULK_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPCTRL_SHARED_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPWEIGHT_L_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPKNOT_L_G
 C Stack info
       LVARINT=LVARINT+1
       TABVINT(LVARINT)=IPART_STACK 

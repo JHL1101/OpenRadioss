@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
 !||    spmd_sync_mmxg2   ../engine/source/mpi/interfaces/spmd_sync_mmxg2.F
 !||--- called by ------------------------------------------------------
 !||    intcrit           ../engine/source/interfaces/intsort/intcrit.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_SYNC_MMXG2(
      1    ISENDTO,IRCVFROM,NEWFRONT,XSLV_L,XMSR_L,
@@ -34,6 +37,7 @@ C
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -58,7 +62,7 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER LOC_PROC, IERROR, I_LEN, 
+      INTEGER LOC_PROC, I_LEN, 
      . KK, L, J, NIN
       PARAMETER (I_LEN = 46)
       my_real
@@ -147,16 +151,16 @@ C T25 main gap changes with thickness change
         L = L + 1
        END DO
        MESSAGE_LEN = NINTC * I_LEN
-       call MPI_AllReduce(SBUF, RBUF, MESSAGE_LEN, REAL , MPI_MAX,
-     &                   COMM_CONT, ierror)
+       call SPMD_ALLREDUCE(SBUF(1:MESSAGE_LEN),RBUF(1:MESSAGE_LEN),
+     &                     MESSAGE_LEN,SPMD_MAX,COMM_CONT)
 C       MESSAGE_LEN = NINTC
 C        call MPI_AllReduce(SBUF2, RBUF2, MESSAGE_LEN, MPI_INTEGER , MPI_SUM,
 C    &                   COMM_CONT, ierror)
 
        IF(I17 > 0) THEN
          MESSAGE_LEN = NINTC
-         call MPI_AllReduce(SBUF3, RBUF3, MESSAGE_LEN, REAL , MPI_SUM,
-     &                   COMM_CONT, ierror)
+         call SPMD_ALLREDUCE(SBUF3(1:MESSAGE_LEN),RBUF3(1:MESSAGE_LEN),
+     &                        MESSAGE_LEN,SPMD_SUM,COMM_CONT)
        ENDIF
 
        L = 0

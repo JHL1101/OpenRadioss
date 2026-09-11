@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    domdec2                     ../starter/source/spmd/domdec2.F
 !||--- called by ------------------------------------------------------
@@ -57,7 +58,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      F   IBFV   ,IBCSCYC,LBCSCYC,R_SKEW,IPM     ,
      G   SENSORS, LEN_CEP,EBCS_TAB,LOADS,IFRAME,
      H   NICONV ,NIRADIA ,NITFLUX,NUMCONV,NUMRADIA,NFXFLUX,
-     I   SENSOR_USER_STRUCT)
+     I   SENSOR_USER_STRUCT,bcs)
 C
 C-----------------------------------------------
 C   M o d u l e s
@@ -74,6 +75,7 @@ C-----------------------------------------------
       USE LOADS_MOD
       USE SUBMODEL_MOD , ONLY : NSUBMOD
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      use bcs_mod , only : bcs_struct_
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -135,6 +137,7 @@ C-----------------------------------------------
       INTEGER ,DIMENSION(LISKN,NUMFRAM+1)   ,INTENT(IN) :: IFRAME ! frame data structure
       LOGICAL IS_EBCS_PARALLEL
       TYPE(SENSOR_USER_STRUCT_) ,INTENT(INOUT) :: SENSOR_USER_STRUCT
+      type(bcs_struct_), intent(inout) :: bcs !< bcs data structure
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
@@ -143,17 +146,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IP,IPROC,IF1, IF2, TYP,
+      INTEGER IPROC,IF1, IF2, TYP,
      .        INSNMAX, IPMAX, SUM, INSNP, LASTM,
      .        K, I, IS, NN_S, IAD, J, K1, K3, NN, NL,NL_L,
      .        NSN,NMN,P,N,N1,N2,N3,N4,NTY,NGROU,NEL,NG,L,M,NIR,
      .        IMAIN,KK,NRTS,NRTM,PM,
      .        OFF, PROC, NIN, ITY_OLD, ITY, MSR, NSL_L, NSL,
      .        IELS(NSPMD), P_SPH, INT2FLAG,INT2FRPLUS,
-     .        ILEV,CNT,OFFSET,FINGEO,IAD1,IAD2,NUMLOADP,ITE2FRPLUS
+     .        ILEV,OFFSET,FINGEO,IAD1,IAD2,NUMLOADP,ITE2FRPLUS
       INTEGER :: ISENS
-      my_real
-     .        ECT_AK,FR_AK
+
       INTEGER :: IJK
       INTEGER :: SURF_ID,NUMBER_NODE,NODE_ID
       INTEGER :: NUMBER_PROC,NUMBER_SEGMENT
@@ -161,11 +163,7 @@ C-----------------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------------
       INT2FLAG=0
-      CNT = 0
  5000 CONTINUE
-c     count flag, how many times we redo this task
-c      CNT = CNT+1
-c      print*,'Count:',CNT
       INT2FRPLUS=0
 C-----------------------------------------------------
 
@@ -1594,18 +1592,33 @@ C--------------------------------------
 !   ------------
 !   ! loop over the /LOAD/PCYL
       DO I=1,LOADS%NLOAD_CYL
-            NUMBER_SEGMENT = LOADS%LOAD_CYL(I)%NSEG ! number of segment for the PCYL I
-            ! ------------
-            DO J=1,NUMBER_SEGMENT ! loop over the segments of the surface
-                DO K=1,4
-                    NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K) + 1! get the node id + 1 (if the segment is a triangle, NODE_ID(node 4) = 0))
-                    NUMBER_PROC = 0
-                    IF(NODE_ID/=0) ADDCNE(NODE_ID) = ADDCNE(NODE_ID) + 1
-                ENDDO
-            ENDDO
-            ! ------------
+        NUMBER_SEGMENT = LOADS%LOAD_CYL(I)%NSEG ! number of segment for the PCYL I
+        ! ------------
+        DO J=1,NUMBER_SEGMENT ! loop over the segments of the surface
+          DO K=1,4
+            NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K) + 1! get the node id + 1 (if the segment is a triangle, NODE_ID(node 4) = 0))
+            NUMBER_PROC = 0
+            IF(NODE_ID/=0) ADDCNE(NODE_ID) = ADDCNE(NODE_ID) + 1
+          ENDDO
         ENDDO
+        ! ------------
+      ENDDO
 !   -------------------------------------
+
+!   -------------------------------------
+!   Boundary conditions : non-relecting frontier
+!   add 1 contribution per node of element
+!   ------------
+      do i=1,bcs%num_nrf ! loop over the /BCS/NRF
+        do j=1,bcs%nrf(i)%list%size ! loop over the segment of the current /BCS/NRF
+          do k=1,4 ! loop over the 4/3/2 nodes of the segment (hexa:4, tetra:3, triangle 2d:2, quad 2d:2)
+            node_id = bcs%nrf(i)%list%node_list(k,j) ! get the node id
+            if(node_id/=0) addcne(node_id+1) = addcne(node_id+1) + 1 ! add 1 contribution to the node
+          enddo
+        enddo              
+      enddo
+!   -------------------------------------
+
 
 C-----------------------------------------------
 C   CALCULATING SKYLINE VECTOR ADDRESSES
@@ -2037,7 +2050,8 @@ C
      4   IGRSURF,IB   ,ADDCNE ,CEP    ,
      5   ILEN   ,GEO    ,IBCV ,IBCR   ,IBFFLUX,
      6   ILOADP ,LLOADP ,CEL  ,EBCS_TAB,LOADS,
-     7   NICONV ,NIRADIA ,NITFLUX,NUMCONV,NUMRADIA,NFXFLUX)
+     7   NICONV ,NIRADIA ,NITFLUX,NUMCONV,NUMRADIA,NFXFLUX,
+     8   bcs)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------    
@@ -2047,9 +2061,12 @@ C-----------------------------------------------
       USE EBCS_MOD
       USE LOADS_MOD
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      use bcs_mod , only : bcs_struct_
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2078,8 +2095,9 @@ C-----------------------------------------------
      .        GEO(NPROPG,*)
       TYPE (SURF_)   , DIMENSION(NSURF)   :: IGRSURF
       TYPE(MONVOL_STRUCT_), DIMENSION(NVOLU), INTENT(IN) :: T_MONVOL
-      TYPE(T_EBCS_TAB), INTENT(INOUT) :: EBCS_TAB ! ebcs data structure
-      TYPE (LOADS_), INTENT(INOUT) :: LOADS ! load data structure
+      TYPE(T_EBCS_TAB), INTENT(INOUT) :: EBCS_TAB !< ebcs data structure
+      TYPE (LOADS_), INTENT(INOUT) :: LOADS !< load data structure
+      type(bcs_struct_), intent(inout) :: bcs !< bcs data structure
 C-----------------------------------------------
 C   F u n c t i o n
 C-----------------------------------------------
@@ -2088,15 +2106,15 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, N, IDEB, OFF, OFFC, OFFTG, K1, K3, NL, NUMLOADP,
-     .        N1, N2, N3, N4, NN, P, NL_L, IS, NN_S, IAD, ITY,
+      INTEGER I, J, K, N, IDEB, OFF, OFFC, OFFTG, K1, NL, NUMLOADP,
+     .        N1, N2, N3, N4, NN, P, IS, NN_S, ITY,
      .        WORK(70000)
 
       INTEGER, DIMENSION(:), ALLOCATABLE :: ADSKY, ITRI, INDEX
       INTEGER :: IJK,NUMBER_NODE
-      INTEGER :: NELEM,ELEM_ID,NODE_ID
+      INTEGER :: ELEM_ID,NODE_ID
       INTEGER :: SURF_ID ! surface id
-      INTEGER :: LOCAL_SEGMENT,NUMBER_SEGMENT ! number of segment for /LOAD
+      INTEGER :: segment_offset,NUMBER_SEGMENT
       INTEGER :: PROC_ID ! processor id
       LOGICAL :: IS_EBCS_PARALLEL
 C-----------------------------------------------
@@ -2105,8 +2123,11 @@ C-----------------------------------------------
 C   CALCULATION OF CNE ADDCNE
 C-----------------------------------------------
       ALLOCATE(ADSKY(0:NUMNOD+1))
-      ALLOCATE(ITRI(ILEN))
-      ALLOCATE(INDEX(2*ILEN))
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
+      call my_alloc(ITRI, ILEN, "ITRI")
+      call my_alloc(INDEX, 2*ILEN, "INDEX")
       DO I = 0, NUMNOD+1
         ADSKY(I) = ADDCNE(I)
       ENDDO
@@ -2791,37 +2812,61 @@ C-----------------------------------------------
 !   /LOAD/PCYL : add 1 contribution per node per segment
 !   ------------
     ! loop over the /LOAD/PCYL
-      LOCAL_SEGMENT = 0
+      segment_offset = 0
       DO I=1,LOADS%NLOAD_CYL
-            NUMBER_SEGMENT = LOADS%LOAD_CYL(I)%NSEG ! number of segment for the PCYL I
-            ! ------------
-            ! loop over the segments of the surface to find where the node are defined 
-            DO J=1,NUMBER_SEGMENT ! loop over the segments of the surface
-                PROC_ID = LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC(J)
-                DO K=1,4
-                    NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K) ! get the node id (if the segment is a triangle, NODE_ID(node 4) = 0))
-                    IF(NODE_ID/=0) THEN
-                        CEP(OFF+LOCAL_SEGMENT+J) = PROC_ID - 1 ! force the proc for the fake element
-                        CNE(ADSKY(NODE_ID)) = OFF+LOCAL_SEGMENT+J ! fake element id
-                        ADSKY(NODE_ID) = ADSKY(NODE_ID) + 1
-                    ENDIF
-                ENDDO
-            ENDDO
-            LOCAL_SEGMENT = LOCAL_SEGMENT + NUMBER_SEGMENT
-            ! ------------
+        NUMBER_SEGMENT = LOADS%LOAD_CYL(I)%NSEG ! number of segment for the PCYL I
+        ! ------------
+        ! loop over the segments of the surface to find where the node are defined 
+        DO J=1,NUMBER_SEGMENT ! loop over the segments of the surface
+          PROC_ID = LOADS%CYL_RESTART(I)%SEGMENT_TO_PROC(J)
+          DO K=1,4
+            NODE_ID = LOADS%LOAD_CYL(I)%SEGNOD(J,K) ! get the node id (if the segment is a triangle, NODE_ID(node 4) = 0))
+            IF(NODE_ID/=0) THEN
+              CEP(OFF+segment_offset+J) = PROC_ID - 1 ! force the proc for the fake element
+              CNE(ADSKY(NODE_ID)) = OFF+segment_offset+J ! fake element id
+              ADSKY(NODE_ID) = ADSKY(NODE_ID) + 1
+            ENDIF
+          ENDDO
         ENDDO
+        segment_offset = segment_offset + NUMBER_SEGMENT
+        ! ------------
+        ENDDO
+        off = off + segment_offset 
 !   -------------------------------------
-      DEALLOCATE(ADSKY)
-      DEALLOCATE(ITRI)
-      DEALLOCATE(INDEX)
+
+!   -------------------------------------
+!   Boundary conditions : non-relecting frontier BCS/NRF
+!   ------------        
+      ! loop over the BCS/NRF
+      segment_offset = 0
+      do i=1,bcs%num_nrf
+        do j=1,bcs%nrf(i)%list%size ! loop over the segment of the current /BCS/NRF
+          do k=1,4 ! loop over the 4 nodes of the segment
+            node_id = bcs%nrf(i)%list%node_list(k,j) ! get the node id
+            if(node_id/=0) then
+              cne(adsky(node_id)) = j+segment_offset+off ! pseudo element with the id = local segment id + local segment offset + off
+              adsky(node_id) = adsky(node_id) + 1 ! add 1 contribution to the node
+              cep(j+segment_offset+off) = cep( bcs%nrf(i)%list%elem(j) )
+              cel(j+segment_offset+off) = cel( bcs%nrf(i)%list%elem(j) )
+            endif
+          enddo
+        enddo
+        segment_offset = segment_offset + bcs%nrf(i)%list%size ! update the segment offset for the next /BCS/NRF
+      enddo
+      off = off + segment_offset ! update the offset for the next option   
+!   -------------------------------------
+      call my_dealloc(ADSKY)
+      CALL MY_DEALLOC(ITRI)
+      CALL MY_DEALLOC(INDEX)
 
       RETURN
       END
 C
 !||====================================================================
-!||    fillcni2        ../starter/source/spmd/domdec2.F
+!||    fillcni2         ../starter/source/spmd/domdec2.F
 !||--- called by ------------------------------------------------------
-!||    lectur          ../starter/source/starter/lectur.F
+!||    lectur           ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE FILLCNI2(
@@ -2833,6 +2878,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2859,6 +2905,9 @@ C-----------------------------------------------
 C   CALCULATION OF CNE ADDCNE
 C-----------------------------------------------
       ALLOCATE(ADSKYI2(0:NUMNOD+1))
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
+! TODO: non-default lower bound, convert manually
       DO I = 0, NUMNOD+1
         ADSKYI2(I) = ADDCNI2(I)
       ENDDO
@@ -2891,20 +2940,23 @@ C
           OFF = OFF + NSN
         END IF
       END DO
-      DEALLOCATE(ADSKYI2)
+      call my_dealloc(ADSKYI2)
 C
       RETURN
       END
 C
 !||====================================================================
-!||    ddprint   ../starter/source/spmd/domdec2.F
+!||    ddprint        ../starter/source/spmd/domdec2.F
 !||--- called by ------------------------------------------------------
-!||    lectur    ../starter/source/starter/lectur.F
+!||    lectur         ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE  DDPRINT(DDSTAT,  MEMFLOW)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2958,8 +3010,8 @@ C-----------------------------------------------
 C Double of float to Bytes conversion
 C In double precision : one double = 8 bytes
 C In single precision : one float  = 4 bytes
-      ALLOCATE( AVERAGE(NACTIVE) )
-      ALLOCATE( DEVIATION(NACTIVE) ) 
+      call my_alloc(AVERAGE, NACTIVE, "AVERAGE")
+      call my_alloc(DEVIATION, NACTIVE, "DEVIATION")
       MBYTE=1024*1024
       IF (IRESP==1) THEN
          RTOBYTES = 4
@@ -3159,22 +3211,24 @@ C
      . '                                 ---------'/
      . '        NEW TOTAL . . . . . . . ',I10,' MB'/)
 C
-      DEALLOCATE( AVERAGE )
-      DEALLOCATE( DEVIATION ) 
+      CALL MY_DEALLOC(AVERAGE)
+      CALL MY_DEALLOC(DEVIATION)
       RETURN
       END
 !||====================================================================
-!||    c_doms10     ../starter/source/spmd/domdec2.F
+!||    c_doms10       ../starter/source/spmd/domdec2.F
 !||--- called by ------------------------------------------------------
-!||    domdec2      ../starter/source/spmd/domdec2.F
+!||    domdec2        ../starter/source/spmd/domdec2.F
 !||--- calls      -----------------------------------------------------
-!||    ifrontplus   ../starter/source/spmd/node/frontplus.F
-!||    nlocal       ../starter/source/spmd/node/ddtools.F
+!||    ifrontplus     ../starter/source/spmd/node/frontplus.F
+!||    nlocal         ../starter/source/spmd/node/ddtools.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE C_DOMS10(ICNDS10,ITAGND,IPLUS)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -3193,11 +3247,12 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER N, NN,N1,N2,P,NF,NS,NF0,NFMAX,IPLUS
+      INTEGER N, NN,N1,N2,P,NF,NS,NF0,IPLUS
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAGI,NNF
 C-----------------------------------------------
 !     TAGI->N: NNF(N)=MAX_NF
-      ALLOCATE( TAGI(NUMNOD),NNF(NS10E) )
+      call my_alloc(TAGI, NUMNOD, "TAGI")
+      call my_alloc(NNF, NS10E, "NNF")
       TAGI(1:NUMNOD) = 0 
       NNF(1:NS10E) = 1 
       IPLUS = 0
@@ -3317,7 +3372,8 @@ C      END DO
           END DO
       END DO
 C ----------------------------
-      DEALLOCATE( TAGI,NNF )
+      CALL MY_DEALLOC(TAGI)
+      CALL MY_DEALLOC(NNF)
 C ----------------------------
 C
       RETURN

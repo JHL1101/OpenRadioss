@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    int18_law151_alloc   ../starter/source/interfaces/int18/int18_law151_alloc.F
 !||--- called by ------------------------------------------------------
 !||    lectur               ../starter/source/starter/lectur.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||====================================================================
         SUBROUTINE INT18_LAW151_ALLOC(NPARI,NINTER,NUMNOD,NUMELS,MULTI_FVM,IPARI)
@@ -41,6 +43,7 @@ C     M o d u l e s
 C-----------------------------------------------           
         USE MULTI_FVM_MOD
         USE GROUPDEF_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -87,19 +90,21 @@ C-----------------------------------------------
         MULTI_FVM%S_APPEND_ARRAY = MY_SIZE
         ! number & list of interface 18 
         MULTI_FVM%NUMBER_INT18 = II
-        ALLOCATE( MULTI_FVM%INT18_LIST(MULTI_FVM%NUMBER_INT18) ) ; MULTI_FVM%INT18_LIST(:) = 0
-        ALLOCATE( MULTI_FVM%IS_INTER_USED_WITH_LAW151(NINTER) ) ;  MULTI_FVM%IS_INTER_USED_WITH_LAW151(:) = 0
+        call my_alloc(MULTI_FVM%INT18_LIST, MULTI_FVM%NUMBER_INT18, "MULTI_FVM%INT18_LIST")
+        MULTI_FVM%INT18_LIST(:) = 0
+        call my_alloc(MULTI_FVM%IS_INTER_USED_WITH_LAW151, NINTER, "MULTI_FVM%IS_INTER_USED_WITH_LAW151") 
+        MULTI_FVM%IS_INTER_USED_WITH_LAW151(:) = 0
         ! allocation of X/V/MASS extended to NUMNOD+NUMELS
         ! 1:NUMNOD --> classical x/v/mass
         ! NUMNOD+1:NUMNOD+NUMELS --> x/v/mass of phantom nodes (located to the center of 
         !                            the ALE elements)
-        ALLOCATE( MULTI_FVM%X_APPEND(3*MY_SIZE) )
-        ALLOCATE( MULTI_FVM%V_APPEND(3*MY_SIZE) )
-        ALLOCATE( MULTI_FVM%MASS_APPEND(MY_SIZE) )
-        ALLOCATE( MULTI_FVM%KINET_APPEND(MY_SIZE) )
+        call my_alloc(MULTI_FVM%X_APPEND, 3*MY_SIZE, "MULTI_FVM%X_APPEND")
+        call my_alloc(MULTI_FVM%V_APPEND, 3*MY_SIZE, "MULTI_FVM%V_APPEND")
+        call my_alloc(MULTI_FVM%MASS_APPEND, MY_SIZE, "MULTI_FVM%MASS_APPEND")
+        call my_alloc(MULTI_FVM%KINET_APPEND, MY_SIZE, "MULTI_FVM%KINET_APPEND")
         
         ! allocation of INT18_GLOBAL_LIST : marker for the interface /INT18+LAW151
-        ALLOCATE( MULTI_FVM%INT18_GLOBAL_LIST(NINTER) )
+        call my_alloc(MULTI_FVM%INT18_GLOBAL_LIST, NINTER, "MULTI_FVM%INT18_GLOBAL_LIST")
 
         IF( MULTI_FVM%IS_INT18_LAW151 ) THEN
             MULTI_FVM%INT18_LIST(1:MULTI_FVM%NUMBER_INT18) = INT18_LIST(1:MULTI_FVM%NUMBER_INT18)

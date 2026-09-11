@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    w_line_str             ../engine/source/output/restart/w_line_str.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    write_i_c              ../common_source/tools/input_output/write_routines.c
 !||--- uses       -----------------------------------------------------
 !||    groupdef_mod           ../common_source/modules/groupdef_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    names_and_titles_mod   ../common_source/modules/names_and_titles_mod.F
 !||====================================================================
       SUBROUTINE W_LINE_STR(IGRSLIN)
@@ -40,6 +43,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -67,7 +72,7 @@ C-----------------------------------------------
       ENDDO ! DO ISU=1,NSLIN
 !
       ERR = 0
-      ALLOCATE (ISLINI(LENISLIN), STAT=ERR)
+      call my_alloc(ISLINI, LENISLIN, "ISLINI", stat=ERR)
       ISLINI(1:LENISLIN) = 0  
       L_SLIN = 0
 !
@@ -115,7 +120,7 @@ C-----------------------------------------------
 !---------
       CALL WRITE_I_C(ISLINI,L_SLIN)
 !---------
-      DEALLOCATE (ISLINI)
+      call my_dealloc(ISLINI)
 !---------
       RETURN
       END

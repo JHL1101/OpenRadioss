@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    outp_sp_s             ../engine/source/output/sty/outp_sp_s.F
 !||--- called by ------------------------------------------------------
@@ -74,7 +75,7 @@ C-----------------------------------------------
       my_real
      .   WA(SIZLOC),WAP0(SIZ_WR),WAP0_LOC(SIZP0)
       my_real
-     .   FUNC(6),S1 ,S2 ,S3,P,VONM2
+     .   S1 ,S2 ,S3,P,VONM2
       TYPE(G_BUFEL_) ,POINTER :: GBUF     
       TYPE(BUF_MAT_) ,POINTER :: MBUF     
 C=======================================================================
@@ -270,8 +271,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NGF,NGL,NN,ITY,NEL,NG,JJ,
-     .        P0ARSZ2,WASZ2
+      INTEGER NGF,NGL,NN,ITY,NEL,NG,JJ
 C-----------------------------------------------
       WASZ = 0
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cepsini        ../starter/source/elements/shell/coque/cepsini.F
 !||--- called by ------------------------------------------------------
@@ -87,7 +88,6 @@ C-----------------------------------------------
      .   E1X(MVSIZ), E1Y(MVSIZ), E1Z(MVSIZ),
      .   E2X(MVSIZ), E2Y(MVSIZ), E2Z(MVSIZ),
      .   E3X(MVSIZ), E3Y(MVSIZ), E3Z(MVSIZ),
-     .   X4I(MVSIZ), Y4I(MVSIZ), Z4I(MVSIZ),
      .   EXX(MVSIZ),EYY(MVSIZ),EXY(MVSIZ),EYZ(MVSIZ),EZX(MVSIZ)
       my_real, 
      .   DIMENSION(:) , POINTER :: DIR1, DIR2
@@ -298,12 +298,11 @@ C-----------------------------------------------
      .   PM(*),FOR(NEL,5),THK(*),EINT(NEL,2),DIR1(NEL,*),DIR2(NEL,*),
      .   UVAR(NEL,*),SIGI(NEL,3), TF(*),GSTR(*),
      .   AREA(NEL),EXX(NEL),EYY(NEL),EXY(NEL)
-      TYPE (ELBUF_STRUCT_), TARGET :: ELBUF_STR
       TYPE (MATPARAM_STRUCT_) ,INTENT(IN) :: MAT_PARAM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NUVAR,NUPARAM,NIPARAM,NBFUNC
+      INTEGER J,NUVAR,NUPARAM,NIPARAM,NBFUNC
       INTEGER IFUNC(100)
 C=======================================================================
 C   INITIALIZE STRESS,THICKNESS & ENERGY
@@ -627,7 +626,7 @@ C-----------------------------------------------
      .   G12(MVSIZ), DE(MVSIZ) ,
      .   A11(MVSIZ), A12(MVSIZ), A22(MVSIZ)
       my_real
-     .   EZZ, SCALE, ZEROSTRESS, S, D, R, P1, P2, BETA
+     .   ZEROSTRESS, S, D, R, P1, P2, BETA
 C-------------------------------------------------------------
       DO I=JFT,JLT
         E11(I)  =PM(33,IMAT)

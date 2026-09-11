@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
       
 !||====================================================================
-!||    spmd_exch_a_int2      ../engine/source/mpi/forces/spmd_exch_a_int2.F
+!||    spmd_exch_a_int2   ../engine/source/mpi/forces/spmd_exch_a_int2.F
 !||--- called by ------------------------------------------------------
-!||    intti1                ../engine/source/interfaces/interf/intti1.F
+!||    intti1             ../engine/source/interfaces/interf/intti1.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    h3d_mod               ../engine/share/modules/h3d_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    h3d_mod            ../engine/share/modules/h3d_mod.F
+!||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod           ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_A_INT2(
      1   A    ,AR     ,MS    ,IN     ,STIFN,
@@ -42,7 +44,9 @@ C realizes the accumulation of accelerations and masses at the main int2 nodes
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
+        use my_alloc_mod
+
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -73,7 +77,6 @@ C-----------------------------------------------
 #ifdef MPI
       INTEGER MSGTYP,LOC_PROC,NOD,I,J,L,IDEB,IAD,LEN,
      .        NBINDEX,INDEX,MSGOFF,SIZ,IERROR,ISIZE2,
-     .        STATUS(MPI_STATUS_SIZE),
      .        REQ_S(NSPMD),REQ_R(NSPMD),INDEXI(NSPMD)
       DATA MSGOFF/117/
 
@@ -91,8 +94,8 @@ C
       IF (H3D_DATA%N_VECT_PCONT2_MAX > 0.OR.H3D_DATA%N_VECT_PCONT2_MIN > 0) THEN
          ISIZE2 = ISIZE2 + 6
       ENDIF 
-      ALLOCATE(SBUF(LCOMI2M*ISIZE2))    
-      ALLOCATE(RBUF(LCOMI2M*ISIZE2))          
+      call my_alloc(SBUF, LCOMI2M*ISIZE2, "SBUF")
+      call my_alloc(RBUF, LCOMI2M*ISIZE2, "RBUF")
 C
 !      PRINT*,'SPMD_EXCH_A_INT2 : LOCPROC = ', LOC_PROC
       IDEB = 1
@@ -104,9 +107,7 @@ C
           L=L+1
           INDEXI(L)=I
           MSGTYP = MSGOFF
-          CALL MPI_IRECV(
-     S      RBUF(IDEB),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(L),IERROR)
+          CALL SPMD_IRECV(RBUF(IDEB:IDEB+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_R(L))
           IDEB = IDEB + SIZ
         ENDIF
       ENDDO
@@ -246,14 +247,12 @@ C
         LEN = IAD_I2M(I+1)-IAD_I2M(I)
         SIZ = LEN*(ISIZE2)
         MSGTYP = MSGOFF
-        CALL MPI_ISEND(
-     S    SBUF(IDEB),SIZ,REAL,IT_SPMD(I),MSGTYP,
-     G    SPMD_COMM_WORLD,REQ_S(L),IERROR)
+        CALL SPMD_ISEND(SBUF(IDEB:IDEB+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_S(L))
         IDEB = IDEB + SIZ
       ENDDO
 C
       DO L=1,NBINDEX
-        CALL MPI_WAITANY(NBINDEX,REQ_R,INDEX,STATUS,IERROR)
+        CALL SPMD_WAITANY(REQ_R,NBINDEX,INDEX)
         I = INDEXI(INDEX)
         IDEB = 1+(IAD_I2M(I)-1)*(ISIZE2)
         LEN = IAD_I2M(I+1)-IAD_I2M(I)
@@ -384,11 +383,11 @@ C
       ENDDO
 C
       DO L=1,NBINDEX
-        CALL MPI_WAITANY(NBINDEX,REQ_S,INDEX,STATUS,IERROR)
+        CALL SPMD_WAITANY(REQ_S,NBINDEX,INDEX)
       ENDDO
 C
-      DEALLOCATE(RBUF)
-      DEALLOCATE(SBUF)
+      call my_dealloc(RBUF)
+      call my_dealloc(SBUF)
 C
 #endif
       RETURN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_eos_tillotson    ../starter/source/materials/eos/hm_read_eos_tillotson.F
 !||--- called by ------------------------------------------------------
 !||    hm_read_eos              ../starter/source/materials/eos/hm_read_eos.F
 !||--- calls      -----------------------------------------------------
+!||    ancmsg                   ../starter/source/output/message/message.F
 !||    hm_get_floatv            ../starter/source/devtools/hm_reader/hm_get_floatv.F
 !||    hm_option_is_encrypted   ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
 !||--- uses       -----------------------------------------------------
@@ -75,10 +77,16 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      my_real :: C1, C2, A, B, ER, ES, VS, E0, RHO0,RHOI,RHOR, ALPHA, BETA,
-     .           FACC1,FACC2,FACPB,MU0,MU2,DF,ETA,
-     .           OMEGA,AA,BB,PP,XX,EXPA,EXPB,DPDMU, SSP0, G0, PSH
-      LOGICAL :: IS_ENCRYPTED,IS_AVAILABLE,IS_AVAILABLE_RHO0
+C   L o c a l   V a r i a b l e s
+C-----------------------------------------------
+      my_real :: C1, C2, A, B, EREF, VSUBL, E0, RHO0,RHOI,RHOR, ALPHA, BETA,
+     .           MU0, MU2, DF, ETA,
+     .           DPDMU, SSP0, G0, PSH, EIV, ECV
+      my_real :: ABW, ABWX, DE_W, DN_W, I12, I4, P12, P4, DE_P12, DE_P4,
+     .           DM_P12, DM_P4, DENOM, KK, P3, TMP3
+      my_real :: ETA2, ETAE, W, W2, PMIN, REGION, C1EB, EAX, C1EBEAX
+      my_real :: DPDM12, DPDM4, PP, XX, P0
+      LOGICAL :: IS_ENCRYPTED, IS_AVAILABLE, IS_AVAILABLE_RHO0
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
@@ -87,7 +95,8 @@ C-----------------------------------------------
       IS_AVAILABLE_RHO0 = .FALSE.
       PSH = ZERO
 
-      EOS_TAG(IEOS)%NVAR = 1  !saving Region id for H2D and ANIM output                         
+      EOS_TAG(IEOS)%NVAR = 1  !saving Region id for H2D and ANIM output
+      PMIN = PM(37)
 
       CALL HM_OPTION_IS_ENCRYPTED(IS_ENCRYPTED)
 
@@ -96,14 +105,18 @@ C-----------------------------------------------
       CALL HM_GET_FLOATV('MAT_A', A, IS_AVAILABLE,LSUBMODEL,UNITAB)
       CALL HM_GET_FLOATV('MAT_B', B, IS_AVAILABLE,LSUBMODEL,UNITAB)
 
-      CALL HM_GET_FLOATV('E_R',ER, IS_AVAILABLE,LSUBMODEL,UNITAB)
-      CALL HM_GET_FLOATV('E_S', ES, IS_AVAILABLE,LSUBMODEL,UNITAB)
-      CALL HM_GET_FLOATV('Vs', VS, IS_AVAILABLE,LSUBMODEL,UNITAB)
+      CALL HM_GET_FLOATV('E_R',EREF, IS_AVAILABLE,LSUBMODEL,UNITAB)
+      CALL HM_GET_FLOATV('E_IV', EIV, IS_AVAILABLE,LSUBMODEL,UNITAB)
+      CALL HM_GET_FLOATV('E_CV', ECV, IS_AVAILABLE,LSUBMODEL,UNITAB)
+      CALL HM_GET_FLOATV('Viv', VSUBL, IS_AVAILABLE,LSUBMODEL,UNITAB)
       CALL HM_GET_FLOATV('MAT_EA', E0 ,IS_AVAILABLE,LSUBMODEL,UNITAB)
       CALL HM_GET_FLOATV('Refer_Rho', RHO0 ,IS_AVAILABLE_RHO0,LSUBMODEL,UNITAB)
 
       CALL HM_GET_FLOATV('Alpha', ALPHA ,IS_AVAILABLE,LSUBMODEL,UNITAB)
       CALL HM_GET_FLOATV('Beta', BETA ,IS_AVAILABLE,LSUBMODEL,UNITAB)
+
+      CALL HM_GET_FLOATV('MAT_PSH', PSH ,IS_AVAILABLE,LSUBMODEL,UNITAB)
+      CALL HM_GET_FLOATV('LAW5_P0', P0 ,IS_AVAILABLE,LSUBMODEL,UNITAB)
 
       RHOR = MAT_PARAM%RHO
       RHOI = MAT_PARAM%RHO0
@@ -115,11 +128,35 @@ C-----------------------------------------------
         RHO0=RHOR                   
       ENDIF
 
+      IF(ECV == ZERO .OR. ECV == EIV)THEN
+        ECV = EIV
+          call ancmsg(MSGID=140,MSGTYPE=msgwarning,ANMODE=aninfo,I1=imideos,
+     .                C1='/EOS/TILLOTSON',C2='TRANSITION AREA IS RECOMMENDED FOR STABILITY PURPOSES (ECV > EIV)')
+      ENDIF
+
+      IF(E0 /= ZERO)THEN
+          call ancmsg(MSGID=140,MSGTYPE=msgwarning,ANMODE=aninfo,I1=imideos,
+     .                C1='/EOS/TILLOTSON',C2='E0 IS EXPECTED TO BE ZERO. NON ZERO VALUE SHOULD LEAD TO UPDATED PARAMETERS')
+      ENDIF
+
+      IF(EIV < ZERO)THEN
+        call ancmsg(MSGID=67,MSGTYPE=msgerror,ANMODE=aninfo,I1=imideos,
+     .              C1='/EOS/TILLOTSON',C2='EIV MUST BE STRICTLY POSITIVE')
+      ELSEIF(ECV < EIV)THEN
+        call ancmsg(MSGID=67,MSGTYPE=msgerror,ANMODE=aninfo,I1=imideos,
+     .              C1='/EOS/TILLOTSON',C2='ECV MUST BE GREATER THAN EIV')
+      ENDIF
+
+      IF (ABS(EREF) < EM20)THEN
+        call ancmsg(MSGID=67,MSGTYPE=msgerror,ANMODE=aninfo,I1=imideos,
+     .              C1='/EOS/TILLOTSON',C2='EREF PARAMETER IS EXPECTED TO BE GREATHER THAN ZERO')
+      ENDIF
+
       PM(23) = E0
       PM(32) = C1+B*E0   !BULK = (1+µ)*dP/dmu (partial derivative at constant E)
       PM(88) = PSH
 
-      MAT_PARAM%EOS%NUPARAM = 9
+      MAT_PARAM%EOS%NUPARAM = 10
       MAT_PARAM%EOS%NIPARAM = 0
       MAT_PARAM%EOS%NFUNC   = 0
       MAT_PARAM%EOS%NTABLE  = 0
@@ -129,13 +166,15 @@ C-----------------------------------------------
       MAT_PARAM%EOS%UPARAM(2) = C2
       MAT_PARAM%EOS%UPARAM(3) = A
       MAT_PARAM%EOS%UPARAM(4) = B
-      MAT_PARAM%EOS%UPARAM(5) = ER
-      MAT_PARAM%EOS%UPARAM(6) = ES
-      MAT_PARAM%EOS%UPARAM(7) = VS
+      MAT_PARAM%EOS%UPARAM(5) = EREF
+      MAT_PARAM%EOS%UPARAM(6) = ECV
+      MAT_PARAM%EOS%UPARAM(7) = VSUBL
       MAT_PARAM%EOS%UPARAM(8) = ALPHA
       MAT_PARAM%EOS%UPARAM(9) = BETA
-      MAT_PARAM%EOS%PSH       = PSH
-      MAT_PARAM%EOS%E0        = E0
+      MAT_PARAM%EOS%UPARAM(10) = EIV
+      MAT_PARAM%EOS%PSH = PSH
+      MAT_PARAM%EOS%E0 = E0
+      MAT_PARAM%EOS%P0 = P0
 !
       IF (MAT_PARAM%THERM%TINI == ZERO) THEN
         MAT_PARAM%THERM%TINI =THREE100
@@ -160,33 +199,76 @@ C-----------------------------------------------
         DF = ZERO
       ENDIF
 
-      MU2   = MU0*MU0
-      FACC1 = ONE
-      FACC2 = ONE
-      FACPB = ONE
-      IF(MU0<ZERO) THEN
-        FACC2=ZERO
-        IF(DF>VS .OR. (DF<=VS .AND. E0>=ES) ) THEN
-         XX    = MU0/(ONE+MU0)
-         EXPA  = EXP(-ALPHA*XX*XX)
-         EXPB  = EXP(BETA*XX)
-         FACC1 = EXPA*EXPB
-         FACPB = EXPA
+      REGION = 1
+      IF(MU0 < ZERO)THEN
+        IF(DF > VSUBL)THEN
+          REGION = 4
+        ELSEIF(E0 >= ECV)THEN
+          REGION = 4
+        ELSEIF(E0 < EIV)THEN
+          REGION = 2
+          C2 = ZERO
+        ELSE
+          REGION = 3
+          C2 = ZERO
         ENDIF
-      ENDIF      
-      ETA   = ONE+MU0       
-      OMEGA = ONE+E0/(ER*ETA**2)
-      AA    = FACC1*C1*MU0+FACC2*C2*MU2
-      BB    = A+FACPB*B/OMEGA
-      PP    = MAX(AA+BB*ETA*E0,PM(37))
-      PM(31)= PP
+      ENDIF
+
+      !---INITIAL PRESSURE
+      MU2= MU0*MAX(ZERO,MU0)
+      ETA = ONE+MU0
+      ETA2 = ETA*ETA
+      ETAE = ETA*E0
+      W = ONE+E0/(EREF*ETA2)
+      W2 = W*W
+      ABW = (A+B/W)
+      DE_W = ONE/(EREF*ETA2)
+      DN_W = -TWO*E0/(EREF*ETA2*ETA)
+      I12 = ZERO
+      I4 = ZERO
+      TMP3 = ZERO
+      P12 =  ZERO ; P4 = ZERO
+      DPDM12 = ZERO ; DPDM4 = ZERO
+      DE_P12 = ZERO ; DE_P4 = ZERO
+      IF(REGION <= 3)THEN
+        P12 = P0+ABW*ETAE+C1*MU0+C2*MU2
+        P12 = MAX(P12,PMIN)
+        DE_P12 = (-b*DE_W*ETAE)/W2 + ABW*ETA
+        DM_P12 = (-B*DN_W*ETAE)/W2 + ABW*E0 + C1 + TWO*C2*MU0
+        DPDM12 = DM_P12 + P12/ETA2*DE_P12
+        I12 = ONE
+      ENDIF
+      IF(REGION >= 3)THEN
+        XX = MU0/(ONE+MU0)
+        C1EB = C1*exp(beta*xx)
+        EAX = exp(-alpha*XX*XX)
+        C1EBEAX = C1EB*EAX
+        ABWX = (A+B*EAX/W)
+        P4 = P0+C1EB*EAX*MU0+ ABWX*ETAE
+        P4 = MAX(P4,PMIN)
+        DE_P4 = -B*EAX*DE_W*ETAE/W2 + ABWX*ETA
+        DM_P4 = BETA/ETA2*C1EBEAX*MU0 - TWO*C1EBEAX*ALPHA*XX*MU0/ETA2 + C1EBEAX
+     .         +ETAE*(-TWO*B*ALPHA*XX*EAX/W/ETA2 - B*EAX*DN_W/W2) + ABWX*E0
+        DPDM4 = DM_P4 + P4/ETA2*DE_P4
+        I4 = ONE
+      END IF
+       IF(REGION == 3)THEN
+         DENOM = ECV-EIV
+         KK = (E0-EIV)/DENOM
+         P3 = (ONE-KK)*P12 + KK*P4
+         TMP3 = P4/DENOM - P12/DENOM
+         I12 = (ONE-KK)
+         I4 = KK
+       ENDIF
+       PP = I12*P12 + I4*P4
+       DPDMU = I12*DPDM12 + I4*DPDM4 + TMP3
+       PM(31)= PP-PSH
         
       !SSP0
       SSP0 = ZERO 
       G0   = PM(22)
       RHOI = PM(89)
-      
-      DPDMU=FACC1*C1+TWO*FACC2*C2*MU0+BB*ETA*PP*DF*DF + E0*( BB+(TWO*E0/ETA-PP*DF*DF)*B*FACPB/(ER*ETA*OMEGA**2) )
+
       DPDMU=MAX(ZERO,DPDMU)
       IF(RHOR > ZERO) SSP0 = SQRT((DPDMU + TWO_THIRD*G0)/RHOR) 
       PM(27)=SSP0      
@@ -195,27 +277,30 @@ C-----------------------------------------------
       IF(IS_ENCRYPTED)THEN
         WRITE(IOUT,'(5X,A,//)')'CONFIDENTIAL DATA'
       ELSE
-        WRITE(IOUT,1500)C1,C2,A,B,ER,ES,VS,E0,PM(31),ALPHA,BETA
+        WRITE(IOUT,1500)C1,C2,A,B,ALPHA,BETA,EREF,EIV,ECV,VSUBL,E0,PSH,PM(31)
         IF(IS_AVAILABLE_RHO0)WRITE(IOUT,1501)PM(1)
       ENDIF
 
       RETURN
       
  1000 FORMAT(
-     & 5X,'  TILLOTSON EOS     ',/,
-     & 5X,'  --------------     ',/)
+     & 5X,'  TILLOTSON EOS',/,
+     & 5X,'  -------------',/)
  1500 FORMAT(
-     & 5X,'C1. . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
-     & 5X,'C2. . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
+     & 5X,'C1  . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
+     & 5X,'C2  . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
      & 5X,'A . . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
      & 5X,'B . . . . . . . . . . . . . . . . . . . .=',1PG20.13/,
-     & 5X,'REF INTERNAL ENERGY (PER UNIT VOLUME) . .=',1PG20.13/,
-     & 5X,'SUBLIMATION ENERGY  (PER UNIT VOLUME) . .=',1PG20.13/,
-     & 5X,'SUBLIMATION RELATIVE VOLUME . . . . . . .=',1PG20.13/,
-     & 5X,'INITIAL INTERNAL ENERGY(PER UNIT VOLUME).=',1PG20.13/,
-     & 5X,'INITIAL PRESSURE. . . . . . . . . . . . .=',1PG20.13/,
      & 5X,'ALPHA . . . . . . . . . . . . . . . . . .=',1PG20.13/,
-     & 5X,'BETA. . . . . . . . . . . . . . . . . . .=',1PG20.13)
+     & 5X,'BETA  . . . . . . . . . . . . . . . . . .=',1PG20.13/,
+     & 5X,'EREF:REFERENCE INTERNAL ENERGY  . . . . .=',1PG20.13/,
+     & 5X,'EIV:INCIPIENT VAPORIZATION ENERGY . . . .=',1PG20.13/,
+     & 5X,'ECV:COMPLETE VAPORIZATION ENERGY  . . . .=',1PG20.13/,
+     & 5X,'VIV:VAPORIZATION RELATIVE VOLUME  . . . .=',1PG20.13/,
+     & 5X,'E0:INITIAL INTERNAL ENERGY  . . . . . . .=',1PG20.13/,
+     & 5X,'PSH:PRESSURE SHIFT  . . . . . . . . . . .=',1PG20.13/,
+     & 5X,'INITIAL PRESSURE  . . . . . . . . . . . .=',1PG20.13)
+
  1501 FORMAT(     
      & 5X,'EOS REFERENCE DENSITY . . . . . . . . . .=',1PG20.13)     
  

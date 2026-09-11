@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25pen3_edg   ../starter/source/interfaces/inter3d1/i25pen3_edg.F
 !||--- called by ------------------------------------------------------
@@ -67,13 +68,11 @@ C-----------------------------------------------
      .     XXS1(MVSIZ) ,XXS2(MVSIZ) ,XYS1(MVSIZ) ,XYS2(MVSIZ) ,XZS1(MVSIZ) ,XZS2(MVSIZ) ,
      .     XXM1(MVSIZ) ,XXM2(MVSIZ) ,XYM1(MVSIZ) ,XYM2(MVSIZ) ,XZM1(MVSIZ) ,XZM2(MVSIZ) ,
      .     XS12,YS12,ZS12,XM12,YM12,ZM12,XA,XB,
-     .     XS2,XM2,XSM,XS2M2,YS2,YM2,YSM,YS2M2,ZS2,ZM2,ZSM,ZS2M2,
+     .     XS2,XM2,XSM,XS2M2,YS2M2,ZS2M2,
      .     XX,YY,ZZ,ALS,ALM,DET,GAP2, 
      .     XMAX1,YMAX1,ZMAX1,XMAX2,YMAX2,ZMAX2,
      .     XMIN1,YMIN1,ZMIN1,XMIN2,YMIN2,ZMIN2,GAPV(MVSIZ),
-     .     AAA, DX, DY, DZ, DD, EX, EY ,EZ, NNI, NI2, INVCOS
-      my_real 
-     .     MAXGAPV
+     .     DD
 C-----------------------------------------------
       DO I=1,JLT
         IE = CAND_M(I)
@@ -83,9 +82,15 @@ C-----------------------------------------------
           GAPV(I)=GAPE(IE)+GAPE(JE)
 C
           IF(IGAP0 == 0) THEN
-            GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
+             IF(LEDGE(7,IE)/=3)  GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
           ELSE
-            GAPV(I)=TWO*(GAPE(IE)+GAPE(JE))
+            IF(LEDGE(7,IE)/=3.AND.LEDGE(7,JE)/=3) THEN
+               GAPV(I)=TWO*(GAPE(IE)+GAPE(JE))
+            ELSEIF(LEDGE(7,IE)/=3) THEN
+               GAPV(I)=TWO*GAPE(IE)+GAPE(JE)
+            ELSEIF(LEDGE(7,JE)/=3) THEN
+               GAPV(I)=TWO*GAPE(JE)+GAPE(IE)
+            ENDIF
           END IF
 C
           IF(IGAP == 3)

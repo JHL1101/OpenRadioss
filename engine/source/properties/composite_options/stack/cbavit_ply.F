@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cbavit_ply    ../engine/source/properties/composite_options/stack/cbavit_ply.F
 !||--- called by ------------------------------------------------------
@@ -70,15 +71,14 @@ C-----------------------------------------------
       INTEGER J, I, EP, NN(4), IP, NPLAT0
  
       my_real
-     .   PG,Z1,Z2,MX13,MY13,MX23,MY23,MX34,MY34,GAMA1,GAMA2, X21, 
-     .   X34,Y21,Y34 ,Z21,Z34,L12,L34,X41,X32,Y41,Y32,Z41,Z32,XX1
-     .   YY,XY,XZ1,YZ ,ZZ,Y24,X24,Y13,X13,COREL(3,4),XX1,YY,OFF_L,
+     .   PG,Z1,Z2,MX13,MY13,
+     .   Y24,X24,Y13,X13,OFF_L,
      .   D1,D2,DT05,DT025,EXZ,EYZ,DDRY,V13X,V24X,VHIX,DDRZ1,DDRZ2,
-     .   DDRZ,DDRX,A1,A2,D3
+     .   DDRX,A1,A2,D3
       my_real 
      .  VG13(3),VG24(3),VGHI(3),V13(MVSIZ,3), V24(MVSIZ,3),
-     .  VHI(MVSIZ,3), AR(3),D(6),ALR(3),RR(3,NNOD),
-     .  AREA_I(MVSIZ), DEL_IPLY(MVSIZ,3,NPT-1),DN_IPLY(MVSIZ,12,NPT-1),
+     .  VHI(MVSIZ,3), AR(3),ALR(3),
+     .  AREA_I(MVSIZ),
      .  DN_PLY(MVSIZ,12,NPT)
       DATA   PG/.577350269189626/
 C-----------------------------------------------

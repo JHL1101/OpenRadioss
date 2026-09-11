@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_dfs_detcord         ../starter/source/initial_conditions/detonation/read_dfs_detcord.F
 !||--- called by ------------------------------------------------------
@@ -80,17 +81,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER              :: I, MAT, J, NPEM, K,IGU,IGS,JJ,MDET,DET_ID,IDET
-      INTEGER              :: IBID,  NODE_ID1, NODE_ID2,uID1,uID2, IOPT, IUNIT, UID
-      INTEGER              :: FLAG_FMT,IMAT,IFLAGUNIT,UNUSED,NNOD
-      INTEGER              :: STAT,NPE,NPE2
-      my_real              :: XC, YC, ZC, ALT, XC1, YC1, ZC1, XC2, YC2, ZC2, NX, NY, NZ, BID, VCJ
+      INTEGER              :: I, MAT, IGU,IGS,MDET,DET_ID,IDET
+      INTEGER              :: IOPT, UID
+      INTEGER              :: UNUSED,NNOD
+      my_real              :: ALT, VCJ
       CHARACTER*40         :: MESS
-      CHARACTER*64         :: chain1,chain2
       CHARACTER(LEN=NCHARKEY) :: KEY, KEY2
-      CHARACTER(LEN=NCHARTITLE) :: TITR
       LOGICAL              :: IS_ENCRYPTED, IS_AVAILABLE
-      INTEGER              :: NDETPS,NDETSG,NECRAN,NDETPL,NDETCORD
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
@@ -153,7 +150,7 @@ C-----------------------------------------------
         ELSEIF (UNUSED==2) THEN
           CALL ANCMSG(MSGID=102,MSGTYPE=MSGERROR,ANMODE=ANINFO,
      .                I1=DET_ID,
-     .                C1='DETONATOR MUST REFER TO A JWL MATERIAL LAW (LAWS 5, 51, 97, 151)',
+     .                C1='DETONATOR MUST REFER TO AN EXPLOSIVE COMPATIBLE MATERIAL (LAWS 5, 51, 97, 105, 151)',
      .                C2='/DFS/DETCORD',
      .                I2=MDET)
         ELSEIF (NNOD == 0) THEN

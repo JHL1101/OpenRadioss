@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,24 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_sphgat           ../engine/source/mpi/sph/spmd_sphgat.F
+!||    spmd_sphgat               ../engine/source/mpi/sph/spmd_sphgat.F
 !||--- called by ------------------------------------------------------
-!||    sphprep               ../engine/source/elements/sph/sphprep.F
+!||    sphprep                   ../engine/source/elements/sph/sphprep.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
-!||    spmd_ialltoall        ../engine/source/mpi/generic/spmd_ialltoall.F
-!||    spmd_ialltoallv_int   ../engine/source/mpi/generic/spmd_ialltoallv_int.F
+!||    ancmsg                    ../engine/source/output/message/message.F
+!||    arret                     ../engine/source/system/arret.F
+!||    spmd_ialltoall            ../engine/source/mpi/generic/spmd_ialltoall.F
+!||    spmd_ialltoallv_int_old   ../engine/source/mpi/generic/spmd_ialltoallv_int_old.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    sphbox                ../engine/share/modules/sphbox.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    message_mod               ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod              ../common_source/tools/memory/my_alloc.F90
+!||    sphbox                    ../engine/share/modules/sphbox.F
+!||    spmd_comm_world_mod       ../engine/source/mpi/spmd_comm_world.F90
 !||====================================================================
       SUBROUTINE SPMD_SPHGAT(KXSP ,IXSP, WSP2SORT, IREDUCE, LGAUGE)
 C-----------------------------------------------
@@ -40,6 +42,8 @@ C   M o d u l e s
 C-----------------------------------------------
       USE SPHBOX
       USE MESSAGE_MOD
+      use my_alloc_mod
+
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -89,6 +93,7 @@ C-----------------------------------------------
 
 C compaction of structures
 C
+      INDEX = 0
       IDEB = 0
       NN = 0
       DO P = 1, NSPMD
@@ -128,23 +133,23 @@ C
       NSPHR = NN
 C
       IERROR = 0
-      IF(ALLOCATED(XSPHR))DEALLOCATE(XSPHR)
+      IF(ALLOCATED(XSPHR)) call my_dealloc(XSPHR)
 C reallocation with new nsphr on the total size
-      ALLOCATE(XSPHR(SIZSPC,NSPHR),STAT=IERROR1)
+      call my_alloc(XSPHR, SIZSPC, NSPHR, "XSPHR", stat=IERROR1)
       IERROR = IERROR + IERROR1
-      IF(ALLOCATED(WACOMPR))DEALLOCATE(WACOMPR)
+      IF(ALLOCATED(WACOMPR)) call my_dealloc(WACOMPR)
 C reallocation WACOMPR en prevision echange spforcp et splissv
-      ALLOCATE(WACOMPR(SIZSPW,NSPHR),STAT=IERROR1)
+      call my_alloc(WACOMPR, SIZSPW, NSPHR, "WACOMPR", stat=IERROR1)
       IERROR = IERROR + IERROR1
 C reallocation des tags cellule active a recevoir
-      IF(ALLOCATED(ISPHR))DEALLOCATE(ISPHR)
+      IF(ALLOCATED(ISPHR)) call my_dealloc(ISPHR)
          
-      ALLOCATE(ISPHR(NSPHR),STAT=IERROR1)
+      call my_alloc(ISPHR, NSPHR, "ISPHR", stat=IERROR1)
       IERROR = IERROR + IERROR1
       IF(NSPCOND>0) THEN
 C reallocation of the array managing the symmetrized particles
-        IF(ALLOCATED(ISPSYMR))DEALLOCATE(ISPSYMR)
-        ALLOCATE(ISPSYMR(NSPCOND,NSPHR),STAT=IERROR1)
+        IF(ALLOCATED(ISPSYMR)) call my_dealloc(ISPSYMR)
+        call my_alloc(ISPSYMR, NSPCOND, NSPHR, "ISPSYMR", stat=IERROR1)
         IERROR = IERROR + IERROR1
       END IF
       IF(IERROR/=0) THEN
@@ -179,6 +184,10 @@ C
         NVOIS2 = KXSP(5,N)
         DO NN = 1, NVOIS1
           IF(IXSP(NN,N)<ZERO) THEN
+            IF(INDEX(-IXSP(NN,N))==0) THEN
+              IXSP(NN,N) = 0
+              CYCLE
+            END IF
 C renumerotation
             IXSP(NN,N) = -INDEX(-IXSP(NN,N))
 C flag distinguishing active cells from others
@@ -187,6 +196,10 @@ C flag distinguishing active cells from others
         END DO
         DO NN = NVOIS1+1,NVOIS2
           IF(IXSP(NN,N)<ZERO) THEN
+            IF(INDEX(-IXSP(NN,N))==0) THEN
+              IXSP(NN,N) = 0
+              CYCLE
+            END IF
 C renumerotation
             IXSP(NN,N) = -INDEX(-IXSP(NN,N))
           END IF
@@ -202,6 +215,10 @@ C
         NVOIS2 = KXSP(5,N)
         DO NN = 1, NVOIS1
           IF(IXSP(NN,N)<ZERO) THEN
+            IF(INDEX(-IXSP(NN,N))==0) THEN
+              IXSP(NN,N) = 0
+              CYCLE
+            END IF
 C renumerotation
             IXSP(NN,N) = -INDEX(-IXSP(NN,N))
 C flag distinguishing active cells from others
@@ -210,6 +227,10 @@ C flag distinguishing active cells from others
         END DO
         DO NN = NVOIS1+1,NVOIS2
           IF(IXSP(NN,N)<ZERO) THEN
+            IF(INDEX(-IXSP(NN,N))==0) THEN
+              IXSP(NN,N) = 0
+              CYCLE
+            END IF
 C renumerotation
             IXSP(NN,N) = -INDEX(-IXSP(NN,N))
           END IF
@@ -254,11 +275,11 @@ C
         END IF
       END DO
 C reallocation liste cellule a envoyer
-      IF(ALLOCATED(LSPHS))DEALLOCATE(LSPHS)
-      ALLOCATE(LSPHS(NSPHS),STAT=IERROR)
+      IF(ALLOCATED(LSPHS)) call my_dealloc(LSPHS)
+      call my_alloc(LSPHS, NSPHS, "LSPHS", stat=IERROR)
 C reallocation of active cell tags to send
-      IF(ALLOCATED(ISPHS))DEALLOCATE(ISPHS)
-      ALLOCATE(ISPHS(NSPHS),STAT=IERROR1)
+      IF(ALLOCATED(ISPHS)) call my_dealloc(ISPHS)
+      call my_alloc(ISPHS, NSPHS, "ISPHS", stat=IERROR1)
       IERROR = IERROR + IERROR1
       IF(IERROR/=0) THEN
         CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
@@ -303,7 +324,7 @@ C reallocation of active cell tags to send
 !   -------------------------
 !   alltoall communication with non-uniform size
 !   for integer array : send : INDEX --> rcv : LSPHS
-      CALL SPMD_IALLTOALLV_INT(INDEX,LSPHS,
+      CALL SPMD_IALLTOALLV_INT_OLD(INDEX,LSPHS,
      .          SEND_SIZE_INDEX,TOTAL_SEND_SIZE_INDEX,DISPLS_INDEX,
      .          TOTAL_RCV_SIZE_LSPHS,RCV_SIZE_LSPHS,DISPLS_LSPHS,
      .          REQUEST_INDEX,SPMD_COMM_WORLD,NSPMD)

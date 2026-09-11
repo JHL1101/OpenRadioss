@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    plot_distrib                 ../starter/source/general_controls/computation/plot_distrib.F
 !||--- called by ------------------------------------------------------
@@ -48,15 +49,13 @@ C-----------------------------------------------
       my_real
      . ARRAY(*),X_MINVALUE, X_MAXVALUE,Y_MAXVALUE
       CHARACTER*1 ECRIT
-      CHARACTER(len=60) :: FMTA,FMTB,FMTC
+      CHARACTER(len=60) :: FMTA
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER KK,FLAG_FMT,I,J,K,IGS,ID,FLAG_FMT_TMP,IFIX_TMP,
-     .   ISU,NUMA,J10(10),IGAUSS,IFUNC,UID,SUB_ID,MAX_PART,
-     .   CPT_PART,NG,ITY,NEL,NFT,II,DISTRIB(NB_INTERV),MAX_DISTRIB
+      INTEGER J,II,DISTRIB(NB_INTERV),MAX_DISTRIB
       my_real
-     . MEAN,SD,MEAN_INPUT,SD_INPUT,TEMP,INTERV,
+     . INTERV,
      . VALUE,X_MAXVALUE1
       CHARACTER*100 CHAR(100)
       CHARACTER*100 CHAR1(100)

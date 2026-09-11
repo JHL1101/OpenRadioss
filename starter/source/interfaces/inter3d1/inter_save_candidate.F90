@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_save_candidate_mod   ../starter/source/interfaces/inter3d1/inter_save_candidate.F90
 !||--- called by ------------------------------------------------------
 !||    i7trivox1                  ../starter/source/interfaces/inter3d1/i7trivox1.F
 !||====================================================================
       module inter_save_candidate_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -48,9 +49,11 @@
           use constant_mod
           use array_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_move_alloc_mod, only : my_move_alloc
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Included files
@@ -99,14 +102,14 @@
             if(local_i_stok+k_stok>local_cand_n%size_int_array_1d) then
               my_old_size = local_cand_n%size_int_array_1d
               my_size = nint((my_old_size+k_stok) * 1.25)
-              allocate( tmp_array_1( my_size ) )
-              allocate( tmp_array_2( my_size ) )
+              call my_alloc(tmp_array_1, my_size, "tmp_array_1")
+              call my_alloc(tmp_array_2, my_size, "tmp_array_2")
               tmp_array_1(1:my_old_size) = local_cand_n%int_array_1d(1:my_old_size)
               tmp_array_2(1:my_old_size) = local_cand_e%int_array_1d(1:my_old_size)
               call dealloc_1d_array(local_cand_n)
               call dealloc_1d_array(local_cand_e)
-              call move_alloc(tmp_array_1,local_cand_n%int_array_1d)
-              call move_alloc(tmp_array_2,local_cand_e%int_array_1d)
+              call my_move_alloc(tmp_array_1, local_cand_n%int_array_1d, "local_cand_n%int_array_1d")
+              call my_move_alloc(tmp_array_2, local_cand_e%int_array_1d, "local_cand_e%int_array_1d")
               local_cand_n%size_int_array_1d = my_size
               local_cand_e%size_int_array_1d = my_size
             end if

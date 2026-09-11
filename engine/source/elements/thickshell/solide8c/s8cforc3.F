@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s8cforc3               ../engine/source/elements/thickshell/solide8c/s8cforc3.F
 !||--- called by ------------------------------------------------------
@@ -44,6 +45,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    s8ztempel              ../engine/source/elements/solid/solide8z/s8ztempel.F
 !||    s8zzero3               ../engine/source/elements/solid/solide8z/s8zzero3.F
 !||    sbilan                 ../engine/source/elements/solid/solide/sbilan.F
+!||    sc8dlenmax_sm          ../engine/source/elements/thickshell/solidec/sc8dlenmax_sm.F90
 !||    scoor3                 ../engine/source/elements/solid/solide/scoor3.F
 !||    sctorth3               ../engine/source/elements/thickshell/solide8c/sctorth3.F
 !||    scumu3                 ../engine/source/elements/solid/solide/scumu3.F
@@ -77,8 +79,11 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    glob_therm_mod         ../common_source/modules/mat_elem/glob_therm_mod.F90
 !||    mat_elem_mod           ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    mmain_mod              ../engine/source/materials/mat_share/mmain.F90
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod         ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod             ../common_source/modules/output/output_mod.F90
+!||    sc8dlenmax_sm_mod      ../engine/source/elements/thickshell/solidec/sc8dlenmax_sm.F90
 !||    sdistor_ini_mod        ../engine/source/elements/solid/solide/sdistror_ini.F90
 !||    sensor_mod             ../common_source/modules/sensor_mod.F90
 !||    table_mod              ../engine/share/modules/table_mod.F
@@ -124,9 +129,12 @@ C-----------------------------------------------
       USE SDISTOR_INI_MOD, ONLY : SDISTOR_INI
       use glob_therm_mod
       use element_mod , only : nixs
+      use sc8dlenmax_sm_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -355,15 +363,13 @@ C-----
      .  DIMENSION(:), POINTER :: DNL
       my_real 
      .  H(8),PR(8),PS(8),PT(8)
-      my_real
-     . d(mvsiz) !!!! BIDON !!!!!
       integer :: fake_size = 0
       my_real, dimension(1) :: fake_array         
       TYPE(G_BUFEL_) ,POINTER :: GBUF
       TYPE(L_BUFEL_) ,POINTER :: LBUF
       INTEGER SZ_IX
       my_real :: STI_C(MVSIZ),LL(MVSIZ),FLD(MVSIZ),
-     .           CNS2,FQMAX
+     .           CNS2,FQMAX,VOLGS(MVSIZ)
 c-----------------------------------------------------
       PARAMETER (NLYMAX = 200,IPMAT = 100,IPANG = 200)
 c-----------------------------------------------------
@@ -550,7 +556,7 @@ C---------R,S,T->S,T,R-------------
       NPTT=ELBUF_TAB(NG)%NPTT
       IT = 1
       INLOC = IPARG(78,NG) 
-      ALLOCATE(VAR_REG(NEL,NPTR*NPTS*NLAY))
+      call my_alloc(VAR_REG, NEL, NPTR*NPTS*NLAY, "VAR_REG")
       IF (INLOC > 0) ALLOCATE(
      .  PXX1(NEL,NPTR*NPTS*NLAY),PXX2(NEL,NPTR*NPTS*NLAY),PXX3(NEL,NPTR*NPTS*NLAY),
      .  PXX4(NEL,NPTR*NPTS*NLAY),PXX5(NEL,NPTR*NPTS*NLAY),PXX6(NEL,NPTR*NPTS*NLAY),
@@ -1286,11 +1292,20 @@ c----------------------
         ENDDO
       ENDIF
       IF ( NN_DEL> 0) THEN
+        IF (ISMSTR == 1 .OR. ISMSTR == 11) THEN 
+          CALL SC8DLENMAX_SM(                          
+     1           NEL      ,X        ,NUMNOD     ,VOLGS   ,       
+     2           NC1      ,NC2      ,NC3        ,NC4     ,       
+     3           NC5      ,NC6      ,NC7        ,NC8     ,       
+     4           LLSH     ,AREA     ,ICSIG)
+        ELSE
          CALL SDLENSH14(VOLG,LLSH,AREA ,
      .          X1, X2, X3, X4, X5, X6, X7, X8,
      .          Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8,
      .          Z1, Z2, Z3, Z4, Z5, Z6, Z7, Z8,ICSIG,NEL)
-        CALL TSHGEODEL3(NGL,GBUF%OFF,VOLG,AREA,GBUF%VOL,
+         VOLGS(1:NEL) =VOLG(1:NEL)
+        END IF !(ISMSTR == 1 .OR. ISMSTR == 11) THEN 
+        CALL TSHGEODEL3(NGL,GBUF%OFF,VOLGS,AREA,GBUF%VOL,
      .                  LLSH,GEO(1,PID),NN_DEL,DT,NEL )
       ENDIF
 C-----------------------------
@@ -1476,30 +1491,30 @@ C----------------------------
       END IF        
 C-----------
 
-      IF (ALLOCATED(VAR_REG)) DEALLOCATE(VAR_REG)
-      IF (ALLOCATED(PXX1))    DEALLOCATE(PXX1)
-      IF (ALLOCATED(PXX2))    DEALLOCATE(PXX2)
-      IF (ALLOCATED(PXX3))    DEALLOCATE(PXX3)
-      IF (ALLOCATED(PXX4))    DEALLOCATE(PXX4)
-      IF (ALLOCATED(PXX5))    DEALLOCATE(PXX5)
-      IF (ALLOCATED(PXX6))    DEALLOCATE(PXX6)
-      IF (ALLOCATED(PXX7))    DEALLOCATE(PXX7)
-      IF (ALLOCATED(PXX8))    DEALLOCATE(PXX8)
-      IF (ALLOCATED(PYY1))    DEALLOCATE(PYY1)
-      IF (ALLOCATED(PYY2))    DEALLOCATE(PYY2)
-      IF (ALLOCATED(PYY3))    DEALLOCATE(PYY3)
-      IF (ALLOCATED(PYY4))    DEALLOCATE(PYY4)
-      IF (ALLOCATED(PYY5))    DEALLOCATE(PYY5)
-      IF (ALLOCATED(PYY6))    DEALLOCATE(PYY6)
-      IF (ALLOCATED(PYY7))    DEALLOCATE(PYY7)
-      IF (ALLOCATED(PYY8))    DEALLOCATE(PYY8)
-      IF (ALLOCATED(PZZ1))    DEALLOCATE(PZZ1)
-      IF (ALLOCATED(PZZ2))    DEALLOCATE(PZZ2)
-      IF (ALLOCATED(PZZ3))    DEALLOCATE(PZZ3)
-      IF (ALLOCATED(PZZ4))    DEALLOCATE(PZZ4)
-      IF (ALLOCATED(PZZ5))    DEALLOCATE(PZZ5)
-      IF (ALLOCATED(PZZ6))    DEALLOCATE(PZZ6)
-      IF (ALLOCATED(PZZ7))    DEALLOCATE(PZZ7)
-      IF (ALLOCATED(PZZ8))    DEALLOCATE(PZZ8)
+      IF (ALLOCATED(VAR_REG)) call my_dealloc(VAR_REG)
+      IF (ALLOCATED(PXX1)) call my_dealloc(PXX1)
+      IF (ALLOCATED(PXX2)) call my_dealloc(PXX2)
+      IF (ALLOCATED(PXX3)) call my_dealloc(PXX3)
+      IF (ALLOCATED(PXX4)) call my_dealloc(PXX4)
+      IF (ALLOCATED(PXX5)) call my_dealloc(PXX5)
+      IF (ALLOCATED(PXX6)) call my_dealloc(PXX6)
+      IF (ALLOCATED(PXX7)) call my_dealloc(PXX7)
+      IF (ALLOCATED(PXX8)) call my_dealloc(PXX8)
+      IF (ALLOCATED(PYY1)) call my_dealloc(PYY1)
+      IF (ALLOCATED(PYY2)) call my_dealloc(PYY2)
+      IF (ALLOCATED(PYY3)) call my_dealloc(PYY3)
+      IF (ALLOCATED(PYY4)) call my_dealloc(PYY4)
+      IF (ALLOCATED(PYY5)) call my_dealloc(PYY5)
+      IF (ALLOCATED(PYY6)) call my_dealloc(PYY6)
+      IF (ALLOCATED(PYY7)) call my_dealloc(PYY7)
+      IF (ALLOCATED(PYY8)) call my_dealloc(PYY8)
+      IF (ALLOCATED(PZZ1)) call my_dealloc(PZZ1)
+      IF (ALLOCATED(PZZ2)) call my_dealloc(PZZ2)
+      IF (ALLOCATED(PZZ3)) call my_dealloc(PZZ3)
+      IF (ALLOCATED(PZZ4)) call my_dealloc(PZZ4)
+      IF (ALLOCATED(PZZ5)) call my_dealloc(PZZ5)
+      IF (ALLOCATED(PZZ6)) call my_dealloc(PZZ6)
+      IF (ALLOCATED(PZZ7)) call my_dealloc(PZZ7)
+      IF (ALLOCATED(PZZ8)) call my_dealloc(PZZ8)
       RETURN
       END

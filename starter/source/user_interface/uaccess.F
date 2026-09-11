@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 
 !||====================================================================
@@ -295,6 +296,7 @@ C
 !||    hm_read_sphio       ../starter/source/loads/sph/hm_read_sphio.F
 !||    i11sti3             ../starter/source/interfaces/inter3d1/i11sti3.F
 !||    i20sti3e            ../starter/source/interfaces/inter3d1/i20sti3.F
+!||    i25sti_edg          ../starter/source/interfaces/inter3d1/i25sti_edg.F
 !||    init_skew45         ../starter/source/elements/joint/rjoint/rini45.F
 !||    inspcnd             ../starter/source/elements/sph/inspcnd.F
 !||    rini32              ../starter/source/properties/spring/hm_read_prop32.F

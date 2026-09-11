@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
 !||    spmd_exch_idel_seglo        ../engine/source/mpi/interfaces/spmd_exch_idel_seglo.F
@@ -28,17 +29,19 @@ C
 !||    i25_remove_global_segment   ../engine/source/interfaces/interf/chkstfn3.F
 !||--- uses       -----------------------------------------------------
 !||    intbufdef_mod               ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    spmd_comm_world_mod         ../engine/source/mpi/spmd_comm_world.F90
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod                    ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         SUBROUTINE SPMD_EXCH_IDEL_SEGLO(IPARI,INTBUF_TAB,INDSEGLO,IBUFSEGLO)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE INTBUFDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -61,7 +64,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER MSGOFF1 ,MSGOFF2, MSGTYP, LOC_PROC,IERROR,REQ_S1(NSPMD),REQ_S2(NSPMD),
+      INTEGER MSGOFF1 ,MSGOFF2, MSGTYP, LOC_PROC,REQ_S1(NSPMD),REQ_S2(NSPMD),
      .        STATUS(MPI_STATUS_SIZE)
       INTEGER RSEGLO(NINTER+1)
 C
@@ -77,16 +80,16 @@ C-----------------------------------------------
          DO I = 1, NSPMD
            IF(I/=LOC_PROC) THEN
              MSGTYP = MSGOFF1
-             CALL MPI_ISEND(
-     C         INDSEGLO,NINTER+1,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G         SPMD_COMM_WORLD,REQ_S1(I),IERROR) 
+             CALL SPMD_ISEND(
+     C         INDSEGLO(1:NINTER+1),NINTER+1,IT_SPMD(I),MSGTYP,
+     G         REQ_S1(I))
 
              SIZ = INDSEGLO(NINTER+1)-INDSEGLO(1)
              IF(SIZ>0)THEN
                MSGTYP = MSGOFF2
-               CALL MPI_ISEND(
-     C           IBUFSEGLO,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G           SPMD_COMM_WORLD,REQ_S2(I),IERROR) 
+               CALL SPMD_ISEND(
+     C           IBUFSEGLO(1:SIZ),SIZ,IT_SPMD(I),MSGTYP,
+     G           REQ_S2(I))
              ENDIF
            ENDIF
          ENDDO
@@ -94,17 +97,17 @@ C-----------------------------------------------
          DO I = 1, NSPMD
            IF(I/=LOC_PROC) THEN
              MSGTYP = MSGOFF1
-             CALL MPI_RECV(
-     .         RSEGLO,NINTER+1,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .         SPMD_COMM_WORLD,STATUS,IERROR)
+             CALL SPMD_RECV(
+     .         RSEGLO(1:NINTER+1),NINTER+1,IT_SPMD(I),MSGTYP,
+     .         STATUS)
              
                SIZ = RSEGLO(NINTER+1)-RSEGLO(1)
                IF(SIZ>0)THEN
-                 ALLOCATE(RBUF(SIZ))
+                 call my_alloc(RBUF, SIZ, "RBUF")
                  MSGTYP = MSGOFF2
-                 CALL MPI_RECV(
-     .             RBUF,SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .             SPMD_COMM_WORLD,STATUS,IERROR)
+                 CALL SPMD_RECV(
+     .             RBUF(1:SIZ),SIZ,IT_SPMD(I),MSGTYP,
+     .             STATUS)
                  
                    DO NG=1,NINTER
                       IND_SEG=RSEGLO(NG+1)-RSEGLO(NG)
@@ -121,7 +124,7 @@ C-----------------------------------------------
                         END IF
                       ENDIF   ! IF(IND_SEG >0)
                    ENDDO     ! DO NG=1,NINTER
-                 DEALLOCATE(RBUF)
+                 call my_dealloc(RBUF)
                ENDIF       ! IF(SIZ>0)THEN
            ENDIF           ! IF(I/=LOC_PROC) THEN
          ENDDO
@@ -130,10 +133,10 @@ C Test Reception Bufr
 C
       DO I = 1, NSPMD
         IF(I/=LOC_PROC) THEN
-          CALL MPI_WAIT(REQ_S1(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S1(I),STATUS)
           SIZ = INDSEGLO(NINTER+1)-INDSEGLO(1)
           IF(SIZ>0)THEN
-              CALL MPI_WAIT(REQ_S2(I),STATUS,IERROR)
+              CALL SPMD_WAIT(REQ_S2(I),STATUS)
           ENDIF
         ENDIF
       ENDDO

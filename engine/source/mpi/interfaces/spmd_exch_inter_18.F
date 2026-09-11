@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_inter_18         ../engine/source/mpi/interfaces/spmd_exch_inter_18.F
 !||--- called by ------------------------------------------------------
@@ -32,7 +33,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    array_mod                  ../common_source/modules/array_mod.F
 !||    intbufdef_mod              ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    multi_fvm_mod              ../common_source/modules/ale/multi_fvm_mod.F90
-!||    spmd_comm_world_mod        ../engine/source/mpi/spmd_comm_world.F90
+!||    my_alloc_mod               ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
 !||    tri7box                    ../engine/share/modules/tri7box.F
 !||====================================================================
         SUBROUTINE SPMD_EXCH_INTER_18(NINTER,NSPMD,NUMBER_INTER18,SXCELL,INTER18_LIST,
@@ -56,10 +58,11 @@ C-----------------------------------------------
         USE TRI7BOX
         USE MULTI_FVM_MOD
         USE ALE_CONNECTIVITY_MOD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -145,8 +148,8 @@ C-----------------------------------------------
 
         ADRESS_SEND(NSPMD+1) = BUFFER_SEND_SIZE + 1
         ADRESS_RCV(NSPMD+1) = BUFFER_RCV_SIZE + 1
-        ALLOCATE( BUFFER_SEND(BUFFER_SEND_SIZE) )
-        ALLOCATE( BUFFER_RCV(BUFFER_RCV_SIZE) )
+        call my_alloc(BUFFER_SEND, BUFFER_SEND_SIZE, "BUFFER_SEND")
+        call my_alloc(BUFFER_RCV, BUFFER_RCV_SIZE, "BUFFER_RCV")
         ! ---------------------------
 
         ! ---------------------------
@@ -155,8 +158,8 @@ C-----------------------------------------------
           RCV_SIZE = ADRESS_RCV(P+1)-ADRESS_RCV(P)
           IF(P/=LOC_PROC.AND.RCV_SIZE>0) THEN
             MSGTYP = MSGOFF           
-            CALL MPI_IRECV( BUFFER_RCV(ADRESS_RCV(P)),RCV_SIZE,REAL,
-     .                      IT_SPMD(P),MSGTYP,SPMD_COMM_WORLD,REQUEST_RCV(P),ERROR_MPI )
+            CALL SPMD_IRECV( BUFFER_RCV(ADRESS_RCV(P):ADRESS_RCV(P)+RCV_SIZE-1),
+     .                       RCV_SIZE,IT_SPMD(P),MSGTYP,REQUEST_RCV(P) )
           ENDIF
         ENDDO
         ! ---------------------------
@@ -198,8 +201,8 @@ C-----------------------------------------------
           SEND_SIZE = ADRESS_SEND(P+1)-ADRESS_SEND(P)
           IF(P/=LOC_PROC.AND.SEND_SIZE>0) THEN
             MSGTYP = MSGOFF           
-            CALL MPI_ISEND( BUFFER_SEND(ADRESS_SEND(P)),SEND_SIZE,REAL,
-     .                      IT_SPMD(P),MSGTYP,SPMD_COMM_WORLD,REQUEST_SEND(P),ERROR_MPI )
+            CALL SPMD_ISEND( BUFFER_SEND(ADRESS_SEND(P):ADRESS_SEND(P)+SEND_SIZE-1),
+     .                       SEND_SIZE,IT_SPMD(P),MSGTYP,REQUEST_SEND(P) )
           ENDIF
         ENDDO
         ! ---------------------------
@@ -213,7 +216,7 @@ C-----------------------------------------------
           IF(P/=LOC_PROC.AND.RCV_SIZE>0) THEN
             LOCAL_ADRESS = 0
             MSGTYP = MSGOFF 
-            CALL MPI_WAIT(REQUEST_RCV(P),STATUS_MPI,ERROR_MPI)
+            CALL SPMD_WAIT(REQUEST_RCV(P),STATUS_MPI)
             DO I=1,NUMBER_INTER18
               NIN = INTER18_LIST(I)
               NUMBER_REMOTE_NODE = NSNFI(NIN)%P(P)
@@ -234,13 +237,13 @@ C-----------------------------------------------
         DO P=1,NSPMD
           SEND_SIZE = ADRESS_SEND(P+1)-ADRESS_SEND(P)
           IF(P/=LOC_PROC.AND.SEND_SIZE>0) THEN
-            CALL MPI_WAIT(REQUEST_SEND(P),STATUS_MPI,ERROR_MPI)
+            CALL SPMD_WAIT(REQUEST_SEND(P),STATUS_MPI)
           ENDIF
         ENDDO
         ! ---------------------------
 
-        DEALLOCATE( BUFFER_SEND )
-        DEALLOCATE( BUFFER_RCV )
+        call my_dealloc(BUFFER_SEND)
+        call my_dealloc(BUFFER_RCV)
 
 !   --------------------------------------------------------------------
 #endif

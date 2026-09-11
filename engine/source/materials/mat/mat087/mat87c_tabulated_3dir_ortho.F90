@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mat87c_tabulated_3dir_ortho_mod   ../engine/source/materials/mat/mat087/mat87c_tabulated_3dir_ortho.F90
 !||--- called by ------------------------------------------------------
@@ -50,7 +51,7 @@
           soundsp,pla     ,dpla    ,epsd    ,yld      ,                          &
           etse   ,gs      ,israte  ,asrate  ,off      ,                          &
           l_sigb ,sigb    ,inloc   ,dplanl  ,seq      ,                          &
-          loff   )
+          loff   ,nuvar   ,uvar    )
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                        Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -108,6 +109,8 @@
           real(kind=WP), dimension(nel), intent(in)            :: dplanl   !< Non-local plastic strain increment
           real(kind=WP), dimension(nel), intent(inout)         :: seq      !< Equivalent stress
           real(kind=WP), dimension(nel), intent(in)            :: loff     !< Flag for layer deletion status
+          integer, intent(in)                                  :: nuvar    !< Number of user variables
+          real(kind=WP), dimension(nel,nuvar), intent(inout)   :: uvar     !< User variables
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   local variables
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -193,7 +196,9 @@
             else
               epsd(1:nel) = asrate*epsp(1:nel) + (one-asrate)*epsd(1:nel)
             end if
-          end if
+          elseif (iflagsr == 1) then
+            epsd(1:nel) = uvar(1:nel,1)
+          endif
 !
           !< Barlat linear projection parameters
           !< - For xprime tensor
@@ -815,6 +820,7 @@
             do i = 1,nel
               dpdt    = dpla(i)/max(timestep,em20)
               epsd(i) = asrate*dpdt + (one - asrate)*epsd(i)
+              uvar(1:nel,1) = epsd(1:nel)
             end do
           end if
 !

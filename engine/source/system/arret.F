@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    arret                            ../engine/source/system/arret.F
 !||--- called by ------------------------------------------------------
@@ -30,7 +31,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    animx                            ../engine/source/output/anim/generate/animx.F
 !||    arret_message                    ../engine/source/system/arret_message.F
 !||    arret_message_slid               ../engine/source/system/arret_message.F
-!||    bcs_nrf                          ../engine/source/boundary_conditions/bcs_nrf.F90
 !||    bemsolv                          ../engine/source/fluid/bemsolv.F
 !||    bforc2                           ../engine/source/ale/bimat/bforc2.F
 !||    blero2                           ../engine/source/ale/bimat/blero2.F
@@ -38,7 +38,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    c_fortran_dgssv                  ../engine/stub/superlu_stub.F
 !||    c_freemem                        ../engine/stub/superlu_stub.F
 !||    c_tricall                        ../engine/stub/fvmbags_stub.F
-!||    check_error_and_write            ../common_source/tools/memory/my_alloc.F90
 !||    cp_ifront                        ../engine/source/implicit/produt_v.F
 !||    create_h3d_1d_scalar             ../engine/source/output/h3d/h3d_build_fortran/create_h3d_1d_scalar.F
 !||    create_h3d_1d_tensor             ../engine/source/output/h3d/h3d_build_fortran/create_h3d_1d_tensor.F
@@ -86,6 +85,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    error_alloc                      ../engine/source/system/error_alloc.F
 !||    eulro2                           ../engine/source/ale/euler2d/eulro2.F
 !||    execargcheck                     ../engine/source/engine/execargcheck.F
+!||    extend_check                     ../common_source/tools/memory/extend_array.F90
 !||    facepoly                         ../engine/source/airbag/fvmesh.F
 !||    fixflux                          ../engine/source/constraints/thermic/fixflux.F
 !||    forint                           ../engine/source/elements/forint.F
@@ -227,6 +227,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    ini_k0h                          ../engine/source/implicit/imp_solv.F
 !||    ini_kisc                         ../engine/source/implicit/lin_solv.F
 !||    inipar                           ../engine/source/mpi/init/inipar.F
+!||    init_h3d_engine                  ../engine/source/output/h3d/h3d_build_fortran/init_h3d_engine.F90
 !||    intbuf_ini                       ../common_source/interf/intbuf_ini.F
 !||    inter7_collision_detection       ../engine/source/interfaces/intsort/inter7_collision_detection.F90
 !||    inter_count_node_curv            ../engine/source/interfaces/generic/inter_count_node_curv.F
@@ -267,6 +268,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    multi_nrf_ebcs                   ../engine/source/multifluid/multi_nrf_ebcs.F
 !||    multi_submatlaw                  ../engine/source/multifluid/multi_submatlaw.F
 !||    multi_timeevolution              ../engine/source/multifluid/multi_timeevolution.F
+!||    my_alloc_check                   ../common_source/tools/memory/my_alloc_tools.F90
 !||    ndof_fv                          ../engine/source/implicit/ind_glob_k.F
 !||    pblast_1                         ../engine/source/loads/pblast/pblast_1.F
 !||    pblast_2                         ../engine/source/loads/pblast/pblast_2.F
@@ -307,6 +309,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    section_read                     ../engine/source/tools/sect/section_read.F
 !||    section_readp                    ../engine/source/tools/sect/section_readp.F
 !||    sensor_base                      ../engine/source/tools/sensor/sensor_base.F
+!||    shrink_check                     ../common_source/tools/memory/shrink_array.F90
 !||    sigeps53                         ../engine/source/materials/mat/mat053/sigeps53.F
 !||    sigeps75                         ../engine/source/materials/mat/mat075/sigeps75.F
 !||    sms_build_mat_2                  ../engine/source/ams/sms_build_mat_2.F
@@ -413,6 +416,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- calls      -----------------------------------------------------
 !||    c_h3d_close_file                 ../engine/source/output/h3d/h3d_build_cpp/c_h3d_close_file.cpp
 !||    checksum_option_checksum_file    ../common_source/modules/output/checksum_mod.F90
+!||    checksum_option_out_file         ../common_source/modules/output/checksum_mod.F90
 !||    close_c                          ../common_source/tools/input_output/write_routines.c
 !||    compute_binary_checksum          ../common_source/output/checksum/checksum.cpp
 !||    cur_fil_c                        ../common_source/tools/input_output/write_routines.c
@@ -429,6 +433,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    file_descriptor_mod              ../engine/source/modules/file_descriptor_mod.F90
 !||    h3d_mod                          ../engine/share/modules/h3d_mod.F
 !||    inoutfile_mod                    ../common_source/modules/inoutfile_mod.F
+!||    mds_restart_mod                  ../common_source/modules/mds_rest.mod.F
 !||    output_mod                       ../common_source/modules/output/output_mod.F90
 !||    qa_out_mod                       ../common_source/qa/qa_out_mod.F
 !||    scratchfile_mod                  ../engine/share/modules/scratchfiles_mod.F
@@ -441,6 +446,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       USE SCRATCHFILE_MOD
       USE OUTPUT_MOD
       USE file_descriptor_mod
+      USE MDS_RESTART_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -466,8 +472,11 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       CHARACTER*2048 INAME
       INTEGER IFIL
+      INTEGER I
       INTEGER :: LEN_TMP_NAME
       CHARACTER(len=2148) :: TMP_NAME
+      INTEGER :: LEN_TMP_NAME_H3D
+      CHARACTER(len=2148), TARGET :: TMP_NAME_H3D
       INTEGER :: IZIP
 C-----------------------------------------------
 C Different End Values
@@ -490,7 +499,17 @@ C ----------------------------------------------
 C TEMPO FILES Clean
 C-----------------------------------------------
        IF(ISPMD == 0 )THEN
-         IF(IS_H3D_USED) CALL C_H3D_CLOSE_FILE()
+         IF(IS_H3D_USED) THEN
+           CALL C_H3D_CLOSE_FILE()
+           IF (OUTPUT_PTR%CHECKSUM%CHECKSUM_COUNT > 0) THEN
+             TMP_NAME_H3D=ROOTNAM(1:ROOTLEN)//'.h3d'
+             LEN_TMP_NAME_H3D=ROOTLEN+4
+             IZIP=0
+             CALL COMPUTE_BINARY_CHECKSUM(
+     .            OUTPUT_PTR%CHECKSUM%FILES_CHECKSUM,
+     .            C_LOC(TMP_NAME_H3D),LEN_TMP_NAME_H3D,IZIP)
+           ENDIF
+         ENDIF
        ENDIF
 C -----------------------------------------------
 C TH FILES
@@ -511,6 +530,13 @@ C -----------------------------------------------
      *                                      C_LOC(OUTPUT_PTR%TH%TH_FILENAME),
      *                                      LEN_TRIM(OUTPUT_PTR%TH%TH_FILENAME),
      *                                      IZIP)
+               DO I=1,9
+                 IF(LEN_TRIM(OUTPUT_PTR%TH%AUX_TH_FILENAME(I)) > 0) THEN
+                   CALL COMPUTE_BINARY_CHECKSUM(OUTPUT_PTR%CHECKSUM%files_checksum,
+     *              C_LOC(OUTPUT_PTR%TH%AUX_TH_FILENAME(I)),
+     *              LEN_TRIM(OUTPUT_PTR%TH%AUX_TH_FILENAME(I)),IZIP)
+                 ENDIF
+               ENDDO
             ENDIF
        ENDIF
 C -----------------------------------------------
@@ -613,7 +639,7 @@ C -----------------------------------------------
       ENDIF
       ! ----------------------
 #ifdef DNC
-      IF(MDS_AVAIL==1) THEN
+      IF(MDS_AVAIL==1 .and. MDS_NMAT > 0) THEN
         ISPMD_USER = ISPMD
         CALL MDS_ENGINE_USER_FINALIZE( ISPMD_USER )
       ENDIF
@@ -663,28 +689,31 @@ C
 
               ENDIF
 
+              if (ispmd==0)then
+                if (output_ptr%checksum%checksum_count > 0) then
+                    ! Write Checksum digest in output file
+                    CALL checksum_option_out_file(output_ptr%checksum)   ! Deck checksums print
+                end if
+              endif
               CLOSE(UNIT=IOUT)
-              IF (ISPMD==0)THEN
-                 IF (OUTPUT_PTR%CHECKSUM%CHECKSUM_COUNT > 0 ) THEN
-                     IZIP=0
-                     CALL COMPUTE_BINARY_CHECKSUM(OUTPUT_PTR%checksum%files_checksum , 
+
+              if (ispmd==0)then
+                if (output_ptr%checksum%checksum_count > 0) then
+                    IZIP=0
+                    CALL COMPUTE_BINARY_CHECKSUM(OUTPUT_PTR%checksum%files_checksum , 
      *                                            C_LOC(OUTPUT_PTR%OUT_FILENAME),
      *                                            LEN_TRIM(OUTPUT_PTR%OUT_FILENAME),
      *                                            IZIP)
-                 ENDIF
-              ENDIF
 
+                    CALL checksum_option_checksum_file(output_ptr%checksum,rootnam,rootlen,chrun)   ! Deck checksums print
+                end if
+              endif
+              
               IF(ISPMD /=0) THEN
                  CALL DELETE_USER_FILE(IUSC4_FNAM,LEN_IUSC4_FNAM)
               ENDIF
 
               CLOSE(UNIT=IUHIS)
-
-              if (ispmd==0)then
-                if (output_ptr%checksum%checksum_count > 0) then
-                    CALL checksum_option_checksum_file(output_ptr%checksum,ROOTNAM,ROOTLEN,CHRUN)   ! Deck checksums print
-                end if
-              endif
 
               CALL MY_EXIT(0)
  

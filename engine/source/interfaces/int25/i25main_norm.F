@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25main_norm       ../engine/source/interfaces/int25/i25main_norm.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    intbufdef_mod      ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    mpi_commod         ../engine/share/modules/mpi_comm_mod.F
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    nodal_arrays_mod   ../common_source/modules/nodal_arrays.F90
 !||    sensor_mod         ../common_source/modules/sensor_mod.F90
 !||====================================================================
@@ -51,6 +53,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -80,7 +83,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER N, ISENS, NI25, NADMSR, IEDGE, NADMSRF6, NADMSRL6,
      .        NRTM, NSN, NSNR, NRTM_SH, NRTM0, FLAGREMN ,NCSHIFT ,ISHIFT,
-     .        SIZE_NODNOR_E2S,I,J,NOD,CC,SOL_EDGE
+     .        SIZE_NODNOR_E2S,I,J,NOD,CC,SOL_EDGE,I_STOK_E2S
       INTEGER :: NEDGE
 C     REAL
       my_real
@@ -185,7 +188,11 @@ C
           IEDGE  = IPARI(58,N)
           NEDGE  = IPARI(68,N) ! Updated in i25normp
           SOL_EDGE =0
-          IF(IEDGE /= 0) SOL_EDGE =IEDGE/10 ! solids
+          I_STOK_E2S = 0
+          IF(IEDGE /= 0)  THEN
+             SOL_EDGE =IEDGE/10 ! solids
+             I_STOK_E2S = INTBUF_TAB(N)%I_STOK_E(2)
+          ENDIF
 
           CALL I25TAGN(NI25    ,N       ,NRTM     ,NSN         ,NSNR      ,
      2               JTASK   ,IAD_FRNOR ,FR_NOR  ,INTBUF_TAB(N)%IRTLM,INTBUF_TAB(N)%MSEGTYP24  ,
@@ -194,7 +201,7 @@ C
      4               INTBUF_TAB(N)%TAGNOD,IAD_ELEM,FR_ELEM ,INTBUF_TAB(N)%ADMSR,INTBUF_TAB(N)%KNOR2MSR, 
      5               INTBUF_TAB(N)%NOR2MSR,FLAGREMN,INTBUF_TAB(N)%KREMNOR,INTBUF_TAB(N)%REMNOR,
      6               IEDGE, NEDGE, INTBUF_TAB(N)%LEDGE,INTBUF_TAB(N)%NRTM_FREE,
-     .                                    INTBUF_TAB(N)%FREE_IRECT_ID,INTBUF_TAB(N)%I_STOK_E(2),
+     .                                    INTBUF_TAB(N)%FREE_IRECT_ID,I_STOK_E2S,
      7               INTBUF_TAB(N)%CANDM_E2S,INTBUF_TAB(N)%CANDS_E2S,INTBUF_TAB(N)%MVOISIN,
      8               INTBUF_TAB(N)%E2S_ACTNOR,NADMSR,INTBUF_TAB(N)%STFM,
      8               INTBUF_TAB(N)%NUMBER_EDGE_TYPE1,INTBUF_TAB(N)%NUMBER_EDGE_TYPE1_0,
@@ -228,7 +235,7 @@ C
            CALL MY_BARRIER()
 
 
-           IF(JTASK==1)  DEALLOCATE(INTBUF_TAB(N)%TAGSEG)
+           IF(JTASK==1) call my_dealloc(INTBUF_TAB(N)%TAGSEG)
         ENDIF
 
         NCSHIFT=NCSHIFT+INTBUF_TAB(N)%ADSKYN(NADMSR+1)-1
@@ -290,14 +297,14 @@ C         NEDGE  = IPARI(68,N) ! Updated in i25normp
 
 
            IF(JTASK == 1) THEN
-             DEALLOCATE(BUFFERS(NI25)%SEND_BUF)
-             DEALLOCATE(BUFFERS(NI25)%RECV_BUF)
-             DEALLOCATE(BUFFERS(NI25)%ISINDEX)
-             DEALLOCATE(BUFFERS(NI25)%IRINDEX)
-             DEALLOCATE(BUFFERS(NI25)%SEND_RQ)
-             DEALLOCATE(BUFFERS(NI25)%RECV_RQ)
-             DEALLOCATE(BUFFERS(NI25)%IAD_RECV)
-             DEALLOCATE(BUFFERS(NI25)%IAD_SEND)
+             call my_dealloc(BUFFERS(NI25)%SEND_BUF)
+             call my_dealloc(BUFFERS(NI25)%RECV_BUF)
+             call my_dealloc(BUFFERS(NI25)%ISINDEX)
+             call my_dealloc(BUFFERS(NI25)%IRINDEX)
+             call my_dealloc(BUFFERS(NI25)%SEND_RQ)
+             call my_dealloc(BUFFERS(NI25)%RECV_RQ)
+             call my_dealloc(BUFFERS(NI25)%IAD_RECV)
+             call my_dealloc(BUFFERS(NI25)%IAD_SEND)
            ENDIF
            CALL MY_BARRIER()
         ENDIF
@@ -348,7 +355,9 @@ C
       IF(JTASK==1)THEN
         DO I=1,NINTER25
            N = INTLIST25(I)
-           DEALLOCATE(INTBUF_TAB(N)%TAGNOD, INTBUF_TAB(N)%WNOD_NORMAL,INTBUF_TAB(N)%TAGE)
+           call my_dealloc(INTBUF_TAB(N)%TAGNOD)
+           call my_dealloc(INTBUF_TAB(N)%WNOD_NORMAL)
+           call my_dealloc(INTBUF_TAB(N)%TAGE)
         ENDDO
       ENDIF
 C

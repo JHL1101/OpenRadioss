@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,27 +15,30 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    i25trivox_edg   ../engine/source/interfaces/intsort/i25trivox_edg.F
+!||    i25trivox_edg    ../engine/source/interfaces/intsort/i25trivox_edg.F
 !||--- called by ------------------------------------------------------
-!||    i25buce_edg     ../engine/source/interfaces/intsort/i25buce_edg.F
+!||    i25buce_edg      ../engine/source/interfaces/intsort/i25buce_edg.F
 !||--- calls      -----------------------------------------------------
-!||    i25sto_e2s      ../engine/source/interfaces/intsort/i25sto_e2s.F
-!||    i25sto_edg      ../engine/source/interfaces/intsort/i25sto_edg.F
-!||    int_checksum    ../engine/share/modules/debug_mod.F
-!||    ireallocate     ../engine/share/modules/realloc_mod.F
-!||    my_barrier      ../engine/source/system/machine.F
+!||    i25sto_e2s       ../engine/source/interfaces/intsort/i25sto_e2s.F
+!||    i25sto_edg       ../engine/source/interfaces/intsort/i25sto_edg.F
+!||    int_checksum     ../engine/share/modules/debug_mod.F
+!||    ireallocate      ../engine/share/modules/realloc_mod.F
+!||    my_barrier       ../engine/source/system/machine.F
 !||--- uses       -----------------------------------------------------
-!||    debug_mod       ../engine/share/modules/debug_mod.F
-!||    realloc_mod     ../engine/share/modules/realloc_mod.F
-!||    tri11           ../engine/share/modules/tri11_mod.F
-!||    tri25ebox       ../engine/share/modules/tri25ebox.F
-!||    tri7box         ../engine/share/modules/tri7box.F
+!||    debug_mod        ../engine/share/modules/debug_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    realloc_mod      ../engine/share/modules/realloc_mod.F
+!||    tri11            ../engine/share/modules/tri11_mod.F
+!||    tri25ebox        ../engine/share/modules/tri25ebox.F
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE I25TRIVOX_EDG(
      1      I_MEM   ,VMAXDT  ,INACTI ,IRECT   ,
@@ -68,6 +71,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -155,10 +160,11 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE ::  TAGREMLINE
 C-----------------------------------------------
 C
+
       DRAD2 =ZERO
 
       IF(FLAGREMNODE==2) THEN
-        ALLOCATE(TAGREMLINE(NEDGE))
+        call my_alloc(TAGREMLINE, NEDGE, "TAGREMLINE")
         TAGREMLINE(1:NEDGE) = 0
       ENDIF
 
@@ -181,8 +187,11 @@ C
       MAX_ADD = MAX(1,4*(NEDGE+NEDGE_REMOTE))
       IF(ITASK==0)THEN
         ALLOCATE(LCHAIN_ELEM(1:MAX_ADD))
+! TODO: non-default lower bound, convert manually
         ALLOCATE(LCHAIN_NEXT(1:MAX_ADD))
+! TODO: non-default lower bound, convert manually
         ALLOCATE(LCHAIN_LAST(1:MAX_ADD))
+! TODO: non-default lower bound, convert manually
       END IF
 
 C     Barrier to wait init voxel and allocation
@@ -231,6 +240,7 @@ C         PRINTIF((STFE(I) == 0 .AND.LEDGE(6,I) == D_ES),STFE(I))
             ZZ1=X(3,N1)
             ZZ2=X(3,N2)
             DEBUG_E2E(EID == D_ES,EID)
+            EDGE_TYPE=LEDGE(7,I) 
           ELSE IF(I > NEDGE) THEN
             XX1=XREM_EDGE(E_X1,I-NEDGE)
             XX2=XREM_EDGE(E_X2,I-NEDGE)
@@ -240,6 +250,7 @@ C         PRINTIF((STFE(I) == 0 .AND.LEDGE(6,I) == D_ES),STFE(I))
             ZZ2=XREM_EDGE(E_Z2,I-NEDGE)
             EID = IREM_EDGE(E_GLOBAL_ID,I-NEDGE)
             DEBUG_E2E(EID == D_ES,EID)
+            EDGE_TYPE = IREM_EDGE(E_TYPE,I-NEDGE)
           ELSE
             ! Secondary edge is boundary between domains
             ! ISPMD is not the owner of this edge
@@ -248,7 +259,7 @@ C         PRINTIF((STFE(I) == 0 .AND.LEDGE(6,I) == D_ES),STFE(I))
           ENDIF
           DEBUG_E2E(EID==D_ES,IGAP0)
 
-          IF(IGAP0 == 0)THEN
+          IF(IGAP0 == 0.OR.EDGE_TYPE==3)THEN
             XMAX_EDGS=MAX(XX1,XX2);
             XMIN_EDGS=MIN(XX1,XX2);
             YMAX_EDGS=MAX(YY1,YY2);
@@ -299,8 +310,6 @@ C         PRINTIF((STFE(I) == 0 .AND.LEDGE(6,I) == D_ES),STFE(I))
 
 
           END IF
-
-
 
           !-------------------------------------------!
           !  VOXEL OCCUPIED BY THE EDGE               !
@@ -400,6 +409,7 @@ C Barrier to wait task0 treatment
 C
 !  Attention: allocation en NTHREADS x (NEDGE+NEDGE_REMOTE)
       ALLOCATE(TAGEDG(1:NEDGE+NEDGE_REMOTE))
+! TODO: non-default lower bound, convert manually
       TAGEDG(1:NEDGE+NEDGE_REMOTE)=0
 C=======================================================================
 C     Sorting vs main shell edges
@@ -451,12 +461,21 @@ C=======================================================================
         YY2=X(2,N2)
         ZZ1=X(3,N1)
         ZZ2=X(3,N2)
-        XMAX_EDGM=MAX(XX1,XX2)+GAPE(IEDG) ! +TZINF
-        XMIN_EDGM=MIN(XX1,XX2)-GAPE(IEDG) ! -TZINF
-        YMAX_EDGM=MAX(YY1,YY2)+GAPE(IEDG) ! +TZINF
-        YMIN_EDGM=MIN(YY1,YY2)-GAPE(IEDG) ! -TZINF
-        ZMAX_EDGM=MAX(ZZ1,ZZ2)+GAPE(IEDG) ! +TZINF
-        ZMIN_EDGM=MIN(ZZ1,ZZ2)-GAPE(IEDG) ! -TZINF
+        IF(IABS(LEDGE(7,IEDG))/=3)THEN
+          XMAX_EDGM=MAX(XX1,XX2)+GAPE(IEDG) ! +TZINF
+          XMIN_EDGM=MIN(XX1,XX2)-GAPE(IEDG) ! -TZINF
+          YMAX_EDGM=MAX(YY1,YY2)+GAPE(IEDG) ! +TZINF
+          YMIN_EDGM=MIN(YY1,YY2)-GAPE(IEDG) ! -TZINF
+          ZMAX_EDGM=MAX(ZZ1,ZZ2)+GAPE(IEDG) ! +TZINF
+          ZMIN_EDGM=MIN(ZZ1,ZZ2)-GAPE(IEDG) ! -TZINF
+        ELSE
+          XMAX_EDGM=MAX(XX1,XX2)
+          XMIN_EDGM=MIN(XX1,XX2)
+          YMAX_EDGM=MAX(YY1,YY2)
+          YMIN_EDGM=MIN(YY1,YY2)
+          ZMAX_EDGM=MAX(ZZ1,ZZ2)
+          ZMIN_EDGM=MIN(ZZ1,ZZ2)
+        ENDIF
         !-------------------------------------------!
         !  VOXEL OCCUPIED BY THE BRICK              !
         !-------------------------------------------!
@@ -650,7 +669,6 @@ C--- IREMGAP - clean of tagremline
 
       ENDDO       !NEXT IEDG
 
-
 C-------------------------------------------------------------------------
 C     FIN DU TRI vs Main shell edges
 C-------------------------------------------------------------------------
@@ -664,6 +682,7 @@ C-------------------------------------------------------------------------
      7                 DGAPLOAD,PENE_OLD_E,STIF_OLD_E,SIZ)
 
   300 CONTINUE
+
 C=======================================================================
 C     Sorting vs main solid edges
 C=======================================================================
@@ -989,13 +1008,13 @@ C Barrier to avoid reinitialization before end of sorting
           END DO
         END DO
         !CHAINED LIST DEALLOCATION
-        DEALLOCATE(LCHAIN_NEXT)
-        DEALLOCATE(LCHAIN_ELEM)
-        DEALLOCATE(LCHAIN_LAST)
-        IF(FLAGREMNODE==2) DEALLOCATE(TAGREMLINE)
+        call my_dealloc(LCHAIN_NEXT)
+        call my_dealloc(LCHAIN_ELEM)
+        call my_dealloc(LCHAIN_LAST)
+        IF(FLAGREMNODE==2) call my_dealloc(TAGREMLINE)
       ENDIF
 
-      DEALLOCATE(TAGEDG)
+      call my_dealloc(TAGEDG)
 
 C=======================================================================
 

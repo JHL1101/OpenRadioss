@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    check_edge_state             ../engine/source/interfaces/interf/check_edge_state.F
 !||--- called by ------------------------------------------------------
@@ -87,9 +88,9 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
         LOGICAL :: DEACTIVATION
-        INTEGER :: I,K,FIRST,LAST
+        INTEGER :: I,K,FIRST,LAST,KK
         INTEGER :: NIN,ID_INTER,NUMBER_INTER
-        INTEGER :: ITY,IDEL
+        INTEGER :: ITY,IDEL,NRTM
         INTEGER :: N1,N2,N3,N4
         INTEGER :: NUMBER_NODE
         INTEGER :: DICHOTOMIC_SEARCH_I_ASC  ! function
@@ -113,15 +114,20 @@ C-----------------------------------------------
 
             ITY = IPARI(7,NIN)
             IDEL = IPARI(17,NIN)
+            NRTM = IPARI(4,NIN)
 
             IF(ITASK==-1) THEN
-                IF(ITY==11.AND.IDEL==1) THEN
+                IF(ITY==11.AND.IDEL==1 ) THEN
                     SHOOT_STRUCT%INTER(NIN)%REMOTE_ELM_M(K) = SHOOT_STRUCT%INTER(NIN)%REMOTE_ELM_M(K) - 1
+                ENDIF
+                IF(ITY==25.AND.IPARI(101,NIN)>0.AND.IDEL >=1) THEN
+                   IF(K>NRTM) SHOOT_STRUCT%INTER(NIN)%REMOTE_ELM_M(K) = SHOOT_STRUCT%INTER(NIN)%REMOTE_ELM_M(K) - 1
                 ENDIF
             ENDIF
 
             ! check if the edge is active, if yes --> deactivate it
-            IF(INTBUF_TAB(NIN)%STFM(K)/=ZERO) THEN
+            IF(K <= NRTM) THEN
+              IF(INTBUF_TAB(NIN)%STFM(K)/=ZERO) THEN
 
                 IF(ITY==11.AND.IDEL==1) THEN
                     N1 = INTBUF_TAB(NIN)%IRECTM((K-1)*2+1)
@@ -141,6 +147,28 @@ C-----------------------------------------------
                     DEACTIVATION=.TRUE.
                 ENDIF
                 IF(DEACTIVATION) INTBUF_TAB(NIN)%STFM(K)  = ZERO
+              ENDIF
+            ENDIF
+            IF(ITY==25.AND.IPARI(101,NIN)>0.AND.IDEL >=1) THEN
+              KK = K -NRTM
+              IF(KK > 0) THEN
+               IF(INTBUF_TAB(NIN)%STFE(KK)/=ZERO) THEN
+                 N1 = INTBUF_TAB(NIN)%LEDGE((KK-1)*NLEDGE+5)
+                 N2 = INTBUF_TAB(NIN)%LEDGE((KK-1)*NLEDGE+6)
+                 N3 = 0
+                 N4 = 0
+                 NUMBER_NODE = 2
+                 IF(SHOOT_STRUCT%INTER(NIN)%REMOTE_ELM_M(K)<1) THEN
+                        CALL CHECK_ACTIVE_ELEM_EDGE( NUMBER_NODE, N1,N2,N3,N4,
+     .                                               DEACTIVATION,GEO,IXS,IXC,
+     .                                               IXT,IXP,IXR,IXTG,IXS10,ADDCNEL,CNEL,
+     .                                               TAG_NODE,TAG_ELEM )
+                 ELSE
+                        DEACTIVATION = .FALSE.
+                 ENDIF
+                 IF(DEACTIVATION) INTBUF_TAB(NIN)%STFE(KK)  = ZERO
+               ENDIF
+              ENDIF
             ENDIF
         ENDDO
         ! --------------------------

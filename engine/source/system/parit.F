@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sum_6_float             ../engine/source/system/parit.F
 !||--- called by ------------------------------------------------------
@@ -150,12 +151,12 @@ C-----------------------------------------------
       INTEGER I
       DOUBLE PRECISION R8DEUXP89,R8DEUXP62,R8DEUXP35,R8TWOP8
       DOUBLE PRECISION R8DEUXPM19,R8DEUXPM46
-      DATA R8DEUXP89 /'4580000000000000'x/
-      DATA R8DEUXP62 /'43D0000000000000'x/
-      DATA R8DEUXP35 /'4220000000000000'x/
-      DATA R8TWOP8  /'4070000000000000'x/
-      DATA R8DEUXPM19/'3EC0000000000000'x/
-      DATA R8DEUXPM46/'3D10000000000000'x/
+      PARAMETER (R8DEUXP89  = 2.D0**89)
+      PARAMETER (R8DEUXP62  = 2.D0**62)
+      PARAMETER (R8DEUXP35  = 2.D0**35)
+      PARAMETER (R8TWOP8    = 2.D0**8)
+      PARAMETER (R8DEUXPM19 = 2.D0**(-19))
+      PARAMETER (R8DEUXPM46 = 2.D0**(-46))
     
       DO I=JFT,JLT
 
@@ -208,12 +209,6 @@ C-----------------------------------------------
 !||    rbe2f                 ../engine/source/constraints/general/rbe2/rbe2f.F
 !||    rbe2fl                ../engine/source/constraints/general/rbe2/rbe2f.F
 !||    rbe3f                 ../engine/source/constraints/general/rbe3/rbe3f.F
-!||    s10volnod3            ../engine/source/elements/solid/solide4_sfem/s10volnod3.F
-!||    s10volnodt3           ../engine/source/elements/solid/solide4_sfem/s10volnodt3.F
-!||    s4alesfem             ../engine/source/elements/solid/solide4_sfem/s4alesfem.F
-!||    s4lagsfem             ../engine/source/elements/solid/solide4_sfem/s4lagsfem.F
-!||    s4volnod3             ../engine/source/elements/solid/solide4_sfem/s4volnod3.F
-!||    s4volnod_sm           ../engine/source/elements/solid/solide4_sfem/s4volnod_sm.F
 !||    sms_build_diag        ../engine/source/ams/sms_build_diag.F
 !||    sms_mav_lt            ../engine/source/ams/sms_pcg.F
 !||    sms_mav_lt2           ../engine/source/ams/sms_pcg.F
@@ -312,12 +307,12 @@ C-----------------------------------------------
       INTEGER I
       DOUBLE PRECISION R8DEUXP89,R8DEUXP62,R8DEUXP35,R8TWOP8
       DOUBLE PRECISION R8DEUXPM19,R8DEUXPM46
-      DATA R8DEUXP89 /'4580000000000000'x/
-      DATA R8DEUXP62 /'43D0000000000000'x/
-      DATA R8DEUXP35 /'4220000000000000'x/
-      DATA R8TWOP8  /'4070000000000000'x/
-      DATA R8DEUXPM19/'3EC0000000000000'x/
-      DATA R8DEUXPM46/'3D10000000000000'x/
+      PARAMETER (R8DEUXP89  = 2.D0**89)
+      PARAMETER (R8DEUXP62  = 2.D0**62)
+      PARAMETER (R8DEUXP35  = 2.D0**35)
+      PARAMETER (R8TWOP8    = 2.D0**8)
+      PARAMETER (R8DEUXPM19 = 2.D0**(-19))
+      PARAMETER (R8DEUXPM46 = 2.D0**(-46))
     
       DO I=JFT,JLT
 
@@ -435,13 +430,13 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
        DOUBLE PRECISION DEUXP92,DEUXP68,DEUXP44 ,DEUXP20,DEUXPM4,
      .          DEUXPM28,DEUXPM52
-       DATA DEUXP92 /'45B0000000000000'X/
-       DATA DEUXP68 /'4430000000000000'X/
-       DATA DEUXP44 /'42B0000000000000'X/
-       DATA DEUXP20 /'4130000000000000'X/
-       DATA DEUXPM4 /'3FB0000000000000'X/
-       DATA DEUXPM28/'3E30000000000000'X/
-       DATA DEUXPM52/'3CB0000000000000'X/
+                   PARAMETER (DEUXP92  = 2.D0**92)
+                   PARAMETER (DEUXP68  = 2.D0**68)
+                   PARAMETER (DEUXP44  = 2.D0**44)
+                   PARAMETER (DEUXP20  = 2.D0**20)
+                   PARAMETER (DEUXPM4  = 2.D0**(-4))
+                   PARAMETER (DEUXPM28 = 2.D0**(-28))
+                   PARAMETER (DEUXPM52 = 2.D0**(-52))
 
        TEMP1 = F     + DEUXP92
        F7(1) = TEMP1 - DEUXP92
@@ -503,9 +498,7 @@ C-----------------------------------------------
 c___________________________________________________          
       double precision
      .    R8_LOCAL,R8_DEUXP43,AA
-      INTEGER*8 I8_DEUXP43
-      DATA I8_DEUXP43 /'80000000000'x/
-      DATA R8_DEUXP43 /'42A0000000000000'x/
+      PARAMETER (R8_DEUXP43 = 2.D0**43)
       INTEGER I
 c___________________________________________________          
 C-----------------------------------------------
@@ -630,12 +623,12 @@ C-----------------------------------------------
       INTEGER I,J,K
       DOUBLE PRECISION R8DEUXP89,R8DEUXP62,R8DEUXP35,R8TWOP8
       DOUBLE PRECISION R8DEUXPM19,R8DEUXPM46
-      DATA R8DEUXP89 /'4580000000000000'x/
-      DATA R8DEUXP62 /'43D0000000000000'x/
-      DATA R8DEUXP35 /'4220000000000000'x/
-      DATA R8TWOP8  /'4070000000000000'x/
-      DATA R8DEUXPM19/'3EC0000000000000'x/
-      DATA R8DEUXPM46/'3D10000000000000'x/
+      PARAMETER (R8DEUXP89  = 2.D0**89)
+      PARAMETER (R8DEUXP62  = 2.D0**62)
+      PARAMETER (R8DEUXP35  = 2.D0**35)
+      PARAMETER (R8TWOP8    = 2.D0**8)
+      PARAMETER (R8DEUXPM19 = 2.D0**(-19))
+      PARAMETER (R8DEUXPM46 = 2.D0**(-46))
 
       DO I= 1,A
         IF(ISENSINT(I) /=0)THEN
@@ -787,12 +780,12 @@ C-----------------------------------------------
       INTEGER I,J
       DOUBLE PRECISION R8DEUXP89,R8DEUXP62,R8DEUXP35,R8TWOP8
       DOUBLE PRECISION R8DEUXPM19,R8DEUXPM46
-      DATA R8DEUXP89 /'4580000000000000'x/
-      DATA R8DEUXP62 /'43D0000000000000'x/
-      DATA R8DEUXP35 /'4220000000000000'x/
-      DATA R8TWOP8  /'4070000000000000'x/
-      DATA R8DEUXPM19/'3EC0000000000000'x/
-      DATA R8DEUXPM46/'3D10000000000000'x/
+      PARAMETER (R8DEUXP89  = 2.D0**89)
+      PARAMETER (R8DEUXP62  = 2.D0**62)
+      PARAMETER (R8DEUXP35  = 2.D0**35)
+      PARAMETER (R8TWOP8    = 2.D0**8)
+      PARAMETER (R8DEUXPM19 = 2.D0**(-19))
+      PARAMETER (R8DEUXPM46 = 2.D0**(-46))
       DO I= 1,A
           DO J=JFT,JLT
 

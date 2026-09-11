@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    intbuf_ini         ../common_source/interf/intbuf_ini.F
 !||--- called by ------------------------------------------------------
@@ -323,6 +324,8 @@ C---------will be cleaned after
           INTBUF_TAB(NI)%S_IELEM_M  = INTBUF_SIZE(N)
           N = N+1
           INTBUF_TAB(NI)%S_PROC_MVOISIN  = INTBUF_SIZE(N)
+          N = N+1
+          INTBUF_TAB(NI)%S_MSR_1D  = INTBUF_SIZE(N)
 
 C=======================================================================
 c READ REAL SIZES
@@ -1281,17 +1284,18 @@ C----------to be cleaned later
             CALL READ_I_C(INTBUF_TAB(NI)%CANDS_E2S,SIZ)
           ENDIF
 
-          SIZ = INTBUF_TAB(NI)%S_IFPEN_E
+         SIZ = INTBUF_TAB(NI)%S_IFPEN_E
           ALLOCATE(INTBUF_TAB(NI)%IFPEN_E(SIZ))
           IF(SIZ>0)THEN
-            CALL READ_I_C(INTBUF_TAB(NI)%IFPEN_E,SIZ)
+            CALL DECOMPRESS_I_NNZ(INTBUF_TAB(NI)%IFPEN_E,SIZ)
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_IFPEN_E2S
           ALLOCATE(INTBUF_TAB(NI)%IFPEN_E2S(SIZ))
           IF(SIZ>0)THEN
+            INTBUF_TAB(NI)%IFPEN_E2S(1:SIZ) = 0
             SIZ =INTBUF_TAB(NI)%I_STOK_E(2)
-            CALL READ_I_C(INTBUF_TAB(NI)%IFPEN_E2S,SIZ)
+            IF(SIZ>0) CALL DECOMPRESS_I_NNZ(INTBUF_TAB(NI)%IFPEN_E2S,SIZ)
           ENDIF
 
 ! NITSCHE METHOD
@@ -1327,6 +1331,12 @@ C----------to be cleaned later
           ALLOCATE(INTBUF_TAB(NI)%PROC_MVOISIN(SIZ))
           IF(SIZ>0)THEN
             CALL READ_I_C(INTBUF_TAB(NI)%PROC_MVOISIN,SIZ)
+          ENDIF
+
+          SIZ = INTBUF_TAB(NI)%S_MSR_1D
+          ALLOCATE(INTBUF_TAB(NI)%MSR_1D(SIZ))
+          IF(SIZ>0)THEN
+            CALL READ_I_C(INTBUF_TAB(NI)%MSR_1D,SIZ)
           ENDIF
 C=======================================================================
 c READ REAL ARRAYS
@@ -1440,9 +1450,11 @@ C=======================================================================
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_STFM
-          ALLOCATE(INTBUF_TAB(NI)%STFM(SIZ))
           IF(SIZ>0)THEN
+            ALLOCATE(INTBUF_TAB(NI)%STFM(SIZ))
             CALL READ_DB(INTBUF_TAB(NI)%STFM,SIZ)
+          ELSE
+            ALLOCATE(INTBUF_TAB(NI)%STFM(1))
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_STFS
@@ -1552,13 +1564,13 @@ C=======================================================================
           SIZ = INTBUF_TAB(NI)%S_PENE_OLD_E
           ALLOCATE(INTBUF_TAB(NI)%PENE_OLD_E(SIZ))
           IF(SIZ>0)THEN
-            CALL READ_DB(INTBUF_TAB(NI)%PENE_OLD_E,SIZ)
+            CALL DECOMPRESS_R_NNZ(INTBUF_TAB(NI)%PENE_OLD_E,SIZ)
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_STIF_OLD_E
           ALLOCATE(INTBUF_TAB(NI)%STIF_OLD_E(SIZ))
           IF(SIZ>0)THEN
-            CALL READ_DB(INTBUF_TAB(NI)%STIF_OLD_E,SIZ)
+            CALL DECOMPRESS_R_NNZ(INTBUF_TAB(NI)%STIF_OLD_E,SIZ)
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_PENE_OLD_E2S
@@ -1566,7 +1578,7 @@ C=======================================================================
           IF(SIZ>0)THEN
             INTBUF_TAB(NI)%PENE_OLD_E2S(1:SIZ) = ZERO
             SIZ =INTBUF_TAB(NI)%I_STOK_E(2)*4
-            CALL READ_DB(INTBUF_TAB(NI)%PENE_OLD_E2S,SIZ)
+            IF(SIZ>0) CALL DECOMPRESS_R_NNZ(INTBUF_TAB(NI)%PENE_OLD_E2S,SIZ)
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_STIF_OLD_E2S
@@ -1574,7 +1586,7 @@ C=======================================================================
           IF(SIZ>0)THEN
             INTBUF_TAB(NI)%STIF_OLD_E2S(1:SIZ) = ZERO
             SIZ =INTBUF_TAB(NI)%I_STOK_E(2)*4
-            CALL READ_DB(INTBUF_TAB(NI)%STIF_OLD_E2S,SIZ)
+            IF(SIZ>0) CALL DECOMPRESS_R_NNZ(INTBUF_TAB(NI)%STIF_OLD_E2S,SIZ)
           ENDIF
 
           SIZ = INTBUF_TAB(NI)%S_GAPE

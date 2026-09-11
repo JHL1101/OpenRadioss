@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mat_hardening_to_fail_mod   ../starter/source/materials/mat/mat_hardening_to_fail.F90
 !||--- called by ------------------------------------------------------
 !||    law02_upd                   ../starter/source/materials/mat/mat002/law02_upd.F90
 !||====================================================================
       module mat_hardening_to_fail_mod
-      implicit none
+        implicit none
       contains
         ! ==========================================================================================
         ! \brief Updating material parameters of /mat/law02
@@ -46,6 +47,7 @@
 ! --------------------------------------------------------------------------------------------------
           use fail_param_mod
           use precision_mod ,only : WP
+          use MY_ALLOC_MOD
 ! --------------------------------------------------------------------------------------------------
           implicit none
 ! --------------------------------------------------------------------------------------------------
@@ -58,27 +60,27 @@
 ! --------------------------------------------------------------------------------------------------
 !         Local variables
 ! --------------------------------------------------------------------------------------------------
-          integer :: i,j,ndim,ntable
+          integer :: i,ndim,ntable
           type(table_4d_) ,dimension(:) ,allocatable :: table_copy
 ! ==================================================================================================
           ntable = fail%ntable4d
-          allocate (table_copy(ntable+1))
+          allocate(table_copy(ntable+1))
           do i = 1,ntable
             ! create local copy of failure model function tables
             call copy_table_to(fail%table4d(i), table_copy(i))
-            
+
             ! deallocate original function tables
             ndim = fail%table4d(i)%ndim
             if (allocated (fail%table4d(i)%y1d)) deallocate(fail%table4d(i)%y1d)
             if (allocated (fail%table4d(i)%y2d)) deallocate(fail%table4d(i)%y2d)
             if (allocated (fail%table4d(i)%y3d)) deallocate(fail%table4d(i)%y3d)
             if (allocated (fail%table4d(i)%y4d)) deallocate(fail%table4d(i)%y4d)
-          end do           
+          end do
           if (allocated (fail%table4d)) deallocate(fail%table4d)
 !-------------------------------------------------------------------------------
           ! allocate new function tables and deallocate local copies
 
-          allocate (fail%table4d(ntable+1))
+          allocate(fail%table4d(ntable+1))
           do i = 1,ntable
             call copy_table_to(table_copy(i) ,fail%table4d(i))
             ndim = table_copy(i)%ndim
@@ -86,7 +88,7 @@
             if (allocated (table_copy(i)%y2d)) deallocate(table_copy(i)%y2d)
             if (allocated (table_copy(i)%y3d)) deallocate(table_copy(i)%y3d)
             if (allocated (table_copy(i)%y4d)) deallocate(table_copy(i)%y4d)
-          end do           
+          end do
 !
           ! add static hardening function to the table list of failure model
 !
@@ -94,13 +96,13 @@
           fail%ntable4d = ntable
           fail%table4d(ntable)%notable = 1
           fail%table4d(ntable)%ndim    = 1
-          allocate (fail%table4d(ntable)%x(1))
-          allocate (fail%table4d(ntable)%x(1)%values(npt))
-          allocate (fail%table4d(ntable)%y1d(npt))
+          allocate(fail%table4d(ntable)%x(1))
+          call my_alloc(fail%table4d(ntable)%x(1)%values, npt, "fail%table4d(ntable)%x(1)%values")
+          call my_alloc(fail%table4d(ntable)%y1d, npt, "fail%table4d(ntable)%y1d")
 
           fail%table4d(ntable)%x(1)%values(1:npt) = eps(1:npt)
           fail%table4d(ntable)%y1d(1:npt)         = sig(1:npt)
 !-------------------------------------------------------------------------------
           return
-          end subroutine mat_hardening_to_fail
-          end module mat_hardening_to_fail_mod
+        end subroutine mat_hardening_to_fail
+      end module mat_hardening_to_fail_mod

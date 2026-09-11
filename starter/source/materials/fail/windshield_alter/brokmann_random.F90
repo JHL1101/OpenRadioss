@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !|====================================================================
 !|  brokmann_random          source/materials/fail/windshield_alter/brokmann_random.F
 !|-- called by -----------
@@ -32,7 +33,7 @@
 !||    updfail               ../starter/source/materials/updfail.F90
 !||====================================================================
       module brokmann_random_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 ! \brief initializes random crack in /fail/alter following Ch.Brokmann extension
@@ -56,6 +57,8 @@
           use brokmann_random_def_mod
           use fail_param_mod
           use stack_mod
+          use MY_ALLOC_MOD, only : my_alloc
+          use my_dealloc_mod, only : my_dealloc
           use constant_mod ,only : zero,half,one,two,pi,em6,ep06
           use precision_mod, only : WP
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -98,14 +101,14 @@
           else
             i_seed = 1
             call random_seed(size=i_seed)
-            allocate(a_seed(1:i_seed))
+            call my_alloc(a_seed,i_seed,"a_seed")
             a_seed = seed
             call random_seed(put=a_seed)
-            deallocate(a_seed)
+            call my_dealloc(a_seed)
           end if
 !
-          allocate (elmat(numelc+numeltg))
-          allocate (nixel(numelc+numeltg))
+          call my_alloc(elmat,numelc+numeltg,"elmat")
+          call my_alloc(nixel,numelc+numeltg,"nixel")
           nixel(:)  = 0
 
           ! create list of shell elements with material law
@@ -189,7 +192,7 @@
           ! initialize brokmann element structure
 
           brokmann%nelem = nshell
-          allocate (brokmann%brokmann_elem(nshell))
+          allocate(brokmann%brokmann_elem(nshell))
           do i = 1,nshell
             brokmann%brokmann_elem(i)%elnum = elmat(i)
             nix = nixel(i)
@@ -214,8 +217,8 @@
             brokmann%brokmann_elem(i)%random(6) = randp
           end do
 !
-          deallocate(nixel)
-          deallocate(elmat)
+          call my_dealloc(nixel)
+          call my_dealloc(elmat)
 ! ----------------------------------------------------------------------------------------------------------------------
           return
         end subroutine brokmann_random

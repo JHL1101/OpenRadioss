@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    i21tri         ../engine/source/interfaces/intsort/i21tri.F
+!||    i21tri           ../engine/source/interfaces/intsort/i21tri.F
 !||--- called by ------------------------------------------------------
-!||    i21buce        ../engine/source/interfaces/intsort/i21buce.F
+!||    i21buce          ../engine/source/interfaces/intsort/i21buce.F
 !||--- calls      -----------------------------------------------------
-!||    i21sto         ../engine/source/interfaces/int21/i21sto.F
-!||    i7dstk         ../engine/source/interfaces/intsort/i7dstk.F
+!||    i21sto           ../engine/source/interfaces/int21/i21sto.F
+!||    i7dstk           ../engine/source/interfaces/intsort/i7dstk.F
 !||--- uses       -----------------------------------------------------
-!||    my_alloc_mod   ../common_source/tools/memory/my_alloc.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE I21TRI(
      1      ADD      ,NSN     ,IRECT  ,XLOC     ,STF     ,
@@ -45,6 +47,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -156,26 +159,26 @@ C     REAL
       my_real, DIMENSION(:),ALLOCATABLE :: TZMAX
       my_real, DIMENSION(:),ALLOCATABLE :: TZMIN
 C-----------------------------------------------
-      CALL MY_ALLOC(PROV_N,2*MVSIZ)
-      CALL MY_ALLOC(PROV_E,2*MVSIZ)
-      CALL MY_ALLOC(TN1,NVECSZ)
-      CALL MY_ALLOC(TN2,NVECSZ)
-      CALL MY_ALLOC(TN3,NVECSZ)
-      CALL MY_ALLOC(TN4,NVECSZ)
-      CALL MY_ALLOC(BPE,MAXSIZ/3)  ! BPE : used over NRTM but not NRTM + 100 (MAXSIZ = NRTM + 100)
-      CALL MY_ALLOC(PE,MAXSIZ)
-      CALL MY_ALLOC(BPN,NSN)
-      CALL MY_ALLOC(PN,NSN)
-      CALL MY_ALLOC(TXX1,3,NVECSZ)
-      CALL MY_ALLOC(TXX2,3,NVECSZ)
-      CALL MY_ALLOC(TXX3,3,NVECSZ)
-      CALL MY_ALLOC(TXX4,3,NVECSZ)
-      CALL MY_ALLOC(TXMAX,NVECSZ)
-      CALL MY_ALLOC(TXMIN,NVECSZ)
-      CALL MY_ALLOC(TYMAX,NVECSZ)
-      CALL MY_ALLOC(TYMIN,NVECSZ)
-      CALL MY_ALLOC(TZMAX,NVECSZ)
-      CALL MY_ALLOC(TZMIN,NVECSZ)
+      call my_alloc(PROV_N, 2*MVSIZ, "PROV_N")
+      call my_alloc(PROV_E, 2*MVSIZ, "PROV_E")
+      call my_alloc(TN1, NVECSZ, "TN1")
+      call my_alloc(TN2, NVECSZ, "TN2")
+      call my_alloc(TN3, NVECSZ, "TN3")
+      call my_alloc(TN4, NVECSZ, "TN4")
+      call my_alloc(BPE, MAXSIZ/3, "BPE") ! BPE : used over NRTM but not NRTM + 100 (MAXSIZ = NRTM + 100)
+      call my_alloc(PE, MAXSIZ, "PE")
+      call my_alloc(BPN, NSN, "BPN")
+      call my_alloc(PN, NSN, "PN")
+      call my_alloc(TXX1, 3, NVECSZ, "TXX1")
+      call my_alloc(TXX2, 3, NVECSZ, "TXX2")
+      call my_alloc(TXX3, 3, NVECSZ, "TXX3")
+      call my_alloc(TXX4, 3, NVECSZ, "TXX4")
+      call my_alloc(TXMAX, NVECSZ, "TXMAX")
+      call my_alloc(TXMIN, NVECSZ, "TXMIN")
+      call my_alloc(TYMAX, NVECSZ, "TYMAX")
+      call my_alloc(TYMIN, NVECSZ, "TYMIN")
+      call my_alloc(TZMAX, NVECSZ, "TZMAX")
+      call my_alloc(TZMIN, NVECSZ, "TZMIN")
 C-----------------------------------------------
 C
 C initial construction phase of BPE and BPN moved from I7BUCE => I7TRI
@@ -745,25 +748,25 @@ C-------------------------------------------------------------------------
      5              CURV_MAX ,XM0,NOD_NORMAL,DEPTH,DRAD ,
      6              DGAPLOAD)
 C-------------------------------------------------------------------------
-      DEALLOCATE(PROV_N)
-      DEALLOCATE(PROV_E)
-      DEALLOCATE(TN1)
-      DEALLOCATE(TN2)
-      DEALLOCATE(TN3)
-      DEALLOCATE(TN4)
-      DEALLOCATE(BPE)
-      DEALLOCATE(PE)
-      DEALLOCATE(BPN)
-      DEALLOCATE(PN)
-      DEALLOCATE(TXX1)
-      DEALLOCATE(TXX2)
-      DEALLOCATE(TXX3)
-      DEALLOCATE(TXX4)
-      DEALLOCATE(TXMAX)
-      DEALLOCATE(TXMIN)
-      DEALLOCATE(TYMAX)
-      DEALLOCATE(TYMIN)
-      DEALLOCATE(TZMAX)
-      DEALLOCATE(TZMIN)
+      call my_dealloc(PROV_N)
+      call my_dealloc(PROV_E)
+      call my_dealloc(TN1)
+      call my_dealloc(TN2)
+      call my_dealloc(TN3)
+      call my_dealloc(TN4)
+      call my_dealloc(BPE)
+      call my_dealloc(PE)
+      call my_dealloc(BPN)
+      call my_dealloc(PN)
+      call my_dealloc(TXX1)
+      call my_dealloc(TXX2)
+      call my_dealloc(TXX3)
+      call my_dealloc(TXX4)
+      call my_dealloc(TXMAX)
+      call my_dealloc(TXMIN)
+      call my_dealloc(TYMAX)
+      call my_dealloc(TYMIN)
+      call my_dealloc(TZMAX)
+      call my_dealloc(TZMIN)
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    w_rwar     ../starter/source/restart/ddsplit/w_rwar.F
+!||    w_rwar         ../starter/source/restart/ddsplit/w_rwar.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit    ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
-!||    nlocal     ../starter/source/spmd/node/ddtools.F
+!||    nlocal         ../starter/source/spmd/node/ddtools.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE W_RWAR(NPRW    ,LPRW ,RWL, RWSAV,
      +                  LWSAV_L ,LRW_PEN_L,NRW_PEN_L,RWSTIF_PEN,
@@ -38,6 +40,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -68,11 +71,11 @@ C-----------------------------------------------
       my_real    , DIMENSION(:),ALLOCATABLE :: RWPEN1_L,RW_PEN_L
 C
       IF(NRWALL>0) THEN
-        ALLOCATE(RWL_L(NRWLP,NRWALL))
+        call my_alloc(RWL_L, NRWLP, NRWALL, "RWL_L")
         IF(LWSAV_L>0) ALLOCATE(RWSAV_L(3*LWSAV_L))
         IF(LRW_PEN_L>0) THEN 
-          ALLOCATE(RWPEN1_L(NRW_PEN_L))
-          ALLOCATE(RW_PEN_L(4*LRW_PEN_L))
+          call my_alloc(RWPEN1_L, NRW_PEN_L, "RWPEN1_L")
+          call my_alloc(RW_PEN_L, 4*LRW_PEN_L, "RW_PEN_L")
         ENDIF
         K = 0
         KSAV = 0
@@ -122,7 +125,7 @@ C RW ALE TH
 C
         CALL WRITE_DB(RWL_L,NRWLP*NRWALL)
         LEN_AM = LEN_AM + NRWLP*NRWALL
-        DEALLOCATE(RWL_L)
+        CALL MY_DEALLOC(RWL_L)
         IF(LWSAV_L>0) THEN
           CALL WRITE_DB(RWSAV_L,LWSAV_L*3)
           LEN_AM = LEN_AM + LWSAV_L*3
@@ -171,8 +174,8 @@ C
           CALL WRITE_DB(RWPEN1_L,NRW_PEN_L)
           CALL WRITE_DB(RW_PEN_L,LRW_PEN_L*4)
           LEN_AM = LEN_AM + NRW_PEN_L + LRW_PEN_L*4
-          DEALLOCATE(RW_PEN_L) 
-          DEALLOCATE(RWPEN1_L) 
+          CALL MY_DEALLOC(RW_PEN_L)
+          CALL MY_DEALLOC(RWPEN1_L)
         END IF
       ENDIF
 C

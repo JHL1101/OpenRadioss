@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i7mainf                     ../engine/source/interfaces/int07/i7mainf.F
 !||--- called by ------------------------------------------------------
@@ -62,6 +63,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    intbufdef_mod               ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod                 ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod               ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                  ../common_source/modules/output/output_mod.F90
 !||    timer_mod                   ../engine/source/system/timer_mod.F90
 !||====================================================================
@@ -105,6 +108,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -327,7 +332,7 @@ C--- Corresponding Friction model
         IF(ICURV == 3)THEN
          CALL MY_BARRIER()
          IF(JTASK == 1)THEN
-           ALLOCATE(INTBUF_TAB%NODNORM_NORMAL (3,NUMNOD))
+           call my_alloc(INTBUF_TAB%NODNORM_NORMAL, 3, NUMNOD, "INTBUF_TAB%NODNORM_NORMAL")
            IF(IPARIT == 0)THEN
              CALL I7NORM(IPARI(4,NIN),INTBUF_TAB%IRECTM,NUMNOD,X,INTBUF_TAB%NODNORM_NORMAL,IPARI(6,NIN),INTBUF_TAB%MSR)
              IF(NSPMD > 1)THEN
@@ -363,8 +368,9 @@ C--- Corresponding Friction model
         IF(IADM /= 0)THEN
          CALL MY_BARRIER()
          IF(JTASK==1)THEN
-           ALLOCATE(INTBUF_TAB%MODRCURV(NRTMDIM),INTBUF_TAB%MODANGLM(NRTMDIM))
-           ALLOCATE(INTBUF_TAB%NODNORM_NORMAL (3,NUMNOD))
+           call my_alloc(INTBUF_TAB%MODRCURV, NRTMDIM, "INTBUF_TAB%MODRCURV")
+           call my_alloc(INTBUF_TAB%MODANGLM, NRTMDIM, "INTBUF_TAB%MODANGLM")
+           call my_alloc(INTBUF_TAB%NODNORM_NORMAL, 3, NUMNOD, "INTBUF_TAB%NODNORM_NORMAL")
            IF(IPARIT == 0)THEN
              CALL I7NORMN(
      .         IPARI(4,NIN),INTBUF_TAB%IRECTM,NUMNOD,X ,INTBUF_TAB%NODNORM_NORMAL,
@@ -502,7 +508,7 @@ c------------------------------------------------
           ENDIF
         ENDDO
         IF (SFSAVPARIT /= 0) THEN
-          ALLOCATE(FSAVPARIT(NISUB+1,11,I_STOK),STAT=IERROR)
+          call my_alloc(FSAVPARIT, NISUB+1, 11, I_STOK, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,C1='(/INTER/TYPE7)')
            CALL ARRET(2)
@@ -515,7 +521,7 @@ c------------------------------------------------
             ENDDO
           ENDDO
         ELSE
-          ALLOCATE(FSAVPARIT(0,0,0),STAT=IERROR)
+          call my_alloc(FSAVPARIT, 0, 0, 0, "FSAVPARIT", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=19,ANMODE=ANINFO,C1='(/INTER/TYPE7)')
            CALL ARRET(2)
@@ -754,7 +760,7 @@ C!$OMP ORDERED
 C-----------------------------------------------
 C
           IF (IMONM > 0 .AND. JTASK == 1) CALL STOPTIME(TIMERS,20)
-          IF(IMPL_S = =1) THEN
+          IF(IMPL_S == 1) THEN
             DO I = 1 ,JLT_NEW
              NS_IMP(I+NUM_IMP)=CN_LOC(I)
              NE_IMP(I+NUM_IMP)=CE_LOC(I)
@@ -767,11 +773,11 @@ C!$OMP END ORDERED
         IF (SFSAVPARIT /= 0)THEN
           CALL SUM_6_FLOAT_SENS(FSAVPARIT, NISUB+1, 11, I_STOK,1,I_STOK, FBSAV6, 12, 6, DIMFB, ISENSINT )
         ENDIF
-        IF (ALLOCATED(FSAVPARIT)) DEALLOCATE (FSAVPARIT)
+        IF (ALLOCATED(FSAVPARIT)) call my_dealloc(FSAVPARIT)
 
         IF(ICURV == 3 .OR. IADM /= 0)THEN
           CALL MY_BARRIER
-          IF(JTASK==1)DEALLOCATE(INTBUF_TAB%NODNORM_NORMAL)
+          IF(JTASK==1) call my_dealloc(INTBUF_TAB%NODNORM_NORMAL)
         END IF
         IF(IADM/=0)THEN
           CALL MY_BARRIER

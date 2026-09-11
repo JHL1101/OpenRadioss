@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mat25_tsaiwu_s_mod   ../engine/source/materials/mat/mat025/mat25_tsaiwu_s.F90
 !||--- called by ------------------------------------------------------
@@ -251,9 +252,11 @@
           do j=1,nindx
             i=index(j)
             if (dmg(i,2) > zero) then
-              dam1=(epst(i,1)-epst1(i))/(epsm1(i)-epst1(i))
-              dam2= dam1*epsm1(i)/epst(i,1)
-              dmg(i,2)= max(dmg(i,2),dam2)
+              if(epst(i,1) > epst1(i) ) then
+                dam1=(epst(i,1)-epst1(i))/(epsm1(i)-epst1(i))
+                dam2= dam1*epsm1(i)/epst(i,1)
+                dmg(i,2)= max(dmg(i,2),dam2)
+              endif 
               dmg(i,2)= min(dmg(i,2),dmax(i))
             end if
           end do
@@ -262,9 +265,11 @@
           do j=1,nindx
             i=index(j)
             if (dmg(i,3) > zero) then
-              dam1=(epst(i,2) - epst2(i))/(epsm2(i)-epst2(i))
-              dam2= dam1*epsm2(i)/epst(i,2)
-              dmg(i,3)= max(dmg(i,3),dam2)
+              if(epst(i,2) > epst2(i) ) then
+                dam1=(epst(i,2) - epst2(i))/(epsm2(i)-epst2(i))
+                dam2= dam1*epsm2(i)/epst(i,2)
+                dmg(i,3)= max(dmg(i,3),dam2)
+              endif 
               dmg(i,3)= min(dmg(i,3),dmax(i))
             end if
           end do

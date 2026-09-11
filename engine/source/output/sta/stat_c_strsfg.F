@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_c_strsfg       ../engine/source/output/sta/stat_c_strsfg.F
 !||--- called by ------------------------------------------------------
@@ -40,6 +41,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    stack_mod           ../engine/share/modules/stack_mod.F
 !||====================================================================
       SUBROUTINE STAT_C_STRSFG(ELBUF_TAB,
@@ -58,6 +60,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -89,7 +92,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,K,N,II,JJ,LEN,IOFF,IE,NG,NEL,NFT,LFT,NPT,
-     .   LLT,ITY,MLW,IH,IHBE, ID, IPRT0, IPRT,IR,IS,IT,J1,J2,
+     .   LLT,ITY,MLW,IHBE, ID, IPRT0, IPRT,IR,IS,IT,J1,J2,
      .   NPG,IPG,MPT,IPT,NPTR,NPTS,NPTT,NLAY,L_PLA,ITHK,NF3,
      .   IGTYP,NPT_ALL,IL,KK(12),NF1,IREL,IBID0,MAT_1,PID_1,ILAY,IDRAPE,
      .   SEDRAPE,NUMEL_DRAPE
@@ -109,7 +112,7 @@ C-----------------------------------------------
       my_real, 
      .   DIMENSION(:),POINTER  :: DIR_A,DIR_B    
       my_real 
-     .   QT(9,MVSIZ),TENS(6),ZH,THKP ,THK0(MVSIZ)   
+     .   QT(9,MVSIZ),TENS(6),THK0(MVSIZ)   
 
       INTEGER, DIMENSION(:)   , ALLOCATABLE :: MATLY   
       my_real, DIMENSION(:)   , ALLOCATABLE :: THKLY    
@@ -124,8 +127,9 @@ C-----------------------------------------------
       DATA DELIMIT(61:100)
      ./'----7----|----8----|----9----|----10---|'/
 !
-      CALL MY_ALLOC(PTWA,MAX(STAT_NUMELC ,STAT_NUMELTG))
+      call my_alloc(PTWA, MAX(STAT_NUMELC ,STAT_NUMELTG), "PTWA")
       ALLOCATE(PTWA_P0(0:MAX(1,STAT_NUMELC_G,STAT_NUMELTG_G)))
+! TODO: non-default lower bound, convert manually
 C=======================================================================
 C     4-NODE SHELLS
 C----------------------------------------------- 
@@ -185,8 +189,10 @@ C
           ENDDO  
          ENDIF
          NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-         ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+         call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+         call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+         call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+         call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
          MATLY  = 0
          THKLY  = ZERO
          POSLY  = ZERO
@@ -200,8 +206,8 @@ C
      .              NEL      ,THK_LY   ,DRAPEG%INDX_SH4N,SEDRAPE,NUMEL_DRAPE)
          L_DIRA = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRA
          L_DIRB = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRB
-         ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-         ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+         call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+         call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
          DIRA=ZERO
          DIRB=ZERO
          IF (L_DIRA == 0) THEN
@@ -522,9 +528,12 @@ C         end-of-zone pointer in wa
             PTWA(IE)=JJ
           ENDDO  !  DO I=LFT,LLT
 c------- end loop over 4 node shell elements
-         IF(ALLOCATED(DIRB))  DEALLOCATE(DIRB)                                                          
-         IF(ALLOCATED(DIRA))  DEALLOCATE(DIRA)  
-         DEALLOCATE(MATLY, THKLY, POSLY, THK_LY)  
+         IF(ALLOCATED(DIRB)) call my_dealloc(DIRB)
+         IF(ALLOCATED(DIRA)) call my_dealloc(DIRA)
+         call my_dealloc(MATLY)
+         call my_dealloc(THKLY)
+         call my_dealloc(POSLY)
+         call my_dealloc(THK_LY)
         ENDIF ! ITY == 3       
       ENDDO   ! NG = 1, NGROUP
 C
@@ -722,8 +731,10 @@ C
           ENDDO  
          ENDIF
          NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-         ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+         call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+         call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+         call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+         call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
          MATLY  = 0
          THKLY  = ZERO
          POSLY  = ZERO
@@ -738,8 +749,8 @@ C
 !
          L_DIRA = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRA
          L_DIRB = ELBUF_TAB(NG)%BUFLY(1)%LY_DIRB
-         ALLOCATE(DIRA(NLAY*NEL*L_DIRA))
-         ALLOCATE(DIRB(NLAY*NEL*L_DIRB))
+         call my_alloc(DIRA, NLAY*NEL*L_DIRA, "DIRA")
+         call my_alloc(DIRB, NLAY*NEL*L_DIRB, "DIRB")
          DIRA=ZERO
          DIRB=ZERO
          IF (L_DIRA == 0) THEN
@@ -919,9 +930,12 @@ C         end-of-zone pointer
             PTWA(IE)=JJ
           ENDDO  !  DO I=LFT,LLT
          
-         IF(ALLOCATED(DIRB))  DEALLOCATE(DIRB)                                                          
-         IF(ALLOCATED(DIRA))  DEALLOCATE(DIRA)  
-         DEALLOCATE(MATLY, THKLY, POSLY, THK_LY)      
+         IF(ALLOCATED(DIRB)) call my_dealloc(DIRB)
+         IF(ALLOCATED(DIRA)) call my_dealloc(DIRA)
+         call my_dealloc(MATLY)
+         call my_dealloc(THKLY)
+         call my_dealloc(POSLY)
+         call my_dealloc(THK_LY)
         ENDIF  !  IF (ITY == 7)                            
       ENDDO  !  DO NG=1,NGROUP
 C
@@ -1067,8 +1081,8 @@ C
 
 C
 c----------
-      DEALLOCATE(PTWA)
-      DEALLOCATE(PTWA_P0)
+      call my_dealloc(PTWA)
+      call my_dealloc(PTWA_P0)
 c-----------
       RETURN
       END
@@ -1100,8 +1114,8 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
  
       my_real
-     .   R1,R2,R3,S1,S2,S3,R12A,R22A,S12B,S22B,RS1,RS2,RS3,
-     .   T1,T2,T3,PHI,SUM1,SUM2,FACT,R3R3,S3S3 
+     .   R1,R2,S1,S2,R12A,R22A,S12B,S22B,RS1,RS2,RS3,
+     .   T1,T2,T3,R3R3,S3S3 
 c------------------------------------------------
           IF (IGTYP /= 1) THEN                                                     
 c------------------------------------------------
@@ -1223,7 +1237,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
  
       my_real 
-     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UZZ,UXY,UYZ,UZX,A,B,C
+     .       TXX,TYY,TZZ,TXY,TYZ,TZX,UXX,UYY,UZZ,UXY,UYZ,UZX,A,B
 C--convention input MOM : mxx,myy,mxy,0,0,0; output mxx,myy,mzz,mxy,myz,mzx
              TXX = MOM(1)
              TYY = MOM(2)

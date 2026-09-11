@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps51_mod   ../engine/source/materials/mat/mat051/sigeps51.F90
 !||--- called by ------------------------------------------------------
@@ -907,18 +908,25 @@
 
             QA   = GEO(14,PID(I)) !1.225D00
             QB   = GEO(15,PID(I)) !0.06D00
-            XL   = VOLUME(I)**THIRD
+            IF(N2D /= 0) THEN
+              XL   = SQRT(VOLUME(I))
+              XL1  = SQRT(V1OLD)
+              XL2  = SQRT(V2OLD)
+              XL3  = SQRT(V3OLD)
+              XL4  = SQRT(V4OLD)
+            ELSE
+              XL   = VOLUME(I)**THIRD
+              XL1  = V1OLD**THIRD
+              XL2  = V2OLD**THIRD
+              XL3  = V3OLD**THIRD
+              XL4  = V4OLD**THIRD
+            ENDIF
             QAL  = (QA*XL)*(QA*XL)
             QBL  = QB*XL
 
             VQ0  = RHO(I)*QAL*MAX(ZERO,DD)
             VQ0  = VQ0 + (RHO1OLD*SSP1*V1OLD+RHO2OLD*SSP2*V2OLD+RHO3OLD*SSP3*V3OLD+RHO4OLD*SSP4*V4OLD)*QBL/(V1OLD+V2OLD+V3OLD+V4OLD)
             Q0   = VQ0*MAX(ZERO,DD)
-
-            XL1  = V1OLD**THIRD
-            XL2  = V2OLD**THIRD
-            XL3  = V3OLD**THIRD
-            XL4  = V4OLD**THIRD
 
             QAL1 = (QA*XL1)**2
             QAL2 = (QA*XL2)**2

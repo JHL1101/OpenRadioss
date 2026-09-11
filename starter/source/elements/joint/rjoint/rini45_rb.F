@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    rini45_rb              ../starter/source/elements/joint/rjoint/rini45_rb.F
 !||--- called by ------------------------------------------------------
 !||    initia                 ../starter/source/elements/initia/initia.F
 !||--- calls      -----------------------------------------------------
 !||    ancmsg                 ../starter/source/output/message/message.F
-!||    find_rby               ../starter/source/elements/joint/rjoint/rini33_rb.F
 !||    fretitl2               ../starter/source/starter/freform.F
 !||    get_u_geo              ../starter/source/user_interface/uaccess.F
 !||    get_u_skew             ../starter/source/user_interface/uaccess.F
@@ -68,20 +68,18 @@ C----------------------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,II,IEL,J,K,N,L,S,NN,NSL,IERROR,NODES,USR,
-     .        IDSK(2),ISK,NSK,ISK2,JTYP,M(2),NOD(2),NODF(3),
-     .        RESET_U_GEO,GET_U_SKEW,SRB(6),NO(3),IDSKRB(2),
-     .        IDRB(2),ERR_FLG,N1,N2,N3,N4,ID_KJ,NUMEL_KJ,IELUSR,
-     .        RB1,RB2,IPID,IDSK2   
+      INTEGER I,IEL,J,K,N,NN,NSL,NODES,
+     .        M(2),NOD(2),
+     .        RESET_U_GEO,GET_U_SKEW,
+     .        IDRB(2),N1,N2,N3,N4,ID_KJ,NUMEL_KJ,IELUSR,
+     .        RB1,RB2,IDSK2
 C
       my_real
-     .   MASS,INER,RM,RI,KNN,KR,L2,U(LSKEW),Q(LSKEW),GET_U_GEO,V(LSKEW),
-     .   XSK1,XSK2,LEN
+     .   MASS,INER,RM,RI,L2,GET_U_GEO,LEN
 C
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
 C-----------------------------------------------
-      INTEGER FIND_RBY
       EXTERNAL GET_U_GEO,RESET_U_GEO,GET_U_SKEW
       DATA NODES/2/
 C=======================================================================

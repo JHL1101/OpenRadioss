@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,17 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    clause_init   ../starter/source/model/sets/clause_init.F
+!||    clause_init      ../starter/source/model/sets/clause_init.F
 !||--- called by ------------------------------------------------------
-!||    hm_set        ../starter/source/model/sets/hm_set.F
+!||    hm_set           ../starter/source/model/sets/hm_set.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    message_mod   ../starter/share/message_module/message_mod.F
+!||    message_mod      ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE CLAUSE_INIT(CLAUSE)
 C-----------------------------------------------
@@ -36,6 +38,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -82,26 +85,26 @@ C-----------------------------------------------
 
       CLAUSE%NB_NODENS= 0         ! CLAUSE nb of NODENS -> unsortable node list
 !---
-      IF(ALLOCATED( CLAUSE%NODE ))          DEALLOCATE( CLAUSE%NODE )
-      IF(ALLOCATED( CLAUSE%PART ))          DEALLOCATE( CLAUSE%PART )
-      IF(ALLOCATED( CLAUSE%SOLID ))         DEALLOCATE( CLAUSE%SOLID )
-      IF(ALLOCATED( CLAUSE%QUAD ))          DEALLOCATE( CLAUSE%QUAD )
-      IF(ALLOCATED( CLAUSE%SH4N ))          DEALLOCATE( CLAUSE%SH4N )
-      IF(ALLOCATED( CLAUSE%SH3N ))          DEALLOCATE( CLAUSE%SH3N )
-      IF(ALLOCATED( CLAUSE%TRIA ))          DEALLOCATE( CLAUSE%TRIA )
-      IF(ALLOCATED( CLAUSE%BEAM ))          DEALLOCATE( CLAUSE%BEAM )
-      IF(ALLOCATED( CLAUSE%TRUSS ))         DEALLOCATE( CLAUSE%TRUSS )
-      IF(ALLOCATED( CLAUSE%SPRING ))        DEALLOCATE( CLAUSE%SPRING )
-      IF(ALLOCATED( CLAUSE%SURF_NODES ))    DEALLOCATE( CLAUSE%SURF_NODES )
-      IF(ALLOCATED( CLAUSE%SURF_ELTYP ))    DEALLOCATE( CLAUSE%SURF_ELTYP )
-      IF(ALLOCATED( CLAUSE%SURF_ELEM ))     DEALLOCATE( CLAUSE%SURF_ELEM )
-      IF(ALLOCATED( CLAUSE%LINE_NODES ))    DEALLOCATE( CLAUSE%LINE_NODES )
-      IF(ALLOCATED( CLAUSE%LINE_ELTYP ))    DEALLOCATE( CLAUSE%LINE_ELTYP )
-      IF(ALLOCATED( CLAUSE%LINE_ELEM ))     DEALLOCATE( CLAUSE%LINE_ELEM )
-      IF(ALLOCATED( CLAUSE%RBODY ))         DEALLOCATE( CLAUSE%RBODY )
-      IF(ALLOCATED( CLAUSE%ELLIPSE_SKEW ))  DEALLOCATE( CLAUSE%ELLIPSE_SKEW )
-      IF(ALLOCATED( CLAUSE%NODENS ))        DEALLOCATE( CLAUSE%NODENS )
-      IF(ALLOCATED( CLAUSE%SPHCEL ))        DEALLOCATE( CLAUSE%SPHCEL )
+      IF(ALLOCATED( CLAUSE%NODE )) call my_dealloc(CLAUSE%NODE)
+      IF(ALLOCATED( CLAUSE%PART )) call my_dealloc(CLAUSE%PART)
+      IF(ALLOCATED( CLAUSE%SOLID )) call my_dealloc(CLAUSE%SOLID)
+      IF(ALLOCATED( CLAUSE%QUAD )) call my_dealloc(CLAUSE%QUAD)
+      IF(ALLOCATED( CLAUSE%SH4N )) call my_dealloc(CLAUSE%SH4N)
+      IF(ALLOCATED( CLAUSE%SH3N )) call my_dealloc(CLAUSE%SH3N)
+      IF(ALLOCATED( CLAUSE%TRIA )) call my_dealloc(CLAUSE%TRIA)
+      IF(ALLOCATED( CLAUSE%BEAM )) call my_dealloc(CLAUSE%BEAM)
+      IF(ALLOCATED( CLAUSE%TRUSS )) call my_dealloc(CLAUSE%TRUSS)
+      IF(ALLOCATED( CLAUSE%SPRING )) call my_dealloc(CLAUSE%SPRING)
+      IF(ALLOCATED( CLAUSE%SURF_NODES )) call my_dealloc(CLAUSE%SURF_NODES)
+      IF(ALLOCATED( CLAUSE%SURF_ELTYP )) call my_dealloc(CLAUSE%SURF_ELTYP)
+      IF(ALLOCATED( CLAUSE%SURF_ELEM )) call my_dealloc(CLAUSE%SURF_ELEM)
+      IF(ALLOCATED( CLAUSE%LINE_NODES )) call my_dealloc(CLAUSE%LINE_NODES)
+      IF(ALLOCATED( CLAUSE%LINE_ELTYP )) call my_dealloc(CLAUSE%LINE_ELTYP)
+      IF(ALLOCATED( CLAUSE%LINE_ELEM )) call my_dealloc(CLAUSE%LINE_ELEM)
+      IF(ALLOCATED( CLAUSE%RBODY )) call my_dealloc(CLAUSE%RBODY)
+      IF(ALLOCATED( CLAUSE%ELLIPSE_SKEW )) call my_dealloc(CLAUSE%ELLIPSE_SKEW)
+      IF(ALLOCATED( CLAUSE%NODENS )) call my_dealloc(CLAUSE%NODENS)
+      IF(ALLOCATED( CLAUSE%SPHCEL )) call my_dealloc(CLAUSE%SPHCEL)
 C-----
       RETURN
       END

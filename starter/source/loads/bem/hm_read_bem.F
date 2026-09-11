@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_preread_bem         ../starter/source/loads/bem/hm_read_bem.F
 !||--- called by ------------------------------------------------------
@@ -71,12 +72,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, ID, ITYP, II, NINOUT, J, ISU, NN, IAD, ITAG(NUMNOD),
-     .        IAD1, NEL, J1, J2, J3, J4, ISH34, NNO, L, IBID,
-     .        III, IGR, NNN, UID, IFLAGUNIT, IUNIT
+      INTEGER I, ID, ITYP, II, NINOUT, J, ISU, NN, ITAG(NUMNOD),
+     .        NEL, J1, J2, J3, J4, ISH34, NNO,
+     .        III, IGR, NNN
       INTEGER JFORM, FREESURF, NELMAX, HG
-      my_real
-     .        RBID
       CHARACTER(LEN=NCHARTITLE)::TITR
       LOGICAL :: IS_AVAILABLE
       INTEGER :: HM_NDAA, HM_NFLOW
@@ -280,9 +279,11 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARKEY
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -310,16 +311,15 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER IADI, IADR, I, ID, ITYP, II, NINOUT, ISU, J, IPIMP,
-     .        NN, IAD, ITAG(NUMNOD), IAD1, IAD2, J1, J2, J3, J4, ISH34,
+     .        NN, ITAG(NUMNOD), IAD2, J1, J2, J3, J4, ISH34,
      .        NNO, ITABINV(NUMNOD), NEL, IVFREE, IFVEL, IFPRES,
-     .        K, IFUNC, L, IFPA, IADMATI, IADMATR, III, IGR, NNN,
+     .        K, IFUNC, IFPA, IADMATI, IADMATR, III, IGR, NNN,
      .        NBLOC, IFORM, ILVOUT, ITAGIO(NUMNOD), NG1, NG2, NG3, NG4,
      .        N1, N2, N3, N4, PROD, NPROW, NPCOL, ITEST, IVINI, IFVINI,
-     .        IINSIDE, NRMAX, NR, ISUIO,NFLOW0, NBLOCMAX, UID,
-     .        IFLAGUNIT,IUNIT
+     .        IINSIDE, NRMAX, NR, ISUIO,NFLOW0, NBLOCMAX
       INTEGER JFORM, KFORM, II1, II2, II3, II4, II5, II6
       INTEGER IR1, IR2, IR3,IR4, IR5, IR6, IR7, IR8, IR9, IR10, IR11
-      INTEGER IPRES, IWAVE, INTEGR, FREESURF, AFTERFLOW, GRAV_ID, NELMAX, IBID, HG
+      INTEGER IPRES, IWAVE, INTEGR, FREESURF, AFTERFLOW, GRAV_ID, NELMAX, HG
       INTEGER, DIMENSION(:), ALLOCATABLE :: N_SHELL
       my_real SFPA, SFVEL, SFPRES, SCALT, DTSUB, RHO, TOLE, SCALT_PA,
      .        SFVINI, DIRX, DIRY, DIRZ, NORM, RNSPMD, SCALT_VI
@@ -328,7 +328,6 @@ C-----------------------------------------------
       my_real XA, YA, ZA, XD, YD, ZD, TT
       my_real, DIMENSION(:,:), ALLOCATABLE :: CBEM
       my_real :: FAC_GEN
-      CHARACTER(LEN=NCHARKEY) :: KEY
       CHARACTER(LEN=NCHARTITLE) :: TITR
       LOGICAL :: IS_AVAILABLE
       INTEGER :: HM_NDAA, HM_NFLOW
@@ -815,7 +814,7 @@ C
          ENDIF
          IF(KFORM ==2) INTEGR=1
 C     
-         IF(NBGAUGE > 0 .AND. JFORM == 2) ALLOCATE(N_SHELL(NUMELC))
+         IF(NBGAUGE > 0 .AND. JFORM == 2) call my_alloc(N_SHELL, NUMELC, "N_SHELL")
 C     
          ISU=0
          DO J=1,NSURF
@@ -1159,10 +1158,10 @@ C-------------------------------------------------------------------------------
             CALL INIT_QD(IFLOW(II1), IFLOW(II2), IFLOW(II3), X, XS, YS, ZS, XD, YD, ZD,
      .           RFLOW(IR1), RFLOW(IR2), RFLOW(IR3), RFLOW(IR4), RFLOW(IR5), RFLOW(IR6))
             IF(NEL < NELMAX) THEN
-               ALLOCATE(CBEM(NEL,NEL))
+               call my_alloc(CBEM, NEL, NEL, "CBEM")
                CALL MASS_FLUID_QD(NNO, NEL, IFLOW(II1), IFLOW(II2), IFLOW(II3), X,
      .              RFLOW(IR2), RFLOW(IR4), RFLOW(IR7), CBEM, RHO,IRESP)
-               DEALLOCATE(CBEM)
+               CALL MY_DEALLOC(CBEM)
             ELSE
                CALL MASS_FLUID_QD(NNO, NEL, IFLOW(II1), IFLOW(II2), IFLOW(II3),  X,
      .              RFLOW(IR2), RFLOW(IR4), RFLOW(IR7), RFLOW(IR11), RHO,IRESP)
@@ -1185,7 +1184,7 @@ C     Node or Shell input
  100              CONTINUE
                   WRITE(IOUT,'(3I10)') J,-LGAUGE(3,J),IFLOW(II5+J-1)
                   ENDDO
-                  DEALLOCATE(N_SHELL)
+                  call my_dealloc(N_SHELL)
                ENDIF
             ENDIF
 C
@@ -1283,10 +1282,6 @@ C
  3000 FORMAT( 10X,'X-COORDINATE OF EXPLOSIVE CHARGE        ',1PE13.6
      .       /10X,'Y-COORDINATE OF EXPLOSIVE CHARGE        ',1PE13.6
      .       /10X,'Z-COORDINATE OF EXPLOSIVE CHARGE        ',1PE13.6)
- 3100 FORMAT(/10X,'PLANE WAVE DIRECTION                    '
-     .       /10X,'X-DIRECTION                             ',1PE13.6
-     .       /10X,'Y-DIRECTION                             ',1PE13.6
-     .       /10X,'Z-DIRECTION                             ',1PE13.6)
  3500 FORMAT(/10X,'FREE SURFACE                    '
      .       /10X,'X-COORDINATE OF SURFACE POINT A         ',1PE13.6
      .       /10X,'Y-COORDINATE OF SURFACE POINT A         ',1PE13.6

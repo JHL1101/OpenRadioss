@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,34 +15,37 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_recv_mod              ../engine/source/mpi/spmd_recv.F90
+!||    spmd_recv_mod   ../engine/source/mpi/spmd_recv.F90
 !||--- called by ------------------------------------------------------
-!||    spmd_gather_nodal_scalar   ../engine/source/mpi/nodes/spmd_gather_nodal_scalar.F
-!||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       module spmd_recv_mod
         implicit none
 
+        !> \brief Interface for spmd_recv, a wrapper for MPI_RECV
         interface spmd_recv
-          module procedure spmd_recv_reals      !< Receives real numbers
-          module procedure spmd_recv_reals2D      !< Receives real numbers
-          module procedure spmd_recv_ints       !< Receives integers
-          module procedure spmd_recv_doubles    !< Receives double precision numbers
-          module procedure spmd_recv_doubles2D   !< Receives double precision numbers
-          module procedure spmd_recv_real       !< Receives a single real number
-          module procedure spmd_recv_int        !< Receives a single integer
-          module procedure spmd_recv_double     !< Receives a single double precision number
+          module procedure spmd_recv_reals
+          module procedure spmd_recv_ints
+          module procedure spmd_recv_doubles
+          module procedure spmd_recv_reals2d
+          module procedure spmd_recv_ints2d
+          module procedure spmd_recv_doubles2d
+          module procedure spmd_recv_real
+          module procedure spmd_recv_int
+          module procedure spmd_recv_double
         end interface spmd_recv
 
       contains
 
 ! ======================================================================================================================
+!>  \brief Blocking receive of real       array
 !||====================================================================
 !||    spmd_recv_reals       ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -52,56 +55,48 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_reals(buf, buf_count, source, tag, comm)
+        subroutine spmd_recv_reals(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          real, dimension(buf_count), intent(inout) :: buf
-          integer, intent(in), optional :: comm
+          real, dimension(:), intent(inout) :: buf
 #ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
           integer :: ierr
-          call spmd_in(tag)
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_reals
-! ======================================================================================================================
-!||====================================================================
-!||    spmd_recv_reals2d     ../engine/source/mpi/spmd_recv.F90
-!||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
-!||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
-!||====================================================================
-        subroutine spmd_recv_reals2D(buf, buf_count, source, tag, comm)
-          use spmd_error_mod, only: spmd_in, spmd_out
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
-          implicit none
-#include "spmd.inc"
-          integer, intent(in) :: buf_count, source, tag
-          real, dimension(1,buf_count), intent(inout) :: buf
-          integer, intent(in), optional :: comm
-#ifdef MPI
-          integer :: ierr
-          call spmd_in(tag)
-          if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, comm, MPI_STATUS_IGNORE, ierr)
-          else
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-          end if
-          call spmd_out(tag,ierr)
-#endif
-        end subroutine spmd_recv_reals2D
 
 ! ======================================================================================================================
+!>  \brief Blocking receive of integer       array
 !||====================================================================
 !||    spmd_recv_ints        ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -111,26 +106,48 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_ints(buf, buf_count, source, tag, comm)
+        subroutine spmd_recv_ints(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          integer, dimension(buf_count), intent(inout) :: buf
+          integer, dimension(:), intent(inout) :: buf
+#ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
           integer, intent(in), optional :: comm
           integer :: ierr
+          integer :: used_comm
 #ifdef MPI
-          call spmd_in(tag)
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_ints
+
 ! ======================================================================================================================
+!>  \brief Blocking receive of double precision       array
 !||====================================================================
 !||    spmd_recv_doubles     ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -140,26 +157,150 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_doubles(buf, buf_count, source, tag,  comm)
+        subroutine spmd_recv_doubles(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          double precision, dimension(buf_count), intent(inout) :: buf
+          double precision, dimension(:), intent(inout) :: buf
+#ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
           integer, intent(in), optional :: comm
           integer :: ierr
+          integer :: used_comm
 #ifdef MPI
-          call spmd_in(tag)
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_doubles
+
 ! ======================================================================================================================
+!>  \brief Blocking receive of real       array
+!||====================================================================
+!||    spmd_recv_reals2d     ../engine/source/mpi/spmd_recv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in               ../engine/source/mpi/spmd_error.F90
+!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_recv_reals2d(buf, buf_count, source, tag, status, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          real, dimension(:,:), intent(inout) :: buf
+#ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
+          integer :: ierr
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
+#endif
+        end subroutine spmd_recv_reals2d
+
+! ======================================================================================================================
+!>  \brief Blocking receive of integer       array
+!||====================================================================
+!||    spmd_recv_ints2d      ../engine/source/mpi/spmd_recv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in               ../engine/source/mpi/spmd_error.F90
+!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_recv_ints2d(buf, buf_count, source, tag, status, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          integer, dimension(:,:), intent(inout) :: buf
+#ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
+          integer :: ierr
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
+#endif
+        end subroutine spmd_recv_ints2d
+
+! ======================================================================================================================
+!>  \brief Blocking receive of double precision       array
 !||====================================================================
 !||    spmd_recv_doubles2d   ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -169,26 +310,48 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_doubles2D(buf, buf_count, source, tag,  comm)
+        subroutine spmd_recv_doubles2d(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          double precision, dimension(1,buf_count), intent(inout) :: buf
+          double precision, dimension(:,:), intent(inout) :: buf
+#ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
           integer, intent(in), optional :: comm
           integer :: ierr
+          integer :: used_comm
 #ifdef MPI
-          call spmd_in(tag)
-          if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, MPI_STATUS_IGNORE, ierr)
-          else
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-          end if
-          call spmd_out(tag,ierr)
+          integer :: local_status(MPI_STATUS_SIZE)
 #endif
-        end subroutine spmd_recv_doubles2D
 
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
+          if (present(comm)) then
+            used_comm = comm
+          else
+            used_comm = SPMD_COMM_WORLD
+          end if
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
+#endif
+        end subroutine spmd_recv_doubles2d
+
+! ======================================================================================================================
+!>  \brief Blocking receive of real       scalar
 !||====================================================================
 !||    spmd_recv_real        ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -198,26 +361,48 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_real(buf, buf_count, source, tag, comm)
+        subroutine spmd_recv_real(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          real, intent(inout) :: buf
-          integer, intent(in), optional :: comm
+          real,  intent(inout) :: buf
 #ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
           integer :: ierr
-          call spmd_in(tag)
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_REAL, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_real
 
+! ======================================================================================================================
+!>  \brief Blocking receive of integer       scalar
 !||====================================================================
 !||    spmd_recv_int         ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -227,25 +412,48 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_int(buf, buf_count, source, tag, comm)
+        subroutine spmd_recv_int(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          integer, intent(inout) :: buf
-          integer, intent(in), optional :: comm
+          integer,  intent(inout) :: buf
 #ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
           integer :: ierr
-          call spmd_in(tag)
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_INTEGER, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_int
+
+! ======================================================================================================================
+!>  \brief Blocking receive of double precision       scalar
 !||====================================================================
 !||    spmd_recv_double      ../engine/source/mpi/spmd_recv.F90
 !||--- calls      -----------------------------------------------------
@@ -255,24 +463,44 @@
 !||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
 !||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
 !||====================================================================
-        subroutine spmd_recv_double(buf, buf_count, source, tag, comm)
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+        subroutine spmd_recv_double(buf, buf_count, source, tag, status, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          double precision, intent(inout) :: buf
-          integer, intent(in), optional :: comm
+          double precision,  intent(inout) :: buf
 #ifdef MPI
+          integer, intent(inout), optional :: status(MPI_STATUS_SIZE)
+#else
+          integer, intent(inout), optional :: status(1)
+#endif
+          integer, intent(in), optional :: comm
           integer :: ierr
-          call spmd_in(tag)
+          integer :: used_comm
+#ifdef MPI
+          integer :: local_status(MPI_STATUS_SIZE)
+#endif
+
+#ifdef MPI
+          call spmd_in(tag, "MPI_Recv", source)
+
           if (present(comm)) then
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, MPI_STATUS_IGNORE, ierr)
+            used_comm = comm
           else
-            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+            used_comm = SPMD_COMM_WORLD
           end if
-          call spmd_out(tag,ierr)
+
+          if (present(status)) then
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, status, ierr)
+          else
+            call MPI_Recv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, used_comm, local_status, ierr)
+          end if
+
+          call spmd_out(tag, ierr)
+#else
+          if (present(status)) status = 0
 #endif
         end subroutine spmd_recv_double
-      end module spmd_recv_mod
 
+      end module spmd_recv_mod

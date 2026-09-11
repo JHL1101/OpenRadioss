@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    print_summary   ../engine/source/system/timer.F
 !||--- called by ------------------------------------------------------
@@ -27,10 +28,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- calls      -----------------------------------------------------
 !||    print_block     ../engine/source/system/timer.F
 !||--- uses       -----------------------------------------------------
+!||    sfem_mod        ../common_source/modules/elements/sfem_mod.F90
 !||    timer_mod       ../engine/source/system/timer_mod.F90
 !||====================================================================
-      SUBROUTINE PRINT_SUMMARY(FLAG,NTIMAX,TABTIME,TITLES,OUT_ID,ITHERM)
-        use timer_mod , only : timer_ale_elm
+      SUBROUTINE PRINT_SUMMARY(FLAG,NTIMAX,TABTIME,TITLES,OUT_ID,ITHERM,sfem)
+        use timer_mod
+        use sfem_mod , only : global_sfem_
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -57,7 +60,8 @@ C-----------------------------------------------
         INTEGER, INTENT(IN) :: OUT_ID ! file descriptor
         INTEGER, INTENT(IN) :: NTIMAX ! max number of timer
         CHARACTER(LEN=9), INTENT(INOUT) :: TITLES(NTIMAX) ! number of columns
-        REAL, INTENT(INOUT) :: TABTIME(NTIMAX,PARASIZ) 
+        REAL, INTENT(INOUT) :: TABTIME(NTIMAX,PARASIZ)
+        type(global_sfem_), intent(in) :: sfem !< global fem data
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -83,6 +87,12 @@ c       IF(IMONM >= 1)THEN
          ENDIF
          FIELDS(NF) = MACRO_TIMER_ELEMENT
          NF = NF + 1
+         IF(TABTIME(MACRO_TIMER_GPU_SHELL,1) > 0) THEN
+           FIELDS(NF) = MACRO_TIMER_GPU_SHELL
+           NF = NF + 1
+           TITLES(MACRO_TIMER_GPU_SHELL) = 'GPU_SHELL'
+         ENDIF
+
          FIELDS(NF) = MACRO_TIMER_KIN
          NF = NF + 1
          FIELDS(NF) = MACRO_TIMER_INTEG
@@ -222,8 +232,12 @@ C
           FIELDS(5 )=44    ; TITLES(FIELDS(5 )) = 'FIXVEL'
           FIELDS(6 )=45    ; TITLES(FIELDS(6 )) = 'RBE3'
           FIELDS(7 )=46    ; TITLES(FIELDS(7 )) = 'GRAV'
-
-          NFIELDS = 7
+          FIELDS(8 )=timer_sfem    ; TITLES(FIELDS(8 )) = 'SFEM'        
+          if(sfem%isfem == 1) then
+            nfields = 8
+          else
+             nfields = 7
+          end if
           CALL PRINT_BLOCK("** KIN COND & TASK0 TIME **",TABTIME,NTIMAX,
      .                      FLAG,OUT_ID,NFIELDS,FIELDS,TITLES)
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i20surfi       ../starter/source/interfaces/inter3d1/i20surfi.F
 !||--- called by ------------------------------------------------------
@@ -70,10 +71,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,LL,NL,ISU1,ISU2,NOD1,NRTM,NRTS,NSN,NMN,
+      INTEGER I,J,K,L,ISU1,ISU2,NOD1,NRTM,NRTS,NSN,NMN,
      .        NLINSA,NLINMA,ISYM,IEDGE,NSNE,NMNE,NLN,
-     .        NLINS,NLINM,LINE1,LINE2,STAT,IL,IG
-      INTEGER TAG(NUMNOD),TAGS(NUMNOD),NEXTK(4),IWORK(70000),
+     .        NLINS,NLINM,LINE1,LINE2
+      INTEGER TAG(NUMNOD),TAGS(NUMNOD),NEXTK(4),
      .        LNTAG(NUMNOD),TAGB(NUMNOD)
       my_real EDG_COS
       DATA NEXTK/1,1,1,-3/
@@ -314,15 +315,15 @@ c-----------------------------------------------------------------
 
 
 !||====================================================================
-!||    i20edge1      ../starter/source/interfaces/inter3d1/i20surfi.F
+!||    i20edge1       ../starter/source/interfaces/inter3d1/i20surfi.F
 !||--- called by ------------------------------------------------------
-!||    i20surfi      ../starter/source/interfaces/inter3d1/i20surfi.F
+!||    i20surfi       ../starter/source/interfaces/inter3d1/i20surfi.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../starter/source/output/message/message.F
-!||    bitset        ../starter/source/interfaces/inter3d1/bitget.F
+!||    ancmsg         ../starter/source/output/message/message.F
+!||    bitset         ../starter/source/interfaces/inter3d1/bitget.F
 !||--- uses       -----------------------------------------------------
-!||    format_mod    ../starter/share/modules1/format_mod.F90
-!||    message_mod   ../starter/share/message_module/message_mod.F
+!||    format_mod     ../starter/share/modules1/format_mod.F90
+!||    message_mod    ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE I20EDGE1(IALLO     ,NSEG0     ,NLIN0   ,NLIN    ,NACTIF  ,
      2                    IXLINE    ,MSVE      ,NSME    ,IEDGE   ,
@@ -334,6 +335,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
       USE FORMAT_MOD , ONLY : FMW_4I
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -370,12 +372,12 @@ C=======================================================================
       NLMAX = 0
       IF(ISU /= 0) NLMAX = 4*NSEG0
 
-      ALLOCATE (LINEIX(2,NLMAX)    ,STAT=stat)
-      ALLOCATE (LINEIX2(2,NLMAX)   ,STAT=stat)
-      ALLOCATE (XLINEIX(3,NLMAX)   ,STAT=stat)
-      ALLOCATE (INDEX(2*NLMAX)     ,STAT=stat)
-      ALLOCATE (TAG(NUMNOD)        ,STAT=stat)
-      ALLOCATE (IXWORK(5,NLMAX)    ,STAT=stat)
+      call my_alloc(LINEIX, 2, NLMAX, "LINEIX", stat=stat)
+      call my_alloc(LINEIX2, 2, NLMAX, "LINEIX2", stat=stat)
+      call my_alloc(XLINEIX, 3, NLMAX, "XLINEIX", stat=stat)
+      call my_alloc(INDEX, 2*NLMAX, "INDEX", stat=stat)
+      call my_alloc(TAG, NUMNOD, "TAG", stat=stat)
+      call my_alloc(IXWORK, 5, NLMAX, "IXWORK", stat=stat)
 
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
@@ -624,32 +626,33 @@ c       nodes
         ENDDO
       ENDIF
 C-----------
-      DEALLOCATE (INDEX)
-      DEALLOCATE (TAG)
-      DEALLOCATE (IXWORK)
-      DEALLOCATE (LINEIX)
-      DEALLOCATE (LINEIX2)
-      DEALLOCATE (XLINEIX)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(TAG)
+      CALL MY_DEALLOC(IXWORK)
+      CALL MY_DEALLOC(LINEIX)
+      CALL MY_DEALLOC(LINEIX2)
+      CALL MY_DEALLOC(XLINEIX)
 C-----------
       RETURN
       END
 
 
 !||====================================================================
-!||    i20bord       ../starter/source/interfaces/inter3d1/i20surfi.F
+!||    i20bord        ../starter/source/interfaces/inter3d1/i20surfi.F
 !||--- called by ------------------------------------------------------
-!||    i20surfi      ../starter/source/interfaces/inter3d1/i20surfi.F
+!||    i20surfi       ../starter/source/interfaces/inter3d1/i20surfi.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg        ../starter/source/output/message/message.F
-!||    bitset        ../starter/source/interfaces/inter3d1/bitget.F
+!||    ancmsg         ../starter/source/output/message/message.F
+!||    bitset         ../starter/source/interfaces/inter3d1/bitget.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod   ../starter/share/message_module/message_mod.F
+!||    message_mod    ../starter/share/message_module/message_mod.F
 !||====================================================================
       SUBROUTINE I20BORD(NSEG  ,SURF_NODES ,TAGB,ISU)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -657,13 +660,13 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER IALLO,NSEG,SURF_NODES(NSEG,4),ISU
+      INTEGER NSEG,SURF_NODES(NSEG,4),ISU
       INTEGER TAGB(*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,NLMAX,STAT,LL,I1,I2,I3,I4,I5,I1M,I2M,IS,BORD,BOLD
-      INTEGER NEXTK(4),IWORK(70000),NL
+      INTEGER I,J,K,L,NLMAX,STAT,LL,I1,I2,I3,I4,I1M,I2M,IS,BORD,BOLD
+      INTEGER NEXTK(4),IWORK(70000)
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: 
      .   LINEIX
       INTEGER, DIMENSION(:), ALLOCATABLE :: 
@@ -679,8 +682,8 @@ C=======================================================================
       I2 = 0
       IF(ISU /= 0)NLMAX = 4*NSEG
 
-      ALLOCATE (LINEIX(2,NLMAX)    ,STAT=stat)
-      ALLOCATE (INDEX(2*NLMAX)     ,STAT=stat)
+      call my_alloc(LINEIX, 2, NLMAX, "LINEIX", stat=stat)
+      call my_alloc(INDEX, 2*NLMAX, "INDEX", stat=stat)
 
       IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                           MSGTYPE=MSGERROR,
@@ -754,8 +757,8 @@ c         last edge is an edge
 
       ENDIF
 
-      DEALLOCATE (INDEX)
-      DEALLOCATE (LINEIX)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(LINEIX)
 C-----------
       RETURN
       END

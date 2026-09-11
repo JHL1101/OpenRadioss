@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    st_qaprint_driver               ../starter/source/output/qaprint/st_qaprint_driver.F
 !||--- called by ------------------------------------------------------
@@ -430,7 +431,7 @@ C-----------------------------------------------
       CALL ST_QAPRINT_OUTPUT_DATABASES(NOM_OPT, INOM_OPT, LACCELM ,ACCELM,LGAUGE,GAUGE)
       CALL ST_QAPRINT_MODEL_TOOLS(NOM_OPT, INOM_OPT, IBOX, IPMAS, NOM_SECT, NSTRF, SECBUF ,
      .                            SKEW   , ISKWN   , XFRAME, NPC,PLD,TABLE,NPTS, 
-     .                            IACTIV , FACTIV  ,SENSORS,FUNC2D)
+     .                            IACTIV , FACTIV  ,SENSORS,FUNC2D,ITAB)
       CALL ST_QAPRINT_MONVOL(T_MONVOL, T_MONVOL_METADATA)
       CALL ST_QAPRINT_FRICTION(NOM_OPT,INOM_OPT,INTBUF_FRIC_TAB,NPFRICORTH,PFRICORTH ,IREPFORTH,PHIFORTH,VFORTH) 
       CALL ST_QAPRINT_REFERENCE_STATE(XREFC     ,XREFTG    ,XREFS     ,TAGXREF   ,

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_visc_prony         ../starter/source/materials/visc/hm_read_visc_prony.F
 !||--- called by ------------------------------------------------------
@@ -50,6 +51,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD 
       USE TABLE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -254,8 +256,8 @@ c-------------------------------------------------
       NUVAR   = 7*NPRONY
       NIPARAM = 2
       NUPARAM = 4*NPRONY + 1
-      ALLOCATE (VISC%UPARAM(NUPARAM))
-      ALLOCATE (VISC%IPARAM(NIPARAM))
+      call my_alloc(VISC%UPARAM, NUPARAM, "VISC%UPARAM")
+      call my_alloc(VISC%IPARAM, NIPARAM, "VISC%IPARAM")
       VISC%NUVAR   = NUVAR
       VISC%NUPARAM = NUPARAM
       VISC%NIPARAM = NIPARAM
@@ -330,61 +332,61 @@ C-----------
      & 5X,'  PRONY SERIES MODEL  :'         ,/,
      & 5X,' --------------------- '         ,/)
  1100 FORMAT(
-     & 5X,'BULK MODULUS FOR VISCO ELASTIC MATERIAL . . . . . . . . . . . . . . . =',1PG20.13/   
-     & 5X,'ORDER OF PRONY SERIES . . . . . . . . . . . . . . . . . . . . . . . . =',I10/)    
+     & 5X,'BULK MODULUS FOR VISCO ELASTIC MATERIAL . . . . . . . . . . . . . . . =',1PG20.13,/
+     & 5X,'ORDER OF PRONY SERIES . . . . . . . . . . . . . . . . . . . . . . . . =',I10,/)    
  1150 FORMAT(
-     & 5X,' ----------------------------------------------------------------------'/
-     & 5X,' PARAMETERS FOR PRONY FUNCTION NUMBER #',I10/
-     & 5X,' ----------------------------------------------------------------------'/)   
+     & 5X,' ----------------------------------------------------------------------',/
+     & 5X,' PARAMETERS FOR PRONY FUNCTION NUMBER #',I10,/
+     & 5X,' ----------------------------------------------------------------------',/)   
  1200 FORMAT(
-     & 5X,'SHEAR RELAXATION G MODULUS  . . . . . . . . . . . . . . . . . . . . . = '1PG20.13/
+     & 5X,'SHEAR RELAXATION G MODULUS  . . . . . . . . . . . . . . . . . . . . . = ',1PG20.13,/
      & 5X,'BETA DECAY SHEAR MODULUS  . . . . . . . . . . . . . . . . . . . . . . =',1PG20.13) 
  1300 FORMAT(   
-     & 5X,'ORDER OF PRONY SERIES . . . . . . . . . . . . . . . . . . . . . . . . =',I10//) 
+     & 5X,'ORDER OF PRONY SERIES . . . . . . . . . . . . . . . . . . . . . . . . =',I10,/,/) 
  1400 FORMAT(
-     & 5X,'BULK RELAXATION K MODULUS . . . . . . . . . . . . . . . . . . . . . . = '1PG20.13/
-     & 5X,'BETAK DECAY BULK MODULUS  . . . . . . . . . . . . . . . . . . . . . . =',1PG20.13//)  
+     & 5X,'BULK RELAXATION K MODULUS . . . . . . . . . . . . . . . . . . . . . . = ',1PG20.13,/
+     & 5X,'BETAK DECAY BULK MODULUS  . . . . . . . . . . . . . . . . . . . . . . =',1PG20.13,/,/)  
  1500 FORMAT(   
-     & 5X,'TABULATED PRONY SERIES FLAG  . . . . . . . . . . . . . . . . . . . . .=',I10/
-     & 5X,'  ITAB=1  FITTING FROM MODULUS VS TIME CURVES'/
-     & 5X,'  ITAB=2  FITTING FROM STORAGE AND LOSS MODULI VS FREQUENCY CURVES'/
-     & 5X,'SHAPE PRONY SERIES FLAG  . . . . . . . . . . . . . . . . . . . . . . .=',I10/
-     & 5X,'  ISHAPE=0 WITHOUT INFINITE MODULUS (DEFAULT)'/
-     & 5X,'  ISHAPE=1 WITH INFINITE MODULUS'/)          
+     & 5X,'TABULATED PRONY SERIES FLAG  . . . . . . . . . . . . . . . . . . . . .=',I10,/
+     & 5X,'  ITAB=1  FITTING FROM MODULUS VS TIME CURVES',/
+     & 5X,'  ITAB=2  FITTING FROM STORAGE AND LOSS MODULI VS FREQUENCY CURVES',/
+     & 5X,'SHAPE PRONY SERIES FLAG  . . . . . . . . . . . . . . . . . . . . . . .=',I10,/
+     & 5X,'  ISHAPE=0 WITHOUT INFINITE MODULUS (DEFAULT)',/
+     & 5X,'  ISHAPE=1 WITH INFINITE MODULUS',/)          
  1600 FORMAT(
-     & 5X,'LEAST SQUARE FITTING FROM SHEAR MODULUS G FUNCTION ID. . . . . . . . .= 'I10/
-     & 5X,'TIME SCALE FACTOR FOR SHEAR MODULUS  . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR SHEAR MODULUS . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/)     
+     & 5X,'LEAST SQUARE FITTING FROM SHEAR MODULUS G FUNCTION ID. . . . . . . . .= ',I10,/
+     & 5X,'TIME SCALE FACTOR FOR SHEAR MODULUS  . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR SHEAR MODULUS . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)     
  1800 FORMAT(
-     & 5X,'LEAST SQUARE FITTING FROM BULK MODULUS K FUNCTION ID . . . . . . . . .= 'I10/
-     & 5X,'TIME SCALE FACTOR FOR BULK MODULUS . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR BULK MODULUS  . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/)
+     & 5X,'LEAST SQUARE FITTING FROM BULK MODULUS K FUNCTION ID . . . . . . . . .= ',I10,/
+     & 5X,'TIME SCALE FACTOR FOR BULK MODULUS . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR BULK MODULUS  . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)
  2000 FORMAT(
-     & 5X,'LEAST SQUARE FITTING FROM STORAGE SHEAR MODULUS GL FUNCTION ID . . . .= 'I10/
-     & 5X,'FREQUENCY SCALE FACTOR FOR STORAGE SHEAR MODULUS . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR STORAGE SHEAR MODULUS . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'LEAST SQUARE FITTING FROM LOSS SHEAR MODULUS GS FUNCTION ID  . . . . .= 'I10/
-     & 5X,'FREQUENCY SCALE FACTOR FOR LOSS SHEAR MODULUS  . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR LOSS SHEAR MODULUS FUNCTION . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/)
+     & 5X,'LEAST SQUARE FITTING FROM STORAGE SHEAR MODULUS GL FUNCTION ID . . . .= ',I10,/
+     & 5X,'FREQUENCY SCALE FACTOR FOR STORAGE SHEAR MODULUS . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR STORAGE SHEAR MODULUS . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'LEAST SQUARE FITTING FROM LOSS SHEAR MODULUS GS FUNCTION ID  . . . . .= ',I10,/
+     & 5X,'FREQUENCY SCALE FACTOR FOR LOSS SHEAR MODULUS  . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR LOSS SHEAR MODULUS FUNCTION . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)
  2500 FORMAT(
-     & 5X,'LEAST SQUARE FITTING FROM STORAGE BULK MODULUS KL FUNCTION ID  . . . .= 'I10/
-     & 5X,'FREQUENCY SCALE FACTOR FOR STORAGE BULK MODULUS  . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR STORAGE BULK MODULUS  . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'LEAST SQUARE FITTING FROM LOSS BULK MODULUS GS FUNCTION ID . . . . . .= 'I10/
-     & 5X,'FREQUENCY SCALE FACTOR FOR LOSS BULK MODULUS . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'SCALE FACTOR FOR LOSS BULK MODULUS FUNCTION  . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/
-     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= '1PG20.13/)
+     & 5X,'LEAST SQUARE FITTING FROM STORAGE BULK MODULUS KL FUNCTION ID  . . . .= ',I10,/
+     & 5X,'FREQUENCY SCALE FACTOR FOR STORAGE BULK MODULUS  . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR STORAGE BULK MODULUS  . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'LEAST SQUARE FITTING FROM LOSS BULK MODULUS GS FUNCTION ID . . . . . .= ',I10,/
+     & 5X,'FREQUENCY SCALE FACTOR FOR LOSS BULK MODULUS . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'SCALE FACTOR FOR LOSS BULK MODULUS FUNCTION  . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL COST FUNCTION VALUE  . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/
+     & 5X,'FINAL DERIVATIVE VALUE . . . . . . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)
  3000 FORMAT(
-     & 5X,'SHEAR MODULUS INFINITE VALUE GINF  . . . . . . . . . . . . . . . . . .= '1PG20.13/)
+     & 5X,'SHEAR MODULUS INFINITE VALUE GINF  . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)
  3500 FORMAT(
-     & 5X,'BULK MODULUS INFINITE VALUE KINF . . . . . . . . . . . . . . . . . . .= '1PG20.13/)
+     & 5X,'BULK MODULUS INFINITE VALUE KINF . . . . . . . . . . . . . . . . . . .= ',1PG20.13,/)
      
       RETURN
       END
@@ -406,6 +408,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE TABLE_MOD
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -443,7 +446,8 @@ C
         IF (TABLE(I)%NOTABLE == FCT_ID) THEN
           ! Number of data points
           SIZE_TIME = SIZE(TABLE(I)%X(1)%VALUES)
-          ALLOCATE(YI(SIZE_TIME),TIME(SIZE_TIME))
+          call my_alloc(YI, SIZE_TIME, "YI")
+          call my_alloc(TIME, SIZE_TIME, "TIME")
           ! Recovering data (time and modulus)
           DO II = 1,SIZE_TIME
             TIME(II) = TABLE(I)%X(1)%VALUES(II)*XGSCALE
@@ -477,10 +481,19 @@ C
       ENDIF
 C      
       ! Allocation and initialization of the vectors
-      ALLOCATE(XI(2*NPRONY),XI_TR(2*NPRONY),JAC(SIZE_TIME,2*NPRONY),FXI(SIZE_TIME),
-     .         DELTAY(SIZE_TIME),JACTJAC(2*NPRONY,2*NPRONY),ID(2*NPRONY,2*NPRONY),
-     .         JACTDY(2*NPRONY),IPIV(2*NPRONY),JACT(2*NPRONY,SIZE_TIME),FXI_TR(SIZE_TIME),
-     .         VECT(2*NPRONY),MU(2*NPRONY))
+      call my_alloc(XI, 2*NPRONY, "XI")
+      call my_alloc(XI_TR, 2*NPRONY, "XI_TR")
+      call my_alloc(JAC, SIZE_TIME, 2*NPRONY, "JAC")
+      call my_alloc(FXI, SIZE_TIME, "FXI")
+      call my_alloc(DELTAY, SIZE_TIME, "DELTAY")
+      call my_alloc(JACTJAC, 2*NPRONY, 2*NPRONY, "JACTJAC")
+      call my_alloc(ID, 2*NPRONY, 2*NPRONY, "ID")
+      call my_alloc(JACTDY, 2*NPRONY, "JACTDY")
+      call my_alloc(IPIV, 2*NPRONY, "IPIV")
+      call my_alloc(JACT, 2*NPRONY, SIZE_TIME, "JACT")
+      call my_alloc(FXI_TR, SIZE_TIME, "FXI_TR")
+      call my_alloc(VECT, 2*NPRONY, "VECT")
+      call my_alloc(MU, 2*NPRONY, "MU")
 C
       ! Initialization of parameters value
       DO I = 1,NPRONY
@@ -640,7 +653,21 @@ C
       DERIV = JACTDY_N2
 C
       ! Deallocation of tables
-      DEALLOCATE(XI,XI_TR,JAC,FXI,DELTAY,JACTJAC,ID,JACTDY,IPIV,JACT,FXI_TR,VECT,YI,TIME,MU)      
+      CALL MY_DEALLOC(XI)
+      CALL MY_DEALLOC(XI_TR)
+      CALL MY_DEALLOC(JAC)
+      CALL MY_DEALLOC(FXI)
+      CALL MY_DEALLOC(DELTAY)
+      CALL MY_DEALLOC(JACTJAC)
+      CALL MY_DEALLOC(ID)
+      CALL MY_DEALLOC(JACTDY)
+      CALL MY_DEALLOC(IPIV)
+      CALL MY_DEALLOC(JACT)
+      CALL MY_DEALLOC(FXI_TR)
+      CALL MY_DEALLOC(VECT)
+      CALL MY_DEALLOC(YI)
+      CALL MY_DEALLOC(TIME)
+      CALL MY_DEALLOC(MU)
       END
 
 !||====================================================================
@@ -662,6 +689,7 @@ C   M o d u l e s
 C-----------------------------------------------
       USE TABLE_MOD
       USE MESSAGE_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -719,8 +747,10 @@ C
       ! --------------------------------------------------------------------
       SIZE_FREQS = SIZE(TABLE(ITABS)%X(1)%VALUES)
       SIZE_FREQL = SIZE(TABLE(ITABL)%X(1)%VALUES)
-      ALLOCATE(FREQS(SIZE_FREQS),YIS_TEMP(SIZE_FREQS),
-     .         FREQL(SIZE_FREQL),YIL_TEMP(SIZE_FREQL))
+      call my_alloc(FREQS, SIZE_FREQS, "FREQS")
+      call my_alloc(YIS_TEMP, SIZE_FREQS, "YIS_TEMP")
+      call my_alloc(FREQL, SIZE_FREQL, "FREQL")
+      call my_alloc(YIL_TEMP, SIZE_FREQL, "YIL_TEMP")
       FREQS(1:SIZE_FREQS)    = TABLE(ITABS)%X(1)%VALUES(1:SIZE_FREQS)*XGS_SCALE
       YIS_TEMP(1:SIZE_FREQS) = TABLE(ITABS)%Y%VALUES(1:SIZE_FREQS)*YGS_SCALE
       FREQL(1:SIZE_FREQL)    = TABLE(ITABL)%X(1)%VALUES(1:SIZE_FREQL)*XGL_SCALE
@@ -735,7 +765,9 @@ C
         IF (SQRT(DOT_PRODUCT(FREQS-FREQL,FREQS-FREQL))<EM08) THEN
           FLAG = 0
           SIZE_FREQ = SIZE_FREQS
-          ALLOCATE(FREQ(SIZE_FREQ),YIS(SIZE_FREQ),YIL(SIZE_FREQ))
+          call my_alloc(FREQ, SIZE_FREQ, "FREQ")
+          call my_alloc(YIS, SIZE_FREQ, "YIS")
+          call my_alloc(YIL, SIZE_FREQ, "YIL")
           MXFREQ = MAXVAL(FREQS)
           DO II = 1, SIZE_FREQ
             FREQ(II) = FREQS(II)*(HUNDRED/MXFREQ)
@@ -764,7 +796,10 @@ C
         ENDDO
         ! -> Allocating and filling tables
         !----------------------------------------------------------------------------        
-        ALLOCATE(IDX(SIZE_FREQ),FREQ(SIZE_FREQ),YIS(SIZE_FREQ),YIL(SIZE_FREQ))
+        call my_alloc(IDX, SIZE_FREQ, "IDX")
+        call my_alloc(FREQ, SIZE_FREQ, "FREQ")
+        call my_alloc(YIS, SIZE_FREQ, "YIS")
+        call my_alloc(YIL, SIZE_FREQ, "YIL")
         FREQ(1:SIZE_FREQS) = FREQS(1:SIZE_FREQS)
         K = 0
         DO I = 1,SIZE_FREQL
@@ -829,11 +864,25 @@ C
       ENDIF
 C      
       ! Allocation and initialization of the vectors
-      ALLOCATE(XI(2*NPRONY),XI_TR(2*NPRONY),JACS(SIZE_FREQ,2*NPRONY),JACL(SIZE_FREQ,2*NPRONY),
-     .         FXIS(SIZE_FREQ),FXIL(SIZE_FREQ),DELTAYS(SIZE_FREQ),DELTAYL(SIZE_FREQ),
-     .         JACTJAC(2*NPRONY,2*NPRONY),ID(2*NPRONY,2*NPRONY),JACTDY(2*NPRONY),IPIV(2*NPRONY),
-     .         JACST(2*NPRONY,SIZE_FREQ),JACLT(2*NPRONY,SIZE_FREQ),FXIS_TR(SIZE_FREQ),
-     .         FXIL_TR(SIZE_FREQ),VECT(2*NPRONY),MU(2*NPRONY),WEIGHT(SIZE_FREQ,SIZE_FREQ))
+      call my_alloc(XI, 2*NPRONY, "XI")
+      call my_alloc(XI_TR, 2*NPRONY, "XI_TR")
+      call my_alloc(JACS, SIZE_FREQ, 2*NPRONY, "JACS")
+      call my_alloc(JACL, SIZE_FREQ, 2*NPRONY, "JACL")
+      call my_alloc(FXIS, SIZE_FREQ, "FXIS")
+      call my_alloc(FXIL, SIZE_FREQ, "FXIL")
+      call my_alloc(DELTAYS, SIZE_FREQ, "DELTAYS")
+      call my_alloc(DELTAYL, SIZE_FREQ, "DELTAYL")
+      call my_alloc(JACTJAC, 2*NPRONY, 2*NPRONY, "JACTJAC")
+      call my_alloc(ID, 2*NPRONY, 2*NPRONY, "ID")
+      call my_alloc(JACTDY, 2*NPRONY, "JACTDY")
+      call my_alloc(IPIV, 2*NPRONY, "IPIV")
+      call my_alloc(JACST, 2*NPRONY, SIZE_FREQ, "JACST")
+      call my_alloc(JACLT, 2*NPRONY, SIZE_FREQ, "JACLT")
+      call my_alloc(FXIS_TR, SIZE_FREQ, "FXIS_TR")
+      call my_alloc(FXIL_TR, SIZE_FREQ, "FXIL_TR")
+      call my_alloc(VECT, 2*NPRONY, "VECT")
+      call my_alloc(MU, 2*NPRONY, "MU")
+      call my_alloc(WEIGHT, SIZE_FREQ, SIZE_FREQ, "WEIGHT")
 C
       ! Initialization of parameters value
       DO I = 1,NPRONY
@@ -1026,9 +1075,29 @@ C
       DERIV = JACTDY_N2
 C
       ! Deallocation of tables
-      DEALLOCATE(XI,XI_TR,JACS,JACL,FXIS,FXIL,DELTAYS,DELTAYL,JACTJAC,ID,JACTDY,IPIV,
-     .           JACST,JACLT,FXIS_TR,FXIL_TR,VECT,MU,FREQS,YIS_TEMP,FREQL,YIL_TEMP)    
-      IF (ALLOCATED(IDX)) DEALLOCATE(IDX)
+      CALL MY_DEALLOC(XI)
+      CALL MY_DEALLOC(XI_TR)
+      CALL MY_DEALLOC(JACS)
+      CALL MY_DEALLOC(JACL)
+      CALL MY_DEALLOC(FXIS)
+      CALL MY_DEALLOC(FXIL)
+      CALL MY_DEALLOC(DELTAYS)
+      CALL MY_DEALLOC(DELTAYL)
+      CALL MY_DEALLOC(JACTJAC)
+      CALL MY_DEALLOC(ID)
+      CALL MY_DEALLOC(JACTDY)
+      CALL MY_DEALLOC(IPIV)
+      CALL MY_DEALLOC(JACST)
+      CALL MY_DEALLOC(JACLT)
+      CALL MY_DEALLOC(FXIS_TR)
+      CALL MY_DEALLOC(FXIL_TR)
+      CALL MY_DEALLOC(VECT)
+      CALL MY_DEALLOC(MU)
+      CALL MY_DEALLOC(FREQS)
+      CALL MY_DEALLOC(YIS_TEMP)
+      CALL MY_DEALLOC(FREQL)
+      CALL MY_DEALLOC(YIL_TEMP)
+      IF (ALLOCATED(IDX)) CALL MY_DEALLOC(IDX)
       END
 
 

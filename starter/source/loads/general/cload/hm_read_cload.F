@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_cload          ../starter/source/loads/general/cload/hm_read_cload.F
 !||--- called by ------------------------------------------------------
@@ -84,9 +85,8 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       my_real
      .        FCX,FCY,FAC_FCX,FAC_FCY
-      INTEGER I,J,K,K1,K2,NOD, NCUR, NOSKEW, ISENS,NLD0,NN,IGU,IGS,
-     .        UID,IAD,NS,IWA,ID,NUM0,IFLAGUNIT,COMPT,SUB_INDEX,IDIR,IFUNCTYPE
-      INTEGER NNB
+      INTEGER I,J,K, NCUR, NOSKEW, ISENS,NLD0,NN,IGU,IGS,
+     .        UID,NS,ID,NUM0,IFLAGUNIT,SUB_INDEX,IDIR,IFUNCTYPE
       CHARACTER MESS*40,X*1, Y*1, Z*1, XX*2, YY*2, ZZ*2
       CHARACTER(LEN=NCHARFIELD) :: XYZ
       CHARACTER(LEN=NCHARTITLE) :: TITR

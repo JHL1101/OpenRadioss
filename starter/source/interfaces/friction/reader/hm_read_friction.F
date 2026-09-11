@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_friction           ../starter/source/interfaces/friction/reader/hm_read_friction.F
 !||--- called by ------------------------------------------------------
@@ -54,6 +55,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -106,11 +108,11 @@ C=======================================================================
 
        IS_AVAILABLE = .FALSE.
 
-       ALLOCATE (TRIGRPT(LENG),STAT=stat) 
-       ALLOCATE (INDEX(2*LENG),STAT=stat) 
-       ALLOCATE (NEWGRP(LENG+1),STAT=stat) 
-       ALLOCATE (TAGG1(LENG),STAT=stat) 
-       ALLOCATE (TAGG2(LENG),STAT=stat) 
+       call my_alloc(TRIGRPT, LENG, "TRIGRPT", stat=stat)
+       call my_alloc(INDEX, 2*LENG, "INDEX", stat=stat)
+       call my_alloc(NEWGRP, LENG+1, "NEWGRP", stat=stat)
+       call my_alloc(TAGG1, LENG, "TAGG1", stat=stat)
+       call my_alloc(TAGG2, LENG, "TAGG2", stat=stat)
 
        CALL FRETITL(TITR,NOM_OPT(LNOPT1-LTITR+1,NIF),LTITR) 
 C
@@ -1269,7 +1271,11 @@ C
 
        ENDDO ! N=1,NLINE
 
-       DEALLOCATE (TRIGRPT,INDEX,NEWGRP,TAGG1,TAGG2) 
+       CALL MY_DEALLOC(TRIGRPT)
+       CALL MY_DEALLOC(INDEX)
+       CALL MY_DEALLOC(NEWGRP)
+       CALL MY_DEALLOC(TAGG1)
+       CALL MY_DEALLOC(TAGG2)
 
 C
        RETURN

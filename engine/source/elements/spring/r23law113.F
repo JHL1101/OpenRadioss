@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r23law113           ../engine/source/elements/spring/r23law113.F
 !||--- called by ------------------------------------------------------
@@ -61,7 +62,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      E   GRESAV,    GRTH,      IGRTH,     MSRT,
      F   DMELRT,    H3D_DATA,  JSMS,      IGRE,
      G   NFT,       PRELD1,    STF_F,     STF,
-     S   SANIN,     IRESP,     SNPC)
+     S   SANIN,     IRESP,     SNPC,      FLG_SPR_DT)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -100,6 +101,7 @@ C-----------------------------------------------
       INTEGER IXR(NIXR,*), NPF(*),IADR(3,*),IPARTR(*),
      .        IGEO(NPROPGI,*),JFT,JLT,NELTST ,ITYPTST,OFFSET,
      .        NEL,MTN,GRTH(*),IGRTH(*),FLG_KJ2,IPM(NPROPMI,*)
+      INTEGER, INTENT(INOUT) :: FLG_SPR_DT
       my_real DT2T ,
      .   GEO(NPROPG,*),X(*),F(*),TF(STF),SKEW(LSKEW,*),FSKY(*),
      .   VR(*), V(*), AR(*), STIFN(*),STIFR(*),MS(*), IN(*),
@@ -176,7 +178,7 @@ C
 C
       FR_W_E(1:NEL) = ZERO
 C=======================================================================
-C=======================================================================
+C======================================================================= 
        CALL R23COOR3(
      1   X,       VR,      IXR,     XDP,
      2   X1DP,    X2DP,    NGL,     X1,
@@ -263,7 +265,8 @@ C
      3   MS,       IN,       MSRT,     DMELRT,
      4   GBUF%G_DT,GBUF%DT,  NGL,      XCR,
      5   XIN,      XM,       XKM,      XCM,
-     6   XKR,      NC1,      NC2,      JSMS)
+     6   XKR,      NC1,      NC2,      JSMS,
+     7   NEL,      GBUF%RBODY_NODE,    FLG_SPR_DT)
         CALL R23BILAN(
      1   GBUF%EINT,PARTSAV,  IXR,      GEO,
      2   V,        IPARTR,   GBUF%MASS,GRESAV,

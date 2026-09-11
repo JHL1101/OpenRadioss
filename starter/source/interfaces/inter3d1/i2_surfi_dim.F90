@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,24 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i2_surfi_dim_mod   ../starter/source/interfaces/inter3d1/i2_surfi_dim.F90
 !||--- called by ------------------------------------------------------
 !||    lecint             ../starter/source/interfaces/interf1/lecint.F
 !||====================================================================
       module i2_surfi_dim_mod
-      implicit none
+        implicit none
       contains
 ! ======================================================================================================================
 !                                                   procedures
 ! ======================================================================================================================
-!! \brief this subroutine doing the dimensioning of the interface type2 w/ input surf/surf
+!! \brief This subroutine performs the dimensioning of the interface type2 with input surf/surf
 !||====================================================================
 !||    i2_surfi_dim     ../starter/source/interfaces/inter3d1/i2_surfi_dim.F90
 !||--- called by ------------------------------------------------------
@@ -51,6 +52,8 @@
           use groupdef_mod
           use select_s2s_mod, only : select_s2s
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -88,13 +91,13 @@
           nsu1  = igrsurf(isu1)%nseg
           nsu2  = igrsurf(isu2)%nseg
           id  = ipari(15)
-          allocate(itags1(nsu1))
-          allocate(itags2(nsu2))
+          call my_alloc(itags1,nsu1,"itags1")
+          call my_alloc(itags2,nsu2,"itags2")
           itags1 = 1
           itags2 = 1
 !
           call select_s2s(nsu1,nsu2,igrsurf(isu1)%nodes,igrsurf(isu2)%nodes,itags1,itags2,x,numnod,dsearch)
-          allocate(itagn(numnod))
+          call my_alloc(itagn,numnod,"itagn")
           itagn = 0
           l = 0
           do i=1,igrsurf(isu1)%nseg
@@ -132,9 +135,9 @@
           end do
           nsn = nsn + ns
           nmn = nsn
-          deallocate(itags1)
-          deallocate(itags2)
-          deallocate(itagn)
+          call my_dealloc(itags1)
+          call my_dealloc(itags2)
+          call my_dealloc(itagn)
 
 ! ----------------------------------------------------------------------------------------------------------------------
         end subroutine i2_surfi_dim

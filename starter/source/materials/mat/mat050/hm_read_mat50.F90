@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat50_mod   ../starter/source/materials/mat/mat050/hm_read_mat50.F90
 !||--- called by ------------------------------------------------------
@@ -60,6 +61,7 @@
           use constant_mod , only : pi,one,third,two,zero,em20,ep10,ep20
           use func_table_copy_mod
           use precision_mod, only : WP
+          use MY_ALLOC_MOD
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -317,7 +319,7 @@
           ! create local function table from tabulated yield curves
 ! ----------------------------------------------------------------------------------------------------------------------
           mat_param%ntable = 6
-          allocate (mat_param%table(mat_param%ntable))
+          allocate(mat_param%table(mat_param%ntable))
 !
           mat_param%table(1)%notable = n11
           mat_param%table(2)%notable = n22
@@ -368,8 +370,8 @@
           end if
           mat_param%nfunc = 0
 !
-          allocate (mat_param%uparam(mat_param%nuparam))
-          allocate (mat_param%iparam(mat_param%niparam))
+          call my_alloc(mat_param%uparam, mat_param%nuparam, "mat_param%uparam")
+          call my_alloc(mat_param%iparam, mat_param%niparam, "mat_param%iparam")
 !
           mat_param%iparam(1)  = iflag1
           mat_param%iparam(2)  = iflag2
@@ -429,7 +431,11 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           call init_mat_keyword(mat_param,"HOOK")
           call init_mat_keyword(mat_param,"COMPRESSIBLE")
-          call init_mat_keyword(mat_param,"SMALL_STRAIN")
+          if (icompact == 1) then
+            call init_mat_keyword(mat_param,"LARGE_STRAIN")
+          else
+            call init_mat_keyword(mat_param,"SMALL_STRAIN")
+          end if
           call init_mat_keyword(mat_param,"ORTHOTROPIC")
           ! properties compatibility
           call init_mat_keyword(mat_param,"SOLID_ISOTROPIC")

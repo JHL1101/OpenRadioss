@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    chktyp2                ../starter/source/interfaces/interf1/chktyp2.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -65,10 +67,11 @@ C-----------------------------------------------
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
 C-----------------------------------------------
-      ALLOCATE(TAGHIER(NUMNOD))
+      call my_alloc(TAGHIER, NUMNOD, "TAGHIER")
       TAGHIER(1:NUMNOD) = 0
+C
       DO N=1,NINTER
-         NTY =I PARI(7,N)
+         NTY =IPARI(7,N)
          IF (NTY == 2) THEN
           NRTS  =IPARI(3,N)
           NRTM  =IPARI(4,N)
@@ -82,13 +85,14 @@ C
           ENDDO
          ENDIF
       ENDDO
+C
       DO N=1,NINTER
         NTY = IPARI(7,N)
         ID  = NOM_OPT(1,N)
         CALL FRETITL2(TITR, NOM_OPT(LNOPT1-LTITR+1,N),LTITR)
         IF (NTY == 2) THEN
           ILEV = IPARI(20,N)
-          IF (ILEV == 0 .OR. ILEV == 1 .OR. ILEV == 27 .OR. ILEV == 28) THEN
+          IF (ILEV /= 25 .OR. ILEV /= 26) THEN
             NMN  = IPARI(6,N)
             DO II=1,NMN        
               J=INTBUF_TAB(N)%MSR(II)
@@ -398,7 +402,7 @@ C
            END IF
         END DO
       END IF
-      DEALLOCATE(TAGHIER)
+      CALL MY_DEALLOC(TAGHIER)
 C
       RETURN
       END

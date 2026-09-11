@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_perturb_part_solid   ../starter/source/general_controls/computation/hm_read_perturb_part_solid.F
 !||--- called by ------------------------------------------------------
@@ -51,6 +52,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARKEY, NCHARFIELD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -176,7 +178,7 @@ c
         MAX_PART = MAX (MAX_PART,CPT_PART)
       ENDDO
       ! Allocation of tables
-      ALLOCATE(TAB_PART(NPERTURB,MAX_PART))
+      call my_alloc(TAB_PART, NPERTURB, MAX_PART, "TAB_PART")
 c
       !----------------------------------------------------------------------
       ! 2nd Loop over /PERTURB/PART for reading and computing perturbation
@@ -290,21 +292,21 @@ C
         ! Set up random seed
         IF( SEED == 0 )THEN
           CALL RANDOM_SEED(SIZE=I_SEED)
-          ALLOCATE(A_SEED(1:I_SEED))
+          call my_alloc(A_SEED, I_SEED, "A_SEED")
           CALL RANDOM_SEED(GET=A_SEED)
           CALL DATE_AND_TIME(values=DT_SEED)
           A_SEED=DT_SEED(8)*DT_SEED(7)*DT_SEED(6)
           SEED=DT_SEED(8)*DT_SEED(7)*DT_SEED(6)
           CALL RANDOM_SEED(PUT=A_SEED)
           SEED_RANDOM = 1
-          DEALLOCATE(A_SEED)
+          CALL MY_DEALLOC(A_SEED)
         ELSE
           CALL RANDOM_SEED(SIZE=I_SEED)
-          ALLOCATE(A_SEED(1:I_SEED))
+          call my_alloc(A_SEED, I_SEED, "A_SEED")
           A_SEED=SEED
           CALL RANDOM_SEED(PUT=A_SEED)
           SEED_RANDOM = 0
-          DEALLOCATE(A_SEED) 
+          CALL MY_DEALLOC(A_SEED)
         ENDIF
 C
         ! Build uniform distribution
@@ -312,7 +314,7 @@ C
         CHAR1=''
         CHAR2=''
         DISTRIB(1:50) = 0
-        ALLOCATE(ARRAY(NB_RANDOM+2))
+        call my_alloc(ARRAY, NB_RANDOM+2, "ARRAY")
         CALL RANDOM_NUMBER(ARRAY)
 C
         ! Build normal distribution
@@ -372,9 +374,9 @@ c
         IF(SEED_RANDOM == 1) WRITE (IOUT,2100) SEED
         WRITE(IOUT,*) ' '
         WRITE(IOUT,*) ' '
-        IF (ALLOCATED(ARRAY)) DEALLOCATE(ARRAY)        
+        IF (ALLOCATED(ARRAY)) CALL MY_DEALLOC(ARRAY)
       ENDDO
-      DEALLOCATE(TAB_PART)      
+      CALL MY_DEALLOC(TAB_PART)
 C-------------------------------------------------------------
  6000 FORMAT(/' PERTURBATION  ID',I10/
      +        ' ---------------'/

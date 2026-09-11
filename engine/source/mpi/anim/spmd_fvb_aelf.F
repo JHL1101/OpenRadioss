@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_fvb_aelf         ../engine/source/mpi/anim/spmd_fvb_aelf.F
+!||    spmd_fvb_aelf   ../engine/source/mpi/anim/spmd_fvb_aelf.F
 !||--- called by ------------------------------------------------------
-!||    genani                ../engine/source/output/anim/generate/genani.F
+!||    genani          ../engine/source/output/anim/generate/genani.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    fvbag_mod             ../engine/share/modules/fvbag_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    fvbag_mod       ../engine/share/modules/fvbag_mod.F
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_FVB_AELF(FVMASS , FVPRES, FVQX  , FVQY  , FVQZ  ,
      .                         FVRHO  , FVENER, FVCSON, FVGAMA, FVVISU,
@@ -39,7 +40,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -61,7 +62,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
       INTEGER ELOFF, I, PMAIN, J, K, KK, N, NN, IDP, ITAG, MSGOFF,
-     .        NNTR, LEN, STAT(MPI_STATUS_SIZE), IERR,MSGOFF2
+     .        NNTR, LEN, MSGOFF2
       my_real
      .        GAMA, SSP, FAC
       my_real
@@ -114,14 +115,12 @@ C
                ELOFF=ELOFF+FVDATA(I)%NNTR
             ELSE
                ITAG=MSGOFF
-               CALL MPI_RECV(NNTR, 1, MPI_INTEGER, IT_SPMD(PMAIN),
-     .                       ITAG, SPMD_COMM_WORLD, STAT, IERR)
+               CALL SPMD_RECV(NNTR, 1, IT_SPMD(PMAIN), ITAG)
 C
                LEN=10*NNTR
                ALLOCATE(RBUF(LEN))
                ITAG=MSGOFF2
-               CALL MPI_RECV(RBUF, LEN, REAL, IT_SPMD(PMAIN),
-     .                       ITAG, SPMD_COMM_WORLD, STAT, IERR)
+               CALL SPMD_RECV(RBUF(1:LEN), LEN, IT_SPMD(PMAIN), ITAG)
 C
                DO J=1,NNTR
                   NN=FVEL2FA(ELOFF+J)
@@ -143,8 +142,7 @@ C
             IF (ISPMD==PMAIN-1) THEN
                NNTR=FVDATA(I)%NNTR
                ITAG=MSGOFF
-               CALL MPI_SEND(NNTR, 1, MPI_INTEGER, IT_SPMD(1),
-     .                       ITAG, SPMD_COMM_WORLD, IERR)
+               CALL SPMD_SEND(NNTR, 1, IT_SPMD(1), ITAG)
 C
                LEN=10*NNTR
                ALLOCATE(RBUF(LEN))
@@ -193,8 +191,7 @@ C
                   ENDDO
                ENDDO
                ITAG=MSGOFF2
-               CALL MPI_SEND(RBUF, LEN, REAL, IT_SPMD(1),
-     .                       ITAG, SPMD_COMM_WORLD, IERR)
+               CALL SPMD_SEND(RBUF(1:LEN), LEN, IT_SPMD(1), ITAG)
 C
                DEALLOCATE(RBUF)        
             ENDIF

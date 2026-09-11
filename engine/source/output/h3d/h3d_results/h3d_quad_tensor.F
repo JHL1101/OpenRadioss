@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    h3d_quad_tensor        ../engine/source/output/h3d/h3d_results/h3d_quad_tensor.F
@@ -81,23 +82,15 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 C     REAL
       my_real
-     .   A1,A2,A3,THK,Y1,Y2,Y3,Y4,Z1,Z2,Z3,Z4,
-     .   SY,SZ,TY,TZ,SUMA,R11,R12,R13,R21,R22,
-     .   R23,R31,R32,R33,S1,S2,S4,T1,T2,T3,T4,CT,CS,
-     .   G22,G23,G32,G33,T22,T23,T32,T33
-      my_real
-     .   SIGE(MVSIZ,5)
-      my_real
      .   EVAR(6,MVSIZ), GAMA(6,MVSIZ)
  
       INTEGER I, NG, NEL, NFT, ITY, LFT, NPT, 
-     .        N,J,LLT,MLW,ISTRAIN,IL,IR,IS,IT,NPTR,NPTS,NLAY,
-     .        IPID,I1,I2,NS1,NS2,ISTRE,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,NNI,N0,
-     .        IHBE,IREP,BUF,NPG,K,ISROT,NUVARV,IVISC,
-     .        IPMAT,IGTYP,MATLY,ISUBSTACK,IIGEO,IADI,IPMAT_IPLY,
-     .        NPT_ALL,NPTT,ILAY,IUS,ID_PLY,IPANG,IPPOS,IPTHK,OFFSET,ISELECT,
-     .        IPLY,IUVAR,IAD,JALE,JTURB,JCVT,NC1,NC2,NC3,NC4,ISORTH
+     .        N,LLT,MLW,ISTRAIN,IR,IS,IT,NPTR,NPTS,
+     .        NN3,
+     .        ISROT,IVISC,
+     .        IGTYP,ISUBSTACK,
+     .        NPTT,ILAY,
+     .        IUVAR,IAD,JALE,JTURB,JCVT,ISORTH,IPR,IPS
       INTEGER IOK_PART(MVSIZ), JJ(6), IS_WRITTEN_TENSOR(MVSIZ)
 C
  
@@ -273,16 +266,14 @@ C-----------------------------------------------
 c
                 DO I=1,NEL
                   N = I + NFT   
-                  DO IS=1,NPTS               
-                   DO IT=1,NPTT
-                    DO IR=1,NPTR
-                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IR,IS,IT)        
+                  DO IPS=1,NPTS               
+                    DO IPR=1,NPTR
+                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IPR,IPS,1)        
                      EVAR(1,I) = EVAR(1,I) + LBUF%STRA(JJ(1) + I)/NPT
                      EVAR(2,I) = EVAR(2,I) + LBUF%STRA(JJ(2) + I)/NPT
                      EVAR(4,I) = EVAR(4,I) + LBUF%STRA(JJ(4) + I)*HALF/NPT
                      IS_WRITTEN_TENSOR(I) = 1
                     ENDDO
-                   ENDDO
                   ENDDO
                 ENDDO
 
@@ -321,10 +312,9 @@ C-----------------------------------------------
 c
                 DO I=1,NEL
                   N = I + NFT   
-                  DO IS=1,NPTS               
-                   DO IT=1,NPTT
-                    DO IR=1,NPTR
-                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IR,IS,IT)                                         
+                  DO IPS=1,NPTS               
+                    DO IPR=1,NPTR
+                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IPR,IPS,1)                                         
                      IF(ELBUF_TAB(NG)%BUFLY(1)%L_DGLO > 0) THEN
                        EVAR(1,I) = EVAR(1,I)+LBUF%DGLO(JJ(1) + I)/NPT
                        EVAR(2,I) = EVAR(2,I)+LBUF%DGLO(JJ(2) + I)/NPT
@@ -332,7 +322,6 @@ c
                        IS_WRITTEN_TENSOR(I) = 1
                      ENDIF
                    ENDDO                                                   
-                  ENDDO                                                    
                  ENDDO                                                     
                 ENDDO   
 c                                                  
@@ -358,16 +347,14 @@ C-----------------------------------------------
 c
                 DO I=1,NEL
                   N = I + NFT   
-                  DO IS=1,NPTS               
-                   DO IT=1,NPTT
-                    DO IR=1,NPTR
-                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IR,IS,IT)        
+                  DO IPS=1,NPTS               
+                    DO IPR=1,NPTR
+                     LBUF =>  ELBUF_TAB(NG)%BUFLY(1)%LBUF(IPR,IPS,1)        
                      EVAR(1,I) = EVAR(1,I) + LBUF%PLA(JJ(1) + I + NEL)/NPT
                      EVAR(2,I) = EVAR(2,I) + LBUF%PLA(JJ(2) + I + NEL)/NPT
                      EVAR(4,I) = EVAR(4,I) + LBUF%PLA(JJ(4) + I + NEL)*HALF/NPT
                      IS_WRITTEN_TENSOR(I) = 1
                     ENDDO
-                   ENDDO
                   ENDDO
                 ENDDO
 

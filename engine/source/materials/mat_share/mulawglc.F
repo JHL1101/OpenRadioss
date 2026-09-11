@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mulawglc                      ../engine/source/materials/mat_share/mulawglc.F
 !||--- called by ------------------------------------------------------
@@ -30,6 +31,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    roto                          ../engine/source/airbag/roto.F
 !||    sigeps01g                     ../engine/source/materials/mat/mat001/sigeps01g.F
 !||    sigeps02g                     ../engine/source/materials/mat/mat002/sigeps02g.F
+!||    sigeps136g                    ../engine/source/materials/mat/mat136/sigeps136g.F90
 !||    sigeps22g                     ../engine/source/materials/mat/mat022/sigeps22g.F
 !||    sigeps36g                     ../engine/source/materials/mat/mat036/sigeps36g.F
 !||    sigeps43g                     ../engine/source/materials/mat/mat043/sigeps43g.F
@@ -42,6 +44,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    damping_range_shell_mom_mod   ../engine/source/general_controls/damping/damping_range_shell_mom.F90
 !||    elbufdef_mod                  ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    mat_elem_mod                  ../common_source/modules/mat_elem/mat_elem_mod.F90
+!||    sigeps136g_mod                ../engine/source/materials/mat/mat136/sigeps136g.F90
 !||    table_mod                     ../engine/share/modules/table_mod.F
 !||====================================================================
       SUBROUTINE MULAWGLC(ELBUF_STR,
@@ -62,6 +65,7 @@ C-----------------------------------------------
       use mat_elem_mod
       use damping_range_shell_mod
       use damping_range_shell_mom_mod
+      USE SIGEPS136G_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -116,19 +120,19 @@ C-----------------------------------------------
      .   SIGNXX(MVSIZ),SIGNYY(MVSIZ),SIGNXY(MVSIZ),SIGNYZ(MVSIZ),
      .   SIGNZX(MVSIZ),SIGVXX(MVSIZ),SIGVYY(MVSIZ),SIGVXY(MVSIZ),
      .   SIGVYZ(MVSIZ),SIGVZX(MVSIZ),TENS(5,MVSIZ), 
-     .   YOUNG, VISC, VOL2, DTINV,ASRATE,SH_OFFSET
+     .   VISC, VOL2, DTINV,ASRATE
       my_real
      .   DEPBXX(MVSIZ),DEPBYY(MVSIZ),DEPBXY(MVSIZ),
      .   MOMOXX(MVSIZ),MOMOYY(MVSIZ),MOMOXY(MVSIZ),
      .   MOMNXX(MVSIZ),MOMNYY(MVSIZ),MOMNXY(MVSIZ),
-     .   ETSE(MVSIZ)  ,EPSPL(MVSIZ),EPSP_LOC(MVSIZ)
+     .   ETSE(MVSIZ)  ,EPSPL(MVSIZ)
       my_real, DIMENSION(:) ,POINTER :: UVAR
       my_real, DIMENSION(:) ,POINTER :: UVARV
       my_real, DIMENSION(NEL) :: OFF_OLD
 C-------------------------------------
       INTEGER, DIMENSION(:), POINTER :: VARTMP
       TYPE(L_BUFEL_) ,POINTER :: LBUF
-      type(matparam_struct_) , pointer :: matparam
+      TYPE(MATPARAM_STRUCT_) , POINTER :: MATPARAM
 C-----------------------------------------------
 C   S o u r c e   L i n es
 C-----------------------------------------------
@@ -139,7 +143,7 @@ C
 C     for user material laws : pid(i)=pid(1)
       IGTYP = IGEO(11,PID(1))
       IMAT  = ELBUF_STR%BUFLY(1)%IMAT
-      IF (MTN==43.OR.MTN==56.OR.MTN==60.OR.MTN==86) THEN
+      IF (MTN==43.OR.MTN==56.OR.MTN==60.OR.MTN==86.OR.MTN==136) THEN
         NUVAR  = ELBUF_STR%BUFLY(1)%NVAR_MAT
         UVAR  =>ELBUF_STR%BUFLY(1)%MAT(IR,IS,1)%VAR
       ENDIF
@@ -147,6 +151,7 @@ C     for user material laws : pid(i)=pid(1)
         NVARTMP= ELBUF_STR%BUFLY(1)%NVARTMP
         VARTMP=>ELBUF_STR%BUFLY(1)%MAT(IR,IS,1)%VARTMP
       ENDIF
+      MATPARAM => MAT_ELEM%MAT_PARAM(IMAT)
       IOFF_DUCT(1:MVSIZ) = 0
       VISCMX(1:MVSIZ) = ZERO
 C
@@ -434,6 +439,16 @@ C-------------------------------------------
      A     SSP    ,VISCMX ,THKN    ,LBUF%PLA,UVAR   ,
      B     OFF    ,NGL    ,IPM     ,MAT     ,ETSE   ,
      C     GS     ,SIGY   ,EPSPL   ,ISRATE  ,IPLA)
+      ELSEIF (MTN == 136) THEN 
+        CALL SIGEPS136G(
+     1     JLT    ,MATPARAM,RHO    ,LBUF%DMG,THK0   ,
+     2     DEPSXX ,DEPSYY ,DEPSXY  ,DEPSYZ  ,DEPSZX ,
+     3     DEPBXX ,DEPBYY ,DEPBXY  ,
+     4     SIGOXX ,SIGOYY ,SIGOXY  ,SIGOYZ  ,SIGOZX ,
+     5     SIGNXX ,SIGNYY ,SIGNXY  ,SIGNYZ  ,SIGNZX ,
+     6     MOMNXX ,MOMNYY ,MOMNXY  ,
+     7     SSP    ,ETSE   ,GS      ,NUVAR   ,UVAR   ,
+     8     SHF    ,LBUF%PLA,LBUF%SIGB)
       ENDIF ! IF (MTN == 1) THEN
 C-----------------------
 C     DAMPING

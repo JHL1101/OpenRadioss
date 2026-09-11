@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i7trivox1                  ../starter/source/interfaces/inter3d1/i7trivox1.F
 !||--- called by ------------------------------------------------------
@@ -49,6 +50,7 @@ C============================================================================
 C   M o d u l e s
 C-----------------------------------------------
       USE MY_ALLOC_MOD
+      USE MY_DEALLOC_MOD, ONLY : MY_DEALLOC
       USE TRI7BOX
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use inter_save_candidate_mod , only : inter_save_candidate
@@ -131,24 +133,22 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NB_NCN,NB_NCN1,NB_ECN,I,J,DIR,NB_NC,NB_EC,
-     .        N1,N2,N3,N4,NN,NE,K,L,NCAND_PROV,II,JJ,KK,
-     .        NSNF, NSNL, I_BID,DELNOD
+      INTEGER I,J,
+     .        NN,NE,K,L,JJ,KK
       my_real
-     .   DX,DY,DZ,XS,YS,ZS,XX,SX,SY,SZ,S2,
-     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX, TZ, GAPSMX, GAPL,
+     .   XS,YS,ZS,SX,SY,SZ,S2,
+     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX,
      .   XX1,XX2,XX3,XX4,YY1,YY2,YY3,YY4,ZZ1,ZZ2,ZZ3,ZZ4,
-     .   D1X,D1Y,D1Z,D2X,D2Y,D2Z,DD1,DD2,D2,A2,GS,GAPV(MVSIZ)
+     .   D1X,D1Y,D1Z,D2X,D2Y,D2Z,DD1,DD2,D2,A2,GAPV(MVSIZ)
       INTEGER  LAST_NOD(NSN)
-      INTEGER*8 meanjj8
-      INTEGER  IX,IY,IZ,NEXT,M1,M2,M3,M4,
+      INTEGER  IX,IY,IZ,M1,M2,M3,M4,
      .         IX1,IY1,IZ1,IX2,IY2,IZ2
       integer, dimension(mvsiz) :: prov_n,prov_e
       my_real
      .   XMINB,YMINB,ZMINB,XMAXB,YMAXB,ZMAXB,
-     .   XMINE,YMINE,ZMINE,XMAXE,YMAXE,ZMAXE,AAA,TSTART,TSTOP
+     .   XMINE,YMINE,ZMINE,XMAXE,YMAXE,ZMAXE,AAA
       my_real , INTENT(IN) :: DGAPLOAD
-      INTEGER FIRST,NEW,LAST,M
+      INTEGER FIRST,LAST,M
       INTEGER, DIMENSION(MVSIZ) :: IX11,IX12,IX13,IX14,NSVG
       my_real, DIMENSION(MVSIZ) :: X1,X2,X3,X4
       my_real, DIMENSION(MVSIZ) :: Y1,Y2,Y3,Y4
@@ -216,8 +216,10 @@ C=======================================================================
 
 !$OMP MASTER
 
-      allocate( cand_n_size(nthreads+1),cand_e_size(nthreads+1) )
-      allocate( address_cand_n(nthreads+1),address_cand_e(nthreads+1) )
+      call my_alloc(cand_n_size, nthreads+1, "cand_n_size")
+      call my_alloc(cand_e_size, nthreads+1, "cand_e_size")
+      call my_alloc(address_cand_n, nthreads+1, "address_cand_n")
+      call my_alloc(address_cand_e, nthreads+1, "address_cand_e")
       cand_n_size(1:nthreads+1) = 0 
       cand_e_size(1:nthreads+1) = 0
       address_cand_n(1:nthreads+1) = 0 
@@ -292,7 +294,8 @@ C=======================================================================
 
       STAGNOD = NUMNOD+NUMFAKENODIGEO
       IF(IS_USED_WITH_LAW151) STAGNOD = STAGNOD + NUMELS
-      ALLOCATE(TAGNOD(STAGNOD)) ; TAGNOD(1:STAGNOD) = 0
+      call my_alloc(TAGNOD, STAGNOD, "TAGNOD")
+      TAGNOD(1:STAGNOD) = 0
 
       local_i_stok = 0
       j_stok = 0
@@ -481,7 +484,7 @@ c    underestimation of the distance**2 for candidate elimination
 
       ENDDO
 !$OMP END DO
-      DEALLOCATE(TAGNOD)
+      CALL MY_DEALLOC(TAGNOD)
 
       IF(J_STOK/=0) THEN
         CALL I7COR3(X    ,IRECT,NSV  ,PROV_E ,PROV_N,
@@ -562,9 +565,9 @@ c    underestimation of the distance**2 for candidate elimination
 !$OMP SINGLE
       ! ------------
       my_size = cand_n_size(nthreads+1)
-      allocate(my_index(2*my_size))
-      allocate(sort_array(2,my_size))
-      allocate(save_array(2,my_size))
+      call my_alloc(my_index, 2*my_size, "my_index")
+      call my_alloc(sort_array, 2, my_size, "sort_array")
+      call my_alloc(save_array, 2, my_size, "save_array")
       
       my_address = i_stok_old + address_cand_n(1) ! get the address of the first pair of candidate
       sort_array(1,1:my_size) = intbuf_tab%cand_n(my_address+1:my_address+my_size)
@@ -585,9 +588,9 @@ c    underestimation of the distance**2 for candidate elimination
       do i=1,my_size
         intbuf_tab%cand_e(my_address+i) = save_array(2,my_index(i))
       enddo
-      deallocate(my_index)
-      deallocate(sort_array)
-      deallocate(save_array)
+      call my_dealloc(my_index)
+      call my_dealloc(sort_array)
+      call my_dealloc(save_array)
       ! ------------
 !$OMP END SINGLE    
 
@@ -600,8 +603,10 @@ c    underestimation of the distance**2 for candidate elimination
 !$OMP END DO
 
 !$OMP SINGLE
-      deallocate( cand_n_size,cand_e_size )
-      deallocate( address_cand_n,address_cand_e )
+      call my_dealloc(cand_n_size)
+      call my_dealloc(cand_e_size)
+      call my_dealloc(address_cand_n)
+      call my_dealloc(address_cand_e)
 !$OMP END SINGLE
 
       RETURN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_group              ../starter/source/coupling/rad2rad/r2r_group.F
 !||--- called by ------------------------------------------------------
@@ -147,14 +148,14 @@ C-----------------------------------------------
 C----- Storage of IGRN in IGRN Temp------------------------------C
         LENGRN = 9
         IF (FLAG == 1) THEN
-          ALLOCATE(IGROUP_TEMP2(10,NGROU+10*NSUBDOM))
+          call my_alloc(IGROUP_TEMP2, 10, NGROU+10*NSUBDOM, "IGROUP_TEMP2")
           IGROUP_TEMP2 = 0
           COUNT = 0
           DO I=1,NGROU
             COUNT = COUNT + IGRNOD2(I)%NENTITY
           ENDDO
           IF (COUNT > 0) THEN
-            ALLOCATE(IGROUP_TEMP2_BUF(COUNT))
+            call my_alloc(IGROUP_TEMP2_BUF, COUNT, "IGROUP_TEMP2_BUF")
             IGROUP_TEMP2_BUF(:) = 0
           ENDIF
           IAD_TMP = 1
@@ -231,10 +232,14 @@ C---------------Reset of out file + printout of new heading ---------C
               CALL PRINTCENTER(" ",0,IOUT,1)
             ENDIF
 C---------------Allocation of arrays for tag of elements--------------C
-            ALLOCATE(TAG_ELC(NUMELC+NPART),TAG_ELS(NUMELS+NPART))
-            ALLOCATE(TAG_ELG(NUMELTG+NPART),TAG_ELSP(NUMSPH+NPART))
-            ALLOCATE(TAG_ELR(NUMELR+NPART),TAG_ELT(NUMELT+NPART))
-            ALLOCATE(TAG_ELP(NUMELP+NPART),TAG_ELQ(NUMELQ+NPART))
+            call my_alloc(TAG_ELC, NUMELC+NPART, "TAG_ELC")
+            call my_alloc(TAG_ELS, NUMELS+NPART, "TAG_ELS")
+            call my_alloc(TAG_ELG, NUMELTG+NPART, "TAG_ELG")
+            call my_alloc(TAG_ELSP, NUMSPH+NPART, "TAG_ELSP")
+            call my_alloc(TAG_ELR, NUMELR+NPART, "TAG_ELR")
+            call my_alloc(TAG_ELT, NUMELT+NPART, "TAG_ELT")
+            call my_alloc(TAG_ELP, NUMELP+NPART, "TAG_ELP")
+            call my_alloc(TAG_ELQ, NUMELQ+NPART, "TAG_ELQ")
             TAG_ELS(:)=0
             TAG_ELC(:)=0
             TAG_ELG(:)=0
@@ -439,7 +444,7 @@ C
 C---------------Tag of nodes with nlocal dof-------------------------C
             IF (NLOC_DMG%IMOD > 0) THEN
               NN = 5
-              CALL MY_ALLOC(TAG_NLOCAL,NUMNOD)
+              CALL MY_ALLOC(TAG_NLOCAL,NUMNOD,"TAG_NLOCAL")
               TAG_NLOCAL(1:NUMNOD) = 0
               CALL TAGNOD_R2R_NL(IXC,IXTG,IXS,IXS10,IXS20,
      .                           IXS16,TAG_NLOCAL,MAT_PARAM)
@@ -510,7 +515,7 @@ C---------------Incrementation of Variables for future GRNOD---------C
             ENDIF
 c
             IF (NLOC_DMG%IMOD > 0) THEN
-              DEALLOCATE(TAG_NLOCAL)
+              CALL MY_DEALLOC(TAG_NLOCAL)
             ENDIF
           ENDIF
         END DO
@@ -521,14 +526,14 @@ C----- Transfer of Igroup_temp in IGRN-------------------------------C
 C--------------------------------------------------------------------C
         IF (FLAG == 1) THEN
           DO I=1,NGRNOD
-            DEALLOCATE(IGRNOD(I)%ENTITY)
+            CALL MY_DEALLOC(IGRNOD(I)%ENTITY)
           ENDDO
           DEALLOCATE(IGRNOD)
-          ALLOCATE(IGRNOD(NGRNOD+N_LNK_C))
+          allocate(IGRNOD(NGRNOD+N_LNK_C))
           NGRNOD = NGRNOD+N_LNK_C
 !
           DO I=1,NGRNOD
-            ALLOCATE(IGRNOD(I)%ENTITY(IGROUP_TEMP2(2,I)))
+            call my_alloc(IGRNOD(I)%ENTITY, IGROUP_TEMP2(2,I), "IGRNOD(I)%ENTITY")
             IGRNOD(I)%ENTITY(1:IGROUP_TEMP2(2,I)) = 0
 !
             IGRNOD(I)%ID        = IGROUP_TEMP2(1,I)    ! IGRN(1,*)
@@ -568,9 +573,9 @@ C--------------------------------------------------------------------C
 C--------------------------------------------------------------------C
 C--------------------------------------------------------------------C
 C--------------------------------------------------------------------C
-        IF (FLAG == 1) DEALLOCATE(IGROUP_TEMP2)
+        IF (FLAG == 1) CALL MY_DEALLOC(IGROUP_TEMP2)
         IF (FLAG == 1) THEN
-          IF (ALLOCATED(IGROUP_TEMP2_BUF))DEALLOCATE(IGROUP_TEMP2_BUF)
+          IF (ALLOCATED(IGROUP_TEMP2_BUF))CALL MY_DEALLOC(IGROUP_TEMP2_BUF)
         ENDIF
         RETURN
 C--------------------------------------------------------------------C

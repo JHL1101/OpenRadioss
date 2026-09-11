@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    st_qaprint_dfs_detonators   ../starter/source/output/qaprint/st_qaprint_dfs_detonators.F
 !||--- called by ------------------------------------------------------
@@ -90,6 +91,18 @@ C-----------------------------------------------
             WRITE(VARNAME,'(A,I0,A)') 'DFS_DETPOINT_',K ,'__ZDET_'
             TEMP_DOUBLE = DETONATORS%POINT(K)%ZDET
             IF(TEMP_DOUBLE/=ZERO)CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),0,TEMP_DOUBLE)
+
+            WRITE(VARNAME,'(A,I0,A)') 'DFS_DETPOINT_',K ,'__R0_'
+            TEMP_DOUBLE = DETONATORS%POINT(K)%R0
+            IF(TEMP_DOUBLE/=ZERO)CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),0,TEMP_DOUBLE)
+
+            WRITE(VARNAME,'(A,I0,A)') 'DFS_DETPOINT_',K ,'__IFRAME1_'
+            TEMP_INTEGER = DETONATORS%POINT(K)%IFRAME1
+            IF(TEMP_INTEGER > 0)CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),TEMP_INTEGER,0.0_8)
+
+            WRITE(VARNAME,'(A,I0,A)') 'DFS_DETPOINT_',K ,'__IFRAME2_'
+            TEMP_INTEGER = DETONATORS%POINT(K)%IFRAME2
+            IF(TEMP_INTEGER > 0)CALL QAPRINT(VARNAME(1:LEN_TRIM(VARNAME)),TEMP_INTEGER,0.0_8)
 
             WRITE(VARNAME,'(A,I0,A)') 'DFS_DETPOINT_',K ,'__GRNOD_ID_'
             TEMP_INTEGER = DETONATORS%POINT(K)%GRNOD_ID

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_lecgrn                ../starter/source/groups/hm_lecgrn.F
 !||--- called by ------------------------------------------------------
@@ -119,16 +120,15 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER J10(10),ID_SUB
       INTEGER, DIMENSION(:), ALLOCATABLE :: BUFTMP ! NUMNOD*2+NPART
-      INTEGER I,J,K,II,KK,N1,N2,ISU,ID,JREC,NNOD,NL,NTRI,IGS,IGRS,
-     .        OK,IT0,IT1,IT2,IT3,IT4,IT5,IT6,
-     .        FLAG_FMT,FLAG_FMT_TMP,IFIX_TMP,STAT,IT7,UID,IFLAGUNIT,
-     .        IT8,SUB_ID,IADBOX,NN,LIST_IGR(NGRNOD),IDMIN,IDMAX,OFFSET,
+      INTEGER I,J,K,KK,N1,N2,ID,NNOD,NTRI,IGS,
+     .        IT0,IT1,IT2,IT3,IT4,IT5,IT6,
+     .        STAT,IT7,UID,IFLAGUNIT,
+     .        IT8,IADBOX,NN,LIST_IGR(NGRNOD),IDMIN,IDMAX,OFFSET,
      .        IT9,IDB,NENTITY,NLINES,JJ
       
       MY_REAL
-     .        XMIN,XMAX,YMIN,YMAX,ZMIN,ZMAX,BID,FAC_L
+     .        BID,FAC_L
       INTEGER, DIMENSION(:),ALLOCATABLE :: BUFTMP2
       CHARACTER(LEN=NCHARTITLE) :: TITR, TITR1
       CHARACTER(LEN=NCHARKEY) :: KEY,KEY2
@@ -138,7 +138,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER USR2SYS,ULIST2S,LISTCNT
+      INTEGER USR2SYS,ULIST2S
 C                1234567890123456789012345678901234567890
       DATA MESS/'NODE GROUP DEFINITION                   '/
 C-----------------------------------------------
@@ -165,7 +165,7 @@ C    IGRNOD(IGS)%LEVEL  : Hierarchy level
 C    IGRNOD(IGS)%R2R_ALL   ! Multidomaines -> number of node(elems, parts) before split
 C    IGRNOD(IGS)%R2R_SHARE ! shared on boundary subdomain
 C-----------------------------------------------
-      ALLOCATE(BUFTMP(2*NUMNOD + NPART))
+      call my_alloc(BUFTMP, 2*NUMNOD + NPART, "BUFTMP")
       IS_AVAILABLE = .FALSE.
       IT0=0
       IT1=0
@@ -250,7 +250,7 @@ c          non sorted nodes
             IGRNOD(IGS)%NENTITY=NNOD
 ! may be allocated already (prelecgrns.F) if NUMELX > 0
             IF (.NOT. ALLOCATED(IGRNOD(IGS)%ENTITY)) 
-     .                CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+     .                CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
             IGRNOD(IGS)%GRPGRP=1
             MAXNNOD = MAX(NNOD,MAXNNOD)
           ELSE 
@@ -275,7 +275,7 @@ C         group of nodes
             IGRNOD(IGS)%NENTITY=NNOD
 ! may be allocated already (prelecgrns.F) if NUMELX > 0
             IF( .NOT. ALLOCATED(IGRNOD(IGS)%ENTITY)) 
-     .                CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+     .                CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
             IGRNOD(IGS)%GRPGRP=1
             MAXNNOD = MAX(NNOD,MAXNNOD)
           ELSE
@@ -355,7 +355,7 @@ C Replacement of user node n0 by system n0 (NODE type)
 C=======================================================================
       IF (IT1 /= 0 .AND. FLAG == 1)THEN
 !
-        ALLOCATE(BUFTMP2(MAXNNOD*2),STAT=stat)
+        call my_alloc(BUFTMP2, MAXNNOD*2, "BUFTMP2", stat=stat)
         IF (STAT /= 0) THEN
           CALL ANCMSG(MSGID=727,
      .                MSGTYPE=MSGERROR,
@@ -385,7 +385,7 @@ C Algo optimized for non -negligeable size group in front of n nod
             ENDIF
           ENDIF
         ENDDO
-        DEALLOCATE (BUFTMP2)
+        CALL MY_DEALLOC(BUFTMP2)
       ENDIF ! IF (IT1 /= 0 .AND. FLAG == 1)THEN
 C=======================================================================
 C BOX, GENERATION
@@ -435,7 +435,7 @@ C---
                 IF (BUFTMP(J) == 1) NNOD = NNOD+1
               ENDDO
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY=0
             ELSE
               DO J=1,NUMNOD
@@ -463,10 +463,10 @@ C-------------------------
       IF(IT8 /= 0)THEN
 C
         IF (FLAG == 0) THEN
-          ALLOCATE(BUFBOX(1))
+          call my_alloc(BUFBOX, 1, "BUFBOX")
           BUFBOX = 0
         ELSEIF (FLAG == 1) THEN
-          ALLOCATE(BUFBOX(IADBOXMAX))
+          call my_alloc(BUFBOX, IADBOXMAX, "BUFBOX")
           BUFBOX(1:IADBOXMAX) = 0
         ENDIF
 C
@@ -510,7 +510,7 @@ C---
             IADBOXMAX = MAX(IADBOX,IADBOXMAX)
             IF (FLAG == 0) THEN
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY = 0
             ELSEIF (FLAG == 1) THEN
               IGRNOD(IGS)%NENTITY=NNOD
@@ -518,7 +518,7 @@ C---
           ENDIF
         ENDDO
 C---
-        IF(ALLOCATED(BUFBOX))DEALLOCATE(BUFBOX)
+        IF(ALLOCATED(BUFBOX))CALL MY_DEALLOC(BUFBOX)
       ENDIF ! IF(IT8 /= 0)
 C=======================================================================
 C groups of subsets, share, mat, prop
@@ -558,7 +558,7 @@ C---
                 IF (BUFTMP(J+NPART) /= 0) NNOD=NNOD+1
               ENDDO
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY=0
             ELSE
               DO J=1,NUMNOD
@@ -595,7 +595,7 @@ c
      .                        TITR1   ,LSUBMODEL  ,IGRNOD(IGS),NN     )
             IF (FLAG == 0) THEN
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY = 0
             ENDIF
           ENDIF
@@ -663,7 +663,7 @@ C---
                 IF (BUFTMP(J) /= 0) NNOD=NNOD+1
               ENDDO
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY = 0
             ELSE
               DO J=1,NUMNOD
@@ -721,7 +721,7 @@ C---
                 IF (BUFTMP(J) == 1) NNOD=NNOD+1
               ENDDO
               IGRNOD(IGS)%NENTITY=NNOD
-              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD)
+              CALL MY_ALLOC(IGRNOD(IGS)%ENTITY,NNOD,"IGRNOD(IGS)%ENTITY")
               IGRNOD(IGS)%ENTITY=0
             ELSE
               DO J=1,NUMNOD
@@ -736,6 +736,6 @@ C---
         ENDDO
       ENDIF
 C-----
-      DEALLOCATE(BUFTMP)
+      CALL MY_DEALLOC(BUFTMP)
       RETURN
       END

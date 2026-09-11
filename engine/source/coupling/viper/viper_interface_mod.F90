@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 ! These are the interface routines between Viper & Radioss
 ! All reordering of nodes & minimisation of timestep occurs in these routines rather than Viper's counterparts
 ! notes: ELBUFDEF_MOD includes a call to include task_c.inc, which is required for several of the included subroutines
@@ -43,7 +44,8 @@
         logical :: ViperCoupling                              ! set in engine/source/input/freform.F with the engine flag /VIPER/ON
 
         type :: viper_coupling_
-          integer :: numon                                    ! number of 'alive' elements (i.e. not eroded/deleted/null)
+          integer :: numon                                    ! number of 'alive' elements (i.e. not eroded/deleted/null/rigid)
+          integer :: numrigid                                 ! number of 'rigid' elements
           integer :: io_dt                                    ! file id for printing time
           integer, dimension(:), allocatable :: ITABM1,IXEM1  ! nodal & elemental arrays for coupling re-indexing
           integer :: NUMELEv                                  ! total number of elements Viper will use
@@ -70,6 +72,7 @@
 !||    radiossviper_sendmass                    ../engine/source/coupling/viper/viper_interface_mod.F90
 !||--- uses       -----------------------------------------------------
 !||    connectivity_mod                         ../common_source/modules/connectivity.F90
+!||    my_alloc_mod                             ../common_source/tools/memory/my_alloc.F90
 !||    nodal_arrays_mod                         ../common_source/modules/nodal_arrays.F90
 !||====================================================================
         subroutine viper_coupling_initialize(VIPER, NODES, ELEMENT,   NUMNOD,&
@@ -83,6 +86,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
           type(viper_coupling_), intent(inout) :: VIPER
           type(nodal_arrays_), intent(in) :: NODES
           TYPE(connectivity_), INTENT(in) :: ELEMENT
@@ -131,14 +135,15 @@
           ! (confirmed that NUMELS8,NUMELS10,NUMELS16,NUMELS20 are not in the array)
           ioffset_3shell = ioffset_4shell+NUMELC+NUMELT+NUMELP+NUMELR ! The (assumed) index offset for 3-shells
           WRITE(ISTDO,"(a,I18)") "Radioss2Viper: the total number of elements used by Viper: ",iNUMELEv_TOTAL
-          ALLOCATE(VIPER%ITABM1(NUMNOD))
-          ALLOCATE(VIPER%IXEM1(iNUMELEv_TOTAL))
+          call my_alloc(VIPER%ITABM1, NUMNOD, "VIPER%ITABM1")
+          call my_alloc(VIPER%IXEM1, iNUMELEv_TOTAL, "VIPER%IXEM1")
 
 !         Initialize node ordering & send nodal masses to Viper
 !         Based upon the ordering of the element numbers in the 0000.out & from our experimentation,
 !         we are assuming the order of elements in ELBUF_TAB is the same as in 0000.out, therefore we are adding offsets as required
-          VIPER%NUMELEv = iNUMELEv_TOTAL
-          VIPER%numon   = iNUMELEv_TOTAL
+          VIPER%NUMELEv  = iNUMELEv_TOTAL
+          VIPER%numon    = iNUMELEv_TOTAL
+          VIPER%numrigid = 0               ! this will trigger a send on step 1 if there are rigid elements, but this is acceptable
           CALL RadiossViper_InitTab(NUMNOD,  NODES%ITAB,        VIPER%ITABM1,                        1,     0)              ! nodes
           CALL RadiossViper_InitTab(NUMELS,  IXS,               VIPER%IXEM1(1          :NUMELS),     NIXS,  0)              ! solids
           CALL RadiossViper_InitTab(NUMELC,  ELEMENT%SHELL%IXC, VIPER%IXEM1(1+NUMELS   :iNUMEL_SC),  NIXC,  ioffset_4shell) ! 4-shells
@@ -147,7 +152,7 @@
           CALL RadiossViper_ReceiveSendInitialNumbers(TSTOP,NUMNOD,NUMELS,NUMELC,NUMELTG)
           IF (TSTOP > 0.) THEN
             CALL RadiossViper_SendMass(NUMNOD,NODES%MS,VIPER%ITABM1)
-            CALL RadiossViper_SendInitialStatus(VIPER%numon,iNUMELEr_TOTAL,iNUMELEv_TOTAL,&
+            CALL RadiossViper_SendInitialStatus(VIPER%numon,VIPER%numrigid,iNUMELEr_TOTAL,iNUMELEv_TOTAL,&
               NPARG,NGROUP,VIPER%IXEM1,IPARG,ELBUF_TAB)  ! required to tell Viper of void elements
             TT_DOUBLE = TT
             TANIM     = 0.
@@ -176,11 +181,17 @@
 !||    radiossviper_inittab        ../engine/source/coupling/viper/viper_interface_mod.F90
 !||--- called by ------------------------------------------------------
 !||    viper_coupling_initialize   ../engine/source/coupling/viper/viper_interface_mod.F90
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         subroutine RadiossViper_InitTab(numnod,itab,itabm1,ncol,ioffset)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           integer, intent(in)  :: numnod,itab(numnod),ncol,ioffset
           integer, intent(out) :: itabm1(numnod)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -196,7 +207,7 @@
           if (iverbose) print*, "Radioss2Viper: InitTab: entering with ncol = ",ncol," and N = ",numnod
 
           ! copy data to a 1D array to (hopefully) minimise cache misses
-          allocate(itab1D(numnod))
+          call my_alloc(itab1D, numnod, "itab1D")
           do i = 1,numnod
             itab1D(i) = itab(i*ncol)
           end do
@@ -211,7 +222,7 @@
           if (iverbose) print*, "Radioss2Viper: InitTab: IDs in the range ",idmin,idmax
 
           ! allocate array & initialise to illegal index
-          allocate(itabtmp(idmax))
+          call my_alloc(itabtmp, idmax, "itabtmp")
           do i = 1,idmax
             itabtmp(i) = -1
           end do
@@ -230,8 +241,8 @@
             itabm1(i) = itabtmp(j) + ioffset ! fill in the correct entry using the correct offset value
             j = j + 1                        ! advance to next entry
           end do
-          deallocate(itabtmp)
-          deallocate(itab1D)
+          call my_dealloc(itabtmp)
+          call my_dealloc(itab1D)
 
           print*, "Radioss2Viper: InitTab: exiting with ncol = ",ncol," and N = ",numnod
 
@@ -256,10 +267,10 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 
           if (iverbose) print*, "Radioss2Viper: ReceiveSendInitialTimes: entering"
-          call SPMD_RECV(dt_min_viper, 1, 1, 9931, MPI_COMM_WORLD)
-          call SPMD_RECV(t_max,        1, 1, 9932, MPI_COMM_WORLD)
-          call SPMD_RECV(dt_out,       1, 1, 9933, MPI_COMM_WORLD)
-          call SPMD_RECV(t_now,        1, 1, 9934, MPI_COMM_WORLD)
+          call SPMD_RECV(dt_min_viper, 1, 1, 9931, comm=MPI_COMM_WORLD)
+          call SPMD_RECV(t_max,        1, 1, 9932, comm=MPI_COMM_WORLD)
+          call SPMD_RECV(dt_out,       1, 1, 9933, comm=MPI_COMM_WORLD)
+          call SPMD_RECV(t_now,        1, 1, 9934, comm=MPI_COMM_WORLD)
           dt_min = max(dt_min,dt_min_viper)                            ! note: prior to this line, dt_min == dt_min_radioss
           dt_min_viper = dt_min                                        ! synchronise both dt_min's
           call SPMD_SEND(dt_min,       1, 1, 9935, MPI_COMM_WORLD)
@@ -297,7 +308,7 @@
           call SPMD_SEND(numsolids,  1,1, 9941, MPI_COMM_WORLD)
           call SPMD_SEND(num4shells, 1,1, 9942, MPI_COMM_WORLD)
           call SPMD_SEND(num3shells, 1,1, 9943, MPI_COMM_WORLD)
-          call SPMD_RECV(ikill,      1,1, 9944, MPI_COMM_WORLD)
+          call SPMD_RECV(ikill,      1,1, 9944, comm=MPI_COMM_WORLD)
           if (ikill == 1) then
             print*, "Radioss2Viper: ReceiveSendInitialNumbers: ABORTING due to number mismatch"
             t_max = 0.
@@ -312,11 +323,16 @@
 !||--- called by ------------------------------------------------------
 !||    viper_coupling_initialize   ../engine/source/coupling/viper/viper_interface_mod.F90
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod                ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         subroutine RadiossViper_SendMass(numnod,MS,itabm1)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           integer, intent(in) :: numnod,itabm1(numnod)
           real(kind=WP), intent(in) :: MS(numnod)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -327,7 +343,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(MSviper(numnod))
+          call my_alloc(MSviper, numnod, "MSviper")
           if (iverbose) print*, "Radioss2Viper: SendMass: entering with numnod = ",numnod
 !         make new arrays where the elements are in the correct order
           do i = 1,numnod
@@ -335,7 +351,7 @@
           end do
           call SPMD_SEND(MSviper,numnod,  1, 9930, MPI_COMM_WORLD)
           if (iverbose) print*, "Radioss2Viper: SendMass: exiting"
-          deallocate(MSviper)
+          call my_dealloc(MSviper)
         end subroutine RadiossViper_SendMass
 ! ----------------------------------------------------------------------------------------------------------------------
 ! This will send the initial erosion status to Viper; this is required to inform Viper of void elements that need to be excluded calculations
@@ -345,13 +361,13 @@
 !||    viper_coupling_initialize        ../engine/source/coupling/viper/viper_interface_mod.F90
 !||--- calls      -----------------------------------------------------
 !||====================================================================
-        subroutine RadiossViper_SendInitialStatus(n,numele_radioss,numele_viper,nparg,ngroup,ixem1,iparg,elbuf_tab)
+        subroutine RadiossViper_SendInitialStatus(non,nrigid,numele_radioss,numele_viper,nparg,ngroup,ixem1,iparg,elbuf_tab)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent(in)    :: numele_radioss,numele_viper,nparg,ngroup
           integer, intent(in)    :: ixem1(numele_viper),iparg(nparg,ngroup)
-          integer, intent(out)   :: n
+          integer, intent(out)   :: non,nrigid
           type(ELBUF_STRUCT_),dimension(ngroup), intent(in):: elbuf_tab
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
@@ -366,8 +382,9 @@
           print*, "Radioss2Viper: SendInitialStatus: entering:", numele_radioss,numele_viper
 !         make new erosion arrary in Viper's order & determine the number of eroded elements
 !         first, we put them in a contigious array; we will sort and send only if the number of active elements has changed
-          n = 0
-          k = 0
+          non    = 0
+          nrigid = 0
+          k      = 0
           do i = 1,ngroup
             do j = 1,iparg(2,i)
               if (iparg(5,i)==1 .or. iparg(5,i)==3 .or. iparg(5,i)==7) then
@@ -377,11 +394,12 @@
               end if
               k = k + 1
               if (k <= numele_radioss) then
-                if (ELBUF_TAB(i)%GBUF%OFF(j) == 1 .and. ELBUF_TAB(i)%BUFLY(1)%ILAW > 0 .and. viper_element) then
-                  n = n + 1
-                  Evipertmp(k) = ELBUF_TAB(i)%GBUF%OFF(j)   ! pass element status (eroded or not)
+                if (ELBUF_TAB(i)%BUFLY(1)%ILAW > 0 .and. viper_element) then
+                  Evipertmp(k) = ELBUF_TAB(i)%GBUF%OFF(j)      ! pass element status
+                  if (Evipertmp(k) ==  1) non    = non    + 1  ! count number of active elements
+                  if (Evipertmp(k) == -1) nrigid = nrigid + 1  ! count number of active elements
                 else
-                  Evipertmp(k) = -1                         ! pass element status defined as void
+                  Evipertmp(k) = 0                             ! default status is eroded
                 end if
               end if
             end do
@@ -392,7 +410,7 @@
           end do
           if (iverbose) print*, "Radioss2Viper: _SendInitialStatus: filled secondary array"
           call SPMD_SEND(Eviper, numele_viper, 1, 9950, MPI_COMM_WORLD)
-          print*, "Radioss2Viper: SendInitialStatus: exiting", numele_radioss,numele_viper,n
+          print*, "Radioss2Viper: SendInitialStatus: exiting", numele_radioss,numele_viper,non,nrigid
 
         end subroutine RadiossViper_SendInitialStatus
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -403,30 +421,35 @@
 !||--- called by ------------------------------------------------------
 !||    resol                  ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod         ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         subroutine RadiossViper_SendXVE( &
           numnod, numele_radioss, numele_viper, nparg, ngroup, &
-          numonIO, X, V, itabm1, ixem1, iparg, elbuf_tab)
+          numonIO, numrigidIO, X, V, itabm1, ixem1, iparg, elbuf_tab)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           integer, intent(in)    :: numnod,numele_radioss,numele_viper,nparg,ngroup
           integer, intent(in)    :: itabm1(numnod),ixem1(numele_viper),iparg(nparg,ngroup)
-          integer, intent(inout) :: numonIO
+          integer, intent(inout) :: numonIO,numrigidIO
           real(kind=WP), intent(in)    :: X(3,numnod),V(3,numnod)
           type(ELBUF_STRUCT_),dimension(ngroup), intent(in) :: elbuf_tab
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
-          integer                :: i,j,k,n
+          integer                :: i,j,k,non,nrigid,nsend
           integer                :: Eviper(numele_viper),Evipertmp(numele_radioss)
           real(kind=WP), dimension(:), allocatable :: Xviper,Vviper
           logical                :: viper_element
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(Xviper(3*numnod))
-          allocate(Vviper(3*numnod))
+          call my_alloc(Xviper, 3*numnod, "Xviper")
+          call my_alloc(Vviper, 3*numnod, "Vviper")
 
           if (iverbose) print*, "Radioss2Viper: Entering SendXVE "
 !         make temporary position & velocity arrays where the elements are in the correct order for Viper
@@ -445,8 +468,9 @@
           if (iverbose) print*, "Radioss2Viper: SendXVE: Sent position & velocity"
 !         make new erosion arrary in Viper's order & determine the number of eroded elements
 !         first, we put them in a contigious array; we will sort and send only if the number of active elements has changed
-          n = 0
-          k = 0
+          non    = 0
+          nrigid = 0
+          k      = 0
           do i = 1,ngroup
             do j = 1,iparg(2,i)
               if (iparg(5,i)==1 .or. iparg(5,i)==3 .or. iparg(5,i)==7) then
@@ -456,26 +480,36 @@
               end if
               k = k + 1
               if (k <= numele_radioss) then
-                if (ELBUF_TAB(i)%GBUF%OFF(j) == 1 .and. ELBUF_TAB(i)%BUFLY(1)%ILAW > 0 .and. viper_element) then
-                  n = n + 1
-                  Evipertmp(k) = ELBUF_TAB(i)%GBUF%OFF(j)   ! pass active status
+                if (ELBUF_TAB(i)%BUFLY(1)%ILAW > 0 .and. viper_element) then
+                  Evipertmp(k) = ELBUF_TAB(i)%GBUF%OFF(j)      ! pass status
+                  if (Evipertmp(k) ==  1) non    = non    + 1  ! count number of active elements
+                  if (Evipertmp(k) == -1) nrigid = nrigid + 1  ! count number of rigid elements
                 else
-                  Evipertmp(k) = -1                         ! failed, dead, null, eroded
+                  Evipertmp(k) = 0                             ! default status is eroded
                 end if
               end if
             end do
           end do
-          call SPMD_SEND(n, 1,  1, 9907, MPI_COMM_WORLD)
-          print*, "Radioss2Viper: SendXVE: numnod, nElements_prev, nElements = : ",numnod,numonIO,n
-          if (numonIO /= n) then
+
+          ! Version that ignored rigid objects sent non & both codes sent/received Eviper if numonIO /= non
+          ! Once rigids were accounted for, then we need to ensure Eviper is passed if numonIO /= non or numrigidIO /= nrigid
+          ! while only sending one value so that disjoint versions of Viper & Radioss would still work
+          ! To achieve the above, use nsend, which is set to trigger / not trigger the MPI commands
+          nsend = non
+          if (numrigidIO /= nrigid) nsend = numonIO + 1
+          call SPMD_SEND(nsend,    1,  1, 9907, MPI_COMM_WORLD)
+          print*, "Radioss2Viper: SendXVE: numnod, nActive_prev, nActive, nRigid_prev, nRigid = : ", &
+            numnod,numonIO,non,numrigidIO,nrigid
+          if (numonIO /= non .or. numrigidIO /= nrigid) then
             do i = 1,numele_viper
               Eviper(i) = Evipertmp(ixem1(i))
             end do
             call SPMD_SEND(Eviper, numele_viper,  1, 9908, MPI_COMM_WORLD)
           end if
-          numonIO = n
-          deallocate(Xviper)
-          deallocate(Vviper)
+          numonIO    = non
+          numrigidIO = nrigid
+          call my_dealloc(Xviper)
+          call my_dealloc(Vviper)
         end subroutine RadiossViper_SendXVE
 ! ----------------------------------------------------------------------------------------------------------------------
 ! This will receive the FORCES on the nodes from Viper
@@ -486,11 +520,16 @@
 !||--- called by ------------------------------------------------------
 !||    resol                               ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod                        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod                      ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         subroutine RadiossViper_ReceiveAccelerations(numnod,A,Fext,itabm1)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
+          use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           integer, intent(in)    :: numnod,itabm1(numnod)
           real(kind=WP), intent(inout) :: A(3,numnod),Fext(3,numnod)
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -501,9 +540,9 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(Aviper(3*numnod))
+          call my_alloc(Aviper, 3*numnod, "Aviper")
           if (iverbose) print*, "Radioss2Viper: ReceiveAccelerations: ", numnod
-          call SPMD_RECV(Aviper, 3*numnod, 1, 9910, MPI_COMM_WORLD)
+          call SPMD_RECV(Aviper, 3*numnod, 1, 9910, comm=MPI_COMM_WORLD)
           do i = 1,numnod
             A(1,itabm1(i)) = A(1,itabm1(i)) + Aviper(3*i-2)
             A(2,itabm1(i)) = A(2,itabm1(i)) + Aviper(3*i-1)
@@ -513,7 +552,7 @@
             Fext(2,itabm1(i)) = Fext(2,itabm1(i)) + Aviper(3*i-1)
             Fext(3,itabm1(i)) = Fext(3,itabm1(i)) + Aviper(3*i  )
           end do
-          deallocate(Aviper)
+          call my_dealloc(Aviper)
         end subroutine RadiossViper_ReceiveAccelerations
 ! ----------------------------------------------------------------------------------------------------------------------
 ! This will pass Viper's timestep to OpenRadioss, compare the two, select the shortest;
@@ -542,7 +581,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 
           dt_rad_in = dt_rad
-          call SPMD_RECV(dt_viper, 1,  1, 9925, MPI_COMM_WORLD)
+          call SPMD_RECV(dt_viper, 1,  1, 9925, comm=MPI_COMM_WORLD)
           dt_rad = min(dt_rad,dt_viper)
           if (dt_rad < dt_min) then
             mstop = 1

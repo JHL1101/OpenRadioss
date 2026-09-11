@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25for3_e2s     ../engine/source/interfaces/int25/i25for3_e2s.F
 !||--- called by ------------------------------------------------------
@@ -151,20 +152,23 @@ C-----------------------------------------------
      . DGAPLOAD,
      .   FSAVSUB1(24,NISUB), IMPX, IMPY, IMPZ,FTN ,FN , FT,BETA
       my_real
-     .   PREC
+     .   PREC, EPP
       my_real
      .   ST1(4*MVSIZ),ST2(4*MVSIZ),ST3(4*MVSIZ),ST4(4*MVSIZ),STIF0(4*MVSIZ),
      .   KT(4*MVSIZ),C(4*MVSIZ),CF(4*MVSIZ),
      .   K1(4*MVSIZ),K2(4*MVSIZ),K3(4*MVSIZ),K4(4*MVSIZ),
      .   C1(4*MVSIZ),C2(4*MVSIZ),C3(4*MVSIZ),C4(4*MVSIZ),
      . CX,CY,CFI,AUX
+       my_real RP1, RP2
 C
 C-----------------------------------------------
 
       IF (IRESP == 1) THEN
         PREC = FIVEEM4
+        EPP = FIVEEM5
       ELSE
         PREC = EM10
+        EPP = EM10
       ENDIF
       IF(DT1>ZERO)THEN
         DT1INV = ONE/DT1
@@ -218,7 +222,7 @@ C          Reduce PENE
           PENE(I)=MAX(ZERO,PENE(I)-CAND_P(INDX2(I),INDX1(I)))
           IF( PENE(I)==ZERO ) THEN
             PENE_OLD_E2S(INDX2(I),INDX1(I)) = ZERO
-            STIF_OLD_E2S(INDX2(I),INDX1(I)) = MAX(STIF_OLD_E2S(INDX2(I),INDX1(I)),STIF(I))
+            STIF_OLD_E2S(INDX2(I),INDX1(I)) = STIF(I)
           ENDIF
           IF( PENE(I)==ZERO )  STIF(I) = ZERO
         ENDDO
@@ -234,7 +238,7 @@ C            CAND_P < 0 <=> Initial penetration computed into the Starter => Do 
             CAND_P(INDX2(I),INDX1(I)) = -CAND_P(INDX2(I),INDX1(I)) ! back to negative value
             IF( PENE(I)==ZERO ) THEN
               PENE_OLD_E2S(INDX2(I),INDX1(I)) = ZERO
-              STIF_OLD_E2S(INDX2(I),INDX1(I)) = MAX(STIF_OLD_E2S(INDX2(I),INDX1(I)),STIF(I))
+              STIF_OLD_E2S(INDX2(I),INDX1(I)) = STIF(I)
             ENDIF
             IF( PENE(I)==ZERO )  STIF(I) = ZERO
           ELSE
@@ -247,7 +251,7 @@ C subtraction of the initial pene from the pene and the gap
             PENE(I)=MAX(ZERO,PENE(I)-CAND_P(INDX2(I),INDX1(I)))
             IF( PENE(I)==ZERO ) THEN
               PENE_OLD_E2S(INDX2(I),INDX1(I)) = ZERO
-              STIF_OLD_E2S(INDX2(I),INDX1(I)) = MAX(STIF_OLD_E2S(INDX2(I),INDX1(I)),STIF(I))
+              STIF_OLD_E2S(INDX2(I),INDX1(I)) = STIF(I)
             ENDIF
             IF( PENE(I)==ZERO )  STIF(I) = ZERO
           END IF
@@ -265,24 +269,27 @@ C subtraction of the initial pene from the pene and the gap
         VN(I) = NX(I)*VX(I) + NY(I)*VY(I) + NZ(I)*VZ(I)
       ENDDO
 C-------------------------------------------
+C     stiffness reduction to avoid positive
+C     force jump and energy generation
+C-------------------------------------------
       DO I=1,JLT
 C
         IF(PENE(I) /= ZERO) THEN
 C
           DPENE(I) = MAX(ZERO,-VN(I)*DT1)
-          IF(TT /= ZERO)THEN 
-            IF(PENE(I) > PENE_OLD_E2S(INDX2(I),INDX1(I)) .AND.
-     .         DPENE(I) < PENE(I)-PENE_OLD_E2S(INDX2(I),INDX1(I)))THEN
-              STIF(I) = (STIF_OLD_E2S(INDX2(I),INDX1(I))*PENE_OLD_E2S(INDX2(I),INDX1(I))+ STIF(I)*DPENE(I))
-     .                                /PENE(I)
-            ELSEIF(PENE_OLD_E2S(INDX2(I),INDX1(I))/=ZERO.or.STIF_OLD_E2S(INDX2(I),INDX1(I))/=ZERO) then
+          IF(TT /= ZERO.AND.PENE_OLD_E2S(INDX2(I),INDX1(I))/=ZERO)THEN 
+           IF(PENE(I)>PENE_OLD_E2S(INDX2(I),INDX1(I)) +DPENE(I)+EPP)THEN
+              RP1 = PENE_OLD_E2S(INDX2(I),INDX1(I))/PENE(I)
+              RP2 = DPENE(I)/PENE(I)
+              STIF(I) = STIF_OLD_E2S(INDX2(I),INDX1(I))*RP1+ STIF(I)*RP2
+            ELSEIF(PENE_OLD_E2S(INDX2(I),INDX1(I))/=ZERO.or.STIF_OLD_E2S(INDX2(I),INDX1(I))/=ZERO) THEN
               STIF(I) = STIF_OLD_E2S(INDX2(I),INDX1(I))
             ENDIF
             PENE_OLD_E2S(INDX2(I),INDX1(I)) = PENE(I)
             STIF_OLD_E2S(INDX2(I),INDX1(I)) = STIF(I)
           ELSE
-            PENE_OLD_E2S(INDX2(I),INDX1(I)) = MAX(PENE_OLD_E2S(INDX2(I),INDX1(I)),PENE(I))
-            STIF_OLD_E2S(INDX2(I),INDX1(I)) = MAX(STIF_OLD_E2S(INDX2(I),INDX1(I)),STIF(I))
+            PENE_OLD_E2S(INDX2(I),INDX1(I)) = PENE(I)
+            STIF_OLD_E2S(INDX2(I),INDX1(I)) = STIF(I)
           ENDIF
         ENDIF
       ENDDO

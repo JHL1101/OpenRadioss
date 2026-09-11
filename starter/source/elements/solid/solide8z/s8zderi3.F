@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    s8zderi3      ../starter/source/elements/solid/solide8z/s8zderi3.F
 !||--- called by ------------------------------------------------------
@@ -72,7 +73,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J
+      INTEGER I
 C                                                                     12
       my_real
      .   JAC1(MVSIZ),JAC2(MVSIZ),JAC3(MVSIZ),
@@ -174,7 +175,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J
+      INTEGER I
       
 C                                                                     12
       my_real
@@ -350,7 +351,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J
+      INTEGER I
       
       my_real
      .   DET(MVSIZ) ,DETT(MVSIZ)
@@ -519,7 +520,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J
+      INTEGER I
       
       my_real
      .   DET(MVSIZ) ,DETT(MVSIZ)
@@ -694,7 +695,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J
+      INTEGER I
       my_real
      .   DET(MVSIZ) ,  DETT(MVSIZ) ,
      .   JAC1(MVSIZ),JAC2(MVSIZ),JAC3(MVSIZ),
@@ -962,7 +963,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IP,IR,IS,IT,IL,i
+      INTEGER IP,IR,IS,IT,IL
 C-----------------------------------------------
       TYPE(L_BUFEL_) ,POINTER :: LBUF     
       TYPE(G_BUFEL_) ,POINTER :: GBUF     
@@ -1163,7 +1164,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K
+      INTEGER I
 
 C-----------------------------------------------
        DO I=1,NEL
@@ -1249,7 +1250,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J ,IR,IS,IT,IP,I1,I2,I3,I4
+      INTEGER I ,IR,IS,IT,I1,I2,I3,I4
       INTEGER IXY(4,2),IXZ(4,2),IYZ(4,2)
       DATA IXY/1,5,3,7,2,6,4,8/
       DATA IXZ/1,3,2,4,5,7,6,8/
@@ -1394,7 +1395,6 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J 
 C                                                                     12
           CALL S8EA2BP8(
      .    PXY1, PXY2, PXY3, PXY4, PXY5, PXY6, PXY7, PXY8,
@@ -1451,7 +1451,6 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I
 C      
         PX1(LFT:LLT) = P0X1(LFT:LLT)  
         PX2(LFT:LLT) = P0X2(LFT:LLT)  
@@ -1543,7 +1542,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  I, J ,ICOR
+      INTEGER  I
 C     REAL
 C                                                                     12
       my_real
@@ -1745,7 +1744,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K
+      INTEGER I,J
 C     REAL
       my_real
      .   E1(MVSIZ,3),E2(MVSIZ,3),E3(MVSIZ,3)
@@ -1904,11 +1903,9 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  I, J ,ICOR
+      INTEGER  I
 C     REAL
 C                                                                     12
-      my_real
-     .  XA
 C-----------------------------------------------
       CALL S8EL2GNJ(
      .    PX1,  PY1,  PZ1, 
@@ -2072,7 +2069,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER  I, J ,ICOR
+      INTEGER  I
 C     REAL
 C                                                                     12
       my_real
@@ -2204,7 +2201,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J ,IP
+      INTEGER I ,IP
 C     REAL
 C                                                                     12
       my_real
@@ -2397,7 +2394,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J
+      INTEGER I
 C                                                                     12
       my_real
      .   JAC1(MVSIZ),JAC2(MVSIZ),JAC3(MVSIZ),

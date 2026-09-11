@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,18 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    h3d_create_datatype                  ../engine/source/output/h3d/h3d_build_fortran/h3d_create_datatype.F
 !||--- called by ------------------------------------------------------
 !||    genh3d                               ../engine/source/output/h3d/h3d_results/genh3d.F
 !||--- calls      -----------------------------------------------------
+!||    c_h3d_add_string                     ../engine/source/output/h3d/h3d_build_cpp/c_h3d_add_string.cpp
 !||    c_h3d_create_oned_eroded             ../engine/source/output/h3d/h3d_build_cpp/c_h3d_eroded_oned.cpp
 !||    c_h3d_create_quad_eroded             ../engine/source/output/h3d/h3d_build_cpp/c_h3d_eroded_quad.cpp
 !||    c_h3d_create_shell_eroded            ../engine/source/output/h3d/h3d_build_cpp/c_h3d_eroded_shell.cpp
@@ -34,12 +36,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    c_h3d_create_sph_eroded              ../engine/source/output/h3d/h3d_build_cpp/c_h3d_eroded_sph.cpp
 !||--- uses       -----------------------------------------------------
 !||    h3d_mod                              ../engine/share/modules/h3d_mod.F
+!||    output_mod                           ../common_source/modules/output/output_mod.F90
 !||====================================================================
-      SUBROUTINE H3D_CREATE_DATATYPE(H3D_DATA,IPARI)
+      SUBROUTINE H3D_CREATE_DATATYPE(H3D_DATA,IPARI,OUTPUT)
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
         USE H3D_MOD
+        USE OUTPUT_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -53,11 +57,12 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
         TYPE (H3D_DATABASE) :: H3D_DATA
         INTEGER, INTENT(IN) ::  IPARI(NPARI,*)
+        TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT ! Output structure
 C-----------------------------------------------
 C   L O C A L   V A R I A B L E S
 C-----------------------------------------------
         INTEGER I, INTER_ID
-        CHARACTER MES*80, CHINFO*10
+        CHARACTER(LEN=100)::KEY3
 C-----------------------------------------------
         DO I=1,H3D_DATA%N_OUTP_H3D
           IF(H3D_DATA%OUTPUT_LIST(I)%OK == 1 )  THEN
@@ -259,6 +264,18 @@ c------------tensor
         CALL C_H3D_CREATE_SPH_ERODED(H3D_DATA%N_OUTP_H3D+6, 'Erosion Status', 14,0,'',0)
         CALL C_H3D_CREATE_QUAD_ERODED(H3D_DATA%N_OUTP_H3D+7, 'Erosion Status', 14,0,'',0)
         CALL C_H3D_CREATE_SKIN_ERODED(H3D_DATA%N_OUTP_H3D+8, 'Erosion Status', 14,0,'',0)
+        
+C--------------------------------------------------
+C BUILD DEFAULT OUTPUTS FOR CHECKSUM OPTION
+C--------------------------------------------------
+        IF(OUTPUT%CHECKSUM%CHECKSUM_COUNT > 0) THEN
+          DO I=1,OUTPUT%CHECKSUM%CHECKSUM_COUNT
+            KEY3 = 'ZCHKSM_'//OUTPUT%CHECKSUM%CHECKSUMS(I)
+            CALL C_H3D_ADD_STRING(KEY3,LEN_TRIM(KEY3))
+          ENDDO
+        ENDIF
+
+
 
 
         RETURN

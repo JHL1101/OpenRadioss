@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    alemain                      ../engine/source/ale/alemain.F
 !||--- called by ------------------------------------------------------
@@ -83,6 +84,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    matparam_def_mod             ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
 !||    multimat_param_mod           ../common_source/modules/multimat_param_mod.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod               ../common_source/modules/nlocal_reg_mod.F
 !||    output_mod                   ../common_source/modules/output/output_mod.F90
 !||    python_funct_mod             ../common_source/modules/python_mod.F90
@@ -117,7 +119,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      M         IGRBRIC     ,NLOC_DMG    ,ID_GLOBAL_VOIS  ,FACE_VOIS  ,EBCS_TAB          ,ALE_CONNECTIVITY,
      N         MAT_ELEM    ,H3D_DATA    ,DT              ,OUTPUT     ,NEED_COMM_INTER18 ,IDTMINS         ,
      O         IDTMIN      ,MAXFUNC     ,IMON_MAT        ,USERL_AVAIL,
-     P         impl_s      ,idyna       ,PYTHON          ,MATPARAM   ,GLOB_THERM  ,SFEM )
+     P         impl_s      ,idyna       ,PYTHON          ,MATPARAM   ,GLOB_THERM  ,SFEM,s_xdp )
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
@@ -153,6 +155,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -209,6 +212,7 @@ C-----------------------------------------------
       INTEGER, INTENT(IN) :: IDTMINS
       ! for parith/on : ID_GLOBAL_VOIS --> user id ; FACE_VOIS --> face of the remote element
       INTEGER, DIMENSION(*), INTENT(in) :: ID_GLOBAL_VOIS,FACE_VOIS
+      integer, intent(in) :: s_xdp !< size of the second dimension of xdp
       LOGICAL, INTENT(inout) :: NEED_COMM_INTER18 !< true if the mpi comm "exchange of remote XCELL data" is mandatory
       DOUBLE PRECISION XDP(3,*)
       
@@ -247,7 +251,7 @@ C-----------------------------------------------
       TYPE(OUTPUT_), INTENT(INOUT) :: OUTPUT !< output structure
       TYPE(PYTHON_) :: PYTHON
       type (glob_therm_) ,intent(inout)   :: glob_therm
-      TYPE (SFEM_) ,INTENT(INOUT) :: SFEM
+      TYPE (global_sfem_) ,INTENT(INOUT) :: SFEM
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -806,10 +810,12 @@ C
           
          !---------------------------------------------
          ! TETRA4 : SMOOTH FINITE ELEMENT FORMULATIONS
-         !---------------------------------------------
+         !---------------------------------------------          
 !$OMP SINGLE
           IF(SFEM%ISFEM == 1) THEN
-            CALL S4ALESFEM(IPARG,IXS,X,ELBUF_TAB,SFEM%SFEM_NODVAR_ALE,SFEM%S_SFEM_NODVAR,PM,IAD_ELEM,FR_ELEM)
+            if(itask==0) call startime(timers,timer_sfem)
+            CALL S4ALESFEM(IPARG,IXS,X,ELBUF_TAB,sfem%ale%nodvar,SFEM%S_SFEM_NODVAR,PM,ispmd,sfem%ale,s_xdp)
+            if(itask==0) call stoptime(timers,timer_sfem)
           ENDIF
 !$OMP END SINGLE
 
@@ -879,14 +885,14 @@ C
      D                  ISTRA,           ITASK,           BID,             BID,
      E                  BID,             IBID,            GRESAV,          GRTH,
      F                  IGRTH,           MSSA,            DMELS,           TABLE,
-     G                  XDP,        SFEM%SFEM_NODVAR_ALE, VOLN,            BID,
+     G                  XDP,        sfem%ale%nodvar, VOLN,            BID,
      H                  BID,             D,               SENSORS,         IOUTPRT,
      I                  MAT_ELEM,        IBID,            DT,              IDEL7NOK,
      J                  NSVOIS,          SZ_BUFVOIS,      SNPC,            STF,
      K                  SBUFMAT,         SVIS,            IDTMINS,         IRESP, 
      *                  IDEL7NG,         MAXFUNC,         USERL_AVAIL,     GLOB_THERM, 
      V                  impl_s,          idyna,           SFEM%S_SFEM_NODVAR,ale%global%s_flux,
-     W                  ale%global%nv46,SFEM%itag_nsfem)
+     W                  ale%global%nv46,sfem%ale%need_it(nf1:nf1+nel-1))
 C
                   ELSEIF (ITY == 1 .AND. ISOLNOD /= 4) THEN
                     NULLIFY(pQMV); 
@@ -1068,14 +1074,14 @@ C     ALE ON / OFF
      D                  ISTRA,           ITASK,           BID,             BID,
      E                  BID,             IBID,            GRESAV,          GRTH,
      F                  IGRTH,           MSSA,            DMELS,           TABLE,
-     G                  XDP,        SFEM%SFEM_NODVAR_ALE, VOLN,            BID,
+     G                  XDP,        sfem%ale%nodvar, VOLN,            BID,
      H                  BID,             D,               SENSORS,         IOUTPRT,
      I                  MAT_ELEM,        IBID,            DT,              IDEL7NOK,
      J                  NSVOIS,          SZ_BUFVOIS,      SNPC,            STF,
      K                  SBUFMAT,         SVIS,            IDTMINS,         IRESP, 
      *                  IDEL7NG,         MAXFUNC,         USERL_AVAIL,     GLOB_THERM, 
      V                  impl_s,          idyna,         SFEM%S_SFEM_NODVAR,ale%global%s_flux,
-     W                  ale%global%nv46,SFEM%itag_nsfem)
+     W                  ale%global%nv46,sfem%ale%need_it(nf1:nf1+nel-1))
 
                     ELSEIF(ITY == 1 .AND. ISOLNOD /= 4)THEN
                       NULLIFY(pQMV); 
@@ -1222,8 +1228,8 @@ c      ENDIF
 
 
       CALL MY_BARRIER
-      if(itask==0) deallocate(qmv)
-      IF(ITASK==0)DEALLOCATE(BUFVOIS)
+      if(itask==0) call my_dealloc(qmv)
+      IF(ITASK==0) call my_dealloc(BUFVOIS)
 
 
       RETURN

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    lecsubmod                               ../starter/source/model/submodel/lecsubmod.F
 !||--- called by ------------------------------------------------------
@@ -51,6 +52,7 @@ C-----------------------------------------------
       USE HM_OPTION_READ_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARLINE, NCHARKEY, NCHARFIELD
       USE transform_translate_in_local_skew_mod, ONLY : transform_translate_in_local_skew
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -74,22 +76,18 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,ID,IDU,ISU,NTRANS,UID,
-     .           ITRANSSUB,IDSUBOK(NSUBMOD),ISUBOK,IGU,I0,
-     .           I1,N0,N1,IFLAGUNIT,IDNOD,NTAG,CTAG,INUM,SIDTRANS,
-     .           IDSUB,ITY,K,
+      INTEGER I,J,ID,ISU,NTRANS,UID,
+     .           ITRANSSUB,IDSUBOK(NSUBMOD),ISUBOK,
+     .           SIDTRANS,
+     .           ITY,K,
      .           CUR_SUBMOD,SUB_LEVEL,NUMNUSR,NUMNUSR2,ISK,CNT
       INTEGER, DIMENSION(:), ALLOCATABLE :: TAGNODSUB,NODESSUB ! NUMNOD
       INTEGER :: WORK(70000)
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX,INDEX1,TAGNODSUB_TMP,IDNODSUB
-      CHARACTER(LEN=NCHARKEY) ::  KEY
-      CHARACTER(LEN=NCHARLINE) ::CART,MESS
+      CHARACTER(LEN=NCHARLINE) ::MESS
       CHARACTER(LEN=NCHARTITLE) :: TITR
-      CHARACTER(LEN=NCHARFIELD) ::VERS_IN,STRING
-      MY_REAL
-     .        BID
       my_real
-     .   TX,TY,TZ,ANGLE,FAC_L,X0(3),X1(3),ROT(9),S,XP,YP,ZP,
+     .   TX,TY,TZ,X0(3),X1(3),ROT(9),S,XP,YP,ZP,SKEW_SUB(12),X0_SUB(3),ROT_SUB(9),
      .   XCOLD(3), XCNEW(3), SX, SY, SZ
       DATA MESS/'SUBMODEL DEFINITION                   '/
       LOGICAL IS_AVAILABLE
@@ -99,31 +97,31 @@ C-----------------------------------------------
       INTEGER  USRTOS
       EXTERNAL USRTOS
 C=======================================================================
-      ALLOCATE(TAGNODSUB(NUMNOD))
+      call my_alloc(TAGNODSUB, NUMNOD, "TAGNODSUB")
       ISU = 0
       IS_AVAILABLE = .FALSE.
       UID = 0
       TAGNODSUB = 0
       NUMNUSR = 0
 
-      ALLOCATE(NODESSUB(NUMNOD))
+      call my_alloc(NODESSUB, NUMNOD, "NODESSUB")
       NODESSUB = 0
 
       IF(IS_DYNA /= 0)THEN
         CALL CPP_NODES_COUNT(NUMNUSR,NUMNUSR2)
-        ALLOCATE( INDEX(2*NUMNUSR))
+        call my_alloc(INDEX, 2*NUMNUSR, "INDEX")
         DO I=1,2*NUMNUSR
          INDEX(I)=I
         ENDDO
-        ALLOCATE( INDEX1(2*NUMNOD) )
+        call my_alloc(INDEX1, 2*NUMNOD, "INDEX1")
         DO I=1,2*NUMNOD
          INDEX1(I)=I
         ENDDO
-        ALLOCATE( TAGNODSUB_TMP(NUMNUSR) )
+        call my_alloc(TAGNODSUB_TMP, NUMNUSR, "TAGNODSUB_TMP")
         DO I=1,NUMNUSR
          TAGNODSUB_TMP(I)=I
         ENDDO
-        ALLOCATE( IDNODSUB(NUMNUSR) )
+        call my_alloc(IDNODSUB, NUMNUSR, "IDNODSUB")
         DO I=1,NUMNUSR
          IDNODSUB(I)=I
         ENDDO 
@@ -190,7 +188,7 @@ C-------------------------
       ENDDO
       DO I=1,NSUBMOD
         SIDTRANS = LSUBMODEL(I)%NBTRANS
-        ALLOCATE(LSUBMODEL(I)%IDTRANS(SIDTRANS)) 
+        call my_alloc(LSUBMODEL(I)%IDTRANS, SIDTRANS, "LSUBMODEL(I)%IDTRANS")
         LSUBMODEL(I)%IDTRANS = 0
       ENDDO   
 C----
@@ -232,6 +230,17 @@ C-------------------------
 c MAKE TRANSFORMATION ON SUBMODEL NODES
 C------------------------- 
       DO I=1,NSUBMOD
+       !-------------------------
+        X0_SUB(1) = ZERO
+        X0_SUB(2) = ZERO
+        X0_SUB(3) = ZERO
+       DO J=1,12
+        SKEW_SUB(J)=ZERO
+       ENDDO
+       SKEW_SUB(1)=ONE
+       SKEW_SUB(5)=ONE
+       SKEW_SUB(9)=ONE
+       !-------------------------
        CUR_SUBMOD = I
        SUB_LEVEL = LSUBMODEL(I)%LEVEL
        DO WHILE (SUB_LEVEL /= 0)
@@ -243,6 +252,30 @@ C-------------------------
             TY=RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),16)
             TZ=RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),17)
             ISK = int(RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),23))
+            !--------
+            ! skew sub
+            IF (isk == 0) THEN
+              SKEW_SUB(10) = SKEW_SUB(10) + TX
+              SKEW_SUB(11) = SKEW_SUB(11) + TY
+              SKEW_SUB(12) = SKEW_SUB(12) + TZ
+            ELSEIF (isk > 0) THEN
+              ROT_SUB(1) = SKEW(1,ISK)
+              ROT_SUB(2) = SKEW(2,ISK)
+              ROT_SUB(3) = SKEW(3,ISK)
+              ROT_SUB(4) = SKEW(4,ISK)
+              ROT_SUB(5) = SKEW(5,ISK)
+              ROT_SUB(6) = SKEW(6,ISK)
+              ROT_SUB(7) = SKEW(7,ISK)
+              ROT_SUB(8) = SKEW(8,ISK)
+              ROT_SUB(9) = SKEW(9,ISK)
+              CALL EULER_VROT(X0_SUB,SKEW_SUB(1),ROT_SUB)
+              CALL EULER_VROT(X0_SUB,SKEW_SUB(4),ROT_SUB)
+              CALL EULER_VROT(X0_SUB,SKEW_SUB(7),ROT_SUB)
+              SKEW_SUB(10) = SKEW_SUB(10) + TX
+              SKEW_SUB(11) = SKEW_SUB(11) + TY
+              SKEW_SUB(12) = SKEW_SUB(12) + TZ
+            ENDIF
+            !--------
             !DO K=1,NUMNOD
             !  IF(TAGNODSUB(K) == I) THEN
             !      X(1,K)=X(1,K)+TX
@@ -257,10 +290,9 @@ C-------------------------
                 NODESSUB(CNT) = K
               ENDIF
             ENDDO
-            CALL transform_translate_in_local_skew(
+            IF (CNT > 0) CALL transform_translate_in_local_skew(
      .            NODESSUB     ,CNT        ,X   ,NUMNOD     , ISK  ,
-     .            TX           ,TY         ,TZ  ,SKEW       , LSKEW,
-     .            SSKEW        )
+     .            TX           ,TY         ,TZ  ,SKEW_SUB   )
           ELSEIF(ITY == 2)THEN
             DO K=1,9
               ROT(K)=RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),K+2)
@@ -272,6 +304,12 @@ C-------------------------
             DO K=1,NUMNOD
               IF(TAGNODSUB(K) == I)  CALL EULER_VROT(X0,X(1,K),ROT)
             ENDDO
+            !--------
+            ! skew sub
+            CALL EULER_VROT(X0_SUB,SKEW_SUB(1),ROT)
+            CALL EULER_VROT(X0_SUB,SKEW_SUB(4),ROT)
+            CALL EULER_VROT(X0_SUB,SKEW_SUB(7),ROT)
+            !--------
           ELSEIF(ITY == 3)THEN 
             TX = RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),15)
             TY = RTRANS(LSUBMODEL(CUR_SUBMOD)%IDTRANS(J),16)
@@ -357,13 +395,13 @@ C-------------------------
       ENDDO
 C-------------------------
       IF(IS_DYNA /= 0)THEN
-        IF (ALLOCATED(INDEX)) DEALLOCATE(INDEX)
-        IF (ALLOCATED(INDEX1)) DEALLOCATE(INDEX1)
-        IF (ALLOCATED(TAGNODSUB_TMP)) DEALLOCATE(TAGNODSUB_TMP)
-        IF (ALLOCATED(IDNODSUB)) DEALLOCATE(IDNODSUB)
+        IF (ALLOCATED(INDEX)) CALL MY_DEALLOC(INDEX)
+        IF (ALLOCATED(INDEX1)) CALL MY_DEALLOC(INDEX1)
+        IF (ALLOCATED(TAGNODSUB_TMP)) CALL MY_DEALLOC(TAGNODSUB_TMP)
+        IF (ALLOCATED(IDNODSUB)) CALL MY_DEALLOC(IDNODSUB)
       ENDIF
-      DEALLOCATE(TAGNODSUB)
-      IF(ALLOCATED(NODESSUB)) DEALLOCATE(NODESSUB)
+      CALL MY_DEALLOC(TAGNODSUB)
+      IF(ALLOCATED(NODESSUB)) CALL MY_DEALLOC(NODESSUB)
 C-------------------------
 c MAKE TRANSFORMATION ON SUBMODEL NODES
 C-------------------------   
@@ -380,5 +418,5 @@ c     .'  NODAL TRANSFORMATIONS       '/,
 c     .'  ---------------------- ')
 c 1000 FORMAT(/10X,'NEW NODE COORDINATES',14X,'X',24X,'Y',24X,'Z')
 c 1500 FORMAT( 17X,I10,3(5X,E20.13))
-      RETURN
+       RETURN
       END

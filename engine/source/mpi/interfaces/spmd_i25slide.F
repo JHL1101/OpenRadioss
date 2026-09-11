@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_i25_slide_exch   ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- called by ------------------------------------------------------
@@ -28,8 +29,9 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    message_mod           ../engine/share/message_module/message_mod.F
 !||    mpi_commod            ../engine/share/modules/mpi_comm_mod.F
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
 !||    pointerdef            ../engine/share/modules/pointerdef_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod              ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I25_SLIDE_EXCH(IBUF    ,RBUF      ,ISIZ    ,RSIZ 
      .                              ,NB      ,COMM_INT, COMM_REAL, COMM_SIZ
@@ -40,10 +42,11 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE MPI_COMMOD
       USE POINTERDEF
+      USE MY_ALLOC_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -109,11 +112,11 @@ C-----------------------------------------------
             MSGTYP = MSGOFF1 
             COMM_SIZ%SIZ(P,NIN) = 1
             COMM_SIZ%TAG(P,NIN) = MSGTYP 
-            CALL MPI_ISEND(
-     1        NB(P,NIN),1,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     2        SPMD_COMM_WORLD,COMM_SIZ%SEND_RQ(P,NIN),ierror)
+            CALL spmd_isend(
+     1        NB(P,NIN),1,IT_SPMD(P),MSGTYP,
+     2        COMM_SIZ%SEND_RQ(P,NIN))
           ELSE
-             COMM_SIZ%SEND_RQ(P,NIN) = MPI_REQUEST_NULL
+             COMM_SIZ%SEND_RQ(P,NIN) = SPMD_REQUEST_NULL
           ENDIF
         ENDDO
       ELSE IF(MODE == 1) THEN        
@@ -126,20 +129,20 @@ C-----------------------------------------------
                COMM_REAL%SIZ(P,NIN) = LENGTH
                COMM_REAL%TAG(P,NIN) = MSGTYP 
                
-               CALL MPI_ISEND(
-     1           RBUF(P,NIN)%P(1),LENGTH,REAL,IT_SPMD(P),MSGTYP,
-     2           SPMD_COMM_WORLD,COMM_REAL%SEND_RQ(P,NIN),ierror)
+               CALL spmd_isend(
+     1           RBUF(P,NIN)%P(1:LENGTH),LENGTH,IT_SPMD(P),MSGTYP,
+     2           COMM_REAL%SEND_RQ(P,NIN))
                
                MSGTYP = MSGOFF3 
                LENGTH = NB(P,NIN) * ISIZ
                COMM_INT%SIZ(P,NIN) = LENGTH
                COMM_INT%TAG(P,NIN) = MSGTYP 
-               CALL MPI_ISEND(
-     1           IBUF(P,NIN)%P(1),LENGTH,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     2           SPMD_COMM_WORLD,COMM_INT%SEND_RQ(P,NIN),ierror)
+               CALL spmd_isend(
+     1           IBUF(P,NIN)%P(1:LENGTH),LENGTH,IT_SPMD(P),MSGTYP,
+     2           COMM_INT%SEND_RQ(P,NIN))
              ELSE
-                 COMM_INT%SEND_RQ(P,NIN) = MPI_REQUEST_NULL
-                 COMM_REAL%SEND_RQ(P,NIN) = MPI_REQUEST_NULL
+                 COMM_INT%SEND_RQ(P,NIN) = SPMD_REQUEST_NULL
+                 COMM_REAL%SEND_RQ(P,NIN) = SPMD_REQUEST_NULL
              ENDIF
            ENDIF
          ENDDO
@@ -150,11 +153,11 @@ C-----------------------------------------------
              MSGTYP = MSGOFF1 
              COMM_REAL%SIZ(P,NIN) = 1
 
-             CALL MPI_IRECV(
-     1         NB(P,NIN),1,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     2         SPMD_COMM_WORLD,COMM_SIZ%RECV_RQ(P,NIN),ierror)
+             CALL spmd_irecv(
+     1         NB(P,NIN),1,IT_SPMD(P),MSGTYP,
+     2         COMM_SIZ%RECV_RQ(P,NIN))
              ELSE
-               COMM_SIZ%RECV_RQ(P,NIN) = MPI_REQUEST_NULL
+               COMM_SIZ%RECV_RQ(P,NIN) = SPMD_REQUEST_NULL
              ENDIF 
          ENDDO
 
@@ -170,7 +173,7 @@ C-----------------------------------------------
          DO PP = 1,NBCOM
 C          IF(P/= LOC_PROC .AND. COMM_PATTERN(P,NIN) == 1) THEN
 C            CALL MPI_WAIT(COMM_SIZ%RECV_RQ(P,NIN),STATUS,IERROR)
-             CALL MPI_WAITANY(NSPMD,COMM_SIZ%RECV_RQ(1:NSPMD,NIN),P,STATUS,IERROR)
+             CALL spmd_waitany(COMM_SIZ%RECV_RQ(1:NSPMD,NIN),NSPMD,P,STATUS)
 
              IF(NB(P,NIN) > 0) THEN
                LENGTH = NB(P,NIN)*RSIZ
@@ -179,9 +182,9 @@ C            CALL MPI_WAIT(COMM_SIZ%RECV_RQ(P,NIN),STATUS,IERROR)
                ALLOCATE(RBUF(P,NIN)%P(LENGTH))
                RBUF(P,NIN)%P(1:LENGTH) = 0
                
-               CALL MPI_RECV(
-     1           RBUF(P,NIN)%P(1),LENGTH,REAL,IT_SPMD(P),MSGTYP,
-     2           SPMD_COMM_WORLD,STATUS,ierror)
+               CALL spmd_recv(
+     1           RBUF(P,NIN)%P(1:LENGTH),LENGTH,IT_SPMD(P),MSGTYP,
+     2           STATUS)
                
                LENGTH = NB(P,NIN)*ISIZ
                MSGTYP = MSGOFF3 
@@ -190,9 +193,9 @@ C            CALL MPI_WAIT(COMM_SIZ%RECV_RQ(P,NIN),STATUS,IERROR)
                ALLOCATE(IBUF(P,NIN)%P(LENGTH))
                IBUF(P,NIN)%P(1:LENGTH) = 0
              
-               CALL MPI_RECV(
-     1           IBUF(P,NIN)%P(1),LENGTH,MPI_INTEGER,IT_SPMD(P),MSGTYP,
-     2           SPMD_COMM_WORLD,STATUS,ierror)
+               CALL spmd_recv(
+     1           IBUF(P,NIN)%P(1:LENGTH),LENGTH,IT_SPMD(P),MSGTYP,
+     2           STATUS)
              ENDIF
 C          ENDIF
          ENDDO
@@ -201,21 +204,21 @@ C          ENDIF
          !CLEAN
          DO P = 1, NSPMD
            IF(NB(P,NIN) > 0 .AND. COMM_PATTERN(P,NIN) == 1) THEN
-             DEALLOCATE(IBUF(P,NIN)%P)
-             DEALLOCATE(RBUF(P,NIN)%P)
+             call my_dealloc(IBUF(P,NIN)%P)
+             call my_dealloc(RBUF(P,NIN)%P)
            ENDIF
          ENDDO
        ELSEIF(MODE == 5) THEN
          !CLEAN
          DO P = 1, NSPMD
             IF(P /= LOC_PROC .AND. COMM_PATTERN(P,NIN) == 1) THEN
-             CALL MPI_WAIT(COMM_SIZ%SEND_RQ(P,NIN),STATUS,IERROR)
+             CALL spmd_wait(COMM_SIZ%SEND_RQ(P,NIN),STATUS)
             ENDIF
             IF(NB(P,NIN) > 0 .AND. COMM_PATTERN(P,NIN) == 1) THEN
-              CALL MPI_WAIT(COMM_INT%SEND_RQ(P,NIN),STATUS,IERROR)
-              DEALLOCATE(IBUF(P,NIN)%P)
-              CALL MPI_WAIT(COMM_REAL%SEND_RQ(P,NIN),STATUS,IERROR)
-              DEALLOCATE(RBUF(P,NIN)%P)
+              CALL spmd_wait(COMM_INT%SEND_RQ(P,NIN),STATUS)
+              call my_dealloc(IBUF(P,NIN)%P)
+              CALL spmd_wait(COMM_REAL%SEND_RQ(P,NIN),STATUS)
+              call my_dealloc(RBUF(P,NIN)%P)
             ENDIF
          ENDDO
        ENDIF
@@ -227,22 +230,23 @@ C          ENDIF
 
 C   
 !||====================================================================
-!||    spmd_i25_slide_gat    ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    spmd_i25_slide_gat   ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- called by ------------------------------------------------------
-!||    i25main_slid          ../engine/source/interfaces/int25/i25main_slid.F
+!||    i25main_slid         ../engine/source/interfaces/int25/i25main_slid.F
 !||--- calls      -----------------------------------------------------
-!||    deallocate_fi1_tmp    ../engine/source/mpi/interfaces/spmd_i25slide.F
-!||    my_orders             ../common_source/tools/sort/my_orders.c
-!||    reallocate_fi1        ../engine/source/mpi/interfaces/spmd_i25slide.F
-!||    reallocate_fi2        ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    deallocate_fi1_tmp   ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    my_orders            ../common_source/tools/sort/my_orders.c
+!||    reallocate_fi1       ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    reallocate_fi2       ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- uses       -----------------------------------------------------
-!||    h3d_mod               ../engine/share/modules/h3d_mod.F
-!||    ifront_mod            ../engine/share/modules/ifront_mod.F
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25tmp              ../engine/share/modules/tri25tmp_mod.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    h3d_mod              ../engine/share/modules/h3d_mod.F
+!||    ifront_mod           ../engine/share/modules/ifront_mod.F
+!||    intbufdef_mod        ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri25tmp             ../engine/share/modules/tri25tmp_mod.F
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_I25_SLIDE_GAT(NSN  ,NIN, NI25,
      2                             IGAP  ,NSNR   ,INTTH   ,ILEV,INTBUF_TAB,
@@ -345,10 +349,11 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE INTBUFDEF_MOD 
       USE H3D_MOD  
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -412,7 +417,7 @@ C
          NB_SLID_TOT = NB_SLID_TOT + NB_SLID(P) 
          NSNR_TOT = NSNR_TOT + NSNFI(NIN)%P(P) 
       ENDDO
-      ALLOCATE(PROC_ORIG(NB_SLID_TOT))
+      call my_alloc(PROC_ORIG, NB_SLID_TOT, "PROC_ORIG")
       IDEB = 0
       DO P = 1,NSPMD
          PROC_ORIG(IDEB+1:IDEB+NB_SLID(P)) =  P
@@ -420,7 +425,7 @@ C
       ENDDO
 
 
-      ALLOCATE(INDEX(NSNR_TOT))
+      call my_alloc(INDEX, NSNR_TOT, "INDEX")
       INDEX(1:NSNR_TOT) = 0
       CALL REALLOCATE_FI1(NODFI,TMP,NIN,INTTH,IGAP,ILEV,INTFRIC,FLAGREMN,IVIS2,ISTIF_MSDT,IFSUB_CAREA)
       NSNFI(NIN)%P(1:NSPMD) = TMP%NSNFI%P(1:NSPMD)
@@ -465,9 +470,9 @@ C
          SIZE_PERM_MAX = MAX(SIZE_PERM_MAX,SINDEX(P))
       ENDDO
 
-      ALLOCATE(PERMUTATIONS(2*SIZE_PERM_MAX))
+      call my_alloc(PERMUTATIONS, 2*SIZE_PERM_MAX, "PERMUTATIONS")
       IF(FLAGREMN == 2 ) THEN
-         ALLOCATE(REMNOR_FI_TMP(NODFI*LREMNORMAX))
+         call my_alloc(REMNOR_FI_TMP, NODFI*LREMNORMAX, "REMNOR_FI_TMP")
          KI = 0
       ENDIF
       DO P = 1, NSPMD
@@ -491,11 +496,11 @@ C
             ENDDO
           ENDIF
 
-          ALLOCATE(IAUX(NSNR_OLD+NSNR_NEW))
-          ALLOCATE(IAUX_LOCAL(NSNR_OLD+NSNR_NEW))
-          ALLOCATE(IAUX_REV(NSNR_OLD+NSNR_NEW))
-          ALLOCATE(IAUX_K(NSNR_OLD+NSNR_NEW))
-          ALLOCATE(IAUX_L(NSNR_OLD+NSNR_NEW))
+          call my_alloc(IAUX, NSNR_OLD+NSNR_NEW, "IAUX")
+          call my_alloc(IAUX_LOCAL, NSNR_OLD+NSNR_NEW, "IAUX_LOCAL")
+          call my_alloc(IAUX_REV, NSNR_OLD+NSNR_NEW, "IAUX_REV")
+          call my_alloc(IAUX_K, NSNR_OLD+NSNR_NEW, "IAUX_K")
+          call my_alloc(IAUX_L, NSNR_OLD+NSNR_NEW, "IAUX_L")
 
           POLD=1
           PNEW=1
@@ -1032,7 +1037,11 @@ C
 
           IDEB_OLD = IDEB_OLD + NSNR_OLD    
           IDEB_SLID = IDEB_SLID + NB_SLID(P)
-          DEALLOCATE(IAUX,IAUX_LOCAL,IAUX_REV,IAUX_K,IAUX_L)
+          call my_dealloc(IAUX)
+          call my_dealloc(IAUX_LOCAL)
+          call my_dealloc(IAUX_REV)
+          call my_dealloc(IAUX_K)
+          call my_dealloc(IAUX_L)
 
 
         ENDIF !IF(NSNR_OLD/=0) 
@@ -1076,7 +1085,7 @@ C
                REMNOR_FI(NIN)%P(N) =REMNOR_FI_TMP(N)
             ENDDO
          ENDIF
-         DEALLOCATE(REMNOR_FI_TMP)
+         call my_dealloc(REMNOR_FI_TMP)
       ENDIF
 
 
@@ -1091,8 +1100,8 @@ C ================================================================
 C
 C Deallocation of XREM IREM
 C
-      IF(ALLOCATED(XREM)) DEALLOCATE(XREM)
-      IF(ALLOCATED(IREM)) DEALLOCATE(IREM)
+      IF(ALLOCATED(XREM)) call my_dealloc(XREM)
+      IF(ALLOCATED(IREM)) call my_dealloc(IREM)
   
 C
 C   ALLOCATIONS FOR THE ASSEMBLY  
@@ -1120,11 +1129,12 @@ C
       ENDDO
 
       DO P=1,NSPMD
-       DEALLOCATE(INDX_FOR_P(P)%P)
-       DEALLOCATE(UID_FOR_P(P)%P)
+       call my_dealloc(INDX_FOR_P(P)%P)
+       call my_dealloc(UID_FOR_P(P)%P)
       ENDDO
 
-      DEALLOCATE(PERMUTATIONS,PROC_ORIG)
+      call my_dealloc(PERMUTATIONS)
+      call my_dealloc(PROC_ORIG)
 
 C
 #endif
@@ -1132,14 +1142,14 @@ C
       END
 
 !||====================================================================
-!||    reallocate_fi1        ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    reallocate_fi1       ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- called by ------------------------------------------------------
-!||    spmd_i25_slide_gat    ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    spmd_i25_slide_gat   ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25tmp              ../engine/share/modules/tri25tmp_mod.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri25tmp             ../engine/share/modules/tri25tmp_mod.F
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE REALLOCATE_FI1(NEW_SIZE,TMP,NIN,INTTH,IGAP,ILEV,INTFRIC,
      .                          FLAGREMN,IVIS2,ISTIF_MSDT,IFSUB_CAREA)
@@ -1152,7 +1162,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 #include      "assert.inc"
 C-----------------------------------------------
@@ -1313,14 +1323,16 @@ C
       RETURN
       END SUBROUTINE    
 !||====================================================================
-!||    deallocate_fi1_tmp    ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    deallocate_fi1_tmp   ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- called by ------------------------------------------------------
-!||    spmd_i25_slide_gat    ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    spmd_i25_slide_gat   ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25tmp              ../engine/share/modules/tri25tmp_mod.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri25tmp             ../engine/share/modules/tri25tmp_mod.F
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE DEALLOCATE_FI1_TMP(NEW_SIZE,TMP,NIN,INTTH,IGAP,ILEV,INTFRIC,
      .                          FLAGREMN,IVIS2,ISTIF_MSDT,IFSUB_CAREA)
@@ -1330,10 +1342,11 @@ C-----------------------------------------------
       USE TRI7BOX
       USE TRI25TMP
       USE MESSAGE_MOD
+      USE MY_ALLOC_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1350,67 +1363,67 @@ C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
 
       IF(.NOT.ASSOCIATED(TMP%NSVFI%P))RETURN
-      DEALLOCATE(TMP%NSNFI%P)
-      DEALLOCATE(TMP%NSVFI%P)
-      DEALLOCATE(TMP%XFI%P)
-      DEALLOCATE(TMP%VFI%P)
-      DEALLOCATE(TMP%MSFI%P)
-      DEALLOCATE(TMP%STIFI%P)
-      DEALLOCATE(TMP%ITAFI%P)
-      DEALLOCATE(TMP%PMAINFI%P)
-      DEALLOCATE(TMP%KINFI%P)
+      call my_dealloc(TMP%NSNFI%P)
+      call my_dealloc(TMP%NSVFI%P)
+      call my_dealloc(TMP%XFI%P)
+      call my_dealloc(TMP%VFI%P)
+      call my_dealloc(TMP%MSFI%P)
+      call my_dealloc(TMP%STIFI%P)
+      call my_dealloc(TMP%ITAFI%P)
+      call my_dealloc(TMP%PMAINFI%P)
+      call my_dealloc(TMP%KINFI%P)
       IF(.TRUE.) THEN
-        DEALLOCATE(TMP%ICODT_FI%P)
-        DEALLOCATE(TMP%ISKEW_FI%P)
+        call my_dealloc(TMP%ICODT_FI%P)
+        call my_dealloc(TMP%ISKEW_FI%P)
       ENDIF
       IF(INTTH > 0 ) THEN
-       DEALLOCATE(TMP%TEMPFI%P)
-       DEALLOCATE(TMP%MATSFI%P)
-       DEALLOCATE(TMP%AREASFI%P)
+       call my_dealloc(TMP%TEMPFI%P)
+       call my_dealloc(TMP%MATSFI%P)
+       call my_dealloc(TMP%AREASFI%P)
       ENDIF 
       IF(IVIS2==-1) THEN
-        IF(INTTH==0) DEALLOCATE(TMP%AREASFI%P)
-        DEALLOCATE(TMP%IF_ADHFI%P)
+        IF(INTTH==0) call my_dealloc(TMP%AREASFI%P)
+        call my_dealloc(TMP%IF_ADHFI%P)
       ENDIF
       IF(INTFRIC > 0 ) THEN
-       DEALLOCATE(TMP%IPARTFRICSFI%P)
+       call my_dealloc(TMP%IPARTFRICSFI%P)
       ENDIF 
       IF(ISTIF_MSDT > 0 ) THEN
-       DEALLOCATE(TMP%STIF_MSDT_FI%P)
+       call my_dealloc(TMP%STIF_MSDT_FI%P)
       ENDIF 
       IF(IFSUB_CAREA > 0 ) THEN
-       DEALLOCATE(TMP%INTAREANFI%P)
+       call my_dealloc(TMP%INTAREANFI%P)
       ENDIF 
       IF(IDTMINS == 2) THEN
-       DEALLOCATE(TMP%NODNXFI%P)
-       DEALLOCATE(TMP%NODAMSFI%P)
-       DEALLOCATE(TMP%PROCAMSFI%P)
+       call my_dealloc(TMP%NODNXFI%P)
+       call my_dealloc(TMP%NODAMSFI%P)
+       call my_dealloc(TMP%PROCAMSFI%P)
       ELSEIF(IDTMINS_INT /= 0) THEN
-       DEALLOCATE(TMP%NODAMSFI%P)
-       DEALLOCATE(TMP%PROCAMSFI%P)
+       call my_dealloc(TMP%NODAMSFI%P)
+       call my_dealloc(TMP%PROCAMSFI%P)
       ENDIF 
       IF(IGAP/=0) THEN
-        DEALLOCATE(TMP%GAPFI%P)
+        call my_dealloc(TMP%GAPFI%P)
         IF(IGAP==3) THEN
-          DEALLOCATE(TMP%GAP_LFI%P)
+          call my_dealloc(TMP%GAP_LFI%P)
         ENDIF
       ENDIF
       IF(ILEV == 2 .AND. ASSOCIATED(TMP%NBINFLFI%P)) THEN
-        DEALLOCATE(TMP%NBINFLFI%P)
+        call my_dealloc(TMP%NBINFLFI%P)
       ENDIF
-      DEALLOCATE(TMP%IRTLM_FI%P)
-      DEALLOCATE(TMP%TIME_SFI%P)
-      DEALLOCATE(TMP%SECND_FRFI%P)
+      call my_dealloc(TMP%IRTLM_FI%P)
+      call my_dealloc(TMP%TIME_SFI%P)
+      call my_dealloc(TMP%SECND_FRFI%P)
 
-      DEALLOCATE(TMP%PENE_OLDFI%P)
+      call my_dealloc(TMP%PENE_OLDFI%P)
 
-      DEALLOCATE(TMP%STIF_OLDFI%P)
+      call my_dealloc(TMP%STIF_OLDFI%P)
 
-      DEALLOCATE(TMP%ICONT_I_FI%P)
-      DEALLOCATE(TMP%ISLIDE_FI%P)
+      call my_dealloc(TMP%ICONT_I_FI%P)
+      call my_dealloc(TMP%ISLIDE_FI%P)
       IF(FLAGREMN == 2) THEN
-         IF(ASSOCIATED(TMP%REMNOR_FI%P)) DEALLOCATE(TMP%REMNOR_FI%P)
-         IF(ASSOCIATED(TMP%KREMNOR_FI%P)) DEALLOCATE(TMP%KREMNOR_FI%P)
+         IF(ASSOCIATED(TMP%REMNOR_FI%P)) call my_dealloc(TMP%REMNOR_FI%P)
+         IF(ASSOCIATED(TMP%KREMNOR_FI%P)) call my_dealloc(TMP%KREMNOR_FI%P)
       ENDIF
 C
 
@@ -1419,17 +1432,18 @@ C
 
 
 !||====================================================================
-!||    reallocate_fi2        ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    reallocate_fi2       ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- called by ------------------------------------------------------
-!||    spmd_i25_slide_gat    ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    spmd_i25_slide_gat   ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg               ../engine/source/output/message/message.F
+!||    arret                ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    h3d_mod               ../engine/share/modules/h3d_mod.F
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    h3d_mod              ../engine/share/modules/h3d_mod.F
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE REALLOCATE_FI2(NIN, INTTH, NODFI, LSKYFI,H3D_DATA,NODADT_THERM) 
 C
@@ -1444,7 +1458,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
+        use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1477,11 +1492,11 @@ C
         IF(IPARIT==0) THEN
          
           IF(ASSOCIATED(AFI(NIN)%P)) THEN
-              DEALLOCATE(AFI(NIN)%P)
+              call my_dealloc(AFI(NIN)%P)
               NULLIFY(AFI(NIN)%P)
           ENDIF
           IF(ASSOCIATED(STNFI(NIN)%P)) THEN
-              DEALLOCATE(STNFI(NIN)%P)
+              call my_dealloc(STNFI(NIN)%P)
               NULLIFY(AFI(NIN)%P) 
           ENDIF
 
@@ -1496,7 +1511,7 @@ C Init a 0
           ENDDO
 C
           IF(KDTINT/=0)THEN
-            IF(ASSOCIATED(VSCFI(NIN)%P)) DEALLOCATE(VSCFI(NIN)%P)
+            IF(ASSOCIATED(VSCFI(NIN)%P)) call my_dealloc(VSCFI(NIN)%P)
             IF(NODFI>0)ALLOCATE(VSCFI(NIN)%P(NODFI*NTHREAD),STAT=IERROR3)
 C Init a 0
             DO I = 1, NODFI*NTHREAD
@@ -1509,8 +1524,8 @@ C
 C
 C Allocation Parith/ON
 C
-          IF(ASSOCIATED(FSKYFI(NIN)%P)) DEALLOCATE(FSKYFI(NIN)%P)
-          IF(ASSOCIATED(ISKYFI(NIN)%P)) DEALLOCATE(ISKYFI(NIN)%P)
+          IF(ASSOCIATED(FSKYFI(NIN)%P)) call my_dealloc(FSKYFI(NIN)%P)
+          IF(ASSOCIATED(ISKYFI(NIN)%P)) call my_dealloc(ISKYFI(NIN)%P)
           NLSKYFI(NIN) = LSKYFI
           IF(LSKYFI>0) THEN
             ALLOCATE(ISKYFI(NIN)%P(LSKYFI),STAT=IERROR1)
@@ -1526,15 +1541,15 @@ C
 C Allocation Parith/OFF
 C
         IF(IPARIT==0) THEN
-          IF(ASSOCIATED(AFI(NIN)%P)) DEALLOCATE(AFI(NIN)%P)
-          IF(ASSOCIATED(STNFI(NIN)%P)) DEALLOCATE(STNFI(NIN)%P)
-          IF(ASSOCIATED(FTHEFI(NIN)%P)) DEALLOCATE(FTHEFI(NIN)%P)
+          IF(ASSOCIATED(AFI(NIN)%P)) call my_dealloc(AFI(NIN)%P)
+          IF(ASSOCIATED(STNFI(NIN)%P)) call my_dealloc(STNFI(NIN)%P)
+          IF(ASSOCIATED(FTHEFI(NIN)%P)) call my_dealloc(FTHEFI(NIN)%P)
           IF(NODFI>0)ALLOCATE(AFI(NIN)%P(3,NODFI*NTHREAD),STAT=IERROR1)
           IF(NODFI>0)ALLOCATE(STNFI(NIN)%P(NODFI*NTHREAD),STAT=IERROR2)
           IF(NODFI>0)ALLOCATE(FTHEFI(NIN)%P(NODFI*NTHREAD),STAT=IERROR3)
 C
           IF(NODADT_THERM ==1) THEN
-            IF(ASSOCIATED(CONDNFI(NIN)%P)) DEALLOCATE(CONDNFI(NIN)%P)
+            IF(ASSOCIATED(CONDNFI(NIN)%P)) call my_dealloc(CONDNFI(NIN)%P)
             IF(NODFI>0.AND.NODADT_THERM ==1)ALLOCATE(CONDNFI(NIN)%P(NODFI*NTHREAD),STAT=IERROR4)
           ENDIF
 C
@@ -1556,7 +1571,7 @@ C Init a 0
           ENDIF
 C
           IF(KDTINT/=0)THEN
-            IF(ASSOCIATED(VSCFI(NIN)%P)) DEALLOCATE(VSCFI(NIN)%P)
+            IF(ASSOCIATED(VSCFI(NIN)%P)) call my_dealloc(VSCFI(NIN)%P)
             IF(NODFI>0)ALLOCATE(VSCFI(NIN)%P(NODFI),STAT=IERROR4)
 C Init a 0
             DO I = 1, NODFI
@@ -1568,9 +1583,9 @@ C
 C
 C Allocation Parith/ON
 C
-          IF(ASSOCIATED(FSKYFI(NIN)%P)) DEALLOCATE(FSKYFI(NIN)%P)
-          IF(ASSOCIATED(ISKYFI(NIN)%P)) DEALLOCATE(ISKYFI(NIN)%P)
-          IF(ASSOCIATED(FTHESKYFI(NIN)%P)) DEALLOCATE(FTHESKYFI(NIN)%P)
+          IF(ASSOCIATED(FSKYFI(NIN)%P)) call my_dealloc(FSKYFI(NIN)%P)
+          IF(ASSOCIATED(ISKYFI(NIN)%P)) call my_dealloc(ISKYFI(NIN)%P)
+          IF(ASSOCIATED(FTHESKYFI(NIN)%P)) call my_dealloc(FTHESKYFI(NIN)%P)
           NLSKYFI(NIN) = LSKYFI
           IF(LSKYFI>0) THEN
             ALLOCATE(ISKYFI(NIN)%P(LSKYFI),STAT=IERROR1)
@@ -1585,7 +1600,7 @@ C
           ENDIF
 C
           IF(NODADT_THERM ==1) THEN
-            IF(ASSOCIATED(CONDNSKYFI(NIN)%P)) DEALLOCATE(CONDNSKYFI(NIN)%P)
+            IF(ASSOCIATED(CONDNSKYFI(NIN)%P)) call my_dealloc(CONDNSKYFI(NIN)%P)
             IF(LSKYFI>0) ALLOCATE(CONDNSKYFI(NIN)%P(LSKYFI),STAT=IERROR4)
           ENDIF
 C
@@ -1601,8 +1616,8 @@ C
 C Output Pressure/ Friction Energy conditional allowances
 C
       IF(ANIM_V(12)+OUTP_V(12)+H3D_DATA%N_VECT_PCONT >0)THEN
-        IF(ASSOCIATED(FNCONTI(NIN)%P)) DEALLOCATE(FNCONTI(NIN)%P)
-        IF(ASSOCIATED(FTCONTI(NIN)%P)) DEALLOCATE(FTCONTI(NIN)%P)
+        IF(ASSOCIATED(FNCONTI(NIN)%P)) call my_dealloc(FNCONTI(NIN)%P)
+        IF(ASSOCIATED(FTCONTI(NIN)%P)) call my_dealloc(FTCONTI(NIN)%P)
         ALLOCATE(FNCONTI(NIN)%P(3,NODFI),STAT=IERROR1)
         ALLOCATE(FTCONTI(NIN)%P(3,NODFI),STAT=IERROR2)
         IF(IERROR1+IERROR2/=0) THEN
@@ -1622,7 +1637,7 @@ C
 C
       IF(H3D_DATA%N_SCAL_CSE_FRICINT >0)THEN
        IF(H3D_DATA%N_CSE_FRIC_INTER (NIN) >0)THEN
-        IF(ASSOCIATED(EFRICFI(NIN)%P)) DEALLOCATE(EFRICFI(NIN)%P)
+        IF(ASSOCIATED(EFRICFI(NIN)%P)) call my_dealloc(EFRICFI(NIN)%P)
         ALLOCATE(EFRICFI(NIN)%P(NODFI),STAT=IERROR1)
         IF(IERROR1/=0) THEN
           CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
@@ -1636,7 +1651,7 @@ C
       ENDIF
 C
       IF(H3D_DATA%N_SCAL_CSE_FRIC >0)THEN
-        IF(ASSOCIATED(EFRICGFI(NIN)%P)) DEALLOCATE(EFRICGFI(NIN)%P)
+        IF(ASSOCIATED(EFRICGFI(NIN)%P)) call my_dealloc(EFRICGFI(NIN)%P)
         ALLOCATE(EFRICGFI(NIN)%P(NODFI),STAT=IERROR1)
         IF(IERROR1/=0) THEN
           CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
@@ -1652,12 +1667,12 @@ C
       END SUBROUTINE
 
 !||====================================================================
-!||    check_fi              ../engine/source/mpi/interfaces/spmd_i25slide.F
+!||    check_fi      ../engine/source/mpi/interfaces/spmd_i25slide.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25tmp              ../engine/share/modules/tri25tmp_mod.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    message_mod   ../engine/share/message_module/message_mod.F
+!||    spmd_mod      ../engine/source/mpi/spmd_mod.F90
+!||    tri25tmp      ../engine/share/modules/tri25tmp_mod.F
+!||    tri7box       ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE CHECK_FI()
 C use for debug only
@@ -1670,7 +1685,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s

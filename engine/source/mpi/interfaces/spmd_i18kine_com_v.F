@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,24 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_i18kine_com_v    ../engine/source/mpi/interfaces/spmd_i18kine_com_v.F
+!||    spmd_i18kine_com_v   ../engine/source/mpi/interfaces/spmd_i18kine_com_v.F
 !||--- called by ------------------------------------------------------
-!||    i18main_kine_2        ../engine/source/interfaces/int18/i18main_kine.F
+!||    i18main_kine_2       ../engine/source/interfaces/int18/i18main_kine.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg               ../engine/source/output/message/message.F
+!||    arret                ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    intbufdef_mod        ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod          ../engine/share/message_module/message_mod.F
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
+!||    tri7box              ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_I18KINE_COM_V(IPARI,INTBUF_TAB,
      *                MTF,A,ITAB)
@@ -44,7 +45,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD, ONLY : SPMD_ISEND, SPMD_RECV, SPMD_WAIT
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -156,9 +157,9 @@ c                 BBUFS(L+5)=MTF(6,NOD)
          IF(SIZ>0)THEN
               MSGTYP = MSGOFF 
 C Send
-              CALL MPI_ISEND(
-     .          BBUFS(IADS(P)),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .          SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+              CALL SPMD_ISEND(
+     .          BBUFS(IADS(P):IADS(P)+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,
+     .          REQ_SI(P))
          ENDIF
        ENDIF
       ENDDO
@@ -171,8 +172,9 @@ C Recieve
           SIZ=IADR(P+1)-IADR(P)
           IF (SIZ > 0) THEN
             MSGTYP = MSGOFF 
-            CALL MPI_RECV( BBUFR(IADR(P)),SIZ,REAL,IT_SPMD(P),MSGTYP,
-     *                     SPMD_COMM_WORLD,STATUS,IERROR )
+            CALL SPMD_RECV(
+     *                    BBUFR(IADR(P):IADR(P)+SIZ-1),SIZ,IT_SPMD(P),
+     *                    MSGTYP,STATUS)
            DO NIN=1,NINTER
              NTY   =IPARI(7,NIN)
              INACTI =IPARI(22,NIN)
@@ -202,7 +204,7 @@ C end of send
       DO P = 1, NSPMD
           SIZ=IADS(P+1)-IADS(P)
           IF(SIZ>0) THEN
-            CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+            CALL SPMD_WAIT(REQ_SI(P),STATUS)
           ENDIF
       ENDDO
 

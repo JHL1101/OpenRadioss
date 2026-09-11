@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    ebcs_cyclic_surface_matching_mod   ../starter/source/boundary_conditions/ebcs/ebcs_cyclic_surface_matching.F90
 !||--- called by ------------------------------------------------------
@@ -45,7 +46,7 @@
 !||    ebcs_cyclic_surface_matching_2d_mod   ../starter/source/boundary_conditions/ebcs/ebcs_cyclic_surface_matching_2d.F90
 !||    ebcs_cyclic_surface_matching_3d_mod   ../starter/source/boundary_conditions/ebcs/ebcs_cyclic_surface_matching_3d.F90
 !||====================================================================
-        subroutine ebcs_cyclic_surface_matching(ebcs_cyclic, ebcs,  n2d, numnod, X)
+        subroutine ebcs_cyclic_surface_matching(ebcs_cyclic, ebcs,  n2d, numnod, X, iflag)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -70,6 +71,7 @@
           integer, intent(in) :: n2d                       !< 2d/3d flag  0:3d, 1:axi, 2:plane strain
           integer,intent(in) :: numnod
           real(kind=WP),intent(in) :: X(3,numnod)
+          integer,intent(in) :: IFLAG
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -78,7 +80,7 @@
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
           if(n2d == 0)then
-            call ebcs_cyclic_surface_matching_3d(ebcs_cyclic, ebcs, numnod, X)
+            if(iflag /= 0)call ebcs_cyclic_surface_matching_3d(ebcs_cyclic, ebcs, numnod, X)
           else
             call ebcs_cyclic_surface_matching_2d(ebcs_cyclic, ebcs, numnod, X)
           end if

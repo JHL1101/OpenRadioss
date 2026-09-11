@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fill_igr              ../starter/source/model/sets/fill_igr.F
 !||--- called by ------------------------------------------------------
@@ -66,9 +67,11 @@ C-----------------------------------------------
       USE QA_OUT_MOD
       USE FILL_SURF_PLANE_MOD
       USE file_descriptor_mod
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "com04_c.inc"
 C-----------------------------------------------
@@ -127,21 +130,23 @@ C
       ! Process the line stored in KEYA here if needed
               IF(KEYA(1:14) == '/DT/NODA/CST/1' .OR. KEYA(1:8) == '/DYREL/1' .OR. KEYA(1:8) == '/KEREL/1' .OR.
      .           KEYA(1:14) == '/INIV/AXIS/X/2' .OR. KEYA(1:14) == '/INIV/AXIS/Y/2' .OR.
-     .           KEYA(1:14) == '/INIV/AXIS/Z/2')  THEN
+     .           KEYA(1:14) == '/INIV/AXIS/Z/2'.OR. KEYA(1:9) == '/ADYREL/1')  THEN
                 NB_GRNODE = NB_GRNODE + 1
               ELSEIF(KEYA(1:4) == '/H3D' .AND. KEYA(1:7) /= '/H3D/DT'  .AND.
      .               KEYA(1:10) /= '/H3D/TITLE'   .AND. KEYA(1:13) /= '/H3D/COMPRESS'   .AND.
      .               KEYA(1:12) /= '/H3D/LSENSOR' .AND. KEYA(1:7) /= '/H3D/RB'     ) THEN
                 READ(UNIT=tmp_engine, FMT='(A)', IOSTAT=IO_ERR2) CARTE
-                IF(CARTE(1:1) == '/') THEN 
-                  BACKSPACE(tmp_engine)
-                ELSE IF(CARTE(1:1) /= '#' .AND. CARTE(1:1) /= '$') THEN
-                  ALLOCATE(GRPART_TMP(NVAR(CARTE)))
-                  READ(CARTE, FMT=*) GRPART_TMP
-                  DO J=1,NVAR(CARTE)
-                    IF(GRPART_TMP(J) < 0)  NB_GRPART = NB_GRPART + 1
-                  END DO
-                  IF(ALLOCATED(GRPART_TMP))  DEALLOCATE(GRPART_TMP)
+                IF(IO_ERR2 == 0) THEN
+                  IF(CARTE(1:1) == '/') THEN 
+                    BACKSPACE(tmp_engine)
+                  ELSE IF(CARTE(1:1) /= '#' .AND. CARTE(1:1) /= '$') THEN
+                    call my_alloc(GRPART_TMP, NVAR(CARTE), "GRPART_TMP")
+                    READ(CARTE, FMT=*) GRPART_TMP
+                    DO J=1,NVAR(CARTE)
+                      IF(GRPART_TMP(J) < 0)  NB_GRPART = NB_GRPART + 1
+                    END DO
+                    IF(ALLOCATED(GRPART_TMP))  CALL MY_DEALLOC(GRPART_TMP)
+                  ENDIF
                 ENDIF
               ELSE IF(KEYA(1:6) == '/BEGIN') THEN
                 IO_ERR2 = 1
@@ -153,10 +158,10 @@ C
         ENDIF
       END DO
 
-      IF (NB_GRNODE > 0) ALLOCATE(GRNODE(NB_GRNODE))
+      IF (NB_GRNODE > 0) call my_alloc(GRNODE, NB_GRNODE, "GRNODE")
       NB_GRNODE = 0
       
-      IF (NB_GRPART > 0) ALLOCATE(GRPART(NB_GRPART))
+      IF (NB_GRPART > 0) call my_alloc(GRPART, NB_GRPART, "GRPART")
       NB_GRPART = 0
 
       DO I = 1, 10000
@@ -188,7 +193,7 @@ C
                   READ(UNIT=tmp_engine, FMT='(A)', IOSTAT=IO_ERR2) CARTE
                 END DO
                 READ(CARTE, FMT=*) GRNODE(NB_GRNODE)
-              ELSEIF(KEYA(1:8) == '/DYREL/1') THEN
+              ELSEIF(KEYA(1:8) == '/DYREL/1' .OR. KEYA(1:9) == '/ADYREL/1') THEN
                 NB_GRNODE = NB_GRNODE + 1
 
                 DO WHILE (CARTE(1:1) == '#' .AND. IO_ERR2 == 0)
@@ -236,18 +241,20 @@ C
      .                KEYA(1:10) /= '/H3D/TITLE'   .AND. KEYA(1:13) /= '/H3D/COMPRESS'   .AND.
      .                KEYA(1:12) /= '/H3D/LSENSOR' .AND. KEYA(1:7) /= '/H3D/RB'     ) THEN
                 READ(UNIT=tmp_engine, FMT='(A)', IOSTAT=IO_ERR2) CARTE
-                IF(CARTE(1:1) == '/') THEN 
-                  BACKSPACE(tmp_engine)
-                ELSE IF(CARTE(1:1) /= '#' .AND. CARTE(1:1) /= '$') THEN
-                  ALLOCATE(GRPART_TMP(NVAR(CARTE)))
-                  READ(CARTE, FMT=*) GRPART_TMP
-                  DO J=1,NVAR(CARTE)
-                    IF(GRPART_TMP(J) < 0)  THEN 
-                      NB_GRPART = NB_GRPART + 1
-                      GRPART(NB_GRPART) = GRPART_TMP(J)
-                    ENDIF
-                  END DO
-                  IF(ALLOCATED(GRPART_TMP))  DEALLOCATE(GRPART_TMP)
+                IF(IO_ERR2 == 0) THEN
+                  IF(CARTE(1:1) == '/') THEN 
+                    BACKSPACE(tmp_engine)
+                  ELSE IF(CARTE(1:1) /= '#' .AND. CARTE(1:1) /= '$') THEN
+                    call my_alloc(GRPART_TMP, NVAR(CARTE), "GRPART_TMP")
+                    READ(CARTE, FMT=*) GRPART_TMP
+                    DO J=1,NVAR(CARTE)
+                      IF(GRPART_TMP(J) < 0)  THEN 
+                        NB_GRPART = NB_GRPART + 1
+                        GRPART(NB_GRPART) = GRPART_TMP(J)
+                      ENDIF
+                    END DO
+                    IF(ALLOCATED(GRPART_TMP))  CALL MY_DEALLOC(GRPART_TMP)
+                  ENDIF
                 ENDIF
               ENDIF
             END IF
@@ -282,7 +289,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%PART )) DEALLOCATE ( SET(IGS)%PART )
+           IF(ALLOCATED (SET(IGS)%PART )) call my_dealloc(SET(IGS)%PART)
            SET(IGS)%NB_PART = 0
          ENDIF
 
@@ -295,7 +302,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%SOLID )) DEALLOCATE ( SET(IGS)%SOLID )
+           IF(ALLOCATED (SET(IGS)%SOLID )) call my_dealloc(SET(IGS)%SOLID)
            SET(IGS)%NB_SOLID = 0
          ENDIF
 
@@ -308,7 +315,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%QUAD )) DEALLOCATE ( SET(IGS)%QUAD )
+           IF(ALLOCATED (SET(IGS)%QUAD )) call my_dealloc(SET(IGS)%QUAD)
            SET(IGS)%NB_QUAD = 0
          ENDIF
 
@@ -321,7 +328,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%SH4N )) DEALLOCATE ( SET(IGS)%SH4N )
+           IF(ALLOCATED (SET(IGS)%SH4N )) call my_dealloc(SET(IGS)%SH4N)
            SET(IGS)%NB_SH4N = 0
          ENDIF
 
@@ -334,7 +341,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%SH3N )) DEALLOCATE ( SET(IGS)%SH3N )
+           IF(ALLOCATED (SET(IGS)%SH3N )) call my_dealloc(SET(IGS)%SH3N)
            SET(IGS)%NB_SH3N = 0
          ENDIF
 
@@ -349,7 +356,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%TRIA )) DEALLOCATE ( SET(IGS)%TRIA )
+           IF(ALLOCATED (SET(IGS)%TRIA )) call my_dealloc(SET(IGS)%TRIA)
            SET(IGS)%NB_TRIA = 0
          ENDIF
 
@@ -362,7 +369,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%TRUSS )) DEALLOCATE ( SET(IGS)%TRUSS )
+           IF(ALLOCATED (SET(IGS)%TRUSS )) call my_dealloc(SET(IGS)%TRUSS)
            SET(IGS)%NB_TRUSS = 0
          ENDIF
 
@@ -375,7 +382,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%BEAM )) DEALLOCATE ( SET(IGS)%BEAM )
+           IF(ALLOCATED (SET(IGS)%BEAM )) call my_dealloc(SET(IGS)%BEAM)
            SET(IGS)%NB_BEAM = 0
          ENDIF
 
@@ -388,7 +395,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%SPRING )) DEALLOCATE ( SET(IGS)%SPRING )
+           IF(ALLOCATED (SET(IGS)%SPRING )) call my_dealloc(SET(IGS)%SPRING)
            SET(IGS)%NB_SPRING = 0
          ENDIF
 
@@ -411,7 +418,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%NODE )) DEALLOCATE ( SET(IGS)%NODE )
+           IF(ALLOCATED (SET(IGS)%NODE )) call my_dealloc(SET(IGS)%NODE)
            SET(IGS)%NB_NODE = 0
          ENDIF
 
@@ -426,7 +433,7 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%NODENS )) DEALLOCATE ( SET(IGS)%NODENS )
+           IF(ALLOCATED (SET(IGS)%NODENS )) call my_dealloc(SET(IGS)%NODENS)
            SET(IGS)%NB_NODENS = 0
          ENDIF
 
@@ -439,12 +446,12 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%SURF_NODES )) DEALLOCATE ( SET(IGS)%SURF_NODES )
-           IF(ALLOCATED (SET(IGS)%SURF_ELTYP )) DEALLOCATE ( SET(IGS)%SURF_ELTYP )
-           IF(ALLOCATED (SET(IGS)%SURF_ELEM ))  DEALLOCATE ( SET(IGS)%SURF_ELEM )
+           IF(ALLOCATED (SET(IGS)%SURF_NODES )) call my_dealloc(SET(IGS)%SURF_NODES)
+           IF(ALLOCATED (SET(IGS)%SURF_ELTYP )) call my_dealloc(SET(IGS)%SURF_ELTYP)
+           IF(ALLOCATED (SET(IGS)%SURF_ELEM )) call my_dealloc(SET(IGS)%SURF_ELEM)
            SET(IGS)%NB_SURF_SEG = 0
            ! Ellipse surface
-           IF(ALLOCATED (SET(IGS)%ELLIPSE_SKEW )) DEALLOCATE ( SET(IGS)%ELLIPSE_SKEW )
+           IF(ALLOCATED (SET(IGS)%ELLIPSE_SKEW )) call my_dealloc(SET(IGS)%ELLIPSE_SKEW)
            SET(IGS)%ELLIPSE_A = ZERO
            SET(IGS)%ELLIPSE_B = ZERO
            SET(IGS)%ELLIPSE_C = ZERO
@@ -471,15 +478,15 @@ C
          ENDIF
 
          IF(DOQA == 0) THEN              ! if qa_print keep SET memory
-           IF(ALLOCATED (SET(IGS)%LINE_NODES )) DEALLOCATE ( SET(IGS)%LINE_NODES )
-           IF(ALLOCATED (SET(IGS)%LINE_ELTYP )) DEALLOCATE ( SET(IGS)%LINE_ELTYP )
-           IF(ALLOCATED (SET(IGS)%LINE_ELEM ))  DEALLOCATE ( SET(IGS)%LINE_ELEM )
+           IF(ALLOCATED (SET(IGS)%LINE_NODES )) call my_dealloc(SET(IGS)%LINE_NODES)
+           IF(ALLOCATED (SET(IGS)%LINE_ELTYP )) call my_dealloc(SET(IGS)%LINE_ELTYP)
+           IF(ALLOCATED (SET(IGS)%LINE_ELEM )) call my_dealloc(SET(IGS)%LINE_ELEM)
            SET(IGS)%NB_LINE_SEG = 0
          ENDIF
        ENDDO
 
-       IF(ALLOCATED(GRNODE))  DEALLOCATE(GRNODE)
-       IF(ALLOCATED(GRPART))  DEALLOCATE(GRPART)
+       IF(ALLOCATED(GRNODE)) call my_dealloc(GRNODE)
+       IF(ALLOCATED(GRPART)) call my_dealloc(GRPART)
 
       END 
 

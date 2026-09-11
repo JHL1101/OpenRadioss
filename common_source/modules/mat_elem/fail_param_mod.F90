@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,51 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_param_mod            ../common_source/modules/mat_elem/fail_param_mod.F90
 !||--- called by ------------------------------------------------------
+!||    biquad_tab                ../starter/source/materials/fail/biquad/biquad_tab.F90
 !||    biquad_upd                ../starter/source/materials/fail/biquad/biquad_upd.F90
 !||    brokmann_random           ../starter/source/materials/fail/windshield_alter/brokmann_random.F90
 !||    check_swift_failure       ../starter/source/materials/fail/check_swift_failure.F90
+!||    dam_fld_sol               ../engine/source/output/h3d/h3d_results/h3d_sol_skin_scalar.F
 !||    delm01law                 ../engine/source/properties/composite_options/stack/delm01law.F
 !||    delm02law                 ../engine/source/properties/composite_options/stack/delm02law.F
 !||    delm24law                 ../engine/source/properties/composite_options/stack/delm24law.F
+!||    fail_biquad_b             ../engine/source/materials/fail/biquad/fail_biquad_b.F
 !||    fail_biquad_c             ../engine/source/materials/fail/biquad/fail_biquad_c.F
+!||    fail_biquad_ib            ../engine/source/materials/fail/biquad/fail_biquad_ib.F
 !||    fail_biquad_s             ../engine/source/materials/fail/biquad/fail_biquad_s.F
 !||    fail_composite_c          ../engine/source/materials/fail/composite/fail_composite_c.F90
 !||    fail_composite_s          ../engine/source/materials/fail/composite/fail_composite_s.F90
+!||    fail_energy_b             ../engine/source/materials/fail/energy/fail_energy_b.F
+!||    fail_energy_c             ../engine/source/materials/fail/energy/fail_energy_c.F
+!||    fail_energy_ib            ../engine/source/materials/fail/energy/fail_energy_ib.F
+!||    fail_energy_s             ../engine/source/materials/fail/energy/fail_energy_s.F
+!||    fail_f                    ../engine/source/materials/fail/fld/fail_fld_c.F
+!||    fail_fld_tsh              ../engine/source/materials/fail/fld/fail_fld_tsh.F
+!||    fail_fld_xfem             ../engine/source/materials/fail/fld/fail_fld_xfem.F
 !||    fail_fun2sys              ../starter/source/materials/tools/fail_fun2sys.F
+!||    fail_gene1_b              ../engine/source/materials/fail/gene1/fail_gene1_b.F90
+!||    fail_gene1_c              ../engine/source/materials/fail/gene1/fail_gene1_c.F
+!||    fail_gene1_ib             ../engine/source/materials/fail/gene1/fail_gene1_ib.F90
+!||    fail_gene1_s              ../engine/source/materials/fail/gene1/fail_gene1_s.F
+!||    fail_nxt_c                ../engine/source/materials/fail/nxt/fail_nxt_c.F
+!||    fail_orthbiquad_c         ../engine/source/materials/fail/orthbiquad/fail_orthbiquad_c.F
+!||    fail_orthbiquad_s         ../engine/source/materials/fail/orthbiquad/fail_orthbiquad_s.F
+!||    fail_orthstrain           ../engine/source/materials/fail/orthstrain/fail_orthstrain_s.F
+!||    fail_orthstrain_c         ../engine/source/materials/fail/orthstrain/fail_orthstrain_c.F
 !||    fail_tab2sys              ../starter/source/materials/tools/fail_tab2sys.F
+!||    fail_tensstrain_b         ../engine/source/materials/fail/tensstrain/fail_tensstrain_b.F
+!||    fail_tensstrain_c         ../engine/source/materials/fail/tensstrain/fail_tensstrain_c.F
+!||    fail_tensstrain_ib        ../engine/source/materials/fail/tensstrain/fail_tensstrain_ib.F
+!||    fail_tensstrain_s         ../engine/source/materials/fail/tensstrain/fail_tensstrain_s.F
 !||    h3d_fld_tsh               ../engine/source/output/h3d/h3d_results/h3d_fld_tsh.F
 !||    hm_read_fail_alter        ../starter/source/materials/fail/windshield_alter/hm_read_fail_alter.F
 !||    hm_read_fail_biquad       ../starter/source/materials/fail/biquad/hm_read_fail_biquad.F
@@ -79,6 +104,7 @@
 !||    hm_read_fail_wilkins      ../starter/source/materials/fail/wilkins/hm_read_fail_wilkins.F
 !||    hm_read_fractal_dmg       ../starter/source/materials/fail/fractal/hm_read_fractal_dmg.F90
 !||    hm_read_mullins_or        ../starter/source/materials/fail/mullins_or/hm_read_fail_mullins_or.F
+!||    idx_fld_sol               ../engine/source/output/h3d/h3d_results/h3d_sol_skin_scalar.F
 !||    mat_hardening_to_fail     ../starter/source/materials/mat/mat_hardening_to_fail.F90
 !||    matparam_def_mod          ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    mmain                     ../engine/source/materials/mat_share/mmain.F90
@@ -117,6 +143,7 @@
           integer       :: nuparam              !< number of real value paraameters
           integer       :: niparam              !< number of int value parameters
           integer       :: nuvar                !< number of internal state variables
+          integer       :: nvartmp              !< number of internal temporary variables
           integer       :: nfunc                !< number of functions
           integer       :: ntable               !< number of function tables
           integer       :: ntable4d             !< number of local function tables

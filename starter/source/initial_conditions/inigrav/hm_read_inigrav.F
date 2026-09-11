@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_inigrav        ../starter/source/initial_conditions/inigrav/hm_read_inigrav.F
 !||--- called by ------------------------------------------------------
@@ -84,6 +85,7 @@ C-----------------------------------------------
       
       INTEGER     :: IGU,ISU,IGRAV, IG, IS, IDIR, PN1, ICURS, IIGRAV,IIG,IIS
       my_real     :: BX_,BY_,BZ_, GRAV0,NX,NY,NZ,NORM,PSURF
+      my_real     :: R0
       LOGICAL     :: lFOUND, lPLANAR_SURF, lUSER_SURF, lOUTP, lGRAV, lUNIQUE, IS_AVAILABLE
       CHARACTER*2 :: CDIR
 
@@ -160,7 +162,10 @@ C
           CALL HM_GET_FLOATV('Bx',BX_,IS_AVAILABLE, LSUBMODEL, UNITAB)
           CALL HM_GET_FLOATV('By',BY_,IS_AVAILABLE, LSUBMODEL, UNITAB)
           CALL HM_GET_FLOATV('Bz',BZ_,IS_AVAILABLE, LSUBMODEL, UNITAB)
-        ENDIF        
+        ENDIF
+
+        CALL HM_GET_FLOATV('MAT_R0',R0,IS_AVAILABLE, LSUBMODEL, UNITAB)
+        IF(.NOT.IS_AVAILABLE) R0= ZERO
 C
         ! Checking Gravity ID
         lFOUND = .FALSE.
@@ -257,7 +262,18 @@ C
                 NORM = SQRT(NX*NX+NY*NY+NZ*NZ)                           
                 NX   = NX / NORM                                         
                 NY   = NY / NORM                                         
-                NZ   = NZ / NORM                                         
+                NZ   = NZ / NORM
+                DOTPROD = NX*NGX+NY*NGY+NZ*NGZ
+                IF(ABS(DOTPROD)<=EM20)THEN
+                  CALL ANCMSG(MSGID=73,ANMODE=ANINFO,MSGTYPE=MSGERROR, I1=ID, C1=TITR, I2= ISU,
+     .                  C2='NORMAL VECTOR IS ORTHOGONAL TO THE GRAVITY DIRECTION')
+                        lOUTP = .FALSE.
+                ELSEIF(DOTPROD < ZERO)THEN
+                  ! SURFACE NORMAL HAS SAME ORIENTATION THAN GRAVITY
+                  NX = -NX
+                  NY = -NY
+                  NZ = -NZ
+                ENDIF
                 EXIT                                                                                                       
               END SELECT
             ENDIF
@@ -318,6 +334,8 @@ C
         INIGRV(2,K)    = IIS
         INIGRV(3,K)    = IIGRAV
         INIGRV(4,K)    = ID
+        INIGRV(5,K)    = 0
+        IF(IIGRAV>0) INIGRV(5,K) = IGRV(2,IIGRAV)/10
 C
         ! Storing real data in LINIGRAV table
         LINIGRAV(01,K) = BX_
@@ -331,6 +349,7 @@ C
         LINIGRAV(09,K) = NGY
         LINIGRAV(10,K) = NGZ
         LINIGRAV(11,K) = PSURF
+        LINIGRAV(12,K) = R0
 C
         ! Printout data
         IF (lPLANAR_SURF) THEN
@@ -343,32 +362,47 @@ C
         ELSEIF(lUSER_SURF)THEN
           WRITE (IOUT,2001)
           WRITE (IOUT,FMT='(A)') ''
-          WRITE (IOUT,3005) IGU,ISU,IGRAV, PSURF
+          WRITE (IOUT,2999) IGU,ISU,IGRAV, PSURF
           WRITE (IOUT,3001) CDIR(2:2)
           WRITE (IOUT,3002) GRAV0
-          IF(lUSER_SURF)WRITE (IOUT,3004)        
+          IF(lUSER_SURF)WRITE (IOUT,3004)
+          IF(R0 > ZERO) WRITE(IOUT,3005) R0
+         ELSE
+          WRITE (IOUT,2002)
+          WRITE (IOUT,FMT='(A)') ''
+          WRITE (IOUT,3001) CDIR(2:2)
+          WRITE (IOUT,3002) GRAV0
+          IF(R0 > ZERO) WRITE(IOUT,3005) R0
         ENDIF
       ENDDO !next K
+
+      WRITE (IOUT,FMT='(A)') ''
+      WRITE (IOUT,FMT='(A)') ''
 C-----------
       RETURN
 C-----------
  2000 FORMAT(//
-     .'     INITIAL GRAVITY LOADING  '/
-     .'     -----------------------  '/
+     .'     INITIAL GRAVITY LOADING (INIGRAV)  '/
+     .'     ---------------------------------  '/
      .'   GRPART_ID     SURF_ID     GRAV_ID          BX          BY          BZ       PSURF     ')
 
  2001 FORMAT(//
-     .'     INITIAL GRAVITY LOADING  '/
-     .'     -----------------------  '/
+     .'     INITIAL GRAVITY LOADING (INIGRAV) '/
+     .'     ---------------------------------  '/
      .'   GRPART_ID     SURF_ID     GRAV_ID          PSURF     ')
 
+ 2002 FORMAT(//
+     .'     INITIAL GRAVITY LOADING (INIGRAV)  '/
+     .'     ---------------------------------  ')
+
+ 2999 FORMAT(2X,I10,2X,I10,2X,I10,3X,E12.4)
  3000 FORMAT(2X,I10,2X,I10,2X,I10,2X,E12.4,2X,E12.4,2X,E12.4,2X,E12.4)
- 3005 FORMAT(2X,I10,2X,I10,2X,I10,3X,E12.4)
- 
+
  3001 FORMAT('     GRAVITY ORIENTATION : ',1X,A2)
  3002 FORMAT('     GRAVITY VALUE       : ',2X,E12.4)
  3003 FORMAT('     SURFACE ORIENTATION : ',2X,E12.4,2X,E12.4,2X,E12.4)
- 3004 FORMAT('     USER DEFINED SURFACE') 
+ 3004 FORMAT('     USER DEFINED SURFACE')
+ 3005 FORMAT('     REFERENCE DENSITY (IMPOSED) : ',2X,E12.4)
 C-----------
       RETURN
       END

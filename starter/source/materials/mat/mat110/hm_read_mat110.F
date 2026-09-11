@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_mat110             ../starter/source/materials/mat/mat110/hm_read_mat110.F
 !||--- called by ------------------------------------------------------
@@ -51,6 +52,7 @@ C-----------------------------------------------
       USE ELBUFTAG_MOD
       USE MATPARAM_DEF_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e sXM
 C-----------------------------------------------
@@ -188,11 +190,11 @@ card7 - Yield criterion parameters
           CALL ANCMSG(MSGID=1779,MSGTYPE=MSGERROR,
      .      ANMODE=ANINFO_BLIND_1,I1=MAT_ID,C1=TITR)      
         ENDIF
-        IF (.NOT.ALLOCATED(fUN))   ALLOCATE(fUN(NANGLE,2))
-        IF (.NOT.ALLOCATED(fSH))   ALLOCATE(fSH(NANGLE,2))
-        IF (.NOT.ALLOCATED(fPS))   ALLOCATE(fPS(NANGLE,2))
+        IF (.NOT.ALLOCATED(fUN))   call my_alloc(fUN, NANGLE, 2, "fUN")
+        IF (.NOT.ALLOCATED(fSH))   call my_alloc(fSH, NANGLE, 2, "fSH")
+        IF (.NOT.ALLOCATED(fPS))   call my_alloc(fPS, NANGLE, 2, "fPS")
         fPS(1:NANGLE,1:2) = ZERO
-        IF (.NOT.ALLOCATED(rLank)) ALLOCATE(rLank(NANGLE))
+        IF (.NOT.ALLOCATED(rLank)) call my_alloc(rLank, NANGLE, "rLank")
         ! Loop over angles (must be equally distributed between 0 and pi/2)
         DO J = 1, NANGLE
           CALL HM_GET_FLOAT_ARRAY_INDEX('MAT_fUN_THETA' ,fUN(J,1),J,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -209,12 +211,12 @@ card7 - Yield criterion parameters
           CALL ANCMSG(MSGID=1779,MSGTYPE=MSGERROR,
      .      ANMODE=ANINFO_BLIND_1,I1=MAT_ID,C1=TITR)      
         ENDIF
-        IF (.NOT.ALLOCATED(fUN))   ALLOCATE(fUN(NANGLE,2))
-        IF (.NOT.ALLOCATED(fSH))   ALLOCATE(fSH(NANGLE,2))
-        IF (.NOT.ALLOCATED(fPS))   ALLOCATE(fPS(NANGLE,2))
+        IF (.NOT.ALLOCATED(fUN))   call my_alloc(fUN, NANGLE, 2, "fUN")
+        IF (.NOT.ALLOCATED(fSH))   call my_alloc(fSH, NANGLE, 2, "fSH")
+        IF (.NOT.ALLOCATED(fPS))   call my_alloc(fPS, NANGLE, 2, "fPS")
         fPS(1:NANGLE,1:2) = ZERO
-        IF (.NOT.ALLOCATED(ALPS))  ALLOCATE(ALPS(NANGLE))
-        IF (.NOT.ALLOCATED(rLank)) ALLOCATE(rLank(NANGLE))
+        IF (.NOT.ALLOCATED(ALPS))  call my_alloc(ALPS, NANGLE, "ALPS")
+        IF (.NOT.ALLOCATED(rLank)) call my_alloc(rLank, NANGLE, "rLank")
         ! Loop over angles (must be equally distributed between 0 and pi/2)
         DO J = 1, NANGLE
           CALL HM_GET_FLOAT_ARRAY_INDEX('MAT_fUN_THETA' ,fUN(J,1),J,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -229,18 +231,18 @@ card7 - Yield criterion parameters
       ELSEIF (Icrit == 3) THEN   
         ! Number of angle is fixed to three in this case
         NANGLE = 3
-        IF (.NOT.ALLOCATED(RM))        ALLOCATE(RM(NANGLE))
-        IF (.NOT.ALLOCATED(AG))        ALLOCATE(AG(NANGLE))
-        IF (.NOT.ALLOCATED(EPSAG))     ALLOCATE(EPSAG(NANGLE))
-        IF (.NOT.ALLOCATED(SIGAG))     ALLOCATE(SIGAG(NANGLE))
-        IF (.NOT.ALLOCATED(CAG))       ALLOCATE(CAG(NANGLE))
-        IF (.NOT.ALLOCATED(EPSEQ))     ALLOCATE(EPSEQ(NANGLE))
-        IF (.NOT.ALLOCATED(fUN))       ALLOCATE(fUN(NANGLE,2))
-        IF (.NOT.ALLOCATED(fSH))       ALLOCATE(fSH(NANGLE,2))
-        IF (.NOT.ALLOCATED(fPS))       ALLOCATE(fPS(NANGLE,2))
-        IF (.NOT.ALLOCATED(rLank))     ALLOCATE(rLank(NANGLE))
-        IF (.NOT.ALLOCATED(THETA))     ALLOCATE(THETA(NANGLE))
-        IF (.NOT.ALLOCATED(THETA_RAD)) ALLOCATE(THETA_RAD(NANGLE))
+        IF (.NOT.ALLOCATED(RM))        call my_alloc(RM, NANGLE, "RM")
+        IF (.NOT.ALLOCATED(AG))        call my_alloc(AG, NANGLE, "AG")
+        IF (.NOT.ALLOCATED(EPSAG))     call my_alloc(EPSAG, NANGLE, "EPSAG")
+        IF (.NOT.ALLOCATED(SIGAG))     call my_alloc(SIGAG, NANGLE, "SIGAG")
+        IF (.NOT.ALLOCATED(CAG))       call my_alloc(CAG, NANGLE, "CAG")
+        IF (.NOT.ALLOCATED(EPSEQ))     call my_alloc(EPSEQ, NANGLE, "EPSEQ")
+        IF (.NOT.ALLOCATED(fUN))       call my_alloc(fUN, NANGLE, 2, "fUN")
+        IF (.NOT.ALLOCATED(fSH))       call my_alloc(fSH, NANGLE, 2, "fSH")
+        IF (.NOT.ALLOCATED(fPS))       call my_alloc(fPS, NANGLE, 2, "fPS")
+        IF (.NOT.ALLOCATED(rLank))     call my_alloc(rLank, NANGLE, "rLank")
+        IF (.NOT.ALLOCATED(THETA))     call my_alloc(THETA, NANGLE, "THETA")
+        IF (.NOT.ALLOCATED(THETA_RAD)) call my_alloc(THETA_RAD, NANGLE, "THETA_RAD")
         CALL HM_GET_FLOATV('MAT_RM_0'  ,RM(1)    ,IS_AVAILABLE, LSUBMODEL, UNITAB)
         CALL HM_GET_FLOATV('MAT_RM_45' ,RM(2)    ,IS_AVAILABLE, LSUBMODEL, UNITAB)
         CALL HM_GET_FLOATV('MAT_RM_90' ,RM(3)    ,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -359,10 +361,10 @@ c
           CALL ANCMSG(MSGID=1779,MSGTYPE=MSGERROR,
      .      ANMODE=ANINFO_BLIND_1,I1=MAT_ID,C1=TITR)      
         ENDIF
-        IF (.NOT.ALLOCATED(fUN))   ALLOCATE(fUN(NANGLE,2))
-        IF (.NOT.ALLOCATED(rLank)) ALLOCATE(rLank(NANGLE))
-        IF (.NOT.ALLOCATED(WPS))   ALLOCATE(WPS(NANGLE))
-        IF (.NOT.ALLOCATED(WSH))   ALLOCATE(WSH(NANGLE))
+        IF (.NOT.ALLOCATED(fUN))   call my_alloc(fUN, NANGLE, 2, "fUN")
+        IF (.NOT.ALLOCATED(rLank)) call my_alloc(rLank, NANGLE, "rLank")
+        IF (.NOT.ALLOCATED(WPS))   call my_alloc(WPS, NANGLE, "WPS")
+        IF (.NOT.ALLOCATED(WSH))   call my_alloc(WSH, NANGLE, "WSH")
         ! Loop over angles (must be equally distributed between 0 and pi/2)
         DO J = 1, NANGLE
           CALL HM_GET_FLOAT_ARRAY_INDEX('MAT_fUN_THETA' ,fUN(J,1),J,IS_AVAILABLE, LSUBMODEL, UNITAB)
@@ -448,11 +450,11 @@ c---------------------
 c----------------------------------------------
 c     Computation of yield criterion parameter
 c----------------------------------------------
-      IF (.NOT.ALLOCATED(HIPS))      ALLOCATE(HIPS(NANGLE,2))
-      IF (.NOT.ALLOCATED(HIUN))      ALLOCATE(HIUN(NANGLE,2))
-      IF (.NOT.ALLOCATED(HISH))      ALLOCATE(HISH(NANGLE,2))
-      IF (.NOT.ALLOCATED(THETA))     ALLOCATE(THETA(NANGLE))
-      IF (.NOT.ALLOCATED(THETA_RAD)) ALLOCATE(THETA_RAD(NANGLE))
+      IF (.NOT.ALLOCATED(HIPS))      call my_alloc(HIPS, NANGLE, 2, "HIPS")
+      IF (.NOT.ALLOCATED(HIUN))      call my_alloc(HIUN, NANGLE, 2, "HIUN")
+      IF (.NOT.ALLOCATED(HISH))      call my_alloc(HISH, NANGLE, 2, "HISH")
+      IF (.NOT.ALLOCATED(THETA))     call my_alloc(THETA, NANGLE, "THETA")
+      IF (.NOT.ALLOCATED(THETA_RAD)) call my_alloc(THETA_RAD, NANGLE, "THETA_RAD")
 c
       ! Computation of angles
       DO J = 1, NANGLE
@@ -568,7 +570,8 @@ c     Computation of cosine interpolation factor
 c----------------------------------------------  
 c
       ! Allocation of the A-MATRIX and the Pivot vector
-      ALLOCATE (AMAT(NANGLE,NANGLE),IPIV(NANGLE))
+      call my_alloc(AMAT, NANGLE, NANGLE, "AMAT")
+      call my_alloc(IPIV, NANGLE, "IPIV")
 c
       ! Filling the A-MATRIX
       DO J = 1,NANGLE
@@ -584,8 +587,12 @@ c
       IF ((Icrit == 1).OR.(Icrit == 2).OR.(Icrit == 3)) THEN 
 c      
         ! Allocation of factors
-        ALLOCATE(Q_fSH(NANGLE,2),Q_fUN(NANGLE,2),Q_fPS(NANGLE,2),
-     .          Q_HISH(NANGLE,2),Q_HIUN(NANGLE,2),Q_HIPS(NANGLE,2))      
+        call my_alloc(Q_fSH, NANGLE, 2, "Q_fSH")
+        call my_alloc(Q_fUN, NANGLE, 2, "Q_fUN")
+        call my_alloc(Q_fPS, NANGLE, 2, "Q_fPS")
+        call my_alloc(Q_HISH, NANGLE, 2, "Q_HISH")
+        call my_alloc(Q_HIUN, NANGLE, 2, "Q_HIUN")
+        call my_alloc(Q_HIPS, NANGLE, 2, "Q_HIPS")
 c
         ! Initialization of tables
         Q_fSH(1:NANGLE,1:2)  = ZERO
@@ -596,7 +603,7 @@ c
         Q_HIPS(1:NANGLE,1:2) = ZERO     
 c
         ! Filling the B vector with experimental points
-        ALLOCATE (BVEC(NANGLE,12))
+        call my_alloc(BVEC, NANGLE, 12, "BVEC")
         BVEC(1:NANGLE,1:2)   = fSH(1:NANGLE,1:2)
         BVEC(1:NANGLE,3:4)   = fUN(1:NANGLE,1:2)
         BVEC(1:NANGLE,5:6)   = fPS(1:NANGLE,1:2)
@@ -626,8 +633,11 @@ c
       ELSE
 c
         ! Allocation of factors
-        ALLOCATE(Q_fUN(NANGLE,2),Q_HISH(NANGLE,2),Q_HIPS(NANGLE,2),
-     .           Q_WSH(NANGLE),Q_WPS(NANGLE))
+        call my_alloc(Q_fUN, NANGLE, 2, "Q_fUN")
+        call my_alloc(Q_HISH, NANGLE, 2, "Q_HISH")
+        call my_alloc(Q_HIPS, NANGLE, 2, "Q_HIPS")
+        call my_alloc(Q_WSH, NANGLE, "Q_WSH")
+        call my_alloc(Q_WPS, NANGLE, "Q_WPS")
 c
         ! Initialization of factors
         Q_fUN(1:NANGLE,1:2)  = ZERO
@@ -637,7 +647,7 @@ c
         Q_WPS(1:NANGLE)      = ZERO
 c
         ! Filling the B vector with experimental points
-        ALLOCATE (BVEC(NANGLE,8))
+        call my_alloc(BVEC, NANGLE, 8, "BVEC")
         BVEC(1:NANGLE,1:2) = fUN(1:NANGLE,1:2)
         BVEC(1:NANGLE,3:4) = HISH(1:NANGLE,1:2)
         BVEC(1:NANGLE,5:6) = HIPS(1:NANGLE,1:2)

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    r2r_prelec                 ../starter/source/coupling/rad2rad/r2r_prelec.F
 !||--- called by ------------------------------------------------------
@@ -75,6 +76,7 @@ C-----------------------------------------------
         USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARKEY, NCHARFIELD
         USE READER_OLD_MOD , ONLY : KINTER, KCUR, LINE, NSLASH
         use element_mod , only : nixc
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -284,7 +286,7 @@ C-------------------------------------------------------------------------------
 
           CALL HM_OPTION_START('/GAUGE')
 
-          ALLOCATE(TAGGAU(NBGAUGE))
+          call my_alloc(TAGGAU, NBGAUGE, "TAGGAU")
           TAGGAU(:)=0
 
           DO I=1,NBGAUGE
@@ -358,7 +360,7 @@ C------Prereading and tag of MONVOL---------------------------------------------
 C----------------------------------------------------------------------------------C
 
           NI=0
-          ALLOCATE(TAGMON(NMONVOL + NVOLU))
+          call my_alloc(TAGMON, NMONVOL + NVOLU, "TAGMON")
           TAGMON(:)=0
 
 C-------------------------------------------------------------------C
@@ -419,7 +421,7 @@ C------Prereading and tag of Cyl joints -> icompatible with interface-C
 C--------------------------------------------------------------------C
 
         CALL HM_OPTION_START('/CYL_JOINT')
-        IF (PASSE==0) ALLOCATE(TAGCYL(NJOINT))
+        IF (PASSE==0) call my_alloc(TAGCYL, NJOINT, "TAGCYL")
         TAGCYL(:)=0
         COMPT = 0
 
@@ -488,7 +490,7 @@ C------Prereading and tag of MPC -> icompatible with interface-------C
 C--------------------------------------------------------------------C
 
         CALL HM_OPTION_START('/MPC')
-        IF (PASSE==0) ALLOCATE(TAGMPC(NUMMPC))
+        IF (PASSE==0) call my_alloc(TAGMPC, NUMMPC, "TAGMPC")
         TAGMPC(:)=0
         COMPT = 0
 
@@ -530,7 +532,7 @@ C------Prereading and tag of GJOINTS -> icompatible with interface---C
 C--------------------------------------------------------------------C
 C
         CALL HM_OPTION_START('/GJOINT')
-        IF (PASSE==0) ALLOCATE(TAGJOIN(NGJOINT))
+        IF (PASSE==0) call my_alloc(TAGJOIN, NGJOINT, "TAGJOIN")
         TAGJOIN(:)=0
         COMPT = 0
 
@@ -581,7 +583,7 @@ C--------------------------------------------------------------------C
 C------Prereading and tag of RBE2 -> icompatible with interface------C
 C--------------------------------------------------------------------C
 
-        IF (PASSE==0) ALLOCATE(TAGRB2(NRBE2))
+        IF (PASSE==0) call my_alloc(TAGRB2, NRBE2, "TAGRB2")
         TAGRB2(:)=0
         COMPT = 0
 
@@ -636,7 +638,7 @@ C--------------------------------------------------------------------C
 C------Prereading and tag of RBE. -> icompatible with interface------C
 C--------------------------------------------------------------------C
 
-        IF (PASSE==0) ALLOCATE(TAGRB3(NRBE3))
+        IF (PASSE==0) call my_alloc(TAGRB3, NRBE3, "TAGRB3")
         TAGRB3(:)=0
         COMPT = 0
         CALL HM_OPTION_START('/RBE3')
@@ -650,7 +652,7 @@ C--------------------------------------------------------------------C
           CALL HM_GET_INTV('dependentnode',N1,IS_AVAILABLE,LSUBMODEL)
           CALL HM_GET_INTV('nset',VAL,IS_AVAILABLE,LSUBMODEL)
 
-          ALLOCATE(BUF_TEMP(VAL))
+          call my_alloc(BUF_TEMP, VAL, "BUF_TEMP")
           N2 = USR2SYS(N1,ITABM1,MESS,ID_RBE3)
 C-----Reading of groups------------------------------------------
           DO L=1,VAL
@@ -692,7 +694,7 @@ C-----tag of rbe3 that can see secondary nodes
               END DO
             ENDIF
           ENDIF
-          DEALLOCATE(BUF_TEMP)
+          CALL MY_DEALLOC(BUF_TEMP)
         END DO
 
         NEW_NRBE3 = COMPT
@@ -701,7 +703,7 @@ C--------------------------------------------------------------------C
 C------Prereading and tag of Rigid links -> icompatible with interface-C
 C--------------------------------------------------------------------C
 
-        IF (PASSE==0) ALLOCATE(TAGLNK(NLINK))
+        IF (PASSE==0) call my_alloc(TAGLNK, NLINK, "TAGLNK")
         TAGLNK(:)=0
         COMPT = 0
         CALL HM_OPTION_START('/RLINK')
@@ -752,7 +754,10 @@ C
         KCUR = KINTER
 C
 C-->  for TYPE19 interfaces NSLASH(KCUR) > NINTER because of specific /card for TYPE19
-        IF (PASSE==0) ALLOCATE(TAGINT(HM_NINTER+NSLASH(KCUR)),TAGINT_WARN(NINTER+1))
+        IF (PASSE==0) THEN
+          call my_alloc(TAGINT, HM_NINTER+NSLASH(KCUR), "TAGINT")
+          call my_alloc(TAGINT_WARN, NINTER+1, "TAGINT_WARN")
+        ENDIF
 C
 C--     -> FOR TAGINT subinterfaces are stored with interfaces in order of the reader
 C--     -> TAGINT( --- INTER new reader + SUB interfaces --- INTER old reader -- )
@@ -1011,7 +1016,7 @@ C--------------------------------------------------------------------C
         NB_RBY = 0
         NB_KIN = 0
         NB_LAG = 0
-        IF (PASSE==0) ALLOCATE(TAGRBY(NRBODY))
+        IF (PASSE==0) call my_alloc(TAGRBY, NRBODY, "TAGRBY")
         TAGRBY(:)=0
         DOMA = 1
 
@@ -1147,7 +1152,7 @@ C--------------------------------------------------------------------C
 
         NSPCONDN = 0
         CALL HM_OPTION_START('/SPHBCS')
-        IF (PASSE==0) ALLOCATE(TAGSPHBCS(NSPCOND))
+        IF (PASSE==0) call my_alloc(TAGSPHBCS, NSPCOND, "TAGSPHBCS")
         TAGSPHBCS(:) = 0
         DO I=1,NSPCOND
           CALL HM_OPTION_READ_KEY(LSUBMODEL,
@@ -1206,7 +1211,7 @@ C--------------------------------------------------------------------C
 
 
         NSPHION = 0
-        IF (PASSE == 0) ALLOCATE(TAGSPHIO(NSPHIO))
+        IF (PASSE==0) call my_alloc(TAGSPHIO, NSPHIO, "TAGSPHIO")
         TAGSPHIO(:) = 0
         CALL HM_OPTION_START('/SPH/INOUT')
         DO I = 1,NSPHIO
@@ -1238,7 +1243,7 @@ C--------------------------------------------------------------------C
 C------Prereading of ALE/LINK----------------------------------------C
 C--------------------------------------------------------------------C
 C
-        IF (PASSE==0) ALLOCATE(TAG_ALELINK(NALELK))
+        IF (PASSE==0) call my_alloc(TAG_ALELINK, NALELK, "TAG_ALELINK")
         TAG_ALELINK(:)=0
         NEW_NALELK = 0
 C        
@@ -1312,7 +1317,7 @@ C------Prereading and tag of INIVOL----------------------------------C
 C--------------------------------------------------------------------C
 
         NEW_NINIVOL = 0
-        IF (PASSE==0) ALLOCATE(TAG_INIVOL(NUM_INIVOL))
+        IF (PASSE==0) call my_alloc(TAG_INIVOL, NUM_INIVOL, "TAG_INIVOL")
         TAG_INIVOL(:) = 0
         CALL HM_OPTION_START('/INIVOL')
 

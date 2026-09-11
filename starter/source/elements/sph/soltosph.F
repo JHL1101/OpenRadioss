@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    soltosphx8       ../starter/source/elements/sph/soltosph.F
 !||--- called by ------------------------------------------------------
@@ -56,7 +57,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J, IR, IS, IT, 
+      INTEGER IR, IS, IT, 
      .        N1, N2, N3, N4, N5, N6, N7, N8
 C                                                                     12
       my_real
@@ -64,7 +65,7 @@ C                                                                     12
      .   Y1,Y2,Y3,Y4,Y5,Y6,Y7,Y8,
      .   Z1,Z2,Z3,Z4,Z5,Z6,Z7,Z8,
      .   PHI1,PHI2,PHI3,PHI4,PHI5,PHI6,PHI7,PHI8,
-     .   KSI, ETA, ZETA, WI,
+     .   KSI, ETA, ZETA,
      .   XI, YI, ZI
 C-----------------------------------------------
       my_real
@@ -360,7 +361,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,  J, IR, IS, IT, IP,
+      INTEGER IR, IS, IT, IP,
      .        N1, N2, N3, N4, N5, N6, N7, N8, NP
 C                                                                    
       my_real
@@ -378,13 +379,10 @@ C
      .   CJ4 ,CJ5 ,CJ6 ,
      .   CJ7 ,CJ8 ,CJ9 ,
      .   JAC_59_68, JAC_67_49, JAC_48_57,
-     .   JAC_38_29, JAC_19_37, JAC_27_18,
-     .   JAC_26_35, JAC_34_16, JAC_15_24,
      .   X_17_46 , X_28_35 ,
      .   Y_17_46 , Y_28_35 ,
      .   Z_17_46 , Z_28_35 ,
-     .   KSI, ETA, ZETA, WI,
-     .   XI, YI, ZI
+     .   KSI, ETA, ZETA, WI
 C-----------------------------------------------
       my_real
      .  W_GAUSS(9,9),A_GAUSS(9,9)

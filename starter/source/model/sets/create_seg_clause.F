@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_seg_clause           ../starter/source/model/sets/create_seg_clause.F
 !||--- called by ------------------------------------------------------
@@ -58,6 +59,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD
       USE MESSAGE_MOD
       USE HM_OPTION_READ_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -85,7 +87,7 @@ C   S o u r c e  L i n e s
 C-----------------------------------------------
       LINE_SEG = 0
       CALL HM_GET_INT_ARRAY_INDEX('segmax' ,SEG_MAX ,JCLAUSE,IS_AVAILABLE,LSUBMODEL)
-      ALLOCATE(BUFSURF(4,SEG_MAX))
+      call my_alloc(BUFSURF, 4, SEG_MAX, "BUFSURF")
       NINDX = 0
 !
       ! Read & convert Segs
@@ -183,9 +185,9 @@ C-----------------------------------------------
 
         ! SURF seg (4-node SEG)
         CLAUSE%NB_SURF_SEG = NINDX
-        ALLOCATE(CLAUSE%SURF_NODES(NINDX,4))
-        ALLOCATE(CLAUSE%SURF_ELTYP(NINDX))
-        ALLOCATE(CLAUSE%SURF_ELEM(NINDX))
+        call my_alloc(CLAUSE%SURF_NODES, NINDX, 4, "CLAUSE%SURF_NODES")
+        call my_alloc(CLAUSE%SURF_ELTYP, NINDX, "CLAUSE%SURF_ELTYP")
+        call my_alloc(CLAUSE%SURF_ELEM, NINDX, "CLAUSE%SURF_ELEM")
 
         DO I=1,NINDX
           CLAUSE%SURF_NODES(I,1) = BUFSURF(1,I) ! N1
@@ -200,9 +202,9 @@ C-----------------------------------------------
 
         ! LINE seg (2-node SEG)
         CLAUSE%NB_LINE_SEG = NINDX
-        ALLOCATE(CLAUSE%LINE_NODES(NINDX,2))
-        ALLOCATE(CLAUSE%LINE_ELTYP(NINDX))
-        ALLOCATE(CLAUSE%LINE_ELEM(NINDX))
+        call my_alloc(CLAUSE%LINE_NODES, NINDX, 2, "CLAUSE%LINE_NODES")
+        call my_alloc(CLAUSE%LINE_ELTYP, NINDX, "CLAUSE%LINE_ELTYP")
+        call my_alloc(CLAUSE%LINE_ELEM, NINDX, "CLAUSE%LINE_ELEM")
 
         DO I=1,NINDX
           CLAUSE%LINE_NODES(I,1) = BUFSURF(1,I) ! N1
@@ -214,7 +216,7 @@ C-----------------------------------------------
       ENDIF ! IF (LINE_SEG == 0)
 
 C-------------------------
-      DEALLOCATE(BUFSURF)
+      CALL MY_DEALLOC(BUFSURF)
 C-------------------------
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    szsvm      ../engine/source/elements/solid/solidez/szsvm.F
@@ -29,7 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||====================================================================
       SUBROUTINE SZSVM(
      1   JR0,     JS0,     JT0,     FHOUR,
-     2   SIGY,    SIG0,    NU,      SVM1,
+     2   SIGY,    SVM2_0,   NU,      SVM1,
      3   SVM2,    NEL,     IINT)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -45,13 +46,14 @@ C-----------------------------------------------
       INTEGER NEL
       my_real
      .   FHOUR(NEL,3,4),JR0(*),JS0(*),JT0(*) ,
-     .   SIGY(*) ,SIG0(NEL,6),SVM1(*),SVM2(*),NU(*)
+     .   SIGY(*) ,SVM1(*),SVM2(*),NU(*)
+      my_real, dimension(NEL), INTENT(IN) :: SVM2_0
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,IKT
       my_real
-     .   S1,S2,S3,SVM0,SR1,SR2,SR3,SR4,
+     .   SVM0,SR1,SR2,SR3,SR4,
      .   SS1,SS2,SS3,SS4,ST1,ST2,ST3,ST4,SVMR,SVMS,SVMT,
      .   SVMRST,COEF,COEF1, JR_1,JS_1,JT_1,NU1,NU2,
      .   RS,ST,RT,VT2(4),MAX0,MIN0    
@@ -71,11 +73,7 @@ C-----------------------------------------------
        SVM1(I) = ZERO
        SVM2(I) = ZERO
        IF (SIGY(I)<ZEP9EP30) THEN
-        S1 =SIG0(I,1)-SIG0(I,2)
-        S2 =SIG0(I,2)-SIG0(I,3)
-        S3 =SIG0(I,1)-SIG0(I,3)
-        SVM0 = (S1*S1+S2*S2+S3*S3)*HALF + THREE*(SIG0(I,4)*SIG0(I,4)
-     .                +SIG0(I,5)*SIG0(I,5)+SIG0(I,6)*SIG0(I,6))
+        SVM0 = SVM2_0(I)
         NU1 =ONE/(ONE - NU(I))
         NU2 =NU(I)*NU1
         JR_1 = ONE/MAX(EM20,JR0(I))
@@ -127,7 +125,7 @@ C
         SVMRST = SVM0+COEF*(SVMR+SVMS+SVMT)
         SVM1(I) = SQRT(ABS(SVMRST+COEF*MAX0))
         SVM2(I) = SQRT(MAX(SVMRST+COEF*MIN0,ZERO))
-        SVM2(I) = MIN(SVM2(I),SVM0)
+        SVM2(I) = MIN(SVM2(I),SQRT(SVM0))
        ENDIF
       ENDDO 
 C

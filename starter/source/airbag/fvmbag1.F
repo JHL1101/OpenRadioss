@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    aleno               ../starter/source/airbag/fvmbag1.F
 !||--- called by ------------------------------------------------------
 !||    init_monvol         ../starter/source/airbag/init_monvol.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    monvol_struct_mod   ../starter/share/modules1/monvol_struct_mod.F
 !||====================================================================
@@ -33,6 +35,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MONVOL_STRUCT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -249,7 +252,7 @@ c End elimination of double elements
         ENDIF
       END DO
       T_MONVOLN%NNS = NNB
-      ALLOCATE(T_MONVOLN%NODES(NNB))
+      call my_alloc(T_MONVOLN%NODES, NNB, "T_MONVOLN%NODES")
       NNB = 0
       DO I=1,NUMNOD
         IF (ITAG(I)==1) THEN
@@ -430,6 +433,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE MONVOL_STRUCT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -454,7 +458,9 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE :: ITAG, ITAG_SURFEXT, ITABINV_SURFEXT
       INTEGER(8) :: VEC_PTR_SURFINT
 
-      ALLOCATE(ITAG(NUMNOD), ITAG_SURFEXT(NUMNOD), ITABINV_SURFEXT(NUMNOD))
+      call my_alloc(ITAG, NUMNOD, "ITAG")
+      call my_alloc(ITAG_SURFEXT, NUMNOD, "ITAG_SURFEXT")
+      call my_alloc(ITABINV_SURFEXT, NUMNOD, "ITABINV_SURFEXT")
 
       DO I = 1, NUMNOD
         ITAG(I) = 0
@@ -463,7 +469,7 @@ C-----------------------------------------------
       ENDDO
 
       NNS = T_MONVOLN%NNS
-      ALLOCATE(BUFNODE(NNS))
+      call my_alloc(BUFNODE, NNS, "BUFNODE")
       DO I = 1, NNS
         BUFNODE(I) = T_MONVOLN%NODES(I)
 !     FLAG NODES OF EXTERNAL SURFACE
@@ -501,8 +507,8 @@ C-----------------------------------------------
         ENDIF
       END DO
 
-      DEALLOCATE(T_MONVOLN%NODES)
-      ALLOCATE(T_MONVOLN%NODES(NNB + NNS))
+      CALL MY_DEALLOC(T_MONVOLN%NODES)
+      call my_alloc(T_MONVOLN%NODES, NNB + NNS, "T_MONVOLN%NODES")
       DO I = 1, NNS
         T_MONVOLN%NODES(I) = BUFNODE(I)
       ENDDO
@@ -511,10 +517,10 @@ C-----------------------------------------------
       IF(NNB>0)CALL INTVECTOR_COPY_TO(VEC_PTR_SURFINT, T_MONVOLN%NODES(NNS + 1))
 
       CALL INTVECTOR_DELETE(VEC_PTR_SURFINT)
-      DEALLOCATE(BUFNODE)
-      DEALLOCATE(ITAG)
-      DEALLOCATE(ITAG_SURFEXT)
-      DEALLOCATE(ITABINV_SURFEXT)
+      CALL MY_DEALLOC(BUFNODE)
+      CALL MY_DEALLOC(ITAG)
+      CALL MY_DEALLOC(ITAG_SURFEXT)
+      CALL MY_DEALLOC(ITABINV_SURFEXT)
 C
       RETURN
       END

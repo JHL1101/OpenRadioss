@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fvbag1                   ../engine/source/airbag/fvbag1.F
 !||--- called by ------------------------------------------------------
@@ -44,6 +45,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    h3d_mod                  ../engine/share/modules/h3d_mod.F
 !||    message_mod              ../engine/share/message_module/message_mod.F
 !||    my_alloc_mod             ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod           ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod               ../common_source/modules/output/output_mod.F90
 !||    python_funct_mod         ../common_source/modules/python_mod.F90
 !||    sensor_mod               ../common_source/modules/sensor_mod.F90
@@ -88,6 +90,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -144,12 +147,12 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, II, IINJ, IEL, N1, N2, N3, JEL, 
-     .        NN1, NN2, NN3, J, JJ, K, KK, IMASS, IFLU, ISENS, IVEL,
-     .        ITEMP, NV, ILVOUT, NPOLYG,NTRIA, IPRI,
-     .        IVENT, IDEF, IPORT, IPORP, IPORA, IPORT1, IPORP1, IPORA1,
-     .        ITVENT, PHDT, I1, I2, NNSA, IVDP,ITTF, IDPDEF,
-     .        IDTPDEF,PMAIN,N21,N22,ITYPL,
-     .        PREPARE_ANIM,IVENTYP,IMETHOD_LC, IEL1, IEL2, IDT_FVMBAG
+     .        J, JJ, K, KK, ISENS, IVEL,
+     .        NV, ILVOUT, NPOLYG,NTRIA, IPRI,
+     .        IVENT, IDEF,
+     .        ITVENT, PHDT, I1, I2, IVDP,ITTF, IDPDEF,
+     .        IDTPDEF,ITYPL,
+     .        PREPARE_ANIM,IVENTYP, IEL1, IEL2, IDT_FVMBAG
       INTEGER TITREVENT(20)
  
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: TAGSURF
@@ -200,30 +203,29 @@ C-----------------------------------------------
      .         AREA,Denom,Denom_max, NX, NY,
      .        NZ, GAMAI, CPAI, CPBI, CPCI, RMWI, TI,
      .        CPDI, CPEI, CPFI,
-     .        RHOI, DATAINJ(6,NJET), SCALT, FMASS, GMASS_OLD,
-     .        GMTOT_OLD, FVEL, TSTART, TSG, GMASS, DGMASS, INJVEL,
-     .         GMTOT, RMWG, CPA, CPB, CPC, FTEMP, EFAC, CPG,
-     .        CVG, WSURF(3), GAMA, FEL(NELT),
+     .        RHOI, DATAINJ(6,NJET), SCALT,
+     .        FVEL, TSTART, TSG, INJVEL,
+     .         CPA, CPB, CPC, EFAC,
+     .        WSURF(3), GAMA, FEL(NELT),
      .        DQ(3,NPOLH), DE(NPOLH), DMI, DQI(3), DEI, RHO1, RE1, UX1,
      .        UY1, UZ1, RHO2, RE2, UX2, UY2, UZ2, VFX, VFY, VFZ, SS,
      .        ALPHA, RHOM, REM, RUXM, RUYM, RUZM, P1, P2,
      .        UEL(3,NELT), AREA1, AREA3, FF, TEMP, TEMP2, PEXT, VOLG, VOLPH,
-     .        AREAP, AREAEL, XX, YY, ZZ, QA, QB, DTX, AL, DD, AD, SSP,
+     .        AREAP, AREAEL, QA, QB, DTX, AL, DD, AD, SSP,
      .        QX, VV,  MSINI, RMW, CV, GAMA1, GAMA2,
      .        QVISC(NPOLH), AMTOT, PMEAN, PMEAN2,
-     .        AREA_VENT(NVENT), PM_VENT(NVENT), SCALP, SCALS, EXTEN,
-     .        AVENT, BVENT, AINI, FPORT, FPORP, FPORA, FPORT1, FPORP1,
-     .        FPORA1, AOUT, AOUT1, DERI, PDEF, PVOLTMP,
+     .        AREA_VENT(NVENT), PM_VENT(NVENT), SCALP, SCALS,
+     .        AOUT, DERI, PDEF, PVOLTMP,
      .        DTPDEFI, DTPDEFC, TVENT,AOUTOT, SVENTOT,
-     .        X23, Y23, Z23, X31, Y31, Z31,  L12, L23, L31, H1, H2, H3,
+     .        X23, Y23, Z23, X31, Y31, Z31,  L12, L23, L31, H1,
      .        FAC1, FAC2, FAC3, HM1, AREA_OLD, PP,  VMAX, UU,
-     .        PCRIT, RHOINJ, PINJ, VX1, VY1, VZ1, VX2, VY2, VZ2,
+     .        PCRIT, VX1, VY1, VZ1, VX2, VY2, VZ2,
      .        VX3, VY3, VZ3, VVX, VVY, VVZ,  FAC, 
      .         FVDP, RBID, TTF,
-     .        CPD, CPE, CPF, TEMP0, TT1,PSTAG, VOLNO,TSTOPE,
+     .        CPD, CPE, CPF, TEMP0, PSTAG, VOLNO,TSTOPE,
      .        ENINT, MASSFLOW, WFEXT0,  DMOUT, DHOUT,
      .        CPAM, CPBM, CPCM, CPDM, CPEM, CPFM, RMWM, TMP_VEC(3), VMAT(3),SSP1,SSP2,SSPt,NTRIA_TOT,
-     .        PRES_AV, RHO_AV, TEMP_AV, CP_AV, CV_AV, RGAS_AV, CENTROID(3)
+     .        PRES_AV, RHO_AV, CP_AV, CV_AV, RGAS_AV, CENTROID(3)
       DOUBLE PRECISION :: CP
 
       LOGICAL :: boolTAGEL,EXIT_NEG_VOL,INJECTION_STARTED
@@ -250,47 +252,47 @@ C NPOLY : number of polygons
 C-----------------------------------------------
 C   S o u r c e   L i n e s
 C-----------------------------------------------
-      CALL MY_ALLOC(TAGSURF,2,NELT+1)
-      CALL MY_ALLOC(ICONT,NNT)
-      CALL MY_ALLOC(ITAGP,NPOLH)
+      call my_alloc(TAGSURF, 2, NELT+1, "TAGSURF")
+      call my_alloc(ICONT, NNT, "ICONT")
+      call my_alloc(ITAGP, NPOLH, "ITAGP")
       !
-      CALL MY_ALLOC(AREA_MAX,NPOLH)
-      CALL MY_ALLOC(DM,NPOLH)
-      CALL MY_ALLOC(NODAREA,NNT)
-      CALL MY_ALLOC(PNOD,3,NNS)
-      CALL MY_ALLOC(ELAREA,NELT)
-      CALL MY_ALLOC(NORM,3,NELT)
-      CALL MY_ALLOC(PAREA,NNTR)
-      CALL MY_ALLOC(PNORM,3,NNTR)
-      CALL MY_ALLOC(PVOLU,NPOLH)
-      CALL MY_ALLOC(RHOEL,NELT)
-      CALL MY_ALLOC(TKEL,NELT)
-      CALL MY_ALLOC(SSPEL,NELT)
-      CALL MY_ALLOC(PU,3,NPOLH)
-      CALL MY_ALLOC(PW,3,NPOLH)
-      CALL MY_ALLOC(DMINI,NPOLH)
-      CALL MY_ALLOC(DMCPA,NPOLH)
-      CALL MY_ALLOC(DMCPB,NPOLH)
-      CALL MY_ALLOC(DMCPC,NPOLH)
-      CALL MY_ALLOC(DMRMW,NPOLH)
-      CALL MY_ALLOC(ELSOUT,NELT)
-      CALL MY_ALLOC(TMP,NEL)
-      CALL MY_ALLOC(PORO,NELT)
-      CALL MY_ALLOC(VOLA,NNA)
-      CALL MY_ALLOC(HMIN,NNTR)
-      CALL MY_ALLOC(VEL,NELT)
-      CALL MY_ALLOC(VNOD,3,NNS)
-      CALL MY_ALLOC(VGRID,3,NNTR)
-      CALL MY_ALLOC(SVENT,NVENT)
-      CALL MY_ALLOC(XXX,3,NNT)
-      CALL MY_ALLOC(DMCPD,NPOLH)
-      CALL MY_ALLOC(DMCPE,NPOLH)
-      CALL MY_ALLOC(DMCPF,NPOLH)
-      CALL MY_ALLOC(PEL,NELT)
-      CALL MY_ALLOC(DLS,NPOLH)
-      CALL MY_ALLOC(ELDMASS,NEL)
-      CALL MY_ALLOC(ELDEHPY,NEL)
-      CALL MY_ALLOC(VVV,3,NNT)
+      call my_alloc(AREA_MAX, NPOLH, "AREA_MAX")
+      call my_alloc(DM, NPOLH, "DM")
+      call my_alloc(NODAREA, NNT, "NODAREA")
+      call my_alloc(PNOD, 3, NNS, "PNOD")
+      call my_alloc(ELAREA, NELT, "ELAREA")
+      call my_alloc(NORM, 3, NELT, "NORM")
+      call my_alloc(PAREA, NNTR, "PAREA")
+      call my_alloc(PNORM, 3, NNTR, "PNORM")
+      call my_alloc(PVOLU, NPOLH, "PVOLU")
+      call my_alloc(RHOEL, NELT, "RHOEL")
+      call my_alloc(TKEL, NELT, "TKEL")
+      call my_alloc(SSPEL, NELT, "SSPEL")
+      call my_alloc(PU, 3, NPOLH, "PU")
+      call my_alloc(PW, 3, NPOLH, "PW")
+      call my_alloc(DMINI, NPOLH, "DMINI")
+      call my_alloc(DMCPA, NPOLH, "DMCPA")
+      call my_alloc(DMCPB, NPOLH, "DMCPB")
+      call my_alloc(DMCPC, NPOLH, "DMCPC")
+      call my_alloc(DMRMW, NPOLH, "DMRMW")
+      call my_alloc(ELSOUT, NELT, "ELSOUT")
+      call my_alloc(TMP, NEL, "TMP")
+      call my_alloc(PORO, NELT, "PORO")
+      call my_alloc(VOLA, NNA, "VOLA")
+      call my_alloc(HMIN, NNTR, "HMIN")
+      call my_alloc(VEL, NELT, "VEL")
+      call my_alloc(VNOD, 3, NNS, "VNOD")
+      call my_alloc(VGRID, 3, NNTR, "VGRID")
+      call my_alloc(SVENT, NVENT, "SVENT")
+      call my_alloc(XXX, 3, NNT, "XXX")
+      call my_alloc(DMCPD, NPOLH, "DMCPD")
+      call my_alloc(DMCPE, NPOLH, "DMCPE")
+      call my_alloc(DMCPF, NPOLH, "DMCPF")
+      call my_alloc(PEL, NELT, "PEL")
+      call my_alloc(DLS, NPOLH, "DLS")
+      call my_alloc(ELDMASS, NEL, "ELDMASS")
+      call my_alloc(ELDEHPY, NEL, "ELDEHPY")
+      call my_alloc(VVV, 3, NNT, "VVV")
 
 
       VOLPH = ZERO
@@ -2365,46 +2367,46 @@ C otherwise we may to miss some in SPMD
       ENDIF
 
  1000 CONTINUE
-      IF (ALLOCATED(NODAREA)) DEALLOCATE(NODAREA)
-      IF (ALLOCATED(TAGSURF)) DEALLOCATE(TAGSURF)
-      IF (ALLOCATED(ICONT)) DEALLOCATE(ICONT)
-      IF (ALLOCATED(ITAGP)) DEALLOCATE(ITAGP)
+      IF (ALLOCATED(NODAREA)) call my_dealloc(NODAREA)
+      IF (ALLOCATED(TAGSURF)) call my_dealloc(TAGSURF)
+      IF (ALLOCATED(ICONT)) call my_dealloc(ICONT)
+      IF (ALLOCATED(ITAGP)) call my_dealloc(ITAGP)
       !
-      IF (ALLOCATED(AREA_MAX)) DEALLOCATE(AREA_MAX)
-      IF (ALLOCATED(DM))       DEALLOCATE(DM)
-      IF (ALLOCATED(PNOD))     DEALLOCATE(PNOD)
-      IF (ALLOCATED(ELAREA))DEALLOCATE(ELAREA)
-      IF (ALLOCATED(NORM))  DEALLOCATE(NORM)
-      IF (ALLOCATED(PAREA)) DEALLOCATE(PAREA)
-      IF (ALLOCATED(PNORM)) DEALLOCATE(PNORM)
-      IF (ALLOCATED(PVOLU)) DEALLOCATE(PVOLU)
-      IF (ALLOCATED(RHOEL)) DEALLOCATE(RHOEL)
-      IF (ALLOCATED(TKEL))  DEALLOCATE(TKEL)
-      IF (ALLOCATED(SSPEL)) DEALLOCATE(SSPEL)
-      IF (ALLOCATED(PU))    DEALLOCATE(PU)
-      IF (ALLOCATED(PW))    DEALLOCATE(PW)
-      IF (ALLOCATED(DMINI)) DEALLOCATE(DMINI)
-      IF (ALLOCATED(DMCPA)) DEALLOCATE(DMCPA)
-      IF (ALLOCATED(DMCPB)) DEALLOCATE(DMCPB)
-      IF (ALLOCATED(DMCPC)) DEALLOCATE(DMCPC)
-      IF (ALLOCATED(DMRMW)) DEALLOCATE(DMRMW)
-      IF (ALLOCATED(ELSOUT))DEALLOCATE(ELSOUT)
-      IF (ALLOCATED(TMP))   DEALLOCATE(TMP)
-      IF (ALLOCATED(PORO))  DEALLOCATE(PORO)
-      IF (ALLOCATED(VOLA))  DEALLOCATE(VOLA)
-      IF (ALLOCATED(HMIN))  DEALLOCATE(HMIN)
-      IF (ALLOCATED(VEL))   DEALLOCATE(VEL)
-      IF (ALLOCATED(VNOD))  DEALLOCATE(VNOD)
-      IF (ALLOCATED(VGRID)) DEALLOCATE(VGRID)
-      IF (ALLOCATED(SVENT)) DEALLOCATE(SVENT)
-      IF (ALLOCATED(XXX)) DEALLOCATE(XXX)
-      IF (ALLOCATED(DMCPD)) DEALLOCATE(DMCPD)
-      IF (ALLOCATED(DMCPE)) DEALLOCATE(DMCPE)
-      IF (ALLOCATED(DMCPF)) DEALLOCATE(DMCPF)
-      IF (ALLOCATED(PEL)) DEALLOCATE(PEL)
-      IF (ALLOCATED(DLS)) DEALLOCATE(DLS)
-      IF (ALLOCATED(ELDMASS)) DEALLOCATE(ELDMASS)
-      IF (ALLOCATED(ELDEHPY)) DEALLOCATE(ELDEHPY)
-      IF (ALLOCATED(VVV)) DEALLOCATE(VVV)
+      IF (ALLOCATED(AREA_MAX)) call my_dealloc(AREA_MAX)
+      IF (ALLOCATED(DM)) call my_dealloc(DM)
+      IF (ALLOCATED(PNOD)) call my_dealloc(PNOD)
+      IF (ALLOCATED(ELAREA)) call my_dealloc(ELAREA)
+      IF (ALLOCATED(NORM)) call my_dealloc(NORM)
+      IF (ALLOCATED(PAREA)) call my_dealloc(PAREA)
+      IF (ALLOCATED(PNORM)) call my_dealloc(PNORM)
+      IF (ALLOCATED(PVOLU)) call my_dealloc(PVOLU)
+      IF (ALLOCATED(RHOEL)) call my_dealloc(RHOEL)
+      IF (ALLOCATED(TKEL)) call my_dealloc(TKEL)
+      IF (ALLOCATED(SSPEL)) call my_dealloc(SSPEL)
+      IF (ALLOCATED(PU)) call my_dealloc(PU)
+      IF (ALLOCATED(PW)) call my_dealloc(PW)
+      IF (ALLOCATED(DMINI)) call my_dealloc(DMINI)
+      IF (ALLOCATED(DMCPA)) call my_dealloc(DMCPA)
+      IF (ALLOCATED(DMCPB)) call my_dealloc(DMCPB)
+      IF (ALLOCATED(DMCPC)) call my_dealloc(DMCPC)
+      IF (ALLOCATED(DMRMW)) call my_dealloc(DMRMW)
+      IF (ALLOCATED(ELSOUT)) call my_dealloc(ELSOUT)
+      IF (ALLOCATED(TMP)) call my_dealloc(TMP)
+      IF (ALLOCATED(PORO)) call my_dealloc(PORO)
+      IF (ALLOCATED(VOLA)) call my_dealloc(VOLA)
+      IF (ALLOCATED(HMIN)) call my_dealloc(HMIN)
+      IF (ALLOCATED(VEL)) call my_dealloc(VEL)
+      IF (ALLOCATED(VNOD)) call my_dealloc(VNOD)
+      IF (ALLOCATED(VGRID)) call my_dealloc(VGRID)
+      IF (ALLOCATED(SVENT)) call my_dealloc(SVENT)
+      IF (ALLOCATED(XXX)) call my_dealloc(XXX)
+      IF (ALLOCATED(DMCPD)) call my_dealloc(DMCPD)
+      IF (ALLOCATED(DMCPE)) call my_dealloc(DMCPE)
+      IF (ALLOCATED(DMCPF)) call my_dealloc(DMCPF)
+      IF (ALLOCATED(PEL)) call my_dealloc(PEL)
+      IF (ALLOCATED(DLS)) call my_dealloc(DLS)
+      IF (ALLOCATED(ELDMASS)) call my_dealloc(ELDMASS)
+      IF (ALLOCATED(ELDEHPY)) call my_dealloc(ELDEHPY)
+      IF (ALLOCATED(VVV)) call my_dealloc(VVV)
       RETURN
       END

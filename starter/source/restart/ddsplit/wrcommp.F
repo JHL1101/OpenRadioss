@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    wrcomip                ../starter/source/restart/ddsplit/wrcommp.F
 !||--- called by ------------------------------------------------------
@@ -95,6 +96,7 @@ C-----------------------------------------------
       USE TH_MOD , ONLY : TH_HAS_NODA_PEXT
       USE EOS_PARAM_MOD , ONLY : ANALY_TEMP
       use element_mod , only : nixs,nixq,nixc,nixp,nixt,nixr,nixtg
+      USE Q1NP_RESTART_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -149,7 +151,7 @@ C-----------------------------------------------
       TYPE(MULTI_FVM_STRUCT) :: MULTI_FVM
       TYPE(t_ale_connectivity), INTENT(IN) :: ALE_CONNECTIVITY
       TYPE (DYNAIN_DATABASE), INTENT(INOUT) :: DYNAIN_DATA
-      TYPE (PARAMETERS_) ,INTENT(INOUT)     :: INTER_PARAMETERS
+      TYPE (PARAMETERS_) ,INTENT(IN)     :: INTER_PARAMETERS
       TYPE (SENSORS_)    ,INTENT(IN)        :: SENSORS
       TYPE (UNIT_TYPE_), INTENT(IN)         :: UNITAB
       TYPE(glob_therm_) ,intent(inout)      :: glob_therm
@@ -159,6 +161,7 @@ C   C o m m o n   B l o c k s
 C-----------------------------------------------
 #include      "com01_c.inc"
 #include      "com04_c.inc"
+#include      "units_c.inc"
 #include      "com09_c.inc"
 #include      "com10_c.inc"
 #include      "com_xfem1.inc"
@@ -1566,6 +1569,33 @@ C
 C
       LVARINT=LVARINT+1
       TABVINT(LVARINT) = SENSORS%STABSEN
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=NUMELQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SKQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SIQ1NP_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPBULK_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPCTRL_SHARED_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPWEIGHT_L_G
+      LVARINT=LVARINT+1
+      TABVINT(LVARINT)=SQ1NPKNOT_L_G
+C Validation: verify Q1Np data is being written
+      IF (NUMELQ1NP_G > 0) THEN
+        WRITE(IOUT,'(A)') ' ** Q1Np RESTART WRITE VALIDATION:'
+        WRITE(IOUT,'(A,I10)') '    NUMELQ1NP = ', NUMELQ1NP_G
+        WRITE(IOUT,'(A,I10)') '    SKQ1NP_G = ', SKQ1NP_G
+        WRITE(IOUT,'(A,I10)') '    SIQ1NP_G = ', SIQ1NP_G
+        WRITE(IOUT,'(A,I10)') '    SQ1NPBULK_G = ', SQ1NPBULK_G
+        WRITE(IOUT,'(A,I10)') '    SQ1NPCTRL_SHARED_G = ', SQ1NPCTRL_SHARED_G
+        WRITE(IOUT,'(A,I10)') '    SQ1NPWEIGHT_L_G = ', SQ1NPWEIGHT_L_G
+        WRITE(IOUT,'(A,I10)') '    SQ1NPKNOT_L_G = ', SQ1NPKNOT_L_G
+        WRITE(IOUT,'(A,I10,A,I10)') 
+     .    '    TABVINT indices: ', LVARINT-6, ' to ', LVARINT
+      ENDIF
 C Stack info
       LVARINT=LVARINT+1
       TABVINT(LVARINT)=IPART_STACK 

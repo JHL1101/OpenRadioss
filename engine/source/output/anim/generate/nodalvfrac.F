@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    nodalvfrac           ../engine/source/output/anim/generate/nodalvfrac.F
 !||--- called by ------------------------------------------------------
 !||    genani               ../engine/source/output/anim/generate/genani.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    elbufdef_mod         ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    i22bufbric_mod       ../common_source/modules/interfaces/cut-cell-search_mod.F
@@ -31,6 +33,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    i22tri_mod           ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    initbuf_mod          ../engine/share/resol/initbuf.F
 !||    multimat_param_mod   ../common_source/modules/multimat_param_mod.F90
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE NODALVFRAC(IFUNC    , WA4, IFLOW, RFLOW, IPARG, 
      .                      ELBUF_TAB, IX , NIX  , ITAB , NV46 )
@@ -58,6 +62,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -80,9 +86,9 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER                            :: I, ITYP, NEL, K1, K, 
-     .                                      IR1, IR2, J, JJ, NNO_L, NNI_L, II3, II4, JJJ, NNI,
-     .                                      IALEL,NNOD,IPOS,IV,NGv,J1,J2,IBV, MLW,NumNodCell,
-     .                                      NG, KCVT, II, NBF, NBL, IB, ICELL, NIN, MCELL,
+     .                                      J, JJ,
+     .                                      IALEL,NNOD,IPOS, MLW,NumNodCell,
+     .                                      NG, NBF, NBL, IB, ICELL, NIN,
      .                                      IPHASE
       TYPE(G_BUFEL_)  ,POINTER           :: GBUF
       my_real, ALLOCATABLE, DIMENSION(:) :: COUNT_VOL    
@@ -109,7 +115,7 @@ C-----------------------------------------------
          !1. COMPUTE NODAL VALUE                                   !
          !---------------------------------------------------------!         
            !---1. COMPUTE NODAL VFRAC---!                          
-           ALLOCATE(COUNT_VOL(NUMNOD))                 
+           call my_alloc(COUNT_VOL, NUMNOD, "COUNT_VOL")
            COUNT_VOL(:) = 0    
            DO NG = 1, NGROUP
              MLW   = IPARG(1,NG)
@@ -153,7 +159,7 @@ C-----------------------------------------------
                WA4(I)=WA4(I)/COUNT_VOL(I)
              ENDIF
            ENDDO                 
-           DEALLOCATE(COUNT_VOL)                    
+           call my_dealloc(COUNT_VOL)
          ELSEIF(INT22>0)THEN 
          !---------------------------------------------------------!         
          !         /INTER/TYPE22                                   !
@@ -169,7 +175,7 @@ C-----------------------------------------------
            NBL = NB
            NIN = 1
            !---1. COMPUTE NODAL PRESSURE---! 
-           ALLOCATE(COUNT_VOL(NUMNOD))      
+           call my_alloc(COUNT_VOL, NUMNOD, "COUNT_VOL")
            COUNT_VOL = 0                            
            DO NG = 1, NGROUP
              MLW   = IPARG(1,NG) 
@@ -233,7 +239,7 @@ C-----------------------------------------------
                WA4(I)=WA4(I)/COUNT_VOL(I)
              ENDIF
            ENDDO
-           DEALLOCATE(COUNT_VOL)                  
+           call my_dealloc(COUNT_VOL)
            
          ENDIF!INT22
                   

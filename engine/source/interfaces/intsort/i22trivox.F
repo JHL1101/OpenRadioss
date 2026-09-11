@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22trivox        ../engine/source/interfaces/intsort/i22trivox.F
 !||--- called by ------------------------------------------------------
@@ -27,13 +28,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- calls      -----------------------------------------------------
 !||    i22sto           ../engine/source/interfaces/intsort/i22sto.F
 !||    ireallocate      ../engine/share/modules/realloc_mod.F
-!||    isonsh3n         ../engine/source/interfaces/int22/i22intersect.F
 !||    my_barrier       ../engine/source/system/machine.F
 !||--- uses       -----------------------------------------------------
 !||    element_mod      ../common_source/modules/elements/element_mod.F90
 !||    i22bufbric_mod   ../common_source/modules/interfaces/cut-cell-search_mod.F
 !||    i22edge_mod      ../common_source/modules/interfaces/cut-cell-buffer_mod.F
 !||    i22tri_mod       ../common_source/modules/interfaces/cut-cell-search_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    realloc_mod      ../engine/share/modules/realloc_mod.F
 !||====================================================================
       SUBROUTINE I22TRIVOX(
@@ -63,6 +65,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -142,25 +146,22 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NB_NCN,NB_NCN1,NB_ECN,I,J,K,L,DIR,NB_NC,NB_EC,
-     .        N1,N2,N3,N4,NN,NE,NS,NCAND_PROV,J_STOK,II,JJ,TT,
-     .        OLDNUM(ISZNSNR), NSNF, NSNL,
-     .        PROV_B(2*MVSIZ), PROV_E(2*MVSIZ), LAST_NE,
-     .        VOXBND(2*MVSIZ,0:1,1:3)                           !voxel bounds storage for shell: comp1=id,  comp2=lbound/ubound, comp3=direction.
+      INTEGER I,J,K,NE,NS,
+     .        PROV_B(2*MVSIZ), PROV_E(2*MVSIZ), LAST_NE
 
-      my_real
-     .   DX,DY,DZ,XS,YS,ZS,SX,SY,SZ,S2,
-     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX, TZ, GAPSMX, GAPL,
-     .   D1X,D1Y,D1Z,D2X,D2Y,D2Z,DD1,DD2,D2,A2,GS, POINT(3),
-     .   ON1(3),N1N2(3)
+!      my_real
+!     .   DX,DY,DZ,XS,YS,ZS,SX,SY,SZ,S2,
+!     .   XMIN, XMAX,YMIN, YMAX,ZMIN, ZMAX, TZ, GAPSMX, GAPL,
+!     .   D1X,D1Y,D1Z,D2X,D2Y,D2Z,DD1,DD2,D2,A2,GS, POINT(3),
+!     .   ON1(3),N1N2(3)
 
-      INTEGER  IX,IY,IZ,NEXT,M1,M2,M3,M4,M5,M6,M7,M8,
-     .         IX1,IY1,IZ1,IX2,IY2,IZ2,IBUG,IBUG2,I_LOC,
+      INTEGER  IX,IY,IZ,
+     .         IX1,IY1,IZ1,IX2,IY2,IZ2,
      .         BIX1(NBRIC),BIY1(NBRIC),BIZ1(NBRIC),
      .         BIX2(NBRIC),BIY2(NBRIC),BIZ2(NBRIC),
      .         FIRST_ADD, PREV_ADD, LCHAIN_ADD, I_STOK
 
-      INTEGER :: NC, I_STOK_BAK, IPA,IPB
+      INTEGER :: NC
       my_real
      .   XMINB,YMINB,ZMINB,XMAXB,YMAXB,ZMAXB,
      .   DXB,DYB,DZB,
@@ -169,23 +170,23 @@ C-----------------------------------------------
       LOGICAL, DIMENSION(NBRIC) :: TAGB
 !      Logical, dimension (12*nbric) :: ledge
       LOGICAL :: BOOL(NIRECT_L)
-      INTEGER NBCUT, DEJA, ISONSHELL, ISONSH3N
-      INTEGER :: COUNTER, NEDGE, NFACE, NODES8(8), COUNTER_BRICK(NBRIC)
+!      INTEGER NBCUT, DEJA, ISONSHELL, ISONSH3N
+!      INTEGER :: COUNTER, NEDGE, NFACE, NODES8(8), COUNTER_BRICK(NBRIC)
 
 c      INTEGER, DIMENSION(2,24)  :: iEDGE  !12 without diagonals, 24 with diagonals
 c      INTEGER, DIMENSION(2,2,6) :: iFACE
-      INTEGER :: iN1, iN2, iN1a, iN2a, iN1b, iN2b , iN3, iN4
-      INTEGER :: POS, IAD, IB     , NBF, NBL
-      INTEGER :: I_12bits, nbits, npqts, pqts(4), SUM, SECTION
-      INTEGER :: I_bits(12), MAX_ADD, IMIN_LOC, IMAX_LOC
+!      INTEGER :: iN1, iN2, iN1a, iN2a, iN1b, iN2b , iN3, iN4
+      INTEGER :: NBF, NBL
+!      INTEGER :: I_12bits, nbits, npqts, pqts(4), SUM, SECTION
+      INTEGER :: I_bits(12), MAX_ADD
 
       my_real ::
-     .           AERADIAG,XX(8),YY(8),ZZ(8),DIAG(4)
+     .           XX(8),YY(8),ZZ(8),DIAG(4)
 
-      CHARACTER*12 :: sectype
-      LOGICAL      :: IsSecDouble, IsSTO
+!      CHARACTER*12 :: sectype
+      LOGICAL      :: IsSTO
 
-      CHARACTER(LEN=1) filenum
+!      CHARACTER(LEN=1) filenum
 
       INTEGER ::
      .        MIN_IX_LOC, MIN_IY_LOC, MIN_IZ_LOC,            !indice voxel min utilise
@@ -264,9 +265,9 @@ C=======================================================================
       IF(ITASK == 0)THEN
         !Possible reallocate for Lchain _*() ()
         NULLIFY (LCHAIN_LAST, LCHAIN_NEXT, LCHAIN_ELEM)
-        ALLOCATE(LCHAIN_ELEM(MAX_ADD))
-        ALLOCATE(LCHAIN_NEXT(MAX_ADD))
-        ALLOCATE(LCHAIN_LAST(MAX_ADD))
+        call my_alloc(LCHAIN_ELEM, MAX_ADD, "LCHAIN_ELEM")
+        call my_alloc(LCHAIN_NEXT, MAX_ADD, "LCHAIN_NEXT")
+        call my_alloc(LCHAIN_LAST, MAX_ADD, "LCHAIN_LAST")
         MIN_IX = NBX+2
         MIN_IY = NBY+2
         MIN_IZ = NBZ+2
@@ -276,8 +277,12 @@ C=======================================================================
         CURRENT_ADD = 1 ! first address in the common chain array
       END IF
       IF(ITASK==NTHREAD-1)THEN
-        ALLOCATE(EIX1(NIRECT_L),EIY1(NIRECT_L),EIZ1(NIRECT_L))
-        ALLOCATE(EIX2(NIRECT_L),EIY2(NIRECT_L),EIZ2(NIRECT_L))
+        call my_alloc(EIX1, NIRECT_L, "EIX1")
+        call my_alloc(EIY1, NIRECT_L, "EIY1")
+        call my_alloc(EIZ1, NIRECT_L, "EIZ1")
+        call my_alloc(EIX2, NIRECT_L, "EIX2")
+        call my_alloc(EIY2, NIRECT_L, "EIY2")
+        call my_alloc(EIZ2, NIRECT_L, "EIZ2")
         EIX1=NBX+2  !a initialiser car si pas de candidat et ftrapuv alors min/max globaux erratics
         EIY1=NBX+2  !set to nthread -1
         EIZ1=NBX+2
@@ -663,8 +668,15 @@ C=======================================================================
       !  DEALLOCATE                               !
       !-------------------------------------------!
       IF(ITASK == 0)THEN
-        DEALLOCATE(LCHAIN_LAST, LCHAIN_NEXT, LCHAIN_ELEM )
-        DEALLOCATE(EIX1, EIY1, EIZ1, EIX2, EIY2, EIZ2)
+        call my_dealloc(LCHAIN_LAST)
+        call my_dealloc(LCHAIN_NEXT)
+        call my_dealloc(LCHAIN_ELEM)
+        call my_dealloc(EIX1)
+        call my_dealloc(EIY1)
+        call my_dealloc(EIZ1)
+        call my_dealloc(EIX2)
+        call my_dealloc(EIY2)
+        call my_dealloc(EIZ2)
         NULLIFY (LCHAIN_LAST, LCHAIN_NEXT, LCHAIN_ELEM)
       ENDIF
 
@@ -695,7 +707,8 @@ C=======================================================================
      .           II_STOK
 
       if(itask==0.AND.ibug22_trivox==1)then
-        allocate(order(ii_stok) ,VALUE(II_STOK))
+        call my_alloc(order, ii_stok, "order")
+        call my_alloc(VALUE, II_STOK, "VALUE")
         MIN2 = MINVAL(ABS(CAND_E(1:II_STOK)))
         R2   = MAXVAL(ABS(CAND_E(1:II_STOK))) - MIN2
         DO I=1,II_STOK
@@ -712,7 +725,8 @@ C=======================================================================
         print *, "  CAND_B =", CAND_B(ORDER(1:II_STOK))
         print *, "  CAND_E =", CAND_E(ORDER(1:II_STOK))
 
-        deallocate(order,VALUE)
+        call my_dealloc(order)
+        call my_dealloc(VALUE)
       endif
 
 

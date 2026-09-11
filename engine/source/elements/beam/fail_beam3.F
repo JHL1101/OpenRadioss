@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_beam3          ../engine/source/elements/beam/fail_beam3.F
 !||--- called by ------------------------------------------------------
@@ -103,17 +104,15 @@ C-----------------------------------------------
 C                                                         
       TYPE (ELBUF_STRUCT_)    ,INTENT(INOUT) :: ELBUF_STR
       TYPE (MATPARAM_STRUCT_) ,INTENT(IN)    :: MAT_PARAM
-      TYPE (FAIL_PARAM_)      ,INTENT(IN)    :: FAIL
+C     FAIL_ENERGY_B declares FAIL as INTENT(INOUT).
+      TYPE (FAIL_PARAM_)      ,INTENT(INOUT) :: FAIL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
-C-----------------------------------------------
- 
+C----------------------------------------------- 
       INTEGER :: I,IFL,NFUNC,NPARAM,IRUPT
+      INTEGER :: NUVAR,NVARTMP
       my_real :: T0, TM
       my_real ,DIMENSION(NEL) :: TSTAR
- 
-C
- 
 C=======================================================================
 c      to avoid compilation error with unused arguments
 c      they will be necessary for next development step
@@ -122,15 +121,16 @@ c-----------------------------------------------------
 C--------------------------------------   
       NPARAM  = FAIL%NUPARAM
       NFUNC   = FAIL%NFUNC
+      NUVAR   = FAIL%NUVAR
+      NVARTMP = FAIL%NVARTMP
 c-----------------------------------------            
       IRUPT = ELBUF_STR%GBUF%FAIL(1)%ILAWF    
 c-------------------------------------
 c     progressive element erosion      
 c
       DO I = 1,NEL   
-
-            IF (OFF(I) < EM01)  OFF(I) = ZERO
-            IF (OFF(I) < ONE )  OFF(I) = OFF(I)*FOUR_OVER_5
+        IF (OFF(I) < EM01)  OFF(I) = ZERO
+        IF (OFF(I) < ONE )  OFF(I) = OFF(I)*FOUR_OVER_5
       ENDDO      
                             
 c-----------------------------------------            
@@ -160,35 +160,31 @@ c---------------
             TSTAR(1:NEL) = ZERO
           ENDIF
           
-          CALL FAIL_TENSSTRAIN_B(                                         
-     .          NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM,
+          CALL FAIL_TENSSTRAIN_B(FAIL,  
+     .          NUVAR    ,NVARTMP  ,ELBUF_STR%GBUF%FAIL(1)%VAR, ELBUF_STR%GBUF%FAIL(1)%VARTMP,                                      
+     .          NEL      ,NGL      ,ISMSTR   ,ELBUF_STR%GBUF%DMGSCL       ,
      .          TIME     ,EPSD     ,OFF      ,ELBUF_STR%GBUF%FAIL(1)%DAMMX,  
-     .          ELBUF_STR%GBUF%FAIL(1)%TDEL,IOUT     ,ISTDO    ,FAIL%IFUNC    ,
-     .          EPSXX    ,AL       ,TSTAR    ,
-     .          SNPC     ,NPF      ,STF      ,
-     .          TF       ,ISMSTR   ,ELBUF_STR%GBUF%FAIL(1)%NVAR, ELBUF_STR%GBUF%FAIL(1)%VAR,
-     .          ELBUF_STR%GBUF%DMGSCL)     
+     .          ELBUF_STR%GBUF%FAIL(1)%TDEL,IOUT     ,ISTDO    ,
+     .          EPSXX    ,AL       ,TSTAR    )     
         
 c--------------- 
         CASE (11)     ! Energy failure model                                        
-          CALL FAIL_ENERGY_B(NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM,
+          CALL FAIL_ENERGY_B(FAIL ,NEL      ,NGL      ,
      .         TIME     ,EPSD     ,OFF      ,ELBUF_STR%GBUF%FAIL(1)%DAMMX,                        
-     .         ELBUF_STR%GBUF%FAIL(1)%TDEL  ,IOUT     ,ISTDO    ,FAIL%IFUNC   ,
-     .         AREA     ,F1       ,F2       ,F3       ,
-     .         M1       ,M2       ,M3       ,SNPC     ,NPF    ,STF     ,
-     .         TF       ,EPSXX    ,EPSXY    ,EPSXZ    ,KXX    ,KYY     ,
-     .         KZZ      ,ELBUF_STR%GBUF%FAIL(1)%NVAR,ELBUF_STR%GBUF%FAIL(1)%VAR,
-     .         ELBUF_STR%GBUF%DMGSCL)
+     .         ELBUF_STR%GBUF%FAIL(1)%TDEL  ,IOUT     ,ISTDO    ,AREA     ,
+     .         F1       ,F2       ,F3       ,M1       ,M2       ,
+     .         M3       ,EPSXX    ,EPSXY    ,EPSXZ    ,KXX    ,KYY     ,
+     .         KZZ      ,NUVAR    ,ELBUF_STR%GBUF%FAIL(1)%VAR,
+     .         ELBUF_STR%GBUF%DMGSCL,NVARTMP,ELBUF_STR%GBUF%FAIL(1)%VARTMP)
 c--------------- 
 
         CASE (30)     !    BIQUAD                                                  
-          CALL FAIL_BIQUAD_B(NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM,
+          CALL FAIL_BIQUAD_B(FAIL         ,NEL      ,NGL      ,
+     .                       FAIL%NUVAR   ,FAIL%NVARTMP ,ELBUF_STR%GBUF%FAIL(1)%VAR, ELBUF_STR%GBUF%FAIL(1)%VARTMP,
      .                       TIME         ,SVM      ,PRESSURE ,
      .                       DPLA         ,OFF      ,ELBUF_STR%GBUF%FAIL(1)%DAMMX,
-     .                       ELBUF_STR%GBUF%FAIL(1)%TDEL     ,IOUT    ,ISTDO  ,FAIL%IFUNC   ,
-     .                       NFUNC,SNPC     ,NPF     ,STF     ,TF,
-     .                       ELBUF_STR%GBUF%FAIL(1)%NVAR, ELBUF_STR%GBUF%FAIL(1)%VAR,AL,
-     .                       ELBUF_STR%GBUF%DMGSCL)
+     .                       ELBUF_STR%GBUF%FAIL(1)%TDEL     ,IOUT    ,ISTDO  ,
+     .                       AL           ,ELBUF_STR%GBUF%DMGSCL)
 c---------------   
         CASE (36)     !    VISUAL                                           
          CALL FAIL_VISUAL_B(NEL      ,NGL      ,NPARAM   ,FAIL%UPARAM,
@@ -200,23 +196,17 @@ c---------------
      .                       ELBUF_STR%GBUF%FAIL(1)%VAR,ISMSTR, DTIME)
       
          CASE (39)     ! Gene1 failure model                                        
-          CALL FAIL_GENE1_B(                         
-     .                       NEL  ,FAIL%NUPARAM  ,ELBUF_STR%GBUF%FAIL(1)%NVAR  ,FAIL%NFUNC,   
-     .                FAIL%IFUNC  ,NPF           ,TF           ,            
-     .                      TIME  ,DTIME         ,FAIL%UPARAM  ,    
-     .                       NGL  ,ELBUF_STR%GBUF%DT    ,EPSD  ,ELBUF_STR%GBUF%FAIL(1)%VAR ,
-     .                       OFF  ,
-     .                      AREA  ,F1       ,
-     .                     EPSXX  ,EPSXY    ,EPSXZ      ,
-     .                     TEMPEL ,   
-     .                     ELBUF_STR%GBUF%FAIL(1)%DAMMX ,AL    ,TABLE,     
-     .                     FAIL%NTABLE,    
-     .                     FAIL%TABLE ,ELBUF_STR%GBUF%FAIL(1)%LF_DAMMX  ,FAIL%NIPARAM  ,FAIL%IPARAM,    
-     .                     SNPC       ,STF  ,NTABLE)
+          CALL FAIL_GENE1_B(FAIL,                         
+     .         NEL    ,NUVAR  ,ELBUF_STR%GBUF%FAIL(1)%VAR ,NVARTMP,ELBUF_STR%GBUF%FAIL(1)%VARTMP,  
+     .         TIME   ,DTIME  ,NGL  ,ELBUF_STR%GBUF%DT    ,EPSD  ,
+     .         OFF    ,AREA   ,F1       ,
+     .         EPSXX  ,EPSXY    ,EPSXZ      ,TEMPEL ,   
+     .         ELBUF_STR%GBUF%FAIL(1)%DAMMX ,AL    ,TABLE,  FAIL%NTABLE,   
+     .         FAIL%TABLE ,ELBUF_STR%GBUF%FAIL(1)%LF_DAMMX  ,NTABLE)
 
           CASE (42)     ! INIEVO failure model  
             CALL FAIL_INIEVO_B(                         
-     .                       NEL  ,FAIL%NUPARAM ,ELBUF_STR%GBUF%FAIL(1)%NVAR                  ,
+     .                       NEL  ,FAIL%NUPARAM ,NUVAR,NVARTMP,ELBUF_STR%GBUF%FAIL(1)%VARTMP  ,
      .                     TABLE  ,FAIL%NTABLE  ,FAIL%TABLE ,TIME    ,FAIL%UPARAM             ,
      .                       NGL  ,AL           ,DPLA       ,EPSD , ELBUF_STR%GBUF%FAIL(1)%VAR,
      .                        F1  ,AREA         ,
@@ -227,10 +217,10 @@ c---------------
 
          CASE (41)     ! TAB2 failure model    
            CALL FAIL_TAB2_B(                         
-     .                       NEL  ,FAIL%NUPARAM ,ELBUF_STR%GBUF%FAIL(1)%NVAR   ,FAIL%NFUNC  ,FAIL%IFUNC  ,
+     .                       NEL  ,FAIL%NUPARAM ,FAIL%NUVAR  ,FAIL%NFUNC  ,FAIL%IFUNC  ,
      .                       NPF  ,TABLE   ,TF        ,TIME  ,FAIL%UPARAM  ,
      .                       NGL  ,AL           ,DPLA  ,EPSD  ,ELBUF_STR%GBUF%FAIL(1)%VAR,  
-     .                        F1  ,AREA         ,
+     .                        F1  ,AREA         ,FAIL%NVARTMP ,ELBUF_STR%GBUF%FAIL(1)%VARTMP,
      .                    TEMPEL  ,OFF          ,ELBUF_STR%GBUF%FAIL(1)%DAMMX ,ELBUF_STR%GBUF%FAIL(1)%TDEL  ,
      .                FAIL%NTABLE ,FAIL%TABLE,
      .                      SNPC  ,STF  ,NTABLE ,ELBUF_STR%GBUF%DMGSCL)

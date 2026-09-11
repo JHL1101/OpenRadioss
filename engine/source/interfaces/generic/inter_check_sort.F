@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,23 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    inter_check_sort   ../engine/source/interfaces/generic/inter_check_sort.F
+!||    inter_check_sort              ../engine/source/interfaces/generic/inter_check_sort.F
 !||--- called by ------------------------------------------------------
-!||    inttri             ../engine/source/interfaces/intsort/inttri.F
+!||    inttri                        ../engine/source/interfaces/intsort/inttri.F
+!||--- calls      -----------------------------------------------------
+!||    sts_int7_bucket_sort_decide   ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
 !||--- uses       -----------------------------------------------------
-!||    intbufdef_mod      ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    inter_struct_mod   ../engine/share/modules/inter_struct_mod.F
-!||    sensor_mod         ../common_source/modules/sensor_mod.F90
+!||    intbufdef_mod                 ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    inter_struct_mod              ../engine/share/modules/inter_struct_mod.F
+!||    ists_sts_bp_algo_mod          ../engine/source/interfaces/ists/ists_sts_bp_algo_mod.F90
+!||    sensor_mod                    ../common_source/modules/sensor_mod.F90
 !||====================================================================
         SUBROUTINE INTER_CHECK_SORT( ITASK,NEED_TO_SORT,NBINTC,INTLIST,IPARI,NSENSOR,
-     .                               INTBUF_TAB,SENSOR_TAB,NB_INTER_SORTED,
-     .                               LIST_INTER_SORTED,INTER_STRUCT)
+     .                               NCYCLE_IN,INTBUF_TAB,SENSOR_TAB,
+     .                               NB_INTER_SORTED,LIST_INTER_SORTED,INTER_STRUCT)
 !$COMMENT
 !       INTER_CHECK_SORT description
 !       check if an interface must be sorted
@@ -46,6 +50,8 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD  
       USE INTER_STRUCT_MOD
       USE SENSOR_MOD
+      USE ISTS_STS_BP_ALGO_MOD, ONLY : STS_BP_ALGO,
+     .  STS_INT7_BUCKET_SORT_DECIDE
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -63,6 +69,7 @@ C-----------------------------------------------
         INTEGER, INTENT(inout) :: NEED_TO_SORT  !   1 if one or more interfaces must be sorted
         INTEGER, INTENT(in) :: NBINTC   ! number of interface which are not TYPE2
         INTEGER, INTENT(in) :: NSENSOR
+        INTEGER, INTENT(in) :: NCYCLE_IN
         INTEGER, DIMENSION(NBINTC), INTENT(in) :: INTLIST   !   interface id 
         INTEGER, INTENT(inout) :: NB_INTER_SORTED        !   number of interfaces that need to be sorted
         INTEGER, DIMENSION(NBINTC), INTENT(inout) :: LIST_INTER_SORTED   !   list of interfaces that need to be sorted
@@ -76,7 +83,7 @@ C-----------------------------------------------
         INTEGER :: NTY,INACTI,ISENS
         my_real :: TS,STARTT,STOPT,DIST
         LOGICAL TYPE18
-        LOGICAL :: IS_SORTING_NEEDED
+        LOGICAL :: IS_SORTING_NEEDED, STS_TIME_ACTIVE
         INTEGER :: KK,N
 !   ----------------------------------------
         NB_INTER_SORTED = 0
@@ -114,6 +121,17 @@ C-----------------------------------------------
                 IF(IS_SORTING_NEEDED) THEN
                     IF(TT>STOPT) IS_SORTING_NEEDED = .FALSE.
                 ENDIF
+
+                STS_TIME_ACTIVE = TT>=TS
+                IF(STARTT>TT) STS_TIME_ACTIVE = .FALSE.
+                IF(TT>STOPT) STS_TIME_ACTIVE = .FALSE.
+
+!               Apply the STS INT7-bucket sort-reuse policy at the
+!               global sort scheduling entry point.
+                CALL STS_INT7_BUCKET_SORT_DECIDE(NCYCLE_IN,
+     .              STS_TIME_ACTIVE, IPARI(105,N), STS_BP_ALGO,
+     .              INTBUF_TAB(N)%I_STOK(1), INACTI, IPARI(31,N),
+     .              0, IPARI(85,N), IS_SORTING_NEEDED)
                 ! the current interface must be sorted --> IS_SORTING_NEEDED=true
                 IF (IS_SORTING_NEEDED) THEN
                     IF(ITASK==0) NEED_TO_SORT = 1

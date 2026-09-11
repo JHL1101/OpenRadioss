@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,15 +15,17 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    law42_upd              ../starter/source/materials/mat/mat042/law42_upd.F
 !||--- called by ------------------------------------------------------
 !||    updmat                 ../starter/source/materials/updmat.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    message_mod            ../starter/share/message_module/message_mod.F
 !||    table_mod              ../starter/share/modules1/table_mod.F
@@ -36,6 +38,7 @@ C-----------------------------------------------
       USE TABLE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE MATPARAM_DEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -102,10 +105,10 @@ C     Formulation for solid elements time step computation.
          ENDDO  
        ENDIF 
 C
-       ALLOCATE (STRETCH(NDATA))                              
-       ALLOCATE (STRESS(NDATA))                                  
-       ALLOCATE (ITAB_ON_A(NDATA))                                    
-       ALLOCATE (INDEX(NDATA))                                                                           
+       call my_alloc(STRETCH, NDATA, "STRETCH")
+       call my_alloc(STRESS, NDATA, "STRESS")
+       call my_alloc(ITAB_ON_A, NDATA, "ITAB_ON_A")
+       call my_alloc(INDEX, NDATA, "INDEX")
        STRETCH(1)=LAM_MIN
        ITAB_ON_A = 0
        DO K= 2,NDATA
@@ -229,10 +232,10 @@ C
          ENDIF
        ENDIF 
 C             
-        DEALLOCATE (STRETCH)                                                 
-        DEALLOCATE (STRESS)                                 
-        DEALLOCATE (ITAB_ON_A)                                    
-        DEALLOCATE (INDEX)  
+        CALL MY_DEALLOC(STRETCH)
+        CALL MY_DEALLOC(STRESS)
+        CALL MY_DEALLOC(ITAB_ON_A)
+        CALL MY_DEALLOC(INDEX)
       RETURN
  1000 FORMAT
      & (//5X, 'CHECK THE DRUCKER PRAGER STABILITY CONDITIONS   ' ,/,

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22datainit          ../engine/source/interfaces/int22/i22datainit.F
 !||--- called by ------------------------------------------------------
@@ -575,9 +576,9 @@ C=======================================================================
       Gface(:,104)=(/3,6,4,2,5,0/)      
       Gface(:,105)=(/3,2,6,5,4,0/)      
       Gface(:,106)=(/3,5,2,4,6,0/)                   
-      !--------------------------- -------------------------!
-      !  SUBVOLUME 'G'RAPH : 'N'NUMBERR of 'Pt'POINT        !  !enables to have number of point on local face of a given polyhedron. Check graph index1-6 corresponds to Fa,Fb,Fc,Fd,Fe,Ff
-      !----------------------------------------------------!  
+      !----------------------------------------------------!
+      !  SUBVOLUME 'G'RAPH : 'N'NUMBER of 'Pt'POINT        ! !enables to have number of point on local face of a given polyhedron.
+      !----------------------------------------------------!   Check graph index1-6 corresponds to Fa,Fb,Fc,Fd,Fe,Ff
       DO I=01,08 ;GNPt(:,I)  = (/3,3,3,0,0,0/);ENDDO  
       DO I=09,20 ;GNPt(:,I)  = (/3,3,4,4,0,0/);ENDDO  
       DO I=21,44 ;GNPt(:,I)  = (/5,3,4,4,3,0/);ENDDO  
@@ -599,10 +600,10 @@ C=======================================================================
       !  SUBVOLUME 'G'RAPH : 'C'ORNER                      !  !EDGE id => intersection node id (CORNER).
       !----------------------------------------------------!
       !TETRA
-      Gcorner(:, 1)=(/1,2,3,1,0,0,0/)      * -1
-      Gcorner(:, 2)=(/6,5,4,6,0,0,0/)      * -1
-      Gcorner(:, 3)=(/7,8,9,7,0,0,0/)      * -1
-      Gcorner(:, 4)=(/10,12,11,10,0,0,0/)  * -1
+      Gcorner(:, 1)=(/-1,-2,-3,-1,0,0,0/)
+      Gcorner(:, 2)=(/-6,-5,-4,-6,0,0,0/)
+      Gcorner(:, 3)=(/-7,-8,-9,-7,0,0,0/)
+      Gcorner(:, 4)=(/-10,-12,-11,-10,0,0,0/)
       Gcorner(:, 5)=(/7,4,1,7,0,0,0/)
       Gcorner(:, 6)=(/10,2,5,10,0,0,0/)
       Gcorner(:, 7)=(/3,11,8,3,0,0,0/)

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    create_element_from_part   ../starter/source/model/sets/create_element_from_part.F
 !||--- called by ------------------------------------------------------
@@ -49,6 +50,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE INVERTED_GROUP_MOD
       USE SETDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -71,8 +73,8 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDX,SORT
 C=======================================================================
       SZELMAX = MAX(NUMELS,NUMELQ,NUMELC,NUMELTG,NUMELTRIA,NUMELT,NUMELP,NUMELR,NUMSPH)
-      ALLOCATE(INDX(SZELMAX*2))
-      ALLOCATE(SORT(SZELMAX))
+      call my_alloc(INDX, SZELMAX*2, "CREATE_ELEMENT_FROM_PART/INDX")
+      call my_alloc(SORT, SZELMAX, "SORT")
 !
 !               SOLID
       IF (NUMELS > 0) THEN
@@ -84,7 +86,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_SOLID = SIZE
-        ALLOCATE( CLAUSE%SOLID(SIZE) )
+        call my_alloc(CLAUSE%SOLID, SIZE, "CLAUSE%SOLID")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -118,7 +120,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_SPHCEL = SIZE
-        ALLOCATE( CLAUSE%SPHCEL(SIZE) )
+        call my_alloc(CLAUSE%SPHCEL, SIZE, "CLAUSE%SPHCEL")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -151,7 +153,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_QUAD = SIZE
-        ALLOCATE( CLAUSE%QUAD(SIZE) )
+        call my_alloc(CLAUSE%QUAD, SIZE, "CLAUSE%QUAD")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -185,7 +187,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_SH4N = SIZE
-        ALLOCATE( CLAUSE%SH4N(SIZE) )
+        call my_alloc(CLAUSE%SH4N, SIZE, "CLAUSE%SH4N")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -220,7 +222,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_SH3N = SIZE
-        ALLOCATE( CLAUSE%SH3N(SIZE) )
+        call my_alloc(CLAUSE%SH3N, SIZE, "CLAUSE%SH3N")
 !
         IND=0
         DO ID=1,CLAUSE%NB_PART
@@ -254,7 +256,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_TRIA = SIZE
-        ALLOCATE( CLAUSE%TRIA(SIZE) )
+        call my_alloc(CLAUSE%TRIA, SIZE, "CLAUSE%TRIA")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -287,7 +289,7 @@ C=======================================================================
           SIZE = SIZE + EL_LAST - EL_FIRST
         ENDDO
         CLAUSE%NB_TRUSS = SIZE
-        ALLOCATE( CLAUSE%TRUSS(SIZE) )
+        call my_alloc(CLAUSE%TRUSS, SIZE, "CLAUSE%TRUSS")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -323,7 +325,7 @@ C=======================================================================
         ENDDO
 
         CLAUSE%NB_BEAM = SIZE
-        ALLOCATE( CLAUSE%BEAM(SIZE) )
+        call my_alloc(CLAUSE%BEAM, SIZE, "CLAUSE%BEAM")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -360,7 +362,7 @@ C=======================================================================
         ENDDO
 
         CLAUSE%NB_SPRING = SIZE
-        ALLOCATE( CLAUSE%SPRING(SIZE) )
+        call my_alloc(CLAUSE%SPRING, SIZE, "CLAUSE%SPRING")
 !
         IND = 0
         DO ID=1,CLAUSE%NB_PART
@@ -382,6 +384,9 @@ C=======================================================================
         ENDDO
 
       ENDIF ! IF (NUMELR > 0)
+
+      CALL MY_DEALLOC(INDX)
+      CALL MY_DEALLOC(SORT)
 !
 C-------------------------
       RETURN

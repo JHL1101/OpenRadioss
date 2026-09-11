@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_tri25vox   ../engine/source/mpi/interfaces/spmd_tri25vox.F
+!||    spmd_tri25vox    ../engine/source/mpi/interfaces/spmd_tri25vox.F
 !||--- called by ------------------------------------------------------
-!||    i25main_tri     ../engine/source/interfaces/intsort/i25main_tri.F
+!||    i25main_tri      ../engine/source/interfaces/intsort/i25main_tri.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg          ../engine/source/output/message/message.F
-!||    arret           ../engine/source/system/arret.F
-!||    spmd_wait       ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitall    ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany    ../engine/source/mpi/spmd_wait.F90
+!||    ancmsg           ../engine/source/output/message/message.F
+!||    arret            ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    message_mod     ../engine/share/message_module/message_mod.F
-!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
-!||    tri25ebox       ../engine/share/modules/tri25ebox.F
-!||    tri7box         ../engine/share/modules/tri7box.F
+!||    message_mod      ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
+!||    tri25ebox        ../engine/share/modules/tri25ebox.F
+!||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_TRI25VOX(
      1   NSV       ,NSN       ,X        ,V       ,MS         ,
@@ -62,6 +62,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -317,26 +319,26 @@ C-----for   NBINFLG
         IF (ILEV==2) ISIZ = ISIZ + 1
       ENDIF    
       IDEB = 1
-      REQ_SD4(1:NSPMD) = MPI_REQUEST_NULL
-      REQ_SD5(1:NSPMD) = MPI_REQUEST_NULL
-      REQ_RD(1:NSPMD)  = MPI_REQUEST_NULL
-      REQ_RD2(1:NSPMD) = MPI_REQUEST_NULL
-      REQ_RD4(1:NSPMD) = MPI_REQUEST_NULL
-      REQ_RD5(1:NSPMD) = MPI_REQUEST_NULL
+      REQ_SD4(1:NSPMD) = SPMD_REQUEST_NULL
+      REQ_SD5(1:NSPMD) = SPMD_REQUEST_NULL
+      REQ_RD(1:NSPMD)  = SPMD_REQUEST_NULL
+      REQ_RD2(1:NSPMD) = SPMD_REQUEST_NULL
+      REQ_RD4(1:NSPMD) = SPMD_REQUEST_NULL
+      REQ_RD5(1:NSPMD) = SPMD_REQUEST_NULL
 
 
 
       JDEB = 0
       IF(ITYP==25)THEN
-        ALLOCATE(ITAGNSNFI(NUMNOD),STAT=IERROR)
+        call my_alloc(ITAGNSNFI, NUMNOD, "ITAGNSNFI", stat=IERROR)
         ITAGNSNFI(1:NUMNOD) = 0
-        ALLOCATE(INDEX_EDGE(NEDGE),STAT=IERROR)
+        call my_alloc(INDEX_EDGE, NEDGE, "INDEX_EDGE", stat=IERROR)
         INDEX_EDGE(1:NEDGE) = 0 
       END IF
-      
+    
       IF(ISENDTO(NIN,LOC_PROC)/=0) THEN
         DO KK = 1, NBIRECV
-          CALL SPMD_WAITANY(NBIRECV,REQ_RB,INDEXI)
+          CALL SPMD_WAITANY(REQ_RB,NBIRECV,INDEXI)
           P=IRINDEXI(INDEXI)
           CALL SPMD_WAIT(REQ_RC(INDEXI))
 C special processing on d.d. keep only the internal nodes
@@ -421,6 +423,8 @@ C            First segment is local
 C            First segment is on the other side of the boundary
              STF = ONE
              IF(MVOISIN(LEDGE(4,I),LEDGE(3,I)) == 0) STF = 0
+           ELSEIF(IABS(LEDGE(7,I))==3)THEN
+             STF = STFE(I)
            ELSE ! 
              
              ! ISPMD owns a boundary edge, but the local segment is deleted
@@ -430,7 +434,6 @@ C            First segment is on the other side of the boundary
            DEBUG_E2E(LEDGE(8,I) == D_ES,STF)
            DEBUG_E2E(LEDGE(8,I) == D_ES,LEDGE(7,I))
 
-
            IF( STF > ZERO .AND. LEDGE(7,I) >= 0)  THEN
 C
 C            GAPE useless here (Redundant with BGAPEMAX on main side) !
@@ -439,7 +442,7 @@ C            GAPE useless here (Redundant with BGAPEMAX on main side) !
              ZMINS = MIN(X(3,N1),X(3,N2))!- GAPE(I)      
              XMAXS = MAX(X(1,N1),X(1,N2))!+ GAPE(I)      
              YMAXS = MAX(X(2,N1),X(2,N2))!+ GAPE(I)      
-             ZMAXS = MAX(X(3,N1),X(3,N2))!+ GAPE(I)      
+             ZMAXS = MAX(X(3,N1),X(3,N2))!+ GAPE(I)   
 
              DEBUG_E2E(LEDGE(8,I) == D_ES, XMINS)
              DEBUG_E2E(LEDGE(8,I) == D_ES, YMINS)
@@ -487,7 +490,7 @@ C            GAPE useless here (Redundant with BGAPEMAX on main side) !
           ENDIF ! IEDGE
 
           NBOX(2,P) = NB_EDGE
-C         WRITE(6,*) ISPMD,"sends ",NB_EDGE,"to,",P-1
+c         WRITE(6,*) ISPMD,"sends ",NB_EDGE,"to,",P-1
           IF(ITYP==25)THEN
             JDEB = 0
             DO Q=1,P-1
@@ -607,29 +610,55 @@ C TO DO: single precision
                IM  = LEDGE(10,I)
                I1  = LEDGE(11,I)
                I2  = LEDGE(12,I)
-               NN1 = ADMSR(JE,IE)
-               NN2 = ADMSR(MOD(JE,4)+1,IE)
-
-
-               RBUF_EDGE(P)%p(L2:L2+2) = EDG_BISECTOR(1:3,JE,IE)
-
+               IF(IE/=0) THEN
+                  NN1 = ADMSR(JE,IE)
+                  NN2 = ADMSR(MOD(JE,4)+1,IE)
+               ELSE
+                  NN1 = 0
+                  NN2 = 0               
+               ENDIF
+               IF(IE/=0) THEN
+                  RBUF_EDGE(P)%p(L2:L2+2) = EDG_BISECTOR(1:3,JE,IE)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
                L2 = E_VTX_BIS + L
-               RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,1,I1)
+               IF(I1/=0) THEN
+                 RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,1,I1)
+               ELSE
+                 RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
+               L2 = L2 + 3
+               IF(I1/=0) THEN
+                  RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,2,I1)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
+               L2 = L2 + 3
+               IF(I2/=0) THEN
+                  RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,1,I2)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
+               L2 = L2 + 3
+               IF(I2/=0)THEN              
+                  RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,2,I2)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
 
                L2 = L2 + 3
-               RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,2,I1)
-
+               IF(NN1/=0) THEN               
+                  RBUF_EDGE(P)%p(L2:L2+2) = E2S_NOD_NORMAL(1:3,NN1)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF         
                L2 = L2 + 3
-               RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,1,I2)
-
-               L2 = L2 + 3
-               RBUF_EDGE(P)%p(L2:L2+2) = VTX_BISECTOR(1:3,2,I2)
-
-               L2 = L2 + 3
-               RBUF_EDGE(P)%p(L2:L2+2) = E2S_NOD_NORMAL(1:3,NN1)
-
-               L2 = L2 + 3
-               RBUF_EDGE(P)%p(L2:L2+2) = E2S_NOD_NORMAL(1:3,NN2)
+               IF(NN2/=0) THEN              
+                  RBUF_EDGE(P)%p(L2:L2+2) = E2S_NOD_NORMAL(1:3,NN2)
+               ELSE
+                  RBUF_EDGE(P)%p(L2:L2+2) = ZERO
+               ENDIF
 
                IF(ISTIF_MSDT > 0) RBUF_EDGE(P)%p(E_STIFE_MSDT_FI+ L) = STIFMSDT_EDG(I) 
               
@@ -922,8 +951,8 @@ C reset
       ENDIF       
 C
       IF(ITYP==25) THEN
-        DEALLOCATE(ITAGNSNFI)
-        DEALLOCATE(INDEX_EDGE) 
+        call my_dealloc(ITAGNSNFI)
+        call my_dealloc(INDEX_EDGE)
       ENDIF
 C
 C   reception of xrem data
@@ -964,23 +993,23 @@ C Allocate total size
 C
 
        IF(NSNR > 0 .OR. NEDGE_REMOTE > 0 ) THEN
-          ALLOCATE(XREM(RSIZ,NSNR),STAT=IERROR)
+          call my_alloc(XREM, RSIZ, NSNR, "XREM", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
           ENDIF
-          ALLOCATE(IREM(ISIZ,NSNR),STAT=IERROR)   
+          call my_alloc(IREM, ISIZ, NSNR, "IREM", stat=IERROR)
           IF(IERROR/=0) THEN
             CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
             CALL ARRET(2)
           ENDIF
           IF(IEDGE /= 0) THEN
-            ALLOCATE(IREM_EDGE(E_IBUF_SIZE,NEDGE_REMOTE),STAT=IERROR)   
+            call my_alloc(IREM_EDGE, E_IBUF_SIZE, NEDGE_REMOTE, "IREM_EDGE", stat=IERROR)
             IF(IERROR/=0) THEN
               CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
               CALL ARRET(2)
             ENDIF
-            ALLOCATE(XREM_EDGE(E_RBUF_SIZE,NEDGE_REMOTE),STAT=IERROR)   
+            call my_alloc(XREM_EDGE, E_RBUF_SIZE, NEDGE_REMOTE, "XREM_EDGE", stat=IERROR)
             IF(IERROR/=0) THEN
               CALL ANCMSG(MSGID=20,ANMODE=ANINFO)
               CALL ARRET(2)
@@ -1030,10 +1059,10 @@ C
 
 
           
-          CALL SPMD_WAITALL(NBIRECV_NODE,REQ_RD )
-          CALL SPMD_WAITALL(NBIRECV_NODE,REQ_RD2)
-          CALL SPMD_WAITALL(NBIRECV_EDGE,REQ_RD4)
-          CALL SPMD_WAITALL(NBIRECV_EDGE,REQ_RD5)
+          CALL SPMD_WAITALL(REQ_RD,NBIRECV_NODE )
+          CALL SPMD_WAITALL(REQ_RD2,NBIRECV_NODE)
+          CALL SPMD_WAITALL(REQ_RD4,NBIRECV_EDGE)
+          CALL SPMD_WAITALL(REQ_RD5,NBIRECV_EDGE)
 
           !set specifics IREM and XREM indexes for INT24 sorting
           IF(ISIZ > 5 .AND. NSNR > 0) THEN
@@ -1062,15 +1091,15 @@ C
               CALL SPMD_WAIT(REQ_SD(P))
               IF(NBOX(1,P) > 0) THEN
                 CALL SPMD_WAIT(REQ_SD2(P))
-                DEALLOCATE(RBUF(P)%p)
+                call my_dealloc(RBUF(P)%p)
                 CALL SPMD_WAIT(REQ_SD3(P))
-                DEALLOCATE(IBUF(P)%p)                   
+                call my_dealloc(IBUF(P)%p)
               ENDIF
               IF(NBOX(2,P) > 0) THEN
                 CALL SPMD_WAIT(REQ_SD4(P))
-                DEALLOCATE(IBUF_EDGE(P)%p)                   
+                call my_dealloc(IBUF_EDGE(P)%p)
                 CALL SPMD_WAIT(REQ_SD5(P))
-                DEALLOCATE(RBUF_EDGE(P)%p)                   
+                call my_dealloc(RBUF_EDGE(P)%p)
               END IF
             ENDIF
           ENDIF
@@ -1080,4 +1109,3 @@ C
 #endif
       RETURN
       END
-

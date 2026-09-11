@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,28 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_exch_efric       ../engine/source/mpi/interfaces/spmd_exch_efric.F
+!||    spmd_exch_efric   ../engine/source/mpi/interfaces/spmd_exch_efric.F
 !||--- called by ------------------------------------------------------
-!||    resol                 ../engine/source/engine/resol.F
+!||    resol             ../engine/source/engine/resol.F
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                ../engine/source/output/message/message.F
-!||    arret                 ../engine/source/system/arret.F
+!||    ancmsg            ../engine/source/output/message/message.F
+!||    arret             ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
-!||    h3d_mod               ../engine/share/modules/h3d_mod.F
-!||    intbufdef_mod         ../common_source/modules/interfaces/intbufdef_mod.F90
-!||    message_mod           ../engine/share/message_module/message_mod.F
-!||    output_mod            ../common_source/modules/output/output_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    tri25ebox             ../engine/share/modules/tri25ebox.F
-!||    tri7box               ../engine/share/modules/tri7box.F
+!||    h3d_mod           ../engine/share/modules/h3d_mod.F
+!||    intbufdef_mod     ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    message_mod       ../engine/share/message_module/message_mod.F
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
+!||    output_mod        ../common_source/modules/output/output_mod.F90
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
+!||    tri25ebox         ../engine/share/modules/tri25ebox.F
+!||    tri7box           ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE SPMD_EXCH_EFRIC(OUTPUT,
      1    IPARI   ,INTLIST ,NBINTC  ,ISLEN7 ,IRLEN7  ,
@@ -49,10 +51,11 @@ C-----------------------------------------------
       USE INTBUFDEF_MOD
       USE OUTPUT_MOD
       USE H3D_MOD
-      USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+      USE SPMD_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -154,9 +157,9 @@ C
                SIZ = L+1-ADD
                IF(SIZ>0)THEN
                  MSGTYP = MSGOFF
-                 CALL MPI_IRECV(
-     .             BBUFR(ADD),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .             SPMD_COMM_WORLD,REQ_RI(P),IERROR    )
+                 CALL spmd_irecv(
+     .             BBUFR(ADD:ADD+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,
+     .             REQ_RI(P))
                ENDIF
              ENDIF
            ENDDO
@@ -203,9 +206,9 @@ C
               SIZ = L+1-ADD
               IF(SIZ>0)THEN
                 MSGTYP = MSGOFF 
-                CALL MPI_ISEND(
-     .            BBUFS(ADD),SIZ,REAL     ,IT_SPMD(P),MSGTYP,
-     .            SPMD_COMM_WORLD,REQ_SI(P),IERROR    )
+                CALL spmd_isend(
+     .            BBUFS(ADD:ADD+SIZ-1),SIZ,IT_SPMD(P),MSGTYP,
+     .            REQ_SI(P))
               ENDIF
             ENDIF
           ENDDO
@@ -216,7 +219,7 @@ C Waiting reception
 C
           DO P = 1, NSPMD
             IF(ADDR(P+1)-ADDR(P)>0) THEN
-              CALL MPI_WAIT(REQ_RI(P),STATUS,IERROR)
+              CALL spmd_wait(REQ_RI(P),STATUS)
               L = ADDR(P)
               DO II = 1, NBINTC
                 NIN = INTLIST(II)
@@ -241,19 +244,19 @@ C
           ENDDO
 C Deallocation R
           IF(IALLOCR>0) THEN
-            DEALLOCATE(BBUFR)
+            call my_dealloc(BBUFR)
           END IF
 C
 C Attente ISEND
 C
           DO P = 1, NSPMD
             IF(ADDS(P+1)-ADDS(P)>0) THEN
-              CALL MPI_WAIT(REQ_SI(P),STATUS,IERROR)
+              CALL spmd_wait(REQ_SI(P),STATUS)
             ENDIF
           ENDDO
 C Deallocation S
           IF(IALLOCS>0) THEN
-            DEALLOCATE(BBUFS)
+            call my_dealloc(BBUFS)
           END IF
 C
       ENDIF ! IS_EFRIC_COM_NEEDED
@@ -261,7 +264,6 @@ C
 #endif
       RETURN
       END
-
 
 
 

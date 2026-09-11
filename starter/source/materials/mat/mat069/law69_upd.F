@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    law69_upd              ../starter/source/materials/mat/mat069/law69_upd.F
 !||--- called by ------------------------------------------------------
@@ -41,6 +42,7 @@ C-----------------------------------------------
       USE MESSAGE_MOD
       USE TABLE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -66,15 +68,15 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 
 c
-      INTEGER N_NETWORK,N,K,ITEST,ICHECK,II,JJ,NSTART,IC1,IC2,NOGD,NDATA,NMULA,
-     .        TAB,NMUAL,IFLAG,IS,I,INDX,LAWID, ITAG,IS_ENCRYPTED
+      INTEGER K,ICHECK,II,JJ,NSTART,IC1,IC2,NOGD,NDATA,
+     .        NMUAL,IFLAG,IS,I,INDX,LAWID, ITAG,IS_ENCRYPTED
       my_real
      .   MU(5),AL(5),LAM_MIN,LAM_MAX,STRAIN_MIN,STRAIN_MAX,
      .   D11,D22,D12,LAM1,LAM2,LAM3,LAM12,INVD1,INVD2
       my_real
-     .   E,NU,GS,RBULK, D,YOUNG,
-     .   ERRTOL,AVE_SLOPE,G,MU_MAX,MU_MIN,DX,LAM,BETA,
-     .   AMULA(2),MUAL(10),DY
+     .   NU,GS,RBULK,YOUNG,
+     .   ERRTOL,AVE_SLOPE,G,DX,
+     .   MUAL(10),DY
       my_real , DIMENSION(:), ALLOCATABLE :: STRESS,STRETCH
       INTEGER , DIMENSION(:), ALLOCATABLE :: ITAB_ON_A,INDEX
 !             
@@ -98,8 +100,8 @@ C
        NOGD=(IC2-IC1)/2
        NDATA=NOGD
 C
-       ALLOCATE (STRETCH(NOGD))                              
-       ALLOCATE (STRESS(NOGD))                           
+       call my_alloc(STRETCH, NOGD, "STRETCH")
+       call my_alloc(STRESS, NOGD, "STRESS")
 C
        AVE_SLOPE = ZERO
        JJ=0                                                  
@@ -170,8 +172,8 @@ C  check if the curve is monotonic
      $                             ICHECK, NSTART, ERRTOL,MAT_ID,TITR,IS_ENCRYPTED)
            UPARAM(18) = NMUAL / 2    
        ENDIF
-       DEALLOCATE (STRETCH)                                                  
-       DEALLOCATE (STRESS)                                                   
+       CALL MY_DEALLOC(STRETCH)
+       CALL MY_DEALLOC(STRESS)
        IF(GAMA_INF < ONE) THEN
          DO II=1,5                                                           
            UPARAM(II)=MUAL(2*II-1)/GAMA_INF                                     
@@ -232,10 +234,10 @@ C
          AL(I) = UPARAM(5+I)
        ENDDO  
 C
-       ALLOCATE (STRETCH(NDATA))                              
-       ALLOCATE (STRESS(NDATA))                                  
-       ALLOCATE (ITAB_ON_A(NDATA))                                    
-       ALLOCATE (INDEX(NDATA))                                                                           
+       call my_alloc(STRETCH, NDATA, "STRETCH")
+       call my_alloc(STRESS, NDATA, "STRESS")
+       call my_alloc(ITAB_ON_A, NDATA, "ITAB_ON_A")
+       call my_alloc(INDEX, NDATA, "INDEX")
        STRETCH(1)=LAM_MIN
        ITAB_ON_A = 0
        DO K= 2,NDATA
@@ -358,10 +360,10 @@ C
            WRITE(IOUT,1200)STRAIN_MAX
          ENDIF
        ENDIF       
-        DEALLOCATE (STRETCH)                                                 
-        DEALLOCATE (STRESS)                                
-        DEALLOCATE (ITAB_ON_A)                                    
-        DEALLOCATE (INDEX)    
+        CALL MY_DEALLOC(STRETCH)
+        CALL MY_DEALLOC(STRESS)
+        CALL MY_DEALLOC(ITAB_ON_A)
+        CALL MY_DEALLOC(INDEX)
 C --------------------------------------------------------
       RETURN
  100  FORMAT

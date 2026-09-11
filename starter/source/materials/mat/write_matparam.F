@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    write_matparam                 ../starter/source/materials/mat/write_matparam.F
 !||--- called by ------------------------------------------------------
@@ -43,6 +44,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD
       use write_therpmaram_mod
       use write_ale_rezoning_param_mod , only : write_ale_rezoning_param
+      use my_alloc_mod
 !     use write_eosparam_mod , only : write_eosparam
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
@@ -63,11 +65,11 @@ C-----------------------------------------------
       INTEGER :: NBSUBMAT, OLDFORMAT
       my_real ,DIMENSION(:) ,ALLOCATABLE :: RBUF
 C=======================================================================
-      NFIX = 24
+      NFIX = 25
       NUMMAT = MAT_ELEM%NUMMAT
       LEN    = 0
       LENI   = NFIX*NUMMAT
-      ALLOCATE (IBUF(LENI) )
+      call my_alloc(IBUF, LENI, "IBUF")
 
       ! write integer parameters and flags
       IAD = 0
@@ -96,19 +98,20 @@ C=======================================================================
         IBUF(IAD+22) = MAT_ELEM%MAT_PARAM(IMAT)%IFAILWAVE
         IBUF(IAD+23) = MAT_ELEM%MAT_PARAM(IMAT)%IXFEM
         IBUF(IAD+24) = MAT_ELEM%MAT_PARAM(IMAT)%NMOD
+        IBUF(IAD+25) = MAT_ELEM%MAT_PARAM(IMAT)%CRIT_PLAS
 
         IAD = IAD + NFIX
       END DO
 
       CALL WRITE_I_C(IBUF,LENI)
       LEN = LEN + LENI
-      DEALLOCATE(IBUF)
+      CALL MY_DEALLOC(IBUF)
 
       ! write real parameters
       NFIXR = 9
       LENR  = NFIXR*NUMMAT
       IAD   = 0
-      ALLOCATE (RBUF(LENR) )
+      call my_alloc(RBUF, LENR, "RBUF")
       DO IMAT = 1,NUMMAT
         RBUF(IAD + 1) = MAT_ELEM%MAT_PARAM(IMAT)%RHO
         RBUF(IAD + 2) = MAT_ELEM%MAT_PARAM(IMAT)%RHO0
@@ -123,7 +126,7 @@ C=======================================================================
       END DO
       CALL WRITE_DB(RBUF ,LENR)
       LEN = LEN + LENR
-      DEALLOCATE(RBUF)
+      CALL MY_DEALLOC(RBUF)
 
       ! write material title
       DO IMAT = 1,NUMMAT      
@@ -205,8 +208,8 @@ c
 
 
       ! Write multimaterial buffer
-      ALLOCATE (IBUF(21) ) !< mex is 21 submaterials
-      ALLOCATE (RBUF(21) )
+      call my_alloc(IBUF, 21, "IBUF") !< mex is 21 submaterials
+      call my_alloc(RBUF, 21, "RBUF")
       DO IMAT = 1,NUMMAT
         NBSUBMAT = MAT_ELEM%MAT_PARAM(IMAT)%MULTIMAT%NB
         OLDFORMAT = MAT_ELEM%MAT_PARAM(IMAT)%MULTIMAT%old_data_format
@@ -227,8 +230,8 @@ c
           ENDIF
         ENDIF
       ENDDO
-      DEALLOCATE(IBUF)
-      DEALLOCATE(RBUF)
+      CALL MY_DEALLOC(IBUF)
+      CALL MY_DEALLOC(RBUF)
 
 
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_prop11             ../starter/source/properties/shell/hm_read_prop11.F
 !||--- called by ------------------------------------------------------
@@ -72,8 +73,6 @@ C-----------------------------------------------
       INTEGER IGEO(NPROPGI),IPM(NPROPMI,*),SUB_ID,IG,IGTYP
       my_real
      .   GEO(NPROPG), PM(NPROPM,*),RTRANS(NTRANSF,*)
-      my_real
-     .   FAC_M, FAC_L, FAC_T
       TYPE(SUBMODEL_DATA) LSUBMODEL(*)
       CHARACTER(LEN=NCHARTITLE)::IDTITL
       TYPE(PROP_TAG_) , DIMENSION(0:MAXPROP) :: PROP_TAG
@@ -83,15 +82,15 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       CHARACTER LAW_ID*4
       INTEGER NUML(100),NLY,NLYMAX,N1,N,J,IERREL,M1,M2,M3,M4,
-     .   K, N2, N3, ISTRAIN, MLAWLY1,ISHEAR,IPLAST,IHBE,ITHK,IREP,
+     .   K, ISTRAIN, MLAWLY1,ISHEAR,IPLAST,IHBE,ITHK,IREP,
      .   IDSK, ISK, IPANG, IPTHK, IPPOS, IPOS, IPMAT, IPWEIGHT,ISKN(LISKN,*),
-     .   ISS, PID1,ISMSTR,ISROT,IBID,IGMAT,IHBEOUTP,IHBE_OLD,IRP
+     .   ISS, PID1,ISMSTR,ISROT,IGMAT,IHBEOUTP,IRP
       my_real AN, VX, VY, VZ, THICKT, DT, TMIN, TMAX,WEIGHT,PTHK,CVIS,PUN,
-     .        PHI_I,THK_I,Z_I,WF_I,ZSHIFT
+     .        PHI_I,THK_I,Z_I,ZSHIFT
       INTEGER ISH3N
-      INTEGER ID,ID1,IUN,IPPLY,NLY_TMP,L,M
+      INTEGER IUN,IPPLY,NLY_TMP,L,M
       CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
-      INTEGER     IHBE_D,IPLA_D,ISTR_D,ITHK_D,ISHEA_D,ISST_D,
+      INTEGER     IHBE_D,IPLA_D,ITHK_D,ISHEA_D,ISST_D,
      .           ISH3N_D, ISTRA_D,NPTS_D,IDRIL_D
       LOGICAL IS_AVAILABLE, IS_ENCRYPTED
 C-----------------------------------------------

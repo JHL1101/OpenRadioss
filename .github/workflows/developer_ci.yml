@@ -21,7 +21,7 @@ jobs:
       # Registry variable can't be a secret but can be a simple variable defined at organization level
       image: "internal.artifacts.altair.com/radioss-docker-local/rd-linux64-common:latest"          
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Detect workflow changes
         run: |
           # fetch base branch
@@ -61,14 +61,14 @@ jobs:
             precision: dp
             os: linux64
             binary: starter
-            image_name: rd-linux64-cos8-bld:ompi4.1.1-ts11
+            image_name: rd-linux64-or-rl8.10-bld-qa:ompi4.1.2-ts11
 
           - build: engine_linux64_gf_ompi
             precision: dp
             os: linux64
             binary: engine
             mpi: ompi
-            image_name: rd-linux64-cos8-bld:ompi4.1.1-ts11
+            image_name: rd-linux64-or-rl8.10-bld-qa:ompi4.1.2-ts11
 
     container: 
       # Registry variable can't be a secret but can be a simple variable defined at organization level
@@ -84,7 +84,7 @@ jobs:
           md5sum exec/* || echo "Nothing in exec/" 
 
       # Get last git modifications, WS is not persistent here
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: 'false'
           ref: refs/pull/${{ github.event.number }}/merge
@@ -119,14 +119,14 @@ jobs:
 
       # Upload artifact (since V4 we can't upload artifact using the same name, each one must be unique) 
       - name: Upload built artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bins-${{ matrix.os }}-${{ matrix.precision }}-${{ matrix.build }}
           path: exec
 
       # We upload extlib only once, arbitrary choice
       - name: Upload extlib artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extlib.zip
           path: extlib.zip
@@ -155,27 +155,27 @@ jobs:
             precision: sp
             os: linux64
             binary: starter
-            image_name: rd-linux64-cos10-bld:ompi4.1.1-ts15
+            image_name: rd-linux64-or-rl10-bld:ompi4.1.2-ts15
 
           - build: engine_linux64_gf_ompi_sp
             precision: sp
             os: linux64 
             binary: engine
             mpi: ompi
-            image_name: rd-linux64-cos10-bld:ompi4.1.1-ts15
+            image_name: rd-linux64-or-rl10-bld:ompi4.1.2-ts15
 
           # Disabled since error would be seen in ompi version
           # - build: engine_linux64_gf
           #   precision: dp
           #   os: linux64
           #   binary: engine
-          #   image_name: rd-linux64-cos10-bld:ompi4.1.1-ts15
+          #   image_name: rd-linux64-or-rl10-bld:ompi4.1.2-ts15
 
           # - build: engine_linux64_gf_sp
           #   precision: sp
           #   os: linux64 
           #   binary: engine
-          #   image_name: rd-linux64-cos10-bld:ompi4.1.1-ts15
+          #   image_name: rd-linux64-or-rl10-bld:ompi4.1.2-ts15
 
     container: 
       # Registry variable can't be a secret but can be a simple variable defined at organization level
@@ -191,7 +191,7 @@ jobs:
           md5sum exec/* || echo "Nothing in exec/" 
 
       # Get last git modifications, WS is not persistent here
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: 'false'
           ref: refs/pull/${{ github.event.number }}/merge
@@ -226,7 +226,7 @@ jobs:
 
       # Upload artifact (since V4 we can't upload artifact using the same name, each one must be unique) 
       - name: Upload built artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bins-${{ matrix.os }}-${{ matrix.precision }}-${{ matrix.build }}
           path: exec
@@ -240,7 +240,7 @@ jobs:
     runs-on: ["build","developer_ci"]
     container: 
       # Registry variable can't be a secret but can be a simple variable defined at organization level
-      image: "internal.artifacts.altair.com/radioss-docker-local/rd-linux64-cos8-bld:ompi4.1.1-ts11"     
+      image: "internal.artifacts.altair.com/radioss-docker-local/rd-linux64-or-rl8.10-bld-qa:ompi4.1.2-ts11"     
       volumes: 
         - /etc/localtime:/etc/localtime:ro
 
@@ -270,7 +270,7 @@ jobs:
           md5sum exec/* || echo "Nothing in exec/" 
 
       # Get last git modifications, WS is not persistent here
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: 'false'
           ref: refs/pull/${{ github.event.number }}/merge
@@ -313,7 +313,7 @@ jobs:
     runs-on: ["qa_${{ matrix.os }}","developer_ci"]
     container: 
       # Registry variable can't be a secret but can be a simple variable defined at organization level
-      image: "internal.artifacts.altair.com/radioss-docker-local/rd-linux64-cos8-qa:ompi4.1.1"     
+      image: "internal.artifacts.altair.com/radioss-docker-local/rd-linux64-or-rl8.10-bld-qa:ompi4.1.2-ts11"     
       volumes: 
         - /etc/localtime:/etc/localtime:ro
 
@@ -337,7 +337,7 @@ jobs:
     steps:
 
       # Get git related to the commit
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: 'false'
           ref: refs/pull/${{ github.event.number }}/merge
@@ -349,25 +349,25 @@ jobs:
       # Download artifacts (since V4 we must download all needed artifacts, we could do it using wildcard but it doesn't work ... see https://github.com/actions/download-artifact/issues/337)
       # Using hard name waiting for this issue to be fixed
       # - name: Download artifacts
-      #   uses: actions/download-artifact@v4
+      #   uses: actions/download-artifact@v8
       #   with:
       #     name: bins-${{ matrix.os }}-${{ matrix.precision }}-*
       #     path: exec
       #     merge-multiple: true
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: bins-${{ matrix.os }}-${{ matrix.precision }}-starter_linux64_gf
           path: exec
           merge-multiple: true
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: bins-${{ matrix.os }}-${{ matrix.precision }}-engine_linux64_gf_ompi
           path: exec
           merge-multiple: true
       - name: Download extlib artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: extlib.zip
 
@@ -419,12 +419,39 @@ jobs:
             exit 1
           fi 
 
-      # DEV ONLY #
-      # Delete the artifacts
-      # In private repo we are limited to 2Gb so we decided not to keep developer ci artifacts for the moment
-      # - uses: geekyeggo/delete-artifact@v2
-      #   with:
-      #     name: |
-      #       bins-${{ matrix.os }}-${{ matrix.precision }}   
-      #       bins-${{ matrix.os }}-sp
+  # cleanup_artifacts:
+  #   if: ${{ always() && github.repository_owner == 'OpenRadioss' }}
+  #   needs: [qa]
+  #   runs-on: [build,linux64]
+  #   permissions:
+  #     actions: write
+  #     contents: read
+
+  #   steps:
+  #     - name: Delete all artifacts for current run
+  #       uses: actions/github-script@v8
+  #       with:
+  #         script: |
+  #           const artifacts = await github.paginate(
+  #             github.rest.actions.listWorkflowRunArtifacts,
+  #             {
+  #               owner: context.repo.owner,
+  #               repo: context.repo.repo,
+  #               run_id: context.runId,
+  #               per_page: 100,
+  #             }
+  #           );
+
+  #           core.info(`Found ${artifacts.length} artifact(s) for run ${context.runId}.`);
+
+  #           for (const artifact of artifacts) {
+  #             core.info(`Deleting artifact: ${artifact.name} (id=${artifact.id})`);
+  #             await github.rest.actions.deleteArtifact({
+  #               owner: context.repo.owner,
+  #               repo: context.repo.repo,
+  #               artifact_id: artifact.id,
+  #             });
+  #           }
+
+  #           core.info('Artifact cleanup completed.');
 

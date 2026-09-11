@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    intbuf_fric_ini_starter   ../starter/source/interfaces/intbuf/intbufFric_ini_starter.F
 !||--- called by ------------------------------------------------------
@@ -73,23 +74,23 @@ C=======================================================================
 c       ALLOCATIONS
 C=======================================================================
 
-          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOUPLEPARTS_FRIC,NSET) 
+          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOUPLEPARTS_FRIC,NSET,"INTBUF_FRIC_TAB(NINF)%TABCOUPLEPARTS_FRIC")
           INTBUF_FRIC_TAB(NINF)%TABCOUPLEPARTS_FRIC(1:NSET) = 0 
 
-          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABPARTS_FRIC,S_TABPARTS_FRIC) 
+          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABPARTS_FRIC,S_TABPARTS_FRIC,"INTBUF_FRIC_TAB(NINF)%TABPARTS_FRIC")
           INTBUF_FRIC_TAB(NINF)%TABPARTS_FRIC(1:S_TABPARTS_FRIC) = 0 
 
-          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%ADPARTS_FRIC,S_TABPARTS_FRIC+1) 
+          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%ADPARTS_FRIC,S_TABPARTS_FRIC+1,"INTBUF_FRIC_TAB(NINF)%ADPARTS_FRIC")
           INTBUF_FRIC_TAB(NINF)%ADPARTS_FRIC(1:S_TABPARTS_FRIC+1) = 0 
 
-          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%IFRICORTH,NSET) 
+          CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%IFRICORTH,NSET,"INTBUF_FRIC_TAB(NINF)%IFRICORTH")
           INTBUF_FRIC_TAB(NINF)%IFRICORTH(1:NSET) = 0 
 
           IF (IORTH == 0 ) THEN
-             CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC,LENC*(NSET+1)) 
+             CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC,LENC*(NSET+1),"INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC")
               INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC(1:LENC*(NSET+1)) = ZERO 
           ELSE
-             CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC,LENC+2*LENC*NSET) 
+             CALL MY_ALLOC(INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC,LENC+2*LENC*NSET,"INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC")
               INTBUF_FRIC_TAB(NINF)%TABCOEF_FRIC(1:2*LENC*NSET+LENC) = ZERO 
           ENDIF
 

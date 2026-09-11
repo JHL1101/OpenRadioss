@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fail_inievo_c         ../engine/source/materials/fail/inievo/fail_inievo_c.F
 !||--- called by ------------------------------------------------------
@@ -30,10 +31,12 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    interface_table_mod   ../engine/share/modules/table_mod.F
 !||    message_mod           ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    table_mod             ../engine/share/modules/table_mod.F
 !||====================================================================
       SUBROUTINE FAIL_INIEVO_C (
-     1     NEL      ,NUPARAM  ,NUVAR    ,
+     1     NEL      ,NUPARAM  ,NUVAR    ,NVARTMP  ,VARTMP   ,
      2     TABLE    ,NTABLF   ,ITABLF   ,TIME     ,UPARAM   , 
      3     NGL      ,ALDT     ,DPLA     ,EPSP     ,UVAR     ,     
      4     SIGNXX   ,SIGNYY   ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,            
@@ -47,6 +50,8 @@ C---------+---------+---+---+--------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -58,12 +63,11 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I N P U T   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER, INTENT(IN) :: 
-     .        NEL,NUPARAM,NUVAR,NGL(NEL),IPT,IPG,NTABLF,
-     .        INLOC,NPG
+      INTEGER, INTENT(IN) :: NEL,NUPARAM,NUVAR,NVARTMP,IPT,IPG,NTABLF,INLOC,NPG
+      INTEGER, INTENT(IN) :: NGL(NEL)
+      INTEGER, DIMENSION(NEL,NVARTMP) ,INTENT(INOUT) :: VARTMP
       INTEGER, DIMENSION(NTABLF) ,INTENT(IN) :: ITABLF
-      INTEGER, INTENT(INOUT) :: 
-     .        DMG_FLAG,FOFF(NEL)
+      INTEGER, INTENT(INOUT) :: DMG_FLAG,FOFF(NEL)
       my_real, INTENT(IN) :: 
      .        TIME,UPARAM(NUPARAM),ALDT(NEL),
      .        DPLA(NEL),EPSP(NEL),TEMP(NEL),
@@ -77,8 +81,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,INDX(NEL),NINDX,IPOS(NEL,2),
-     .        NINIEVO,ISHEAR,ILEN
+      INTEGER I,J,K,L,INDX(NEL),NINDX,NINIEVO,ISHEAR,ILEN
       INTEGER, DIMENSION(:), ALLOCATABLE :: 
      .        INITYPE,EVOTYPE,EVOSHAP,COMPTYP,TAB_ID,
      .        TAB_EL,FCRIT            
@@ -104,20 +107,20 @@ C!--------------------------------------------------------------
       ISHEAR  = INT(UPARAM(2))
       ILEN    = INT(UPARAM(3))
       IF (INLOC > 0) ILEN = 1
-      ALLOCATE(INITYPE(NINIEVO))
-      ALLOCATE(EVOTYPE(NINIEVO))
-      ALLOCATE(EVOSHAP(NINIEVO))
-      ALLOCATE(COMPTYP(NINIEVO))
-      ALLOCATE(TAB_ID (NINIEVO))
-      ALLOCATE(SR_REF (NINIEVO))
-      ALLOCATE(FSCALE (NINIEVO))
-      ALLOCATE(INI_P1 (NINIEVO))
-      ALLOCATE(TAB_EL (NINIEVO))
-      ALLOCATE(EL_REF (NINIEVO))
-      ALLOCATE(ELSCAL (NINIEVO))
-      ALLOCATE(DISP   (NINIEVO))
-      ALLOCATE(ENER   (NINIEVO))
-      ALLOCATE(ALPHA2 (NINIEVO))   
+      call my_alloc(INITYPE, NINIEVO, "INITYPE")
+      call my_alloc(EVOTYPE, NINIEVO, "EVOTYPE")
+      call my_alloc(EVOSHAP, NINIEVO, "EVOSHAP")
+      call my_alloc(COMPTYP, NINIEVO, "COMPTYP")
+      call my_alloc(TAB_ID, NINIEVO, "TAB_ID")
+      call my_alloc(SR_REF, NINIEVO, "SR_REF")
+      call my_alloc(FSCALE, NINIEVO, "FSCALE")
+      call my_alloc(INI_P1, NINIEVO, "INI_P1")
+      call my_alloc(TAB_EL, NINIEVO, "TAB_EL")
+      call my_alloc(EL_REF, NINIEVO, "EL_REF")
+      call my_alloc(ELSCAL, NINIEVO, "ELSCAL")
+      call my_alloc(DISP, NINIEVO, "DISP")
+      call my_alloc(ENER, NINIEVO, "ENER")
+      call my_alloc(ALPHA2, NINIEVO, "ALPHA2")
       TAB_ID(1:NINIEVO) = ITABLF(1:NINIEVO)
       TAB_EL(1:NINIEVO) = ITABLF(NINIEVO+1:NINIEVO*2)
 c
@@ -164,9 +167,9 @@ c
       ! Positive stress triaxiality bounded plastic strain
       EPSMOD(1:NEL) = UVAR(1:NEL,2)
       ! Damage initiation and evolution variable
-      ALLOCATE(DMGINI(NEL,NINIEVO))
-      ALLOCATE(DMGEVO(NEL,NINIEVO))
-      ALLOCATE(FCRIT(NEL))
+      call my_alloc(DMGINI, NEL, NINIEVO, "DMGINI")
+      call my_alloc(DMGEVO, NEL, NINIEVO, "DMGEVO")
+      call my_alloc(FCRIT, NEL, "FCRIT")
       DO J = 1,NINIEVO
         DO I=1,NEL
           ! Initiation damage
@@ -239,9 +242,9 @@ c
               XVEC(I,1) = (SVM(I) + INI_P1(J)*P(I))/MAX(SIGPMAJ(I),EM08)
             ENDDO
         END SELECT
-        XVEC(1:NEL,2)   = EPSP(1:NEL)/SR_REF(J)
-        IPOS(1:NEL,1:2) = 1
-        CALL TABLE_VINTERP(TABLE(TAB_ID(J)),NEL,NEL,IPOS,XVEC,EPSF,DEPSF)
+        XVEC(1:NEL,2) = EPSP(1:NEL)/SR_REF(J)
+        K = J*2 - 1
+        CALL TABLE_VINTERP(TABLE(TAB_ID(J)),NEL,NEL,VARTMP(1:NEL,K:K+1),XVEC,EPSF,DEPSF)
         EPSF(1:NEL) = EPSF(1:NEL)*FSCALE(J)
 c
         ! Compute the element size regularization factor 
@@ -261,8 +264,8 @@ c
                 XVEC(I,2) = (SVM(I) + INI_P1(J)*P(I))/MAX(SIGPMAJ(I),EM08)
               ENDDO            
           END SELECT
-          IPOS(1:NEL,1:2) = 1
-          CALL TABLE_VINTERP(TABLE(TAB_EL(J)),NEL,NEL,IPOS,XVEC,SIZEFAC,DSIZE)
+          L = K + NINIEVO*2
+          CALL TABLE_VINTERP(TABLE(TAB_EL(J)),NEL,NEL,VARTMP(1:NEL,L:L+1),XVEC,SIZEFAC,DSIZE)
           SIZEFAC(1:NEL) = SIZEFAC(1:NEL)*ELSCAL(J)
           EPSF(1:NEL) = EPSF(1:NEL)*SIZEFAC(1:NEL)
         ENDIF
@@ -456,23 +459,23 @@ c
       !====================================================================
       ! - TABLES DEALLOCATION
       !====================================================================
-      IF (ALLOCATED(INITYPE)) DEALLOCATE(INITYPE)
-      IF (ALLOCATED(EVOTYPE)) DEALLOCATE(EVOTYPE)
-      IF (ALLOCATED(EVOSHAP)) DEALLOCATE(EVOSHAP)
-      IF (ALLOCATED(COMPTYP)) DEALLOCATE(COMPTYP)
-      IF (ALLOCATED(TAB_ID))  DEALLOCATE(TAB_ID)
-      IF (ALLOCATED(SR_REF))  DEALLOCATE(SR_REF)
-      IF (ALLOCATED(FSCALE))  DEALLOCATE(FSCALE)
-      IF (ALLOCATED(INI_P1))  DEALLOCATE(INI_P1)
-      IF (ALLOCATED(TAB_EL))  DEALLOCATE(TAB_EL)
-      IF (ALLOCATED(EL_REF))  DEALLOCATE(EL_REF)
-      IF (ALLOCATED(ELSCAL))  DEALLOCATE(ELSCAL)
-      IF (ALLOCATED(DISP))    DEALLOCATE(DISP)
-      IF (ALLOCATED(ENER))    DEALLOCATE(ENER)
-      IF (ALLOCATED(ALPHA2))  DEALLOCATE(ALPHA2)
-      IF (ALLOCATED(DMGINI))  DEALLOCATE(DMGINI)
-      IF (ALLOCATED(DMGEVO))  DEALLOCATE(DMGEVO)
-      IF (ALLOCATED(FCRIT))   DEALLOCATE(FCRIT)
+      IF (ALLOCATED(INITYPE)) call my_dealloc(INITYPE)
+      IF (ALLOCATED(EVOTYPE)) call my_dealloc(EVOTYPE)
+      IF (ALLOCATED(EVOSHAP)) call my_dealloc(EVOSHAP)
+      IF (ALLOCATED(COMPTYP)) call my_dealloc(COMPTYP)
+      IF (ALLOCATED(TAB_ID)) call my_dealloc(TAB_ID)
+      IF (ALLOCATED(SR_REF)) call my_dealloc(SR_REF)
+      IF (ALLOCATED(FSCALE)) call my_dealloc(FSCALE)
+      IF (ALLOCATED(INI_P1)) call my_dealloc(INI_P1)
+      IF (ALLOCATED(TAB_EL)) call my_dealloc(TAB_EL)
+      IF (ALLOCATED(EL_REF)) call my_dealloc(EL_REF)
+      IF (ALLOCATED(ELSCAL)) call my_dealloc(ELSCAL)
+      IF (ALLOCATED(DISP)) call my_dealloc(DISP)
+      IF (ALLOCATED(ENER)) call my_dealloc(ENER)
+      IF (ALLOCATED(ALPHA2)) call my_dealloc(ALPHA2)
+      IF (ALLOCATED(DMGINI)) call my_dealloc(DMGINI)
+      IF (ALLOCATED(DMGEVO)) call my_dealloc(DMGEVO)
+      IF (ALLOCATED(FCRIT)) call my_dealloc(FCRIT)
 c------------------------
  1000 FORMAT(1X,'FOR SHELL ELEMENT NUMBER ',I10,
      .          ' FAILURE (INIEVO) WITH CRITERION NUMBER ',I3,

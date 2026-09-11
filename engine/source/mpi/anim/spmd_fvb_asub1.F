@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_fvb_asub1        ../engine/source/mpi/anim/spmd_fvb_asub1.F
+!||    spmd_fvb_asub1   ../engine/source/mpi/anim/spmd_fvb_asub1.F
 !||--- called by ------------------------------------------------------
-!||    genani                ../engine/source/output/anim/generate/genani.F
+!||    genani           ../engine/source/output/anim/generate/genani.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    fvbag_mod             ../engine/share/modules/fvbag_mod.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    fvbag_mod        ../engine/share/modules/fvbag_mod.F
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_FVB_ASUB1(II, FVPBUF)
 C-----------------------------------------------
@@ -37,7 +38,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -55,8 +56,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
-      INTEGER I, PMAIN, J, ITAG, MSGOFF, STAT(MPI_STATUS_SIZE),
-     .        IERR, NPOLH_ANIM, IADP
+      INTEGER I, PMAIN, J, ITAG, MSGOFF, NPOLH_ANIM, IADP
 C-----------------------------------------------
       DATA MSGOFF /7051/
 C-----------------------------------------------
@@ -73,9 +73,7 @@ C
                IADP=IADP+FVDATA(I)%NPOLH_ANIM
             ELSE
                ITAG=MSGOFF
-               CALL MPI_RECV(NPOLH_ANIM, 1, MPI_INTEGER,
-     .                       IT_SPMD(PMAIN), ITAG, SPMD_COMM_WORLD,
-     .                       STAT, IERR)
+               CALL SPMD_RECV(NPOLH_ANIM, 1, IT_SPMD(PMAIN), ITAG)
                DO J=1,NPOLH_ANIM
                   FVPBUF(IADP+J)=II-1
                ENDDO
@@ -84,9 +82,8 @@ C
          ELSE
             IF (ISPMD==PMAIN-1) THEN
                ITAG=MSGOFF
-               CALL MPI_SEND(FVDATA(I)%NPOLH_ANIM, 1, MPI_INTEGER,
-     .                       IT_SPMD(1), ITAG, SPMD_COMM_WORLD,
-     .                       IERR)
+               CALL SPMD_SEND(FVDATA(I)%NPOLH_ANIM, 1, IT_SPMD(1),
+     .                         ITAG)
             ENDIF
          ENDIF
       ENDDO

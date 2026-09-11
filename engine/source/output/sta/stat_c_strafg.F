@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_c_strafg       ../engine/source/output/sta/stat_c_strafg.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||    stack_mod           ../engine/share/modules/stack_mod.F
 !||====================================================================
       SUBROUTINE STAT_C_STRAFG(ELBUF_TAB,
@@ -56,6 +58,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -87,13 +90,13 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, K, N, JJ, LEN, IOFF, NG, NEL, NFT, ITY, LFT, NPT, 
-     .    LLT, MLW, ISTRAIN,ID, IPRT0, IPRT,NPG,IPG,IE,NPTR,NPTS,G_STRA,
+     .    LLT, MLW, ID, IPRT0, IPRT,NPG,IPG,IE,NPTR,NPTS,G_STRA,
      .    ITHK,KK(8),NF1,IGTYP,IREL,IHBE,NLAY,IBID0,MAT_1,PID_1,ILAY,NF3,
      .    SEDRAPE,NUMEL_DRAPE
       INTEGER,DIMENSION(:),ALLOCATABLE :: PTWA
       INTEGER,DIMENSION(:),ALLOCATABLE :: PTWA_P0
       double precision   
-     .   THK, EM, EB, H1, H2, H3
+     .   THK
       CHARACTER*100 DELIMIT,LINE
       TYPE(G_BUFEL_)  ,POINTER :: GBUF     
  
@@ -115,8 +118,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C     4-NODE SHELLS
 C-----------------------------------------------
-      CALL MY_ALLOC(PTWA,MAX(STAT_NUMELC ,STAT_NUMELTG))
+      call my_alloc(PTWA, MAX(STAT_NUMELC ,STAT_NUMELTG), "PTWA")
       ALLOCATE(PTWA_P0(0:MAX(1,STAT_NUMELC_G,STAT_NUMELTG_G)))
+! TODO: non-default lower bound, convert manually
 C-----------------------------------------------
       JJ = 0
       IF(STAT_NUMELC==0) GOTO 200
@@ -172,8 +176,10 @@ C-----------------------------------------------
            ENDDO  
          ENDIF
          NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-         ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+         call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+         call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+         call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+         call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
          MATLY  = 0
          THKLY  = ZERO
          POSLY  = ZERO
@@ -303,7 +309,10 @@ C         end-of-zone pointer in wa
           PTWA(IE)=JJ
 c
          ENDDO  ! I=LFT,LLT
-         DEALLOCATE(MATLY, THKLY, POSLY, THK_LY) 
+         call my_dealloc(MATLY)
+         call my_dealloc(THKLY)
+         call my_dealloc(POSLY)
+         call my_dealloc(THK_LY)
        END IF   ! ITY==3
       ENDDO     ! NG=1,NGROUP
 
@@ -483,8 +492,10 @@ C-----------------------------------------------
           ENDDO  
          ENDIF
          NLAY_MAX   = MAX(NLAY,NPT,  ELBUF_TAB(NG)%NLAY)
-         ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+         call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+         call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+         call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+         call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
          MATLY  = 0
          THKLY  = ZERO
          POSLY  = ZERO
@@ -616,7 +627,10 @@ C         end-of-zone pointer
           PTWA(IE)=JJ
 c
          ENDDO  ! I=LFT,LLT
-         DEALLOCATE(MATLY, THKLY, POSLY, THK_LY) 
+         call my_dealloc(MATLY)
+         call my_dealloc(THKLY)
+         call my_dealloc(POSLY)
+         call my_dealloc(THK_LY)
        END IF   ! ITY==7
       ENDDO     ! NG=1,NGROUP
 
@@ -744,8 +758,8 @@ C----- 2nd point
       ENDIF
 
 c----------
-      DEALLOCATE(PTWA)
-      DEALLOCATE(PTWA_P0)
+      call my_dealloc(PTWA)
+      call my_dealloc(PTWA_P0)
 c-----------
       RETURN
       END

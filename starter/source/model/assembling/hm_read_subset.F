@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_subset           ../starter/source/model/assembling/hm_read_subset.F
 !||--- called by ------------------------------------------------------
@@ -87,10 +88,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,ID,IDV,IAD,IP,IS,ISU,NSU,NL,NC,NP,NTP,NS,
+      INTEGER I,K,ID,IDV,IAD,IS,ISU,NSU,NC,NP,NTP,NS,
      .   CONT,NIVEAU,NIVMAX,LIST_IGR(NSUBS),UID,SUB_INDEX
-      INTEGER IFIX_TMP,TITLEN,ICHILD
-      INTEGER J10(10)
+      INTEGER ICHILD
       INTEGER, DIMENSION(NPART+NSUBS) :: BUFTMP
       my_real BID
       CHARACTER(LEN=NCHARTITLE) :: TITR
@@ -99,7 +99,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
-      INTEGER  LISTCNT,SUBLVL
+      INTEGER  SUBLVL
 c-----------------------------------------------
       DATA MESS/' SUBSET DEFINITION                      '/
 c-----------------------------------------------
@@ -150,12 +150,12 @@ C--------------------------------------------------
         SUBSET(ISU)%NPART  = 0
         SUBSET(ISU)%NCHILD = NSU
         SUBSET(ISU)%TH_FLAG = 0
-        CALL MY_ALLOC(SUBSET(ISU)%NVARTH,10) 
+        CALL MY_ALLOC(SUBSET(ISU)%NVARTH,10,"SUBSET(ISU)%NVARTH")
 c        /iTH , i=A,,B, ... I 
 c     (  /iTH --> 9 additional time history files + 1 for /TH )
         SUBSET(ISU)%NVARTH(1:10) = 0
         SUBSET(ISU)%THIAD = 0
-        CALL MY_ALLOC(SUBSET(ISU)%CHILD,NSU)
+        CALL MY_ALLOC(SUBSET(ISU)%CHILD,NSU,"SUBSET(ISU)%CHILD")
         DO K=1,NSU
           SUBSET(ISU)%CHILD(K) = 0
         ENDDO
@@ -230,7 +230,7 @@ c
       SUBSET(NSUBS)%NCHILD = 0
       SUBSET(NSUBS)%NPART  = 0
       SUBSET(NSUBS)%TH_FLAG = 0
-      CALL MY_ALLOC(SUBSET(NSUBS)%NVARTH,10) !  /iTH , i=A,,B, ... I 
+      CALL MY_ALLOC(SUBSET(NSUBS)%NVARTH,10,"SUBSET%NVARTH") !  /iTH , i=A,,B, ... I 
 !     (  /iTH --> 9 additional time history files + 1 for /TH )
       SUBSET(NSUBS)%NVARTH(1:10) = 0
       SUBSET(NSUBS)%THIAD = 0
@@ -245,7 +245,7 @@ c
       ENDDO
 !==================================================
       SUBSET(NSUBS)%NCHILD = NSU
-      CALL MY_ALLOC(SUBSET(NSUBS)%CHILD,NSU)
+      CALL MY_ALLOC(SUBSET(NSUBS)%CHILD,NSU,"SUBSET(NSUBS)%CHILD")
       DO I=1,NSU
         SUBSET(NSUBS)%CHILD(I) = BUFTMP(I)
       ENDDO
@@ -265,7 +265,7 @@ C-------------------------------------
           ENDIF
         ENDDO
         SUBSET(ISU)%NPART = NP   
-        CALL MY_ALLOC(SUBSET(ISU)%PART,NP)
+        CALL MY_ALLOC(SUBSET(ISU)%PART,NP,"SUBSET(ISU)%PART")
         DO K=1,NP
           SUBSET(ISU)%PART(K) = BUFTMP(K) 
         ENDDO
@@ -315,7 +315,7 @@ C-------------------------------------
           NC = SUBLVL(SUBSET,NSUBS,ISU,NTP,BUFTMP)               
         ENDDO
         SUBSET(ISU)%NTPART = NTP
-        CALL MY_ALLOC(SUBSET(ISU)%TPART,NTP)
+        CALL MY_ALLOC(SUBSET(ISU)%TPART,NTP,"SUBSET(ISU)%TPART")
         DO I=1,NTP
           SUBSET(ISU)%TPART(I) = BUFTMP(I)
         ENDDO
@@ -364,7 +364,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,NC,IS,IP,NK
+      INTEGER I,J,NC,IS,NK
 c=======================================================================      
       NS = SUBSET(ISU)%NCHILD
       DO J=1,SUBSET(ISU)%NPART                  
@@ -416,7 +416,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,K,K2,L,LL,NP,IP,ID,NIVEAU,NIVMAX,TITLEN
       INTEGER CNT(0:33)
-      CHARACTER LIGNE*132,LIGN2*132,BAR(33)*10,BLI*21
+      CHARACTER LIGNE*132,BAR(33)*10,BLI*21
       CHARACTER(LEN=NCHARTITLE)::TITR
       DATA BAR /33*'|         '/
       DATA BLI /'|____________________'/

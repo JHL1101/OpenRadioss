@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,19 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    write_joint   ../starter/source/constraints/general/cyl_joint/write_joint.F
+!||    write_joint    ../starter/source/constraints/general/cyl_joint/write_joint.F
 !||--- called by ------------------------------------------------------
-!||    ddsplit       ../starter/source/restart/ddsplit/ddsplit.F
+!||    ddsplit        ../starter/source/restart/ddsplit/ddsplit.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    joint_mod     ../starter/share/modules1/joint_mod.F
+!||    joint_mod      ../starter/share/modules1/joint_mod.F
 !||====================================================================
             SUBROUTINE WRITE_JOINT(LJOINT,CEP,CEL,PROC,
      +                   NODLOCAL,LJOINT_L,LEN_IA,NUMNOD_L)
@@ -40,6 +41,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------     
             USE JOINT_MOD
+            use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -75,7 +77,7 @@ C
         K = K + NJOINT
         !   ----------------------
         !   buffer allocation
-        ALLOCATE(BUF_W(K))
+        call my_alloc(BUF_W, K, "BUF_W")
 
         !   write for all processor the number of node per proc
         DO N=1,NJOINT            
@@ -97,7 +99,7 @@ C
                 !   list of processor for the current joint
                 CALL WRITE_I_C(CYL_JOIN(N)%LIST_PROC,CYL_JOIN(N)%NUMBER_PROC)
 
-                ALLOCATE( SECONDARY_NODE(CYL_JOIN(N)%NB_NODE(P)) )
+                call my_alloc(SECONDARY_NODE, CYL_JOIN(N)%NB_NODE(P), "SECONDARY_NODE")
                 DO I=1,CYL_JOIN(N)%NB_NODE(P)
                     SECONDARY_NODE(I) = NODLOCAL(CYL_JOIN(N)%PROC(P)%NODE(I))
                 ENDDO
@@ -105,7 +107,7 @@ C
                 CALL WRITE_I_C(SECONDARY_NODE,CYL_JOIN(N)%NB_NODE(P))
                 !   weight array (0 or 1) for the current processor and joint
                 CALL WRITE_I_C(CYL_JOIN(N)%PROC(P)%WEIGHT,CYL_JOIN(N)%NB_NODE(P))
-                DEALLOCATE( SECONDARY_NODE )
+                CALL MY_DEALLOC(SECONDARY_NODE)
             ENDIF
             !   ----------------------
             DO I=1,NSPMD
@@ -123,7 +125,7 @@ C
         CALL WRITE_I_C(IS_SMS_AVAILABLE,1)
         
         LEN_IA = LEN_IA + K + 1
-        DEALLOCATE(BUF_W)
+        CALL MY_DEALLOC(BUF_W)
 C
         RETURN
         END SUBROUTINE WRITE_jOINT

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    tensors        ../starter/source/output/anim/tensors.F
 !||--- called by ------------------------------------------------------
@@ -58,15 +59,15 @@ C     REAL
      .   TENS(6,*),PM(NPROPM,*),X(3,*)                         
       INTEGER IPARG(NPARG,*),ITENS, ISPH3D,NBF,                                    
      .   IXS(NIXS,*),EL2FA(*),IPM(NPROPMI,*),IPART(LIPART1,*),IPARTSP(*)                         
-      REAL WA(6*NBF)                                                    
+
       TYPE (ELBUF_STRUCT_), DIMENSION(NGROUP), TARGET :: ELBUF_TAB
 C-----------------------------------------------                        
 C     REAL                                                    
       my_real                                                           
-     .   EVAR(6,MVSIZ),OFF, FAC, A1, A2, A3, THK, GAMA(6)               
+     .   EVAR(6,MVSIZ), GAMA(6)                                          
       REAL R4(18)                                                       
-      INTEGER I, II,NG, NEL, IPT,MT1,NLAY,IL,                                      
-     .   N, J, MLW,IALEL,NN1,NN2,NN3,IPRT, KCVT,ISOLNOD,                                       
+      INTEGER I, NG, NEL, IPT,MT1,NLAY,IL,                                         
+     .   N, J, MLW,NN1,NN2,NN3,IPRT, KCVT,ISOLNOD,                                             
      .   NPTR, NPTS, NPTT,NPTG, IS, IR, IT,                                  
      .   JHBE, JIVF, JCLOSE, JPLASOL, IREP, IGTYP,          
      .   ICSEN, ISORTHG, IFAILURE, IINT,JJ(6)

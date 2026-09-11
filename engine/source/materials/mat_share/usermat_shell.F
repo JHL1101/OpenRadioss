@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    usermat_shell                ../engine/source/materials/mat_share/usermat_shell.F
 !||--- called by ------------------------------------------------------
@@ -33,7 +34,6 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    fail_composite_c             ../engine/source/materials/fail/composite/fail_composite_c.F90
 !||    fail_energy_c                ../engine/source/materials/fail/energy/fail_energy_c.F
 !||    fail_fabric_c                ../engine/source/materials/fail/fabric/fail_fabric_c.F
-!||    fail_fld_c                   ../engine/source/materials/fail/fld/fail_fld_c.F
 !||    fail_fld_xfem                ../engine/source/materials/fail/fld/fail_fld_xfem.F
 !||    fail_gene1_c                 ../engine/source/materials/fail/gene1/fail_gene1_c.F
 !||    fail_hashin_c                ../engine/source/materials/fail/hashin/fail_hashin_c.F90
@@ -201,7 +201,7 @@ C-----------------------------------------------
      .   IGMAT,IPGMAT,KK,NPTT,IPT_ALL,NPTTOT,NUVARV,ILAW,
      .   FAILNPT,JOFF,SIZNUL,PLY_ID,IJ(5),K,ISEQ,PROGRESSIVE_CRACK,
      .   ORTH_DAMAGE,L_DMG,IPRONY,ISRATE,NVARTMP,INLOC,IDRAPE,
-     .   LF_DAMMX,NIPAR
+     .   LF_DAMMX,NIPAR,NVARFTMP
       INTEGER :: IJ1,IJ2,IJ3,IJ4,IJ5
       INTEGER :: IFUNC(MAXFUNC),IFLAG(1),IOFF_DUCT(MVSIZ)
       INTEGER :: MAT_ID
@@ -1102,6 +1102,7 @@ c---
             DO IFL = 1, NFAIL      ! loop over fail models in current layer                                      
               UVARF  => FBUF%FLOC(IFL)%VAR
               NVARF  =  FBUF%FLOC(IFL)%NVAR                                 
+              VARTMP => FBUF%FLOC(IFL)%VARTMP
               IRUPT  =  FBUF%FLOC(IFL)%ILAWF                                
               DAM    => FBUF%FLOC(IFL)%DAM
               DFMAX  => FBUF%FLOC(IFL)%DAMMX 
@@ -1113,6 +1114,7 @@ c---
               FAIL_PARAM => MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)
               NUPAR      =  MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%NUPARAM
               NIPAR      =  MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%NIPARAM
+              NVARFTMP   =  MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%NVARTMP
               NFUNC_FAIL =  MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%NFUNC
               NTABL_FAIL =  MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%NTABLE
               UPARAMF    => MAT_ELEM%MAT_PARAM(IMAT)%FAIL(IFL)%UPARAM(1:NUPAR)
@@ -1288,26 +1290,24 @@ c
                   EPSZX(I)= GSTR(I,5)
                 ENDDO
                 IF (IXFEM == 0) THEN
-                  CALL FAIL_FLD_C(
-     1            NEL       ,NUPAR     ,NFUNC_FAIL,IFUNC_FAIL ,
-     2            NPF       ,TF        ,TT        ,UPARAMF    ,   
-     3            NGL       ,IPG       ,ILAYER    ,IT         ,
+                  CALL FAIL_FLD_C(fail_param , 
+     1            NEL       ,NVARF     ,NVARFTMP  ,UVARF      ,VARTMP   ,
+     2            TT        ,NGL       ,IPG       ,ILAYER    ,IT         ,
      4            EPSXX     ,EPSYY     ,EPSXY     ,LF_DAMMX   ,
      5            DEPSXX    ,DEPSYY    ,DEPSXY    ,EL_PLA     ,
      6            ZT        ,OFF       ,FOFF      ,TDEL       ,
-     7            FLD_IDX   ,DAM       ,DFMAX     ,DT1        ,
-     8            NIPAR     ,IPARAMF   ,NVARF     ,UVARF      )
+     7            FLD_IDX   ,DAM       ,DFMAX     ,DT1        )
                 ELSE
-                  CALL FAIL_FLD_XFEM(                                      
-     1            NEL       ,NUPAR     ,NVARF     ,NFUNC_FAIL,IFUNC_FAIL,
-     2            NPF       ,TF        ,TT        ,UPARAMF   ,
+                  CALL FAIL_FLD_XFEM(fail_param ,                                       
+     1            NEL       ,NVARF     ,NVARFTMP  ,UVARF      ,VARTMP   ,
+     2            TT        ,
      3            NGL       ,IPT       ,MPT       ,SSP       ,TENSX     ,
      4            SIGNXX    ,SIGNYY    ,SIGNXY    ,SIGNYZ    ,SIGNZX    ,  
      5            EPSXX     ,EPSYY     ,EPSXY     ,EPSYZ     ,EPSZX     ,  
-     6            UVARF     ,GBUF%NOFF ,OFF       ,LF_DAMMX  ,
+     6            GBUF%NOFF ,OFF       ,LF_DAMMX  ,
      7            ELCRKINI  ,IXFEM     ,IXEL      ,ILAYER    ,IT        ,  
      8            OFFL      ,NPTT      ,UELR1     ,DFMAX     ,TDEL      ,
-     9            DAM       ,FLD_IDX   ,NIPAR     ,IPARAMF   ,EL_PLA    ,
+     9            DAM       ,FLD_IDX   ,EL_PLA    ,
      A            DEPSXX    ,DEPSYY    ,DEPSXY    ,DT1       )
                 ENDIF
 c
@@ -1320,23 +1320,21 @@ c
      5               TDEL      )           
 c
               CASE (10)     !    Tension Strain failure model
-                CALL FAIL_TENSSTRAIN_C(                                         
-     1               NEL       ,NFUNC_FAIL    ,NUPAR     ,NVARF     ,IFUNC_FAIL    ,
-     2               UPARAMF   ,UVARF     ,NPF       ,TF        ,TT        ,
+                CALL FAIL_TENSSTRAIN_C(fail_param ,                             
+     1               nel       ,nvarf     ,nvartmp   ,uvarf    ,vartmp     ,
      3               NGL       ,IPG       ,ILAYER    ,IT        ,EPSPL     ,
      4               EPSXX     ,EPSYY     ,EPSXY     ,EPSYZ     ,EPSZX     ,
-     5               OFF       ,FOFF      ,DFMAX     ,TDEL      ,
+     5               OFF       ,FOFF      ,DFMAX     ,TDEL      ,TT        ,  
      6               DMG_FLAG  ,DMG_LOC_SCALE ,ALDT  ,TSTAR     ,ISMSTR    )                                
 c
               CASE (11)     !    Energy failure model
-                CALL FAIL_ENERGY_C(
-     1               NEL       ,NUPAR     ,NVARF     ,NFUNC_FAIL   ,IFUNC_FAIL     , 
-     2               UPARAMF   ,UVARF     ,NPF       ,TF       ,TT         , 
-     3               NGL       ,IPG       ,ILAYER    ,IT       ,EPSPL      ,  
-     4               AREA      ,THKN      ,DMG_FLAG  , 
-     5               DMG_LOC_SCALE ,OFF   ,FOFF      ,DFMAX    ,TDEL       ,
-     6               SIGNXX    ,SIGNYY    ,SIGNXY    ,SIGNYZ   ,SIGNZX     ,
-     7               DEPSXX    ,DEPSYY    ,DEPSXY    ,DEPSYZ   ,DEPSZX     )     
+                call fail_energy_c(fail_param ,                      
+     &               nel       ,nvarf     ,nvarftmp  ,uvarf    ,vartmp     ,
+     &               ngl       ,ipg       ,ilayer    ,it       ,epspl      ,
+     &               area      ,thkn      ,dmg_flag  ,tt       ,            
+     &               dmg_loc_scale ,off   ,foff      ,dfmax    ,tdel       ,
+     &               signxx    ,signyy    ,signxy    ,signyz   ,signzx     ,
+     &               depsxx    ,depsyy    ,depsxy    ,depsyz   ,depszx     )
 c
               CASE (13)     !    Chang-Chang failure model
                 CALL FAIL_CHANGCHANG_C(
@@ -1386,19 +1384,18 @@ c
                 ENDIF
 c
               CASE (24)     !    Orthotropic strain failure model
-                CALL FAIL_ORTHSTRAIN_C(
-     1              NEL       ,NUPAR     ,NVARF     ,UPARAMF   ,UVARF     ,
-     2              NFUNC_FAIL,IFUNC_FAIL,NPF       ,TF        ,NGL       ,
-     3              TT        ,DT1       ,IPG       ,ILAYER    ,IT        , 
-     4              EPSXX     ,EPSYY     ,EPSXY     ,DMG_FLAG  ,DMG_LOC_SCALE ,
-     5              EPSPXX    ,EPSPYY    ,EPSPXY    ,ALDT      ,ISMSTR    ,
-     6              SIGNXX    ,SIGNYY    ,SIGNXY    ,LF_DAMMX  ,   
-     7              OFF       ,OFFLY     ,FOFF      ,DFMAX     ,TDEL      )
+                call fail_orthstrain_c(fail_param,                              
+     &               nel       ,nvarf     ,uvarf     ,nvarftmp  ,vartmp  ,      
+     &               tt        ,dt1       ,ipg       ,ilayer    ,it        ,    
+     &               epsxx     ,epsyy     ,epsxy     ,dmg_flag  ,dmg_loc_scale ,
+     &               epspxx    ,epspyy    ,epspxy    ,aldt      ,ismstr    ,    
+     &               lf_dammx  ,ngl       ,    
+     &               off       ,offly     ,foff      ,dfmax     ,tdel      )
 c
               CASE (25)     !    NXT Failure
-                CALL FAIL_NXT_C(
-     1               NEL       ,NUPAR     ,NVARF     ,UPARAMF   ,UVARF     ,
-     2               TT        ,NPF       ,TF        ,NFUNC_FAIL,IFUNC_FAIL,   
+                CALL FAIL_NXT_C(fail_param,
+     1               NEL       ,NVARF     ,NVARFTMP  ,UVARF     ,VARTMP    ,
+     2               TT        ,   
      3               NGL       ,IPG       ,ILAYER    ,IT        ,HARDM     ,   
      4               SIGNXX    ,SIGNYY    ,SIGNXY    ,SIGNYZ    ,SIGNZX    ,
      5               OFF       ,FOFF      ,DFMAX     ,TDEL      ,LF_DAMMX  )
@@ -1437,13 +1434,11 @@ c
 c
               CASE (30)     !    Biquadratic failure model
                 CALL FAIL_BIQUAD_C(mat_elem%mat_param(imat)%fail(ifl),
-     1          JLT      ,NVARF   ,
-     2          TT       ,NGL      ,IPT      ,MPT      ,
+     1          JLT      ,NVARF   ,NVARFTMP ,UVARF    ,VARTMP   ,
+     2          TT       ,NGL     ,IPT      ,MPT      ,IPG      ,
      3          SIGNXX   ,SIGNYY  ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,
-     4          DPLA     ,UVARF   ,UELR1    ,
-     5          OFF      ,OFFL    ,DFMAX    ,TDEL     ,NFUNC_FAIL,
-     6          IFUNC_FAIL,NPF    ,TF       ,EL_LEN   ,FOFF     ,IPG      ,
-     7          DMG_FLAG ,DMG_LOC_SCALE)
+     4          DPLA     ,UELR1   ,OFF      ,OFFL     ,DFMAX    ,
+     5          TDEL     ,EL_LEN   ,FOFF     ,DMG_FLAG ,DMG_LOC_SCALE)
 c
               CASE (31)     !    Anisotropic fabric failure model
 c
@@ -1514,26 +1509,24 @@ c
 c
               CASE (38)     !    Orthotropic biquad
 c
-                CALL FAIL_ORTHBIQUAD_C(
-     1            JLT      ,NVARF   ,
-     2            TT       ,UPARAMF ,NGL      ,IPT      ,MPT      ,
+                CALL FAIL_ORTHBIQUAD_C(mat_elem%mat_param(imat)%fail(ifl),
+     1            JLT      ,NVARF    ,nvarftmp,UVARF    ,vartmp   ,
+     2            TT       ,NGL      ,IPT     ,MPT      ,IPG      ,
      3            SIGNXX   ,SIGNYY  ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,
-     4            DPLA     ,EPSPL   ,UVARF    ,UELR1    ,
-     5            OFF      ,OFFL    ,DFMAX    ,TDEL     ,NFUNC_FAIL,
-     6            IFUNC_FAIL,NPF    ,TF       ,EL_LEN   ,FOFF     , 
-     7            IPG      )
+     4            DPLA     ,EPSPL   ,UELR1    ,EL_LEN   ,FOFF     ,
+     5            OFF      ,OFFL    ,DFMAX    ,TDEL     )
 c
               CASE (39)     !    GENE1
 c
-                CALL FAIL_GENE1_C(
-     1            JLT      ,NUPAR    ,NVARF    ,NFUNC_FAIL   ,IFUNC_FAIL   ,
-     2            NPF      ,TF       ,TT       ,DT1C     ,UPARAMF  ,IPG      ,
-     3            NGL      ,GBUF%DT  ,EPSPL    ,UVARF    ,OFF      ,    
+                CALL FAIL_GENE1_C(mat_elem%mat_param(imat)%fail(ifl),
+     1            JLT      ,NVARF    ,nvarftmp ,UVARF    ,vartmp   ,
+     2            TT       ,DT1C     ,IPG      ,
+     3            NGL      ,GBUF%DT  ,EPSPL    ,OFF      ,    
      4            EPSXX    ,EPSYY    ,EPSXY    ,AREA     ,THKN     ,            
      5            SIGNXX   ,SIGNYY   ,SIGNXY   ,SIGNYZ   ,SIGNZX   , 
      6            EL_TEMP  ,DFMAX    ,ALDT     ,TABLE    ,TDEL     ,
      7            THK0     ,IPT      ,FOFF     ,THKLYL   ,NTABL_FAIL,
-     8            ITABL_FAIL,LF_DAMMX,NIPAR    ,IPARAMF  ,DT)
+     8            ITABL_FAIL,LF_DAMMX,DT)
 c
               CASE (40)     !    RTCL
 c
@@ -1549,7 +1542,7 @@ c
      1            JLT      ,NUPAR    ,NVARF    ,NFUNC_FAIL,IFUNC_FAIL,
      2            NPF      ,TABLE    ,TF       ,TT       ,UPARAMF  , 
      3            NGL      ,EL_LEN   ,DPLA     ,EPSPL    ,UVARF    ,     
-     4            SIGNXX   ,SIGNYY   ,SIGNXY   ,              
+     4            SIGNXX   ,SIGNYY   ,SIGNXY   ,NVARFTMP ,VARTMP   ,              
      5            EL_TEMP  ,FOFF     ,DFMAX    ,TDEL     ,IPT      ,
      6            IPG      ,DMG_FLAG ,DMG_LOC_SCALE,NTABL_FAIL,ITABL_FAIL,
      7            NIPAR    ,IPARAMF  ,GBUF%NOFF,OFF      ,NPTT     ,
@@ -1558,7 +1551,7 @@ c
               CASE (42)     !    INIEVO
 c
                 CALL FAIL_INIEVO_C(
-     1            JLT      ,NUPAR    ,NVARF    ,
+     1            JLT      ,NUPAR    ,NVARF    ,NVARFTMP ,VARTMP   ,
      2            TABLE    ,NTABL_FAIL,ITABL_FAIL   ,TT       ,UPARAMF  , 
      3            NGL      ,EL_LEN   ,DPLA     ,EPSPL    ,UVARF    ,     
      4            SIGNXX   ,SIGNYY   ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,              

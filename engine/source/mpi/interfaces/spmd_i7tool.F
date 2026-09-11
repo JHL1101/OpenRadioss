@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_oldnumcd                ../engine/source/mpi/interfaces/spmd_i7tool.F
 !||--- called by ------------------------------------------------------
@@ -339,7 +340,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, P, I_STOK, IDEB, JDEB, NI
+      INTEGER I, J, P, IDEB, JDEB
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -405,7 +406,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, P, I_STOK, IDEB, JDEB, NI, IAD,IADM1
+      INTEGER I, J, P, I_STOK, IDEB, JDEB, NI, IAD
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -526,7 +527,6 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      my_real :: MASS, FSAV29
       INTEGER :: IBRIC
       INTEGER I, J, II, N, NOD, K0, K1S, IBCS, IBCM, NBINTER,PP,PPL,NP  
 C-----------------------------------------------
@@ -719,7 +719,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, II, N, NOD, K0, K1S, IBCS, IBCM, NBINTER,PP,PPL,NOD1,NOD2,NP
+      INTEGER I, J, II, N, NOD, K0, K1S, NBINTER,PP,PPL,NOD1,NOD2,NP
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -1842,8 +1842,7 @@ C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, II, N, NOD, K0, K1S, IBCS, IBCM, NBINTER,
-     .        NISKY_SAV,TEMP_SIZ,IERROR,PP,PPL,NP
-      my_real FSAV29
+     .        NISKY_SAV,TEMP_SIZ,PP,PPL,NP
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -2244,7 +2243,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, II, N, NOD, K0, K1S, IBCS, IBCM, NBINTER,PP,PPL,NOD1,NOD2,NP 
+      INTEGER I, J, II, N, NOD, K0, K1S, NBINTER,PP,PPL,NOD1,NOD2,NP 
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -2580,7 +2579,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, II, N, NOD, K0, K1S, IBCS, IBCM, NBINTER 
+      INTEGER I, J, II, N, NOD, K0, K1S, NBINTER 
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -2796,7 +2795,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, II, IIIS, NOD, IES, NN
+      INTEGER I, II, IIIS, NOD, IES, NN
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -2864,6 +2863,7 @@ C
 !||    interface_modification_mod   ../engine/share/modules/interface_modification_mod.F
 !||    message_mod                  ../engine/share/message_module/message_mod.F
 !||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    sensor_mod                   ../common_source/modules/sensor_mod.F90
 !||    tri25ebox                    ../engine/share/modules/tri25ebox.F
 !||    tri7box                      ../engine/share/modules/tri7box.F
@@ -2893,6 +2893,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -2933,10 +2934,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, NSN, NMN, ITYP, IERROR, IERROR1, KK, NIN, P,
+      INTEGER I, J, K, NSN, NMN, ITYP, NIN, P,
      .        SCPMAX1,ISD,IRC,MY_RANK,LAST, IGE, IGN, NME, NMES,INTTH,
      .        NRTM, NRTS, NLINM, NLINS,NSNE, NMNE,N,M,
-     .        WORK(70000),ITY,NOINT,INACTI,ISENS,INTERACT
+     .        WORK(70000),ITY,NOINT,INACTI,ISENS,INTERACT,NEDGE_1D
       INTEGER,DIMENSION(:), ALLOCATABLE:: INDX
       INTEGER,DIMENSION(:), ALLOCATABLE:: PPAR
       INTEGER,DIMENSION(:), ALLOCATABLE:: INDP
@@ -2949,14 +2950,14 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
-      CALL MY_ALLOC(INDX,2*NINTER)
-      CALL MY_ALLOC(PPAR,NINTER)
-      CALL MY_ALLOC(INDP,2*NSPMD)
-      CALL MY_ALLOC(NNP,NSPMD)
-      CALL MY_ALLOC(RANK,NSPMD)
-      CALL MY_ALLOC(IRBODY,NUMNOD)
-      CALL MY_ALLOC(INDB,2*NRBYKIN)
-      CALL MY_ALLOC(NNSN,NRBYKIN)
+      call my_alloc(INDX, 2*NINTER, "INDX")
+      call my_alloc(PPAR, NINTER, "PPAR")
+      call my_alloc(INDP, 2*NSPMD, "INDP")
+      call my_alloc(NNP, NSPMD, "NNP")
+      call my_alloc(RANK, NSPMD, "RANK")
+      call my_alloc(IRBODY, NUMNOD, "IRBODY")
+      call my_alloc(INDB, 2*NRBYKIN, "INDB")
+      call my_alloc(NNSN, NRBYKIN, "NNSN")
 C-----------------------------------------------
 C
 C iexicodt : flag for sending icodt during run
@@ -2977,7 +2978,7 @@ C
         !-----------------------------------------------        
         IF(NINTER/=0) THEN
 C Case INACTI = 5, 6 or 7 + TSTART
-         ALLOCATE(NSNFI_FLAG(NINTER))
+         call my_alloc(NSNFI_FLAG, NINTER, "NSNFI_FLAG")
          NSNFI_FLAG(1:NINTER)=0 
 
          DO I=1,NINTER
@@ -3070,19 +3071,19 @@ C
      .          ITYP==11.OR.ITYP==23.OR.ITYP==24.OR.
      .          ITYP==25) THEN
               NSN = IPARI(5,I)
-              NMN = IPARI(6,I)               
-              IF(NSN/=0) THEN
-                ISENDTO(I,ISPMD+1)=NSN
+              NMN = IPARI(6,I)       
+              NEDGE_1D = IPARI(101,I)                           
+              IF(NSN+NEDGE_1D/=0) THEN
+                ISENDTO(I,ISPMD+1)=NSN +NEDGE_1D
                 ISENDTO(I,NSPMD+1)=ISENDTO(I,NSPMD+1)+1
-                ISENDTO(NINTER+1,ISPMD+1)=ISENDTO(NINTER+1,ISPMD+1)+NSN
+                ISENDTO(NINTER+1,ISPMD+1)=ISENDTO(NINTER+1,ISPMD+1)+NSN +NEDGE_1D
               ENDIF
-              IF(NMN/=0) THEN
-                IRCVFROM(I,ISPMD+1) = NMN
+              IF(NMN+NEDGE_1D/=0) THEN
+                IRCVFROM(I,ISPMD+1) = NMN +NEDGE_1D
                 IRCVFROM(I,NSPMD+1)=IRCVFROM(I,NSPMD+1)+1
                 IRCVFROM(NINTER+1,ISPMD+1)=IRCVFROM(NINTER+1,ISPMD+1)
-     +                                    +NMN
+     +                                    +NMN +NEDGE_1D
               ENDIF
-
 
             ELSEIF(ITYP==17)THEN
               IF(IPARI(33,I)==0)THEN
@@ -3284,8 +3285,8 @@ C type 7 or 10
            ENDIF
 
           IF(ITYP == 25 .AND. IPARI(58,NIN) >0) THEN
-            ISLEN25E= SUM(NSNSIE(NIN)%P(1:NSPMD))
-            IRLEN25E= SUM(NSNFIE(NIN)%P(1:NSPMD))
+            ISLEN25E= ISLEN25E + SUM(NSNSIE(NIN)%P(1:NSPMD))
+            IRLEN25E= IRLEN25E + SUM(NSNFIE(NIN)%P(1:NSPMD))
           ENDIF
 
           ELSEIF(ITYP==11) THEN
@@ -3378,14 +3379,14 @@ C
 !     Create CJOINT communicator
       CALL SPMD_SPLIT_COMM_JOINT()
 
-      DEALLOCATE(INDX)
-      DEALLOCATE(PPAR)
-      DEALLOCATE(INDP)
-      DEALLOCATE(NNP)
-      DEALLOCATE(RANK)
-      DEALLOCATE(IRBODY)
-      DEALLOCATE(INDB)
-      DEALLOCATE(NNSN)
+      call my_dealloc(INDX)
+      call my_dealloc(PPAR)
+      call my_dealloc(INDP)
+      call my_dealloc(NNP)
+      call my_dealloc(RANK)
+      call my_dealloc(IRBODY)
+      call my_dealloc(INDB)
+      call my_dealloc(NNSN)
 
       RETURN
       END
@@ -3404,6 +3405,7 @@ C
 !||    interface_modification_mod   ../engine/share/modules/interface_modification_mod.F
 !||    intstamp_glob_mod            ../engine/share/modules/intstamp_glob_mod.F
 !||    message_mod                  ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
 !||    parameters_mod               ../common_source/modules/interfaces/parameters_mod.F
 !||    tri25ebox                    ../engine/share/modules/tri25ebox.F
 !||    tri7box                      ../engine/share/modules/tri7box.F
@@ -3422,6 +3424,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 #include      "i25edge_c.inc"
 C-----------------------------------------------
@@ -3448,8 +3451,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, P, NSN, NMN, ITYP, IGAP, IERROR, IERROR1, LENS, LENR,
-     .        LSKYFI, INACTI, NBINTC, LENI, J,INTTH, K, L,IEDGE4 ,INTFRIC ,
+      INTEGER I, P, NSN, ITYP, IGAP, IERROR, IERROR1, LENS, LENR,
+     .        LSKYFI, INACTI, NBINTC, LENI, J,INTTH, K, IEDGE4 ,INTFRIC ,
      .        FLAGREMN ,SIZREMNORFI, IVIS2 ,INTNITSCHE,ITIED,IPSTIF
       INTEGER :: LENR_EDGE,LENS_EDGE
 C-----------------------------------------------
@@ -4623,7 +4626,6 @@ C Lenr case = 0, we don't need an iskyfi and fskyfi table
 
                 CALL READ_I_C(NSNSIE(I)%P(1),NSPMD)
                 CALL READ_I_C(NSNFIE(I)%P(1),NSPMD)
-
                 LENS_EDGE = 0
                 LENR_EDGE = 0
                 DO P = 1, NSPMD
@@ -4661,8 +4663,11 @@ C
                 ENDIF
                 IF(LENR_EDGE>0) THEN
                   ALLOCATE(NSVFIE(I)%P(LENR_EDGE)) 
+
                   ALLOCATE(ITAFIE(I)%P(LENR_EDGE*2))
+
                   ALLOCATE(LEDGE_FIE(I)%P(E_LEDGE_SIZE,LENR_EDGE)) 
+
                   ALLOCATE(XFIE(I)%P(3,LENR_EDGE*2)) 
                   ALLOCATE(VFIE(I)%P(3,LENR_EDGE*2)) 
                   ALLOCATE(MSFIE(I)%P(LENR_EDGE*2)) 
@@ -5164,8 +5169,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, P, NSN, NMN, ITYP, IGAP, LENS, LENR, MULTIMP,
-     .        INACTI, LSKYFI, LENI,INTTH,IEDGE4, IVIS2, INTNITSCHE
+      INTEGER I, P, ITYP, IGAP, LENS, LENR,
+     .        INACTI, LENI,INTTH,IEDGE4, IVIS2, INTNITSCHE
       INTEGER INTERACT,ISENS
       my_real TS,STARTT,STOPT
       INTEGER, DIMENSION(NSPMD) :: SAVE_NSNFI,SAVE_NSNSI
@@ -5695,8 +5700,6 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, L, IR, IIA,IIA2
-      my_real
-     .        RRA1, RRA2, RRA3, RRA4, RRA5,PPA
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -6313,7 +6316,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IDEB, P, N, NB
+      INTEGER P, NB
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -6566,7 +6569,7 @@ C-----------------------------------------------
       my_real
      .        RRA1, RRA2, RRA3, RRA4, RRA5,
      .        RRA6, RRA7, RRA8, RRA9, RRA10, 
-     .        RRA11,RRA12
+     .        RRA11
 C-----------------------------------------------
 C   S o u r c e  L i n e s
 C-----------------------------------------------
@@ -7010,7 +7013,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER N, NFSKYI, ISKY(*)
+      INTEGER N, ISKY(*)
       my_real
      .        FSKYI(40,*)
 C-----------------------------------------------
@@ -7242,6 +7245,7 @@ C
 !||    arret             ../engine/source/system/arret.F
 !||--- uses       -----------------------------------------------------
 !||    message_mod       ../engine/share/message_module/message_mod.F
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    tri25ebox         ../engine/share/modules/tri25ebox.F
 !||    tri7box           ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -7252,6 +7256,7 @@ C
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s

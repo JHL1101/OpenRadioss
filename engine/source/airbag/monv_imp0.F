@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    monv_prem       ../engine/source/airbag/monv_imp0.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    groupdef_mod    ../common_source/modules/groupdef_mod.F
 !||    imp_monv        ../engine/share/modules/impbufdef_mod.F
 !||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod    ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE MONV_PREM(
      1    NMONV     ,IMONV     ,MONVOL    ,IGRSURF   ,
@@ -46,6 +48,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -71,7 +74,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, NTYP,NN,K1,IAD,IS,J,N,NOD,NUMN,ID,NMT,IROT,
+      INTEGER I, NTYP,NN,K1,IAD,IS,J,N,NOD,NUMN,NMT,IROT,
      .        IERR1,IERR2,IERR3,IERR4,IERR5,IERR6
 C-------IMONV(NMONV)--number of nodes in each mv.----------------------
       NMONV = 0
@@ -117,7 +120,8 @@ C-------IMONV(NMONV)--number of nodes in each mv.----------------------
 C--------allocation------
       IF (NMONV == 0) RETURN
 C
-      ALLOCATE(IN_MV(NUMN_MV),ID_MV(3,NUMN_MV),STAT=IERR1)
+      call my_alloc(IN_MV, NUMN_MV, "IN_MV", stat=IERR1)
+      call my_alloc(ID_MV, 3, NUMN_MV, "ID_MV", stat=IERR1)
       DO I=1,NUMNOD
        J = ITAG(I)
        IF (J>0) IN_MV(J) = I
@@ -128,16 +132,19 @@ C
      3    NI2_MV    ,IRBE3     ,NRBE3_MV  ,IRBE2     ,LRBE2     ,
      4    NRBE2_MV  )
       IF (NI2_MV>0) THEN
-       ALLOCATE(II2_MV(2,NI2_MV),ID_MVM2(6,4,NI2_MV),STAT=IERR2)
+       call my_alloc(II2_MV, 2, NI2_MV, "II2_MV", stat=IERR2)
+       call my_alloc(ID_MVM2, 6, 4, NI2_MV, "ID_MVM2", stat=IERR2)
       ENDIF
       IF (NRB_MV>0) THEN
-       ALLOCATE(IRB_MV(2,NRB_MV),ID_MVM(6,NRB_MV),STAT=IERR4)
+       call my_alloc(IRB_MV, 2, NRB_MV, "IRB_MV", stat=IERR4)
+       call my_alloc(ID_MVM, 6, NRB_MV, "ID_MVM", stat=IERR4)
       ENDIF
       IF (NRBE3_MV>0) THEN
-        ALLOCATE(IRBE3_MV(NRBE3_MV),STAT=IERR3)
+        call my_alloc(IRBE3_MV, NRBE3_MV, "IRBE3_MV", stat=IERR3)
       ENDIF
       IF (NRBE2_MV>0) THEN
-        ALLOCATE(IRBE2_MV(2,NRBE2_MV),ID_MVM4(6,NRBE2_MV),STAT=IERR3)
+        call my_alloc(IRBE2_MV, 2, NRBE2_MV, "IRBE2_MV", stat=IERR3)
+        call my_alloc(ID_MVM4, 6, NRBE2_MV, "ID_MVM4", stat=IERR3)
         ID_MVM4=0
       ENDIF
       CALL INI_KINMV(
@@ -157,27 +164,27 @@ C-----------ini RBE3
          NMT = NMT + NUMN
          IROT=MAX(IROT,IRBE3(6,N))
         ENDDO
-        ALLOCATE(ID_MVM3(6,IAD,NRBE3_MV),STAT=IERR3)
+        call my_alloc(ID_MVM3, 6, IAD, NRBE3_MV, "ID_MVM3", stat=IERR3)
            ID_MVM3=0
            R3M_MAX=IAD
-        ALLOCATE(FCDI_MV(18*NMT),STAT=IERR5)
+        call my_alloc(FCDI_MV, 18*NMT, "FCDI_MV", stat=IERR5)
            FCDI_MV=ZERO
         IF (IROT>0) THEN
-           ALLOCATE(MCDI_MV(18*NMT),STAT=IERR5)
+           call my_alloc(MCDI_MV, 18*NMT, "MCDI_MV", stat=IERR5)
            MCDI_MV=ZERO
         ENDIF
       ENDIF
       IF (IPREC >= 2) THEN
-       ALLOCATE(DIAG_MV(3,NUMN_MV),STAT=IERR2)
+       call my_alloc(DIAG_MV, 3, NUMN_MV, "DIAG_MV", stat=IERR2)
        DIAG_MV=ZERO
        IF (NI2_MV>0) ALLOCATE(DIAG_MVM2(6,4,NI2_MV),STAT=IERR5)
        IF (NRB_MV>0) ALLOCATE(DIAG_MVM(6,NRB_MV),STAT=IERR6)
        IF (NRBE3_MV>0) THEN
-        ALLOCATE(DIAG_MVM3(6,R3M_MAX,NRBE3_MV),STAT=IERR5)
+        call my_alloc(DIAG_MVM3, 6, R3M_MAX, NRBE3_MV, "DIAG_MVM3", stat=IERR5)
            DIAG_MVM3=ZERO
        ENDIF
        IF (NRBE2_MV>0) THEN
-        ALLOCATE(DIAG_MVM4(6,NRBE2_MV),STAT=IERR5)
+        call my_alloc(DIAG_MVM4, 6, NRBE2_MV, "DIAG_MVM4", stat=IERR5)
            DIAG_MVM4=ZERO
        ENDIF
       ENDIF
@@ -226,8 +233,8 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER
-     .        I,J,K,N,L,NL,NJ,NI,J1,M,NSN,N1,N2,NK,ID,
-     .        JI,K10,K11,K12,K13,K14,KFI,NS
+     .        I,J,K,N,NI,M,NSN,ID,
+     .        JI,K10,K11,K12,K13,K14,KFI
 C----------------------------
       LNS2=0
       DO J=1,NINT2
@@ -335,7 +342,7 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER
-     .        I,J,K,N,L,NL,NJ,NI,J1,M,NSN,N1,N2,NK,ID,
+     .        I,J,K,N,NI,M,NSN,ID,
      .        JI,K10,K11,K12,K13,K14,KFI,NI2,NRB,NR3,NR2
 c----------------------
       NI2=0
@@ -425,13 +432,16 @@ C----6---------------------------------------------------------------7---------8
       RETURN
       END
 !||====================================================================
-!||    monv_fvl   ../engine/source/airbag/monv_imp0.F
+!||    monv_fvl         ../engine/source/airbag/monv_imp0.F
 !||--- called by ------------------------------------------------------
-!||    monv_imp   ../engine/source/airbag/monv_imp0.F
+!||    monv_imp         ../engine/source/airbag/monv_imp0.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    imp_aspc   ../engine/share/modules/impbufdef_mod.F
-!||    imp_monv   ../engine/share/modules/impbufdef_mod.F
-!||    imp_rwl    ../engine/share/modules/impbufdef_mod.F
+!||    imp_aspc         ../engine/share/modules/impbufdef_mod.F
+!||    imp_monv         ../engine/share/modules/impbufdef_mod.F
+!||    imp_rwl          ../engine/share/modules/impbufdef_mod.F
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE MONV_FVL(IBFV      ,LJ      ,ISKEW   ,ICODT  )
 C-----------------------------------------------
@@ -443,6 +453,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -456,7 +468,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,N,L,IERR1,IERR2,IERR3,ITAG(NUMNOD)
+      INTEGER I,J,N,IERR1,IERR2,IERR3,ITAG(NUMNOD)
 C-----------------------------------------------
       DO N=1,NUMNOD
         ITAG(N) = 0
@@ -472,8 +484,8 @@ C-----------------------------------------------
         ENDIF
       ENDDO
       IF (NBC_MV>0) THEN
-       IF(ALLOCATED(IBC_MV)) DEALLOCATE(IBC_MV)
-       ALLOCATE(IBC_MV(3,NBC_MV),STAT=IERR1)
+       IF(ALLOCATED(IBC_MV)) call my_dealloc(IBC_MV)
+       call my_alloc(IBC_MV, 3, NBC_MV, "IBC_MV", stat=IERR1)
        NBC_MV = 0
        DO N=1,NUMNOD
         IF (ISKEW(N)>1.AND.ICODT(N)/=7) THEN
@@ -492,8 +504,8 @@ C-----AUTOSPC----
        IF (ITAG(N)>0)NSPC_MV = NSPC_MV + 1
       ENDDO
       IF (NSPC_MV>0) THEN
-       IF(ALLOCATED(ISPC_MV)) DEALLOCATE(ISPC_MV)
-       ALLOCATE(ISPC_MV(NSPC_MV),STAT=IERR1)
+       IF(ALLOCATED(ISPC_MV)) call my_dealloc(ISPC_MV)
+       call my_alloc(ISPC_MV, NSPC_MV, "ISPC_MV", stat=IERR1)
        NSPC_MV = 0
        DO N=1,NSPCL
          IF (ITAG(N)>0) THEN
@@ -511,8 +523,8 @@ C
         ENDIF
       ENDDO
       IF (NFX_MV>0) THEN
-       IF(ALLOCATED(IFX_MV)) DEALLOCATE(IFX_MV)
-       ALLOCATE(IFX_MV(2,NFX_MV),STAT=IERR2)
+       IF(ALLOCATED(IFX_MV)) call my_dealloc(IFX_MV)
+       call my_alloc(IFX_MV, 2, NFX_MV, "IFX_MV", stat=IERR2)
        NFX_MV = 0
        DO J=1,NFXVEL
         IF (LJ(J)>0.AND.LJ(J)<=3) THEN
@@ -531,8 +543,8 @@ C
        IF (ITAG(N)>0) NRW_MV = NRW_MV + 1
       ENDDO
       IF (NRW_MV>0) THEN
-       IF(ALLOCATED(IRW_MV)) DEALLOCATE(IRW_MV)
-       ALLOCATE(IRW_MV(NRW_MV),STAT=IERR3)
+       IF(ALLOCATED(IRW_MV)) call my_dealloc(IRW_MV)
+       call my_alloc(IRW_MV, NRW_MV, "IRW_MV", stat=IERR3)
        NRW_MV = 0
        DO J=1,N_RWL
          N=IN_RWL(J)
@@ -583,7 +595,6 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J
 C-----------------------------------------------
        CALL MONV_FVL(IBFV      ,LJ    ,ISKEW   ,ICODT  )
        CALL MONV_M3(MONVOL ,VOLMON  ,X      ,IGRSURF  ,
@@ -645,7 +656,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IDDLM(NUMNOD),NKC,N,ND,ID,NKIN,IAD
+      INTEGER I,J,N,ND,ID,NKIN,IAD
       INTEGER M,NSN,JI,K10,K11,K12,K13,K14,L,NNOD,NJ,NL,NI
 C----------------
       CALL ID_MVINI(IPARI  ,INTBUF_TAB,NDOF   ,IDDL    ,IKC    ,
@@ -807,7 +818,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IDDLM(NUMNOD),NKC,N,ND,ID,NND,IROT,NMT,IAD,IADS
+      INTEGER I,J,IDDLM(NUMNOD),NKC,N,ND,ID,IROT,NMT,IAD,IADS
       INTEGER M,NSN,JI,K10,K11,K12,K13,K14,L,NNOD,NJ,NL,NI
 C-----initialise iddl_mv-----------
       NKC = 0
@@ -981,12 +992,12 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, NTYP,NN,K1,IAD,IS,J,N,NMV,
-     .        N1,N2,N3,N4,KK1,J1,ID,ID1,M1,M2,M3,M4
+      INTEGER I, NN,K1,IS,J,NMV,
+     .        N1,N2,N3,N4,KK1,J1,M1,M2,M3,M4
       my_real
      .   VOL(NMONV),NOR(3,NNMAX_MV),DVD1(3),DVD2(3),GAMAV(NMONV)
       my_real
-     .   XX,YY,ZZ,X12,Y12,Z12,X13,Y13,Z13,X24,Y24,Z24,V,
+     .   XX,YY,ZZ,X13,Y13,Z13,X24,Y24,Z24,
      .   GAMAV2
 C----- Idddl (3,*) is after UPD_K-, if depending-: as a remote interface --------------------
 C-----------reprend vol,gama------
@@ -1089,12 +1100,12 @@ C-----------------------------------------------
       INTEGER N1,N2,N3,N4
 C     REAL
       my_real
-     .   XX,YY,ZZ,X12,Y12,Z12,X13,Y13,Z13,X24,Y24,Z24,VOL,
+     .   XX,YY,ZZ,X13,Y13,Z13,X24,Y24,Z24,VOL,
      .   DVD1(*),DVD2(*),N(3),GAMAV2,K_DIAG(3,*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J,NNOD,ND,ID
+      INTEGER I, J,NNOD,ND
       my_real
      .   DNDX1(3),DNDY1(3),DNDZ1(3),DNDX2(3),DNDY2(3),DNDZ2(3),
      .   KEV1(3),KEV2(3),KEVS(3),FAC,FACV(3)
@@ -1190,7 +1201,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J,NNOD,NNOD1,ND,NM(4)
       my_real
-     .   KEV1(3),KEV2(3),KEVS(3),FAC,FACV(3)
+     .   KEV1(3),KEV2(3),KEVS(3),FACV(3)
 C---------DNDX:NX,x,NY,x,NZ,x,------------------------------------
       ND = 3
        NM(1) = M1
@@ -1297,7 +1308,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l  V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,ID,N,J,NDD,IS,NS,ILEV,J10,J11,J12,J21
+      INTEGER I,N,J,NS,ILEV,J10,J11,J12,J21
       INTEGER M,NSN,JI,L,NNOD,NJ,NL,NI,
      .        I1,J1,ISK,IFM,K1,K2,K3,ICT,NN,IROT,IAD,IADS,
      .        JT(3),JR(3),IR,IRAD,K,IC
@@ -1601,7 +1612,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NKC,N,ND,ID,IAD
+      INTEGER I,J,N,ID,IAD
       INTEGER M,NSN,JI,K10,K11,K12,K13,K14,L,NNOD,NJ,NL,NI
 C---------IFLAG=0: add; IFLAG=1:remove-------
       IF (IFLAG==0) THEN
@@ -1801,10 +1812,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J,N,K,K1,KK1,N1,N2,N3,N4,ID,IAD,IS,NN,NTY
+      INTEGER I, J,K,K1,KK1,N1,N2,N3,N4,IS,NN,NTY
       my_real
      .   TEMP,VOL ,NOR(3,NNMAX_MV),
-     .   XX,YY,ZZ,X12,Y12,Z12,X13,Y13,Z13,X24,Y24,Z24,
+     .   XX,YY,ZZ,X13,Y13,Z13,X24,Y24,Z24,
      .   FNI(3),DPI,DPRES
 C----------------actualise X---------------------
       CALL IMP3_U2X(X     ,IPARI  ,INTBUF_TAB,NDOF  ,
@@ -2250,7 +2261,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER IDEF,IV
+      INTEGER IDEF
 C     REAL
       my_real
      .   VOL,VINC,GAMA,PRES,PMAX,VEPS,POLD,VOLD,PEXT,
@@ -2359,7 +2370,7 @@ C-----------------------------------------------
 C----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,ID,ND,M,N,NS,NI,NSN,ILEV,JT(3),JR(3),
+      INTEGER I,J,ND,M,N,NS,NI,NSN,ILEV,JT(3),JR(3),
      .        JI,K10,K11,K12,K13,K14,J10,J11,J12,J21,
      .        L,NNOD,NJ,NL,IAD,IADS,IROT,ISK,IRAD,NN,IC
       my_real

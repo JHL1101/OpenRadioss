@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    mat25_tsaiwu_c_mod   ../engine/source/materials/mat/mat025/mat25_tsaiwu_c.F90
 !||--- called by ------------------------------------------------------
@@ -58,7 +59,8 @@
           ly_exy  ,sigply  ,sigpe   ,ply_id  ,                &
           signxx  ,signyy  ,signxy  ,signyz  ,signzx,         &
           ipg     ,tsaiwu  ,iplyxfem,time    ,timestep,       &
-          imconv  ,mvsiz   ,iout    ,dmg     ,l_dmg   )
+          imconv  ,mvsiz   ,iout    ,dmg     ,l_dmg   ,       &
+          islice )
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                        Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -84,6 +86,7 @@
           integer ,intent(in) :: ishplyxfem                !< ply Xfem flag
           integer ,intent(in) :: iplyxfem                  !< ply Xfem flag
           integer ,intent(in) :: ngl(mvsiz)                !< element ID table
+          integer ,intent(in) :: islice                    !< slice number corresponding to ip in the ply
           real(kind=WP) ,intent(in) :: time                !< current time
           real(kind=WP) ,intent(in) :: timestep            !< current time step
           real(kind=WP) ,intent(in) :: asrate              !< strain rate filtering coefficient
@@ -357,6 +360,7 @@
               i=index(j)
               if (dmg(i,2)/=zero) then
                 crak(i,1) = crak(i,1) + eps(i,1)+ epsply(i,1)
+                crak(i,1) = max(crak(i,1), zero) 
                 dam1 = crak(i,1)/(epsm1(i)-epst1(i))
                 dam2 = dam1*epsm1(i)/(crak(i,1)+epst1(i))
                 dmg(i,2) = max(dmg(i,2),dam2)
@@ -370,6 +374,7 @@
 !
               if (dmg(i,3)/=zero) then
                 crak(i,2) = crak(i,2)+eps(i,2)+ epsply(i,2)
+                crak(i,2) = max(crak(i,2), zero) 
                 dam1 = crak(i,2)/(epsm2(i)-epst2(i))
                 dam2 = dam1*epsm2(i)/(crak(i,2)+epst2(i))
                 dmg(i,3) = max(dmg(i,3),dam2)
@@ -382,6 +387,7 @@
               i=index(j)
               if (dmg(i,2)/=zero) then
                 crak(i,1) = crak(i,1) + eps(i,1)
+                crak(i,1) = max(crak(i,1), zero) 
                 dam1 = crak(i,1)/(epsm1(i)-epst1(i))
                 dam2 = dam1*epsm1(i)/(crak(i,1)+epst1(i))
                 dmg(i,2) = max(dmg(i,2),dam2)
@@ -394,6 +400,7 @@
 !
               if (dmg(i,3)/=zero) then
                 crak(i,2) = crak(i,2)+eps(i,2)
+                crak(i,2) = max(crak(i,2), zero)
                 dam1 = crak(i,2)/(epsm2(i)-epst2(i))
                 dam2 = dam1*epsm2(i)/(crak(i,2)+epst2(i))
                 dmg(i,3) = max(dmg(i,3),dam2)
@@ -571,27 +578,27 @@
               if (imconv == 1) then
 !$OMP CRITICAL
                 if (igtyp == 17 .or. igtyp == 51 .or. igtyp == 52) then
-                  if (fail==1.or.fail==3.or.fail==5) write(iout,1001) ngl(i),ilayer,ipg,ply_id,time
-                  if (fail==2.or.fail==3.or.fail==6) write(iout,1002) ngl(i),ilayer,ipg,ply_id,time
+                  if (fail==1.or.fail==3.or.fail==5) write(iout,1001) ngl(i),ply_id,islice,ipg,time
+                  if (fail==2.or.fail==3.or.fail==6) write(iout,1002) ngl(i),ply_id,islice,ipg,time
                   if (fail==4.or.fail==5.or.fail==6) then
                     if (icas(i) == 0) then
-                      write(iout, 2000) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2000) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     else if (icas(i) == 1) then
-                      write(iout, 2001) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2001) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     else if (icas(i) == -1) then
-                      write(iout, 2002) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2002) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     else if (icas(i) == 2) then
-                      write(iout, 2003) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2003) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     else if (icas(i) == -2) then
-                      write(iout, 2004) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2004) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     else if (icas(i) == 3) then
-                      write(iout, 2005) ngl(i),wplamx(i),ilayer,ipg,ply_id,time
+                      write(iout, 2005) ngl(i),wplamx(i),ply_id,islice,ipg,time
                     end if    ! icas
                   end if
                   if (fail >= 16) then
-                    write(iout,1003) ngl(i),ilayer,ipg,ply_id,time
+                    write(iout,1003) ngl(i),ply_id,islice,ipg,time
                   else if (fail >= 8) then
-                    write(iout,1004) ngl(i),ilayer,ipg,ply_id,time
+                    write(iout,1004) ngl(i),ply_id,islice,ipg,time
                   end if
 !
                 else   ! igtyp 11
@@ -747,26 +754,26 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           return
 ! ----------------------------------------------------------------------------------------------------------------------
-1001      format(" FAILURE-1 ELEMENT #",i10,", LAYER #",i3,                       &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-1002      format(" FAILURE-2 ELEMENT #",i10,", LAYER #",i3,                       &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-1003      format(" TOTAL FAILURE-2 ELEMENT #",i10,", LAYER #",i3,                 &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-1004      format(" TOTAL FAILURE-1 ELEMENT #",i10,", LAYER #",i3,                 &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2000      format(" FAILURE-P-MAX ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,    &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2001      format(" FAILURE-P-T1 ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,     &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2002      format(" FAILURE-P-C1 ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,     &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2003      format(" FAILURE-P-T2 ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,     &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2004      format(" FAILURE-P-C2 ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,     &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
-2005      format(" FAILURE-P-T12 ELEMENT #",i10,", WPLA ",f8.2,", LAYER #",i3,    &
-            ", INTEGRATION POINT #",i3,", (PLY #",i10,"), TIME=",1pe11.4)
+1001      format(" FAILURE-1 ELEMENT #",i10,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+1002      format(" FAILURE-2 ELEMENT #",i10,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+1003      format(" TOTAL FAILURE-2 ELEMENT #",i10,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+1004      format(" TOTAL FAILURE-1 ELEMENT #",i10,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2000      format(" FAILURE-P-MAX ELEMENT #",i10,", WPLA ",f8.2,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2001      format(" FAILURE-P-T1 ELEMENT #",i10,", WPLA ",f8.2,                       &
+               ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2002      format(" FAILURE-P-C1 ELEMENT #",i10,", WPLA ",f8.2,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2003      format(" FAILURE-P-T2 ELEMENT #",i10,", WPLA ",f8.2,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2004      format(" FAILURE-P-C2 ELEMENT #",i10,", WPLA ",f8.2,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
+2005      format(" FAILURE-P-T12 ELEMENT #",i10,", WPLA ",f8.2,                       &
+                ", PLY-ID #",i10,", SLICE #",i3, ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
 3001      format(" FAILURE-1 ELEMENT #",i10,", LAYER #",i3,                       &
             ", INTEGRATION POINT #",i3,", TIME=",1pe11.4)
 3002      format(" FAILURE-1 ELEMENT #",i10,", LAYER #",i3,                       &

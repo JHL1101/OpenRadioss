@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    inter_color_voxel    ../engine/source/interfaces/generic/inter_color_voxel.F
 !||--- called by ------------------------------------------------------
@@ -32,6 +33,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    inter_sorting_mod    ../engine/share/modules/inter_sorting_mod.F
 !||    inter_struct_mod     ../engine/share/modules/inter_struct_mod.F
 !||    multi_fvm_mod        ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE INTER_COLOR_VOXEL(ITASK,NB_INTER_SORTED,LIST_INTER_SORTED,IPARI,INTBUF_TAB,
      .                               X,INTER_STRUCT,SORT_COMM)
@@ -52,6 +55,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -93,15 +98,15 @@ C-----------------------------------------------
         ! --------------------
         ! allocation of global omp array
         IF(ITASK==0) THEN
-            ALLOCATE(CELL_BOOL(NB_CELL_X,NB_CELL_Y,NB_CELL_Z))
+            call my_alloc(CELL_BOOL, NB_CELL_X, NB_CELL_Y, NB_CELL_Z, "CELL_BOOL")
             CELL_BOOL(1:NB_CELL_X,1:NB_CELL_Y,1:NB_CELL_Z) = .TRUE.
-            ALLOCATE( NB_LOCAL_CELL(NTHREAD) ) 
+            call my_alloc(NB_LOCAL_CELL, NTHREAD, "NB_LOCAL_CELL")
         ENDIF
         CALL MY_BARRIER()
         ! --------------------
         ! allocation of local omp array
         SIZE_INDEX_CELL = NB_CELL_X*NB_CELL_Y*NB_CELL_Z
-        ALLOCATE(INDEX_CELL(SIZE_INDEX_CELL))
+        call my_alloc(INDEX_CELL, SIZE_INDEX_CELL, "INDEX_CELL")
         NB_LOCAL_CELL(ITASK+1) = 0
 
         ! --------------------
@@ -195,10 +200,10 @@ C-----------------------------------------------
         ! --------------------
         ! deallocation
         IF(ITASK==0) THEN
-            DEALLOCATE(CELL_BOOL)
-            DEALLOCATE( NB_LOCAL_CELL ) 
+            call my_dealloc(CELL_BOOL)
+            call my_dealloc(NB_LOCAL_CELL)
         ENDIF
-        DEALLOCATE(INDEX_CELL)
+        call my_dealloc(INDEX_CELL)
         ! --------------------
         RETURN
         END SUBROUTINE INTER_COLOR_VOXEL

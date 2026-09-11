@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i22tzinf      ../starter/source/interfaces/inter3d1/i22tzinf.F
 !||--- called by ------------------------------------------------------
@@ -46,7 +47,7 @@ C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER  IXS(NIXS,*)
-      my_real X(3,*),TZINF,XX(8),YY(8), ZZ(8), CoorMIN(3), CoorMAX(3), DDmax
+      my_real X(3,*),TZINF,XX(8),YY(8), ZZ(8), DDmax
       INTEGER BUFBRIC(*), NBRIC
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
@@ -54,13 +55,7 @@ C-----------------------------------------------
       INTEGER L
       INTEGER NE
       my_real
-     .   DX1,DY1,DZ1,
-     .   DX3,DY3,DZ3,
-     .   DX4,DY4,DZ4,
-     .   DX6,DY6,DZ6,
-     .   DD1,DD2,DD3,DD4,DD,DD0,XMIN,YMIN,ZMIN,
-     .   XMAX,YMAX,ZMAX,TZINF0,GAPSMAX,
-     .   BID,TZINF_ST,MARGE,MARGE_ST,GAPV(MVSIZ),
+     .   DD,
      .   DIAG(4)
 C-----------------------------------------------
 C   P r e c o n d i t i o n s

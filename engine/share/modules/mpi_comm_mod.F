@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C generic module intended to pack information needed for asynchronous communications
 C where send and received are not done in the same routine
 !||====================================================================
@@ -56,8 +57,10 @@ C where send and received are not done in the same routine
 !||    allocate_comm_struct   ../engine/share/modules/mpi_comm_mod.F
 !||--- called by ------------------------------------------------------
 !||    i25main_slid           ../engine/source/interfaces/int25/i25main_slid.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    mpi_commod             ../engine/share/modules/mpi_comm_mod.F
+!||    my_alloc_mod           ../common_source/tools/memory/my_alloc.F90
 !||====================================================================
       SUBROUTINE ALLOCATE_COMM_STRUCT(OBJECT,S1,S2)
         USE MPI_COMMOD
@@ -65,33 +68,37 @@ C where send and received are not done in the same routine
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
         TYPE(MPI_COMM_STRUCT) :: OBJECT
         INTEGER, INTENT(IN) :: S1,S2
-        ALLOCATE(OBJECT%SEND_RQ(S1,S2)) 
-        ALLOCATE(OBJECT%RECV_RQ(S1,S2)) 
-        ALLOCATE(OBJECT%TAG    (S1,S2))
-        ALLOCATE(OBJECT%SIZ    (S1,S2))     
+        call my_alloc(OBJECT%SEND_RQ, S1, S2, "OBJECT%SEND_RQ")
+        call my_alloc(OBJECT%RECV_RQ, S1, S2, "OBJECT%RECV_RQ")
+        call my_alloc(OBJECT%TAG, S1, S2, "OBJECT%TAG")
+        call my_alloc(OBJECT%SIZ, S1, S2, "OBJECT%SIZ")
       END SUBROUTINE
 !||====================================================================
 !||    deallocate_comm_struct   ../engine/share/modules/mpi_comm_mod.F
 !||--- called by ------------------------------------------------------
 !||    i25main_slid             ../engine/source/interfaces/int25/i25main_slid.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    mpi_commod               ../engine/share/modules/mpi_comm_mod.F
+!||    my_dealloc_mod           ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE DEALLOCATE_COMM_STRUCT(OBJECT,S1,S2)
        USE MPI_COMMOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
         TYPE(MPI_COMM_STRUCT) :: OBJECT
         INTEGER, INTENT(IN) :: S1,S2
-        DEALLOCATE(OBJECT%SEND_RQ) 
-        DEALLOCATE(OBJECT%RECV_RQ) 
-        DEALLOCATE(OBJECT%TAG    )
-        DEALLOCATE(OBJECT%SIZ    )     
+        call my_dealloc(OBJECT%SEND_RQ)
+        call my_dealloc(OBJECT%RECV_RQ)
+        call my_dealloc(OBJECT%TAG)
+        call my_dealloc(OBJECT%SIZ)
       END SUBROUTINE
 
 

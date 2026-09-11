@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps79   ../engine/source/materials/mat/mat079/sigeps79.F
 !||--- called by ------------------------------------------------------
@@ -32,7 +33,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      4      SIGOXX   ,SIGOYY   ,SIGOZZ   ,SIGOXY   ,SIGOYZ   ,SIGOZX   ,
      5      SIGNXX   ,SIGNYY   ,SIGNZZ   ,SIGNXY   ,SIGNYZ   ,SIGNZX   ,
      6      EPSD     ,DMG      ,SOUNDSP  ,UVAR     ,OFF      ,AMU      ,
-     7      ET       )      
+     7      ET       ,INLOC    ,VARNL    ,L_PLANL  ,PLANL    )
 C
 C-----------------------------------------------
 C   I M P L I C I T   T Y P E S
@@ -70,6 +71,13 @@ C----------------------------------------------------------------
      .      UVAR(NEL,NUVAR),OFF(NEL),DMG(NEL),
      .      DEFP(NEL),ET(NEL)
 C----------------------------------------------------------------
+C  N O N - L O C A L   A R G U M E N T S
+C----------------------------------------------------------------
+      INTEGER,INTENT(IN) :: INLOC
+      INTEGER,INTENT(IN) :: L_PLANL
+      my_real,INTENT(INOUT) :: VARNL(NEL)
+      my_real,INTENT(IN) :: PLANL(L_PLANL*NEL)
+C----------------------------------------------------------------
 C  L O C A L  V A R I A B L E S
 C----------------------------------------------------------------
       INTEGER I,J,NINDX,INDX(NEL),IDEL
@@ -81,10 +89,10 @@ C----------------------------------------------------------------
       my_real
      .   MU(NEL),MU2(NEL),POLD(NEL),VM(NEL),
      .   DELTAP(NEL),PNEW(NEL),PSTAR(NEL),SCALE(NEL), 
-     .   SIGYI(NEL),SIGYF(NEL),SIGYOLD(NEL),DMG_OLD(NEL)
+     .   SIGYI(NEL),SIGYF(NEL),DMG_OLD(NEL)
       my_real
      .   DAV, CE, SIGSTAR, EPFAIL, P1, YIELD, DELTAU, DPDMU,
-     .   PMIN, J2
+     .   PMIN, J2, HARDP
 C
       !=======================================================================
       ! - INITIALISATION OF COMPUTATION ON TIME STEP
@@ -116,7 +124,6 @@ c
         IF (OFF(I) < EM01) OFF(I) = ZERO
         IF (OFF(I) <  ONE) OFF(I) = OFF(I)*FOUR_OVER_5
         DELTAP(I)  = UVAR(I,1)
-        SIGYOLD(I) = UVAR(I,2)/SHEL
         DMG_OLD(I) = DMG(I)
         MU(I)      = AMU(I)
         MU2(I)     = MU(I)*MU(I)
@@ -154,6 +161,54 @@ c
       ENDDO
 c
       !========================================================================
+      ! - UPDATE PLASTIC STRAIN AND DAMAGE IN CASE OF NON-LOCAL REGULARISATION
+      !========================================================================
+      NINDX = 0
+      INDX(1:NEL) = 0
+      IF (INLOC > 0) THEN
+        DO I=1,NEL
+          IF (OFF(I) == ONE) THEN
+c
+            ! Compute plastic strain at failure
+            IF (D2 == ZERO) THEN
+              EPFAIL = D1
+            ELSEIF ((PSTAR(I)+TSTAR) >= ZERO) THEN
+              EPFAIL = D1*(PSTAR(I)+TSTAR)**D2
+            ELSE
+              EPFAIL = ZERO
+            ENDIF
+c
+            ! Update damage using the non-local variable
+            IF (EPFAIL > ZERO) THEN
+              DMG(I)  = DMG(I)  + MAX(VARNL(I),ZERO)/EPFAIL
+              DMG(I)  = MIN(DMG(I),ONE)
+            ENDIF
+c
+            ! Check element deletion
+            IF (IDEL == 1) THEN
+              IF ((PSTAR(I)+TSTAR) < ZERO) THEN
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF
+            ELSEIF (IDEL == 2) THEN
+              IF (PLANL(I) > EPSMAX) THEN
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF
+            ELSEIF (IDEL == 3) THEN
+              IF (DMG(I) == ONE) THEN
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDDO
+      ENDIF
+c
+      !========================================================================
       ! - COMPUTATION OF THE YIELD STRESS
       !========================================================================
       DO I=1,NEL
@@ -180,9 +235,12 @@ C
         ENDIF
 C
          SIGYI(I) = CE*SIGYI(I)
+         SIGYI(I) = MAX(SIGYI(I),EM20)
          SIGYF(I) = CE*SIGYF(I)
          SIGYF(I) = MIN(SIGYF(I),SIGFMAX)
+         SIGYF(I) = MAX(SIGYF(I),EM20)
          SIGY(I)  = (ONE-DMG(I))*SIGYI(I)+DMG(I)*SIGYF(I)
+         SIGY(I)  = MAX(SIGY(I),EM20)
       ENDDO
 c
       !========================================================================
@@ -210,54 +268,61 @@ c
       !========================================================================
       ! - UPDATE PLASTIC STRAIN AND DAMAGE
       !========================================================================
-      NINDX = 0
-      INDX(1:NEL) = 0
       DO I=1,NEL
-        IF (OFF(I) == ONE) THEN 
-c
-          ! Compute plastic strain at failure
-          IF (D2 == ZERO) THEN
-            EPFAIL = D1
-          ELSEIF ((PSTAR(I)+TSTAR) >= ZERO) THEN
-            EPFAIL = D1*(PSTAR(I)+TSTAR)**D2
-          ELSE
-            EPFAIL = ZERO
-          ENDIF
-c
-          ! Update plastic strain and damage
-          ! -> When damage parameters are defined, progressive failure + plastic strain
-          IF (EPFAIL > ZERO) THEN 
-            DPLA(I) = (ONE - SCALE(I))*VM(I)/(THREE*SQRT(THREE)*G)
-            DEFP(I) = DEFP(I) + DPLA(I)  
-            DMG(I)  = DMG(I)  + DPLA(I)/EPFAIL
-            DMG(I)  = MIN(DMG(I),ONE)
-          ! -> When damage parameters are not defined, no plastic strain and instant failure
-          ELSEIF (SCALE(I)<ONE) THEN 
-            DMG(I)  = ONE
-          ENDIF
-c 
-          ! Check element deletion
-          IF (IDEL == 1) THEN 
-            IF ((PSTAR(I)+TSTAR) < ZERO) THEN 
-              OFF(I) = FOUR_OVER_5
-              NINDX  = NINDX + 1
-              INDX(NINDX) = I
-            ENDIF 
-          ELSEIF (IDEL == 2) THEN 
-            IF (DEFP(I) > EPSMAX) THEN 
-              OFF(I) = FOUR_OVER_5
-              NINDX  = NINDX + 1
-              INDX(NINDX) = I
-            ENDIF
-          ELSEIF (IDEL == 3) THEN 
-            IF (DMG(I) == ONE) THEN 
-              OFF(I) = FOUR_OVER_5
-              NINDX  = NINDX + 1
-              INDX(NINDX) = I
-            ENDIF            
-          ENDIF
+        IF (OFF(I) == ONE) THEN
+          DPLA(I) = (ONE - SCALE(I))*VM(I)/(THREE*G)
+          DEFP(I) = DEFP(I) + DPLA(I) 
         ENDIF
-      ENDDO    
+      ENDDO
+c
+      IF (INLOC == 0) THEN
+        NINDX = 0
+        INDX(1:NEL) = 0
+        DO I=1,NEL
+          IF (OFF(I) == ONE) THEN 
+c
+            ! Compute plastic strain at failure
+            IF (D2 == ZERO) THEN
+              EPFAIL = D1
+            ELSEIF ((PSTAR(I)+TSTAR) >= ZERO) THEN
+              EPFAIL = D1*(PSTAR(I)+TSTAR)**D2
+            ELSE
+              EPFAIL = ZERO
+            ENDIF
+c
+            ! Update plastic strain and damage
+            ! -> When damage parameters are defined, progressive failure + plastic strain
+            IF (EPFAIL > ZERO) THEN  
+              DMG(I)  = DMG(I)  + DPLA(I)/EPFAIL
+              DMG(I)  = MIN(DMG(I),ONE)
+            ! -> When damage parameters are not defined, no plastic strain and instant failure
+            ELSEIF (SCALE(I)<ONE) THEN 
+              DMG(I)  = ONE
+            ENDIF
+c 
+            ! Check element deletion
+            IF (IDEL == 1) THEN 
+              IF ((PSTAR(I)+TSTAR) < ZERO) THEN 
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF 
+            ELSEIF (IDEL == 2) THEN 
+              IF (DEFP(I) > EPSMAX) THEN 
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF
+            ELSEIF (IDEL == 3) THEN 
+              IF (DMG(I) == ONE) THEN 
+                OFF(I) = FOUR_OVER_5
+                NINDX  = NINDX + 1
+                INDX(NINDX) = I
+              ENDIF            
+            ENDIF
+          ENDIF
+        ENDDO
+      ENDIF
 c  
       !========================================================================
       ! - COMPUTE PRESSURE INCREMENT
@@ -266,11 +331,11 @@ c
         IF ((DMG(I) > DMG_OLD(I)).AND.(MU(I) > ZERO).AND.(OFF(I) == ONE)) THEN     
           P1     = K1*MU(I)
           YIELD  = (ONE-DMG(I))*SIGYI(I)+DMG(I)*SIGYF(I)
-          DELTAU = (SIGYOLD(I)*SIGYOLD(I)-YIELD*YIELD)/(SIX*G)
+          YIELD  = MAX(YIELD,EM20)
+          DELTAU = (SIGY(I)*SIGY(I)-YIELD*YIELD)/(SIX*G)
           IF (DELTAU > ZERO) THEN
             DELTAU = DELTAU*SHEL*SHEL
-            DELTAP(I) = -P1+
-     .               SQRT((DELTAP(I)+P1)**2+TWO*BETA*K1*DELTAU)
+            DELTAP(I) = -P1+SQRT((DELTAP(I)+P1)**2+TWO*BETA*K1*DELTAU)
           ENDIF
         ENDIF
       ENDDO
@@ -279,8 +344,6 @@ C
       ! - UPDATE STRESS TENSOR AND SOUND SPEED
       !========================================================================
       DO I=1,NEL
-        UVAR(I,1)  = DELTAP(I)
-        UVAR(I,2)  = SIGY(I)*SHEL
         SIGNXX(I)  = SIGNXX(I)-PNEW(I)
         SIGNYY(I)  = SIGNYY(I)-PNEW(I)
         SIGNZZ(I)  = SIGNZZ(I)-PNEW(I)
@@ -289,8 +352,26 @@ C
         ELSE 
           DPDMU    = K1
         ENDIF
-        SOUNDSP(I) = SQRT((DPDMU+FOUR_OVER_3*G)/RHO0(I))
-        ET(I) = ONE
+        SOUNDSP(I) = SQRT((DPDMU+FOUR_OVER_3*G)/MIN(RHO0(I),RHO(I)))
+        IF (DPLA(I) > EM20) THEN
+          HARDP = (SIGY(I)*SHEL - UVAR(I,2)) / DPLA(I)   ! UVAR(I,2)=SIGYOLD*SHEL from last cycle
+          ET(I) = MAX(HARDP,ZERO) / (MAX(HARDP,ZERO) + THREE*G)   
+        ELSE
+          ET(I) = ONE
+        ENDIF
+        UVAR(I,1)  = DELTAP(I)
+        UVAR(I,2)  = SIGY(I)*SHEL
+        ! Non-local variable to regularize
+        IF (INLOC > 0) THEN
+          IF (OFF(I) == ONE) THEN
+            VARNL(I) = DEFP(I)
+            IF (DMG(I) >= ONE) THEN
+              VARNL(I) = ZERO
+            ENDIF
+          ELSE
+            VARNL(I) = ZERO
+          ENDIF
+        ENDIF
       ENDDO
 C
       !========================================================================

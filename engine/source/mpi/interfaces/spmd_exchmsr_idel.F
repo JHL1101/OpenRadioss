@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
-!||    spmd_exchmsr_idel     ../engine/source/mpi/interfaces/spmd_exchmsr_idel.F
+!||    spmd_exchmsr_idel   ../engine/source/mpi/interfaces/spmd_exchmsr_idel.F
 !||--- called by ------------------------------------------------------
-!||    chkstfn3n             ../engine/source/interfaces/interf/chkstfn3.F
+!||    chkstfn3n           ../engine/source/interfaces/interf/chkstfn3.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    element_mod           ../common_source/modules/elements/element_mod.F90
-!||    nodal_arrays_mod      ../common_source/modules/nodal_arrays.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    element_mod         ../common_source/modules/elements/element_mod.F90
+!||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    nodal_arrays_mod    ../common_source/modules/nodal_arrays.F90
+!||    spmd_mod            ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCHMSR_IDEL(
      1    BUFS  ,LBUFS,IXS    ,IXC    ,IXTG   ,
@@ -39,8 +41,9 @@ C
      5    LINDEX,IXP   ,IXR    ,IXT    ,GEO    ,
      6    TAGEL ,IAD_ELEM)
        USE nodal_arrays_mod
-       USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+       USE SPMD_MOD
        use element_mod , only : nixs,nixq,nixc,nixt,nixp,nixr,nixtg
+       use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -75,7 +78,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
 #ifdef MPI
       INTEGER MSGOFF2 ,MSGOFF3, MSGTYP, LOC_PROC,
-     .        IERROR,I, IDEB, LEN, N1, N2, N3, N4,
+     .        I, IDEB, LEN, N1, N2, N3, N4,
      .        K, IX, II, NN, J, IOFF,
      .           IDEL, ITYP, NBEL,
      .            
@@ -86,19 +89,19 @@ C-----------------------------------------------
       DATA MSGOFF2/188/
       DATA MSGOFF3/189/
 C-----------------------------------------------
-      ALLOCATE(BUFR(IRSIZE))
+      call my_alloc(BUFR, IRSIZE, "BUFR")
       LOC_PROC = ISPMD+1
 
       IDEB = 1
       IOFF = 0
       LEN = 0
-      REQ_R1(1:NSPMD) = MPI_REQUEST_NULL
+      REQ_R1(1:NSPMD) = SPMD_REQUEST_NULL
       DO I = 1, NSPMD
         IF(IRECV(I)>0) THEN
           MSGTYP = MSGOFF2 
-          CALL MPI_IRECV(
-     .      BUFR(IDEB),IRECV(I),MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .      SPMD_COMM_WORLD,REQ_R1(I),IERROR)
+          CALL SPMD_IRECV(
+     .      BUFR(IDEB:IDEB+IRECV(I)-1),IRECV(I),IT_SPMD(I),MSGTYP,
+     .      REQ_R1(I),SPMD_COMM_WORLD)
           LEN = LEN+IRECV(I)
           IDEB = LEN + 1 
          ENDIF
@@ -109,9 +112,9 @@ C Proc sends the same BUFS to everybody
         SIZ = (IAD_ELEM(1,I+1)-IAD_ELEM(1,I))
         IF(I.NE.LOC_PROC.AND.LBUFS.GT.0.AND.SIZ>0) THEN
            MSGTYP = MSGOFF2
-           CALL MPI_ISEND(
-     C      BUFS,LBUFS,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_S2(I),IERROR)
+           CALL SPMD_ISEND(
+     C      BUFS(1:LBUFS),LBUFS,IT_SPMD(I),MSGTYP,
+     G      REQ_S2(I),SPMD_COMM_WORLD)
         ENDIF
       ENDDO
       IDEB = 1
@@ -121,7 +124,7 @@ C Proc receive only if IRECV(I) > 0
       DO I = 1, NSPMD
         IF(IRECV(I)>0) THEN
           MSGTYP = MSGOFF2 
-          CALL MPI_WAIT(REQ_R1(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_R1(I),STATUS)
 c         CALL MPI_RECV(
 c    .      BUFR(IDEB),IRECV(I),MPI_INTEGER,IT_SPMD(I),MSGTYP,
 c    .      SPMD_COMM_WORLD,STATUS,IERROR)
@@ -378,9 +381,9 @@ C
         IF(IRECV(I)>0) THEN
           LEN = IRECV(I)
           MSGTYP = MSGOFF3
-          CALL MPI_ISEND(
-     C      BUFR(IDEB),LEN,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_S3(I),IERROR)
+          CALL SPMD_ISEND(
+     C      BUFR(IDEB:IDEB+LEN-1),LEN,IT_SPMD(I),MSGTYP,
+     G      REQ_S3(I),SPMD_COMM_WORLD)
           IDEB = IDEB + LEN
         ENDIF
       ENDDO
@@ -390,13 +393,13 @@ C
       DO I = 1, NSPMD
         SIZ = (IAD_ELEM(1,I+1)-IAD_ELEM(1,I))
         IF(I.NE.LOC_PROC.AND.LBUFS.GT.0.AND.SIZ>0) THEN
-          CALL MPI_WAIT(REQ_S2(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S2(I),STATUS)
         ENDIF
       ENDDO
 C
 C Reception BUFR in BUFS2
 C
-      ALLOCATE(BUFS2(LINDEX))
+      call my_alloc(BUFS2, LINDEX, "BUFS2")
       IF(LINDEX>0) THEN
         DO I = 1, LINDEX
           BUFS(I) = 0
@@ -405,27 +408,27 @@ C
           SIZ = (IAD_ELEM(1,I+1)-IAD_ELEM(1,I))
           IF(I.NE.LOC_PROC.AND.LINDEX.GT.0.AND.SIZ>0) THEN
             MSGTYP = MSGOFF3
-            CALL MPI_RECV(
-     .        BUFS2,LINDEX,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     .        SPMD_COMM_WORLD,STATUS,IERROR)
+            CALL SPMD_RECV(
+     .        BUFS2(1:LINDEX),LINDEX,IT_SPMD(I),MSGTYP,STATUS,
+     .        SPMD_COMM_WORLD)
               DO J = 1, LINDEX
                 BUFS(J) = MAX(BUFS(J),BUFS2(J))
               ENDDO
           ENDIF
         ENDDO
       ENDIF
-      DEALLOCATE(BUFS2)
+      call my_dealloc(BUFS2)
 
 C
 C Test Reception Bufr
 C
       DO I = 1, NSPMD
         IF(IRECV(I)>0) THEN
-          CALL MPI_WAIT(REQ_S3(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S3(I),STATUS)
         ENDIF
       ENDDO
 C
-      DEALLOCATE(BUFR)
+      call my_dealloc(BUFR)
 #endif
       RETURN
       END

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    genani                       ../engine/source/output/anim/generate/genani.F
 !||--- called by ------------------------------------------------------
@@ -196,6 +197,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    message_mod                  ../engine/share/message_module/message_mod.F
 !||    multi_fvm_mod                ../common_source/modules/ale/multi_fvm_mod.F90
 !||    my_alloc_mod                 ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod               ../common_source/tools/memory/my_dealloc.F90
 !||    output_mod                   ../common_source/modules/output/output_mod.F90
 !||    plyxfem_mod                  ../engine/share/modules/plyxfem_mod.F
 !||    stack_mod                    ../engine/share/modules/stack_mod.F
@@ -264,6 +266,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -299,9 +302,9 @@ C-----------------------------------------------
      .          SIADG,NERCVOIS(*),NESDVOIS(*),LERCVOIS(*),
      .          LESDVOIS(*),SPH2SOL(*)
         INTEGER
-     .    SUIX, SXUSR ,SFACPTX,SIXEDGE,SIXFACET,SIXSOLID,SNUMX1,
+     .    SUIX, SXUSR ,SIXEDGE,SIXFACET,SIXSOLID,SNUMX1,
      .    SNUMX2,SNUMX3,SOFFX1,SOFFX2,SOFFX3,SMASS1,SMASS2,
-     .    SMASS3,SFUNC1,SFUNC2,SFUNC3,SFIN,SNFACPTX
+     .    SMASS3,SFUNC1,SFUNC2,SFUNC3,SNFACPTX
 
         INTEGER  IGEO(NPROPGI,*),IPM(NPROPMI,*),INDX_CRK(*),
      .    LRBE2(*),LRBE3(*),FR_RBE2(3,*),FR_RBE3M(3,*),
@@ -336,7 +339,6 @@ C-----------------------------------------------
      .          WEIGHT_MD(*),NODGLOBXFE(*),IPARTIG3D(*)
         INTEGER CTEXT(2159), IB
         INTEGER DD_IAD(NSPMD+1,*),
-     .          NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,
      .          N1,N2,N3
         INTEGER FR_SEC(NSPMD+1,*),FR_RBY2(3,*),IAD_RBY2(4,*),
      .          NERBT(NRBODY),LOC_PROC,PROC,NERBE2T(NRBE2G),
@@ -387,7 +389,7 @@ C-----------------------------------------------
         INTEGER,DIMENSION(:),ALLOCATABLE :: IOFFX2
         INTEGER,DIMENSION(:),ALLOCATABLE :: IOFFX3
         INTEGER,DIMENSION(:),ALLOCATABLE :: IG3DSOLID
-        INTEGER SZ16,SHFT16,IADGPS,NSN,IADISO,FIRST_NODE_IG3D,IADCHKSUM
+        INTEGER SZ16,SHFT16,IADGPS,IADISO,FIRST_NODE_IG3D,IADCHKSUM
 
         REAL
      .         , DIMENSION(:), ALLOCATABLE :: WA4, MAS4, WA4_FVM
@@ -404,23 +406,22 @@ C-----------------------------------------------
 
         CHARACTER*80 STR, MES*30, CAUX,TITL*100
         CHARACTER CHANIM*9,FILNAM*100, CHANIM1*4
-        INTEGER I, IDX,IDX0,IDX1,IDX2,NBF, NBPART, MAGIC, J, IFUNC, FILEN, NPSOL,
-     .          NODCUT,NELCUT,LENR,LENI,LENCUT,LENCUTO,IXEL,
-     .          MIC1,MIC2,MIC3,MIC4,MIC5,MAC1,MAC2,MAC3,NPSPR,N,K,
-     .          I3000, NESCT,NERBY,NERWL,NNWL,TMPNBF,ISK(6),
+        INTEGER I, IDX,IDX0,IDX1,IDX2,NBF, NBPART, MAGIC, J, IFUNC, FILEN,
+     .          NODCUT,NELCUT,LENR,LENI,LENCUT,LENCUTO,
+     .          MIC1,MIC2,MIC3,MIC4,MIC5,MAC1,MAC2,MAC3,N,K,
+     .          I3000, NESCT,NERBY,NERWL,NNWL,
      .          NESBW2,NEL,NFT,ITY,NG,OUI,IPT
-        INTEGER II,II_L,INC,P,NSLARB_L,NDMA2,NUMELS_T,NSKEWA,NB1D,
-     .          M1,M2,M3,M,M01,NB1D_T, NBF_L, LEN, NUMELT_T,
+        INTEGER II,INC,P,NDMA2,NUMELS_T,NSKEWA,NB1D,
+     .          M1,M2,M3,M,M01,NB1D_T, NBF_L, NUMELT_T,
      .          NUMELR_T, NUMELP_T
         INTEGER ISECT,NESCT1,IRBY,NERBY1,IRWL,NERWL1,NERBE2,NERBE3,
      .          NERBE2_1,NERBE3_1
-        INTEGER NSURG,NESRG, NNSRG, NESRG1, NNSRG1,ISRG,ISRF,ISRK
-        INTEGER NSMAD,NESMD, NNSMD, NESMD1, NNSMD1,ISMD
-        INTEGER NENT,OFFSI,OFFSRF,OFFSRV
+        INTEGER NSURG,NESRG, NNSRG, NESRG1,ISRG,ISRF
+        INTEGER NSMAD,NESMD, NNSMD, NESMD1
         INTEGER NESPH,NNSPH,INSPH,NESPHG,NNSPHG,SNNSPHG,SZNNSPH,SHFTSPH
         INTEGER I161,I16A,I16B,I16C,I16D,I16E,I16F,I16G,I16H,I16I,I16J,
      .          I16K,I16L,I16M,I16N
-        INTEGER MXSUBS,NSECTSA
+        INTEGER MXSUBS
         INTEGER IPRT, IAUX
         INTEGER IFLAG1D,NNNSRG,NNN,BUF
         INTEGER NANIM1D_L,IUS,NANIM3D_L
@@ -429,8 +430,7 @@ C-----------------------------------------------
         INTEGER LRBUF,BUFL,BUFFERP(NPART),SBUFSPM,SBUFRECVM,SBUFSPO,
      .          SPORBY,NUMSPH_T,NUMELS16_T,LRBUFG,NNNG
         my_real
-     .     CDG(3), S3000,XMIN,YMIN,ZMIN,XMAX,YMAX,ZMAX, SCALE,
-     .     RVAL
+     .     CDG(3), S3000,XMIN,YMIN,ZMIN,XMAX,YMAX,ZMAX, SCALE
         INTEGER K1, KK1, K2, KIBJET, KIBHOL, IADHOL, KK2, KRBJET, KRBHOL,
      .          RADHOL, ITYP, KI1, KR1, NCA, NTG, NJET, NVENT, NTGI
         my_real
@@ -458,8 +458,8 @@ C-----------------------------------------------
 
         INTEGER, DIMENSION(:,:), ALLOCATABLE :: IAD_PLYG
         INTEGER IUL,IAD_GP2,IFIRST,
-     .          NEL_PLY, NFNOD_PXFEM,IDPLY,NBF_PXFEM_L,
-     .          IPLY,NPLYSUBS,ID_PART,NBF_PXFEM,SWAFT_PXFEM,MAXPART,
+     .          NEL_PLY, NFNOD_PXFEM,IDPLY,
+     .          IPLY,NPLYSUBS,NBF_PXFEM,SWAFT_PXFEM,MAXPART,
      .          NBF_PXFEMG,NFNOD_PXFEMG,PLYNUMC,
      .          SEL2FA_PLY,IADPC,IFV,IAD_GP3,IAD_ISO,IAD_GP4
         INTEGER, DIMENSION(:), ALLOCATABLE :: NFSHSZ
@@ -471,8 +471,7 @@ C-----------------------------------------------
         REAL R4
         SAVE LENCUTO
         DATA LENCUTO/0/
-        INTEGER IERROR
-        INTEGER ITG,NPLYPARTW,ILAY,ILEV,IANIM_TMP,CPT,KKT
+        INTEGER NPLYPARTW,ILAY,ILEV,IANIM_TMP,CPT,KKT
 C
         INTEGER NFNOD_CRKXFEM,IDCRK,ICRK,NCRKSUBS,
      .          NBF_CRKXFEM,LEN_CRKX,NBF_CRKXFEMG,NFNOD_CRKXFEMG,
@@ -484,47 +483,59 @@ C
 
         INTEGER :: LEN_TMP_NAME
         CHARACTER(len=2048),TARGET :: TMP_NAME
-        LOGICAL :: CONDITION
         INTEGER :: IS_WRITTEN_NODE_FVM(AIRBAGS_TOTAL_FVM_IN_H3D)
         INTEGER,DIMENSION(:),ALLOCATABLE :: IS_WRITTEN_NODE
         INTEGER :: DEFAULT_OUTPUT
 C=======================================================================
-        ALLOCATE(WAFT(SWAFT)   , MAS(SMAS)     , XNORM(SXNORM) ,
-     .           XMASS1(SMASS1), XMASS2(SMASS2), XMASS3(SMASS3),
-     .           XFUNC1(SFUNC1), XFUNC2(SFUNC2), XFUNC3(SFUNC3),
-     .           XUSR(SXUSR) )
+        call my_alloc(WAFT, SWAFT, "WAFT")
+        call my_alloc(MAS, SMAS, "MAS")
+        call my_alloc(XNORM, SXNORM, "XNORM")
+        call my_alloc(XMASS1, SMASS1, "XMASS1")
+        call my_alloc(XMASS2, SMASS2, "XMASS2")
+        call my_alloc(XMASS3, SMASS3, "XMASS3")
+        call my_alloc(XFUNC1, SFUNC1, "XFUNC1")
+        call my_alloc(XFUNC2, SFUNC2, "XFUNC2")
+        call my_alloc(XFUNC3, SFUNC3, "XFUNC3")
+        call my_alloc(XUSR, SXUSR, "XUSR")
         WAFT(1:SWAFT) = ZERO
 
-        ALLOCATE (WA4(SWA4), MAS4(SMAS))
-        ALLOCATE (WA4_FVM(AIRBAGS_TOTAL_FVM_IN_H3D))
+        call my_alloc(WA4, SWA4, "WA4")
+        call my_alloc(MAS4, SMAS, "MAS4")
+        call my_alloc(WA4_FVM, AIRBAGS_TOTAL_FVM_IN_H3D, "WA4_FVM")
 
-        ALLOCATE(VFLU(3,NUMNOD), VVAR1(3,NUMNOD), AFLU(3,NUMNOD),
-     .          VFLU_ALE(3,NUMNOD),FANREACT(3,NUMNOD),FANREACR(3,NUMNOD))
+        call my_alloc(VFLU, 3, NUMNOD, "VFLU")
+        call my_alloc(VVAR1, 3, NUMNOD, "VVAR1")
+        call my_alloc(AFLU, 3, NUMNOD, "AFLU")
+        call my_alloc(VFLU_ALE, 3, NUMNOD, "VFLU_ALE")
+        call my_alloc(FANREACT, 3, NUMNOD, "FANREACT")
+        call my_alloc(FANREACR, 3, NUMNOD, "FANREACR")
 
-        ALLOCATE(WGPS(NUMNOD), VGPS(NUMNOD), ITAGPS(NUMNOD))
+        call my_alloc(WGPS, NUMNOD, "WGPS")
+        call my_alloc(VGPS, NUMNOD, "VGPS")
+        call my_alloc(ITAGPS, NUMNOD, "ITAGPS")
 
-        CALL MY_ALLOC(IS_WRITTEN_NODE,NUMNOD)
-        CALL MY_ALLOC(IAD,SIAD)
+        call my_alloc(IS_WRITTEN_NODE, NUMNOD, "IS_WRITTEN_NODE")
+        call my_alloc(IAD, SIAD, "IAD")
         IF(SIAD >0) IAD(1:SIAD) = -HUGE(IAD(1))
-        CALL MY_ALLOC(INVERT,SINVERT)
-        CALL MY_ALLOC(MATER,SMATER)
-        CALL MY_ALLOC(EL2FA,SEL2FA)
-        CALL MY_ALLOC(IADG,NSPMD,SIADG)
-        CALL MY_ALLOC(IADG_TPR,NSPMD,SIADG)
-        CALL MY_ALLOC(NFSHSZ,NPLYMAX)
-        CALL MY_ALLOC(NFNODSZ,NPLYMAX)
-        CALL MY_ALLOC(UIX,SUIX)
-        CALL MY_ALLOC(NFACPTX,3,SNFACPTX)
-        CALL MY_ALLOC(IXEDGE,SIXEDGE)
-        CALL MY_ALLOC(IXFACET,SIXFACET)
-        CALL MY_ALLOC(IXSOLID,SIXSOLID)
-        CALL MY_ALLOC(INUMX1,SNUMX1)
-        CALL MY_ALLOC(INUMX2,SNUMX2)
-        CALL MY_ALLOC(INUMX3,SNUMX3)
-        CALL MY_ALLOC(IOFFX1,SOFFX1)
-        CALL MY_ALLOC(IOFFX2,SOFFX2)
-        CALL MY_ALLOC(IOFFX3,SOFFX3)
-        CALL MY_ALLOC(IG3DSOLID,SIG3DSOLID)
+        call my_alloc(INVERT, SINVERT, "INVERT")
+        call my_alloc(MATER, SMATER, "MATER")
+        call my_alloc(EL2FA, SEL2FA, "EL2FA")
+        call my_alloc(IADG, NSPMD, SIADG, "IADG")
+        call my_alloc(IADG_TPR, NSPMD, SIADG, "IADG_TPR")
+        call my_alloc(NFSHSZ, NPLYMAX, "NFSHSZ")
+        call my_alloc(NFNODSZ, NPLYMAX, "NFNODSZ")
+        call my_alloc(UIX, SUIX, "UIX")
+        call my_alloc(NFACPTX, 3, SNFACPTX, "NFACPTX")
+        call my_alloc(IXEDGE, SIXEDGE, "IXEDGE")
+        call my_alloc(IXFACET, SIXFACET, "IXFACET")
+        call my_alloc(IXSOLID, SIXSOLID, "IXSOLID")
+        call my_alloc(INUMX1, SNUMX1, "INUMX1")
+        call my_alloc(INUMX2, SNUMX2, "INUMX2")
+        call my_alloc(INUMX3, SNUMX3, "INUMX3")
+        call my_alloc(IOFFX1, SOFFX1, "IOFFX1")
+        call my_alloc(IOFFX2, SOFFX2, "IOFFX2")
+        call my_alloc(IOFFX3, SOFFX3, "IOFFX3")
+        call my_alloc(IG3DSOLID, SIG3DSOLID, "IG3DSOLID")
 C=======================================================================
         IADG(1:NSPMD,1:SIADG) = 0
         IF (ANIM_PLY > 0)THEN
@@ -854,8 +865,10 @@ C Ply Elements Elements
               SWAFT_PXFEM = MAX(3*NFNOD_PXFEM,3*NBF_PXFEM)
               SEL2FA_PLY = NBF_PXFEM
             ENDIF
-            ALLOCATE(EL2FA_PLY(SEL2FA_PLY), WAFT_PLY(SWAFT_PXFEM),
-     .           IAD_PLY(NPLYMAX),IAD_PLYG(NSPMD,NPLYMAX))
+            call my_alloc(EL2FA_PLY, SEL2FA_PLY, "EL2FA_PLY")
+            call my_alloc(WAFT_PLY, SWAFT_PXFEM, "WAFT_PLY")
+            call my_alloc(IAD_PLY, NPLYMAX, "IAD_PLY")
+            call my_alloc(IAD_PLYG, NSPMD, NPLYMAX, "IAD_PLYG")
             EL2FA_PLY = 0
             WAFT_PLY = ZERO
             IAD_PLY = 0
@@ -870,8 +883,10 @@ cc         NBF_PXFEM =  EPLYXFE*NPLYPART
             ENDDO
 
             SWAFT_PXFEM = MAX(3*NFNOD_PXFEM,3*NBF_PXFEM)
-            ALLOCATE(EL2FA_PLY(NBF_PXFEM), WAFT_PLY(SWAFT_PXFEM),
-     .           IAD_PLY(NPLYMAX),IAD_PLYG(NSPMD,NPLYMAX))
+            call my_alloc(EL2FA_PLY, NBF_PXFEM, "EL2FA_PLY")
+            call my_alloc(WAFT_PLY, SWAFT_PXFEM, "WAFT_PLY")
+            call my_alloc(IAD_PLY, NPLYMAX, "IAD_PLY")
+            call my_alloc(IAD_PLYG, NSPMD, NPLYMAX, "IAD_PLYG")
             EL2FA_PLY = 0
             WAFT_PLY = ZERO
             IAD_PLY = 0
@@ -928,12 +943,14 @@ C
               SEL2FA_CRK = NBF_CRKXFEM + 1
               SWAFT_CRK  = MAX(3*NFNOD_CRKXFEM,3*NBF_CRKXFEM)
             ENDIF
-            ALLOCATE(EL2FA_CRK(SEL2FA_CRK),WAFT_CRK(SWAFT_CRK),
-     .               IAD_CRK(NLEVMAX),IAD_CRKG(NSPMD,NLEVMAX))
+            call my_alloc(EL2FA_CRK, SEL2FA_CRK, "EL2FA_CRK")
+            call my_alloc(WAFT_CRK, SWAFT_CRK, "WAFT_CRK")
+            call my_alloc(IAD_CRK, NLEVMAX, "IAD_CRK")
+            call my_alloc(IAD_CRKG, NSPMD, NLEVMAX, "IAD_CRKG")
             IF (NXEL > 0) THEN
-              ALLOCATE(IAD_LAY(INT(NLEVMAX/NXEL)))
+              call my_alloc(IAD_LAY, INT(NLEVMAX/NXEL), "IAD_LAY")
             ELSE
-              ALLOCATE(IAD_LAY(0))
+              call my_alloc(IAD_LAY, 0, "IAD_LAY")
             ENDIF
             EL2FA_CRK = 0
             IAD_CRK   = 0
@@ -948,11 +965,11 @@ C
 C
             LEN_CRKX = MAX(NFNOD_CRKXFEM,NBF_CRKXFEM)
             SWAFT_CRK = MAX(3*NFNOD_CRKXFEM,3*NBF_CRKXFEM)
-            ALLOCATE(EL2FA_CRK(NBF_CRKXFEM))
-            ALLOCATE(WAFT_CRK(SWAFT_CRK))
-            ALLOCATE(IAD_CRK(NLEVMAX))
-            ALLOCATE(IAD_CRKG(NSPMD,NLEVMAX))
-            ALLOCATE(IAD_LAY(INT(NLEVMAX/NXEL)))
+            call my_alloc(EL2FA_CRK, NBF_CRKXFEM, "EL2FA_CRK")
+            call my_alloc(WAFT_CRK, SWAFT_CRK, "WAFT_CRK")
+            call my_alloc(IAD_CRK, NLEVMAX, "IAD_CRK")
+            call my_alloc(IAD_CRKG, NSPMD, NLEVMAX, "IAD_CRKG")
+            call my_alloc(IAD_LAY, INT(NLEVMAX/NXEL), "IAD_LAY")
             EL2FA_CRK = 0
             IAD_CRK   = 0
             IAD_CRKG  = 0
@@ -963,8 +980,11 @@ C
             NBF_CRKXFEMG   = NBF_CRKXFEM
           ENDIF
         ELSE
-          ALLOCATE(EL2FA_CRK(0),IAD_CRK(0),IAD_CRKG(0,0),IAD_LAY(0),
-     .             WAFT_CRK(0))
+          call my_alloc(EL2FA_CRK, 0, "EL2FA_CRK")
+          call my_alloc(IAD_CRK, 0, "IAD_CRK")
+          call my_alloc(IAD_CRKG, 0, 0, "IAD_CRKG")
+          call my_alloc(IAD_LAY, 0, "IAD_LAY")
+          call my_alloc(WAFT_CRK, 0, "WAFT_CRK")
         ENDIF
 C-----------------------------------------------
 C   cuts in solids
@@ -984,13 +1004,13 @@ C-----------------------------------------------
           LENCUT = MAX(LENCUT,NCUTS)
           IF(LENCUT>LENCUTO)THEN
             IF(ALLOCATED(CBUF))THEN
-              DEALLOCATE(CBUF)
-              DEALLOCATE(ICBUF)
+              call my_dealloc(CBUF)
+              call my_dealloc(ICBUF)
             ENDIF
             LENR=42*LENCUT
             LENI=28*LENCUT+2*NCUTS
-            ALLOCATE(CBUF(LENR),STAT=oui)
-            ALLOCATE(ICBUF(LENI),STAT=oui)
+            call my_alloc(CBUF, LENR, "CBUF", stat=oui)
+            call my_alloc(ICBUF, LENI, "ICBUF", stat=oui)
             IF(oui/=0) THEN
               CALL ANCMSG(MSGID=29,ANMODE=ANINFO)
               CALL ARRET(2)
@@ -1373,7 +1393,7 @@ C Mono Equivalent Treatment
           IF (IFVANI==1) THEN
             ELOFF=0
             DO I=1,NFVBAG
-              ALLOCATE(ITAGT(FVDATA(I)%NNTR))
+              call my_alloc(ITAGT, FVDATA(I)%NNTR, "ITAGT")
               DO J=1,FVDATA(I)%NNTR
                 ITAGT(J)=0
               ENDDO
@@ -1411,7 +1431,7 @@ C
                 ENDDO
               ENDDO
               ELOFF=ELOFF+FVDATA(I)%NNTR
-              DEALLOCATE(ITAGT)
+              call my_dealloc(ITAGT)
             ENDDO
           ENDIF
         ELSE
@@ -1451,7 +1471,7 @@ C
 C
         IF (NSPMD == 1) THEN
           IF (IFVANI==1) THEN
-            ALLOCATE(OFFTR(NFVTR))
+            call my_alloc(OFFTR, NFVTR, "OFFTR")
             DO I=1,NFVTR
               OFFTR(I)=0
             ENDDO
@@ -1481,7 +1501,7 @@ C
             ENDDO
 C
             CALL WRITE_C_C(OFFTR,NFVTR)
-            DEALLOCATE(OFFTR)
+            call my_dealloc(OFFTR)
           ENDIF
         ELSE
           IF (IFVANI==1) CALL SPMD_FVB_AOFF(FVEL2FA)
@@ -1557,7 +1577,7 @@ cc         CALL WRITE_I_C(IAD_PLY  ,NPLYPART)
                 CALL WRITE_I_C(IADPC ,1)
               ENDDO
             ENDIF
-            DEALLOCATE(IAD_PLY)
+            call my_dealloc(IAD_PLY)
           ENDIF
 c------------------------------------------------------------------
 C     xfem crack for layered shells
@@ -1619,7 +1639,7 @@ C
             IF (IFVANI==1) THEN
               FVIAD=NELCUT+NBF+NESCT+NERWL+NESRG+NESMD1
               DO I=1,NFVBAG
-                ALLOCATE(ITAGT(FVDATA(I)%NNTR))
+                call my_alloc(ITAGT, FVDATA(I)%NNTR, "ITAGT")
                 DO J=1,FVDATA(I)%NNTR
                   ITAGT(J)=0
                 ENDDO
@@ -1639,9 +1659,9 @@ ccC
                   ENDDO
                   CALL WRITE_I_C(FVIAD,1)
                 ENDDO
-                DEALLOCATE(ITAGT)
+                call my_dealloc(ITAGT)
               ENDDO
-              DEALLOCATE(FVPBUF)
+              call my_dealloc(FVPBUF)
             ENDIF
           ELSE
             IF (IFVANI==1.AND.NFVPART>0) THEN
@@ -1649,7 +1669,7 @@ ccC
                 FVIAD=FVPBUF(I)
                 CALL WRITE_I_C(FVIAD,1)
               ENDDO
-              DEALLOCATE(FVPBUF)
+              call my_dealloc(FVPBUF)
             ENDIF
           ENDIF
 C-----------------------------------------------
@@ -3242,10 +3262,16 @@ C-----------------------------------------------
      .                +MIN(1,ANIM_N(12)+OUTP_N(3)+H3D_DATA%N_SCAL_DINER))
 C Monoproc Equivalent Treatment
         IF (NSPMD == 1 .AND. NFVTR>0) THEN
-          ALLOCATE(FVMASS(NFVTR),FVPRES(NFVTR), FVQX(NFVTR),
-     .             FVQY(NFVTR), FVQZ(NFVTR), FVRHO(NFVTR),
-     .             FVENER(NFVTR), FVCSON(NFVTR), FVGAMA(NFVTR),
-     .             FVVISU(NFVTR))
+          call my_alloc(FVMASS, NFVTR, "FVMASS")
+          call my_alloc(FVPRES, NFVTR, "FVPRES")
+          call my_alloc(FVQX, NFVTR, "FVQX")
+          call my_alloc(FVQY, NFVTR, "FVQY")
+          call my_alloc(FVQZ, NFVTR, "FVQZ")
+          call my_alloc(FVRHO, NFVTR, "FVRHO")
+          call my_alloc(FVENER, NFVTR, "FVENER")
+          call my_alloc(FVCSON, NFVTR, "FVCSON")
+          call my_alloc(FVGAMA, NFVTR, "FVGAMA")
+          call my_alloc(FVVISU, NFVTR, "FVVISU")
           DO I=1,NFVTR
             FVMASS(I)=ZERO
             FVPRES(I)=ZERO
@@ -3304,10 +3330,16 @@ C
           ENDDO
         ELSEIF(NFVTR>0) THEN
           IF (ISPMD==0) THEN
-            ALLOCATE(FVMASS(NFVTR),FVPRES(NFVTR), FVQX(NFVTR),
-     .               FVQY(NFVTR), FVQZ(NFVTR), FVRHO(NFVTR),
-     .               FVENER(NFVTR), FVCSON(NFVTR), FVGAMA(NFVTR),
-     .               FVVISU(NFVTR))
+            call my_alloc(FVMASS, NFVTR, "FVMASS")
+            call my_alloc(FVPRES, NFVTR, "FVPRES")
+            call my_alloc(FVQX, NFVTR, "FVQX")
+            call my_alloc(FVQY, NFVTR, "FVQY")
+            call my_alloc(FVQZ, NFVTR, "FVQZ")
+            call my_alloc(FVRHO, NFVTR, "FVRHO")
+            call my_alloc(FVENER, NFVTR, "FVENER")
+            call my_alloc(FVCSON, NFVTR, "FVCSON")
+            call my_alloc(FVGAMA, NFVTR, "FVGAMA")
+            call my_alloc(FVVISU, NFVTR, "FVVISU")
             DO I=1,NFVTR
               FVMASS(I)=ZERO
               FVPRES(I)=ZERO
@@ -3484,7 +3516,7 @@ C-----------------------------------------------
           IF(ANIM_V(1)==1) CALL ANI_TXT('Velocity',8)
           IF(ANIM_V(2)==1) CALL ANI_TXT('Displacement',12)
           IF(ANIM_V(3)==1) CALL ANI_TXT('Acceleration',12)
-          IF(ANIM_V(4)==1.AND.ANIMCONT==1) CALL ANI_TXT('Contact Forces',14)
+          IF(ANIM_V(4)==1) CALL ANI_TXT('Contact Forces',14)
           IF(ANIM_V(5)==1) CALL ANI_TXT('Internal Forces',15)
           IF(ANIM_V(6)==1) CALL ANI_TXT('External Forces',15)
           IF(ANIM_V(7)==1) CALL ANI_TXT('Sect.RBY,Wall F.',16)
@@ -3538,7 +3570,7 @@ C     ENDIF
      .   CALL VELVEC(A,A_TEMP,ICBUF(MIC2),CBUF(MAC2),NODCUT,NNWL,
      .         NNNSRG,NODGLOB,WEIGHT,NFVNOD,3,
      .         NFNOD_PXFEM,NOD_PXFEM,INDX_PLY,NFNOD_CRKXFEMG,ITAB)
-        IF(ANIM_V(4)==1.AND.ANIMCONT==1)THEN
+        IF(ANIM_V(4)==1)THEN
           IF(NINTSTAMP==0)THEN
             CALL VELVECC(CONT,CONT_TEMP,ICBUF(MIC2),CBUF(MAC2),NODCUT,NNWL,
      .          NNNSRG,NODGLOB,WEIGHT,NFVNOD,NFNOD_PXFEM,NFNOD_PXFEMG,
@@ -4187,7 +4219,7 @@ C  ----
         IF(ANIM_PLY > 0) THEN
           IF (NSPMD == 1) THEN
             II = 0
-            ALLOCATE(ITAB_PLY(NPLYXFE))
+            call my_alloc(ITAB_PLY, NPLYXFE, "ITAB_PLY")
             ITAB_PLY =0
             DO J=1,NPLYPART
               IPLY = INDX_PLY(J)
@@ -4198,11 +4230,11 @@ C  ----
               CALL WRITE_I_C(ITAB_PLY,NN)
               II = II + NN
             ENDDO
-            DEALLOCATE(ITAB_PLY)
+            call my_dealloc(ITAB_PLY)
             IDMAX =  IDMAX + NFNOD_PXFEM
           ELSE
             IF (ISPMD==0)THEN
-              ALLOCATE(ITAB_PLY(NFNOD_PXFEMG))
+              call my_alloc(ITAB_PLY, NFNOD_PXFEMG, "ITAB_PLY")
               II = 0
               ITAB_PLY =0
               DO J=1,NFNOD_PXFEMG
@@ -4214,7 +4246,7 @@ c               DO I=1,NN
 c                  ITAB_PLY(I) = IDMAX  + II + I
               CALL WRITE_I_C(ITAB_PLY,NFNOD_PXFEMG)
 c              II = II + NN
-              DEALLOCATE(ITAB_PLY)
+              call my_dealloc(ITAB_PLY)
               IDMAX =  IDMAX + NFNOD_PXFEMG
             ENDIF
           ENDIF
@@ -4223,7 +4255,7 @@ C xfem crack for layerd shells +++
         IF(ANIM_CRK > 0)THEN
           IF(NSPMD == 1)THEN
             II = 0
-            ALLOCATE(ITAB_CRK(NFNOD_CRKXFEMG))
+            call my_alloc(ITAB_CRK, NFNOD_CRKXFEMG, "ITAB_CRK")
             ITAB_CRK =0
             DO ICRK=1,NCRKPART
               DO I=1,CRKNOD(ILEV)%CRKNUMNODS
@@ -4233,7 +4265,7 @@ C xfem crack for layerd shells +++
                 CALL WRITE_I_C(ITAB_CRK(K),1)
               ENDDO
             ENDDO
-            DEALLOCATE(ITAB_CRK)
+            call my_dealloc(ITAB_CRK)
           ELSE
             IF(ISPMD==0)THEN
               BUF = NFNOD_CRKXFEMG
@@ -4245,7 +4277,7 @@ C xfem crack for layerd shells +++
             END DO
           ENDIF
         ELSE
-          ALLOCATE(ITAB_CRK(0))
+          call my_alloc(ITAB_CRK, 0, "ITAB_CRK")
         ENDIF
 C xfem crack for layerd shells ---
 C  MONOPRIX Equivalent Treatment
@@ -4295,7 +4327,8 @@ C
           DO I=1,NFVTR
             CALL WRITE_I_C(IDCMAX+FVINUM(I),1)
           ENDDO
-          DEALLOCATE(FVEL2FA, FVINUM)
+          call my_dealloc(FVEL2FA)
+          call my_dealloc(FVINUM)
         ENDIF
 C-----------------------------------------------
 C   HIERARCHY
@@ -4389,7 +4422,7 @@ C Monoproc Equivalent Treatment
             ENDDO
           ELSEIF (NFVPART>0) THEN
             CALL WRITE_I_C(FVPBUF, NFVPART)
-            DEALLOCATE(FVPBUF)
+            call my_dealloc(FVPBUF)
           ENDIF
           DO I=1,NPART
             IF(MATER(I)==1)CALL WRITE_I_C(IPART(1,I),1)
@@ -6838,48 +6871,64 @@ C-----------------------------------------------
         ENDIF
 C
         IF(ANIM_PLY > 0) THEN
-          DEALLOCATE(WAFT_PLY)
-          DEALLOCATE(EL2FA_PLY)
-          DEALLOCATE(IAD_PLYG)
+          call my_dealloc(WAFT_PLY)
+          call my_dealloc(EL2FA_PLY)
+          call my_dealloc(IAD_PLYG)
         ENDIF
         IF(ANIM_CRK > 0) THEN
-          DEALLOCATE(EL2FA_CRK)
-          DEALLOCATE(IAD_CRKG)
-          DEALLOCATE(IAD_CRK)
-          DEALLOCATE(IAD_LAY)
-          DEALLOCATE(WAFT_CRK)
+          call my_dealloc(EL2FA_CRK)
+          call my_dealloc(IAD_CRKG)
+          call my_dealloc(IAD_CRK)
+          call my_dealloc(IAD_LAY)
+          call my_dealloc(WAFT_CRK)
         ENDIF
 
-        DEALLOCATE(WAFT,MAS,XNORM,XMASS1,XMASS2,XMASS3,
-     .             XFUNC1,XFUNC2,XFUNC3,XUSR)
+        call my_dealloc(WAFT)
+        call my_dealloc(MAS)
+        call my_dealloc(XNORM)
+        call my_dealloc(XMASS1)
+        call my_dealloc(XMASS2)
+        call my_dealloc(XMASS3)
+        call my_dealloc(XFUNC1)
+        call my_dealloc(XFUNC2)
+        call my_dealloc(XFUNC3)
+        call my_dealloc(XUSR)
 
-        DEALLOCATE(WA4,MAS4)
-        DEALLOCATE(WA4_FVM)
+        call my_dealloc(WA4)
+        call my_dealloc(MAS4)
+        call my_dealloc(WA4_FVM)
 
-        DEALLOCATE(VFLU,VVAR1,AFLU,VFLU_ALE,FANREACT,FANREACR)
+        call my_dealloc(VFLU)
+        call my_dealloc(VVAR1)
+        call my_dealloc(AFLU)
+        call my_dealloc(VFLU_ALE)
+        call my_dealloc(FANREACT)
+        call my_dealloc(FANREACR)
 
-        DEALLOCATE(WGPS,VGPS,ITAGPS)
-        DEALLOCATE(IS_WRITTEN_NODE)
-        DEALLOCATE(IAD)
-        DEALLOCATE(INVERT)
-        DEALLOCATE(MATER)
-        DEALLOCATE(EL2FA)
-        DEALLOCATE(IADG)
-        DEALLOCATE(IADG_TPR)
-        DEALLOCATE(NFSHSZ)
-        DEALLOCATE(NFNODSZ)
-        DEALLOCATE(UIX)
-        DEALLOCATE(NFACPTX)
-        DEALLOCATE(IXEDGE)
-        DEALLOCATE(IXFACET)
-        DEALLOCATE(IXSOLID)
-        DEALLOCATE(INUMX1)
-        DEALLOCATE(INUMX2)
-        DEALLOCATE(INUMX3)
-        DEALLOCATE(IOFFX1)
-        DEALLOCATE(IOFFX2)
-        DEALLOCATE(IOFFX3)
-        DEALLOCATE(IG3DSOLID)
+        call my_dealloc(WGPS)
+        call my_dealloc(VGPS)
+        call my_dealloc(ITAGPS)
+        call my_dealloc(IS_WRITTEN_NODE)
+        call my_dealloc(IAD)
+        call my_dealloc(INVERT)
+        call my_dealloc(MATER)
+        call my_dealloc(EL2FA)
+        call my_dealloc(IADG)
+        call my_dealloc(IADG_TPR)
+        call my_dealloc(NFSHSZ)
+        call my_dealloc(NFNODSZ)
+        call my_dealloc(UIX)
+        call my_dealloc(NFACPTX)
+        call my_dealloc(IXEDGE)
+        call my_dealloc(IXFACET)
+        call my_dealloc(IXSOLID)
+        call my_dealloc(INUMX1)
+        call my_dealloc(INUMX2)
+        call my_dealloc(INUMX3)
+        call my_dealloc(IOFFX1)
+        call my_dealloc(IOFFX2)
+        call my_dealloc(IOFFX3)
+        call my_dealloc(IG3DSOLID)
 c-----------
         RETURN
       END SUBROUTINE GENANI

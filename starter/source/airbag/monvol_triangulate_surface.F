@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    monvol_triangulate_surface   ../starter/source/airbag/monvol_triangulate_surface.F
 !||--- called by ------------------------------------------------------
@@ -35,9 +36,11 @@ C     M o d u l e s
 C-----------------------------------------------
       USE MONVOL_STRUCT_MOD
       USE GROUPDEF_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C     I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C     C o m m o n   B l o c k s
@@ -114,7 +117,7 @@ C-----------------------------------------------
       NB_FILL_TRI = T_MONVOLN%NB_FILL_TRI
 
       IF (NTG + NB_FILL_TRI + NTGI > 0) THEN
-         ALLOCATE(T_MONVOLN%ELEM(3, NTG + NB_FILL_TRI + NTGI))
+         call my_alloc(T_MONVOLN%ELEM, 3, NTG + NB_FILL_TRI + NTGI, "T_MONVOLN%ELEM")
       ENDIF
 
       IF (KMESH == 12 .OR. KMESH == 14) THEN
@@ -202,12 +205,14 @@ C-----------------------------------------------
 
 !     Allocate
 !     --------
-            IF (NTRI + NB_FILL_TRI > 0) ALLOCATE(TRI(4 * (NTRI + NB_FILL_TRI)))
-            IF (NQUAD > 0) THEN 
-               ALLOCATE(QUAD(5 * NQUAD))
-               ALLOCATE(SPLITTED_QUAD(6 * NQUAD))
+            IF (NTRI + NB_FILL_TRI > 0) THEN
+               call my_alloc(TRI, 4 * (NTRI + NB_FILL_TRI), "TRI")
             ENDIF
-            ALLOCATE(COORD(4 * (NNS + NNI)))
+            IF (NQUAD > 0) THEN 
+               call my_alloc(QUAD, 5 * NQUAD, "QUAD")
+               call my_alloc(SPLITTED_QUAD, 6 * NQUAD, "SPLITTED_QUAD")
+            ENDIF
+            call my_alloc(COORD, 4 * (NNS + NNI), "COORD")
 !     *****************************    !
 !     * Fill in quad and tri tabs *    !
 !     *****************************    !
@@ -490,10 +495,10 @@ C-----------------------------------------------
 !     ***********************    !
 !     * Memory deallocation *    !
 !     ***********************    !
-            IF (ALLOCATED(QUAD)) DEALLOCATE(QUAD)
-            IF (ALLOCATED(TRI)) DEALLOCATE(TRI)
-            IF (ALLOCATED(COORD)) DEALLOCATE(COORD)
-            IF (ALLOCATED(SPLITTED_QUAD)) DEALLOCATE(SPLITTED_QUAD)
+            IF (ALLOCATED(QUAD)) CALL MY_DEALLOC(QUAD)
+            IF (ALLOCATED(TRI)) call my_dealloc(TRI)
+            IF (ALLOCATED(COORD)) CALL MY_DEALLOC(COORD)
+            IF (ALLOCATED(SPLITTED_QUAD)) CALL MY_DEALLOC(SPLITTED_QUAD)
          ENDIF
       ELSE
 !     *-*-*-*-*-*-*-*-*-*-*-*-*-*-    !
@@ -577,16 +582,16 @@ C-----------------------------------------------
          IF (ITRI - 1 /= NTG) THEN
             NTG = ITRI - 1
             T_MONVOLN%NTG = NTG
-            ALLOCATE(ELEM_TMP(3, NTG))
+            call my_alloc(ELEM_TMP, 3, NTG, "ELEM_TMP")
             DO II = 1, NTG
                ELEM_TMP(1:3, II) = T_MONVOLN%ELEM(1:3, II)
             ENDDO
-            DEALLOCATE(T_MONVOLN%ELEM)
-            ALLOCATE(T_MONVOLN%ELEM(3, NTG + NB_FILL_TRI + NTGI))
+            CALL MY_DEALLOC(T_MONVOLN%ELEM)
+            call my_alloc(T_MONVOLN%ELEM, 3, NTG + NB_FILL_TRI + NTGI, "T_MONVOLN%ELEM")
             DO II = 1, NTG
                T_MONVOLN%ELEM(1:3, II) = ELEM_TMP(1:3, II)
             ENDDO
-            DEALLOCATE(ELEM_TMP)
+            CALL MY_DEALLOC(ELEM_TMP)
          ENDIF
          IF (NB_FILL_TRI > 0) THEN
             DO II = 1, NB_FILL_TRI

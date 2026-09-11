@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,26 +15,27 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_exch_tag_scnd    ../engine/source/mpi/elements/spmd_exch_tag_scnd.F
+!||    spmd_exch_tag_scnd   ../engine/source/mpi/elements/spmd_exch_tag_scnd.F
 !||--- called by ------------------------------------------------------
-!||    cndmasi2_dim          ../engine/source/elements/solid/solide10/s10cndf.F
-!||    s10cndi2_ini          ../engine/source/elements/solid/solide10/s10cndf.F
+!||    cndmasi2_dim         ../engine/source/elements/solid/solide10/s10cndf.F
+!||    s10cndi2_ini         ../engine/source/elements/solid/solide10/s10cndf.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod             ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_EXCH_TAG_SCND(
      1            ITAGND   ,FR_CNDS,IAD_CNDS, LCOMM)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -70,9 +71,8 @@ C-----------------------------------------------
         IF(SIZ>0)THEN
          L = IAD_CNDS(I)
           MSGTYP = MSGOFF 
-          CALL MPI_IRECV(
-     S      RBUF(L),SIZ  ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     G      SPMD_COMM_WORLD,REQ_R(I),IERROR)
+          CALL SPMD_IRECV(
+     S      RBUF(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_R(I))
         ENDIF
       END DO
 C
@@ -96,9 +96,8 @@ C--------------------------------------------------------------------
         IF(SIZ>0)THEN
           L = IAD_CNDS(I)
           MSGTYP = MSGOFF 
-          CALL MPI_ISEND(
-     +      SBUF(L),SIZ,MPI_INTEGER,IT_SPMD(I),MSGTYP,
-     +      SPMD_COMM_WORLD,REQ_S(I),IERROR)
+          CALL SPMD_ISEND(
+     +      SBUF(L:L+SIZ-1),SIZ,IT_SPMD(I),MSGTYP,REQ_S(I))
         ENDIF        
       ENDDO
 C
@@ -107,7 +106,7 @@ C--------------------------------------------------------------------
       DO I=1,NSPMD
         SIZ = IAD_CNDS(I+1)-IAD_CNDS(I)
        IF(SIZ>0)THEN
-        CALL MPI_WAIT(REQ_R(I),STATUS,IERROR)
+        CALL SPMD_WAIT(REQ_R(I),STATUS)
         DO J=IAD_CNDS(I),IAD_CNDS(I+1)-1
          NOD =  FR_CNDS(J)
          IF (ITAGND(NOD)>0) THEN
@@ -124,11 +123,10 @@ C
 C--------------------------------------------------------------------
       DO I = 1, NSPMD
         IF((IAD_CNDS(I+1)-IAD_CNDS(I))>0)THEN
-          CALL MPI_WAIT(REQ_S(I),STATUS,IERROR)
+          CALL SPMD_WAIT(REQ_S(I),STATUS)
         ENDIF
       ENDDO
 C
 #endif
       RETURN
       END SUBROUTINE
-

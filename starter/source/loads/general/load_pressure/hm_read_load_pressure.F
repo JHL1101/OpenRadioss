@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_load_pressure      ../starter/source/loads/general/load_pressure/hm_read_load_pressure.F
 !||--- called by ------------------------------------------------------
@@ -58,6 +59,7 @@ C-----------------------------------------------
         USE SENSOR_MOD
         USE PBLAST_MOD
         USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE, NCHARLINE, NCHARFIELD
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -148,9 +150,9 @@ C-------------------------------------------------------------------------------
 
 C*******   Interface reading  **************
 
-        ALLOCATE (ID_INTER(HM_NINTER ),STAT=stat)
+        call my_alloc(ID_INTER, HM_NINTER, "ID_INTER", stat=stat)
         ID_INTER(1:HM_NINTER ) = 0
-        ALLOCATE (INTER_TYP(HM_NINTER),STAT=stat)
+        call my_alloc(INTER_TYP, HM_NINTER, "INTER_TYP", stat=stat)
         INTER_TYP(1:HM_NINTER ) = 0
 C
         CALL HM_OPTION_START('/INTER')
@@ -450,7 +452,8 @@ C--------------
 
         ENDIF
 
-        DEALLOCATE (ID_INTER,INTER_TYP)
+        CALL MY_DEALLOC(ID_INTER)
+        CALL MY_DEALLOC(INTER_TYP)
 
 C-------------------------------------------------------------------------------C
         RETURN

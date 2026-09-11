@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    wrrestp                      ../engine/source/output/restart/wrrestp.F
 !||--- called by ------------------------------------------------------
@@ -133,6 +134,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    pblast_mod                   ../common_source/modules/loads/pblast_mod.F90
 !||    pinchtype_mod                ../common_source/modules/pinchtype_mod.F
 !||    python_funct_mod             ../common_source/modules/python_mod.F90
+!||    q1np_restart_mod             ../common_source/modules/q1np_restart_mod.F90
 !||    rbe3_mod                     ../common_source/modules/constraints/rbe3_mod.F90
 !||    restart_rbe3pen_mod          ../engine/source/output/restart/restart_rbe3pen.F90
 !||    restart_rwallpen_mod         ../engine/source/output/restart/restart_rwallpen.F90
@@ -226,6 +228,7 @@ C-----------------------------------------------
       use rwall_mod
       use restart_rwallpen_mod, only : write_rrwallpen
       use sfem_mod
+      USE Q1NP_RESTART_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -277,7 +280,7 @@ c     TYPE (CLUSTER_) ,DIMENSION(NCLUSTER) :: CLUSTER
       TYPE(PBLAST_)    ,INTENT(INOUT) :: PBLAST
       TYPE(RBE3_)      ,INTENT(INOUT) :: RBE3
       TYPE(RWALL_)     ,INTENT(INOUT) :: RWALL
-      TYPE(SFEM_)      ,INTENT(IN   ) :: SFEM
+      TYPE(global_sfem_),INTENT(IN  ) :: SFEM
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
 C-----------------------------------------------
@@ -345,6 +348,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C     Restart size
       INTEGER,INTENT(INOUT) :: RESTSIZE
+      integer :: N
+      my_real, allocatable :: DIST_SAV(:)
 C-----------------------------------------------
       DATA IJK/'I','J','K','L','M','N','O','P','Q','R',
      .         'S','T','U','V','W','X','Y','Z','A','B',
@@ -750,7 +755,24 @@ c        CALL WRITE_I_C(INBUF,SINBUF)
         CALL W_BUFBRIC_22() !inter22
 
         !write new structure INTBUF_TAB
+        ! Ensure type10 distance is negative so next run triggers a sort
+        ALLOCATE(DIST_SAV(NINTER))
+        DO N = 1, NINTER
+          IF (IPARI(NPARI*(N-1)+7)==10 .AND.
+     .        INTBUF_TAB(N)%S_VARIABLES >= distance_index) THEN
+            DIST_SAV(N) = INTBUF_TAB(N)%VARIABLES(distance_index)
+            INTBUF_TAB(N)%VARIABLES(distance_index) =
+     .        -ABS(DIST_SAV(N))
+          ENDIF
+        ENDDO
         CALL WRITE_INTBUF(INTBUF_TAB)
+        DO N = 1, NINTER
+          IF (IPARI(NPARI*(N-1)+7)==10 .AND.
+     .        INTBUF_TAB(N)%S_VARIABLES >= distance_index) THEN
+            INTBUF_TAB(N)%VARIABLES(distance_index) = DIST_SAV(N)
+          ENDIF
+        ENDDO
+        DEALLOCATE(DIST_SAV)
 
         CALL WRITE_I_C(RWALL%NPRW,RWALL%NNPRW*RWALL%NRWALL)
 
@@ -769,8 +791,6 @@ c        CALL WRITE_I_C(INBUF,SINBUF)
         CALL WRITE_I_C(MADNOD,SMADNOD)
 
         CALL WRITE_I_C(MADCLNOD,MADCLNODS)
-
-        CALL WRITE_I_C(MADFAIL,SMADFAIL)
 
         CALL WRITE_I_C(MADIDX,SMADIDX)
 
@@ -1102,6 +1122,30 @@ C--------------------------------------
         CALL WRITE_I_C(KXIG3D,SKXIG3D)
 
         CALL WRITE_I_C(IXIG3D,SIXIG3D)
+      ENDIF
+C----------------------------------
+C Q1NP element integer arrays
+C----------------------------------
+      IF (NUMELQ1NP_G > 0) THEN
+        IF (SKQ1NP_G > 0) THEN
+          CALL WRITE_I_C(KQ1NP_TAB,SKQ1NP_G)
+        ENDIF
+        IF (SIQ1NP_G > 0) THEN
+          CALL WRITE_I_C(IQ1NP_TAB,SIQ1NP_G)
+        ENDIF
+        IF (SQ1NPBULK_G > 0) THEN
+          CALL WRITE_I_C(IQ1NP_BULK_TAB,SQ1NPBULK_G)
+        ENDIF
+        ITMP = MAX(0, Q1NP_NKNOT_SETS_G)
+        CALL WRITE_I_C(ITMP,1)
+        IF (Q1NP_NKNOT_SETS_G > 0) THEN
+          CALL WRITE_I_C(Q1NP_NX_SET_G,Q1NP_NKNOT_SETS_G)
+          CALL WRITE_I_C(Q1NP_NY_SET_G,Q1NP_NKNOT_SETS_G)
+          CALL WRITE_I_C(Q1NP_KTAB_OFF_G,Q1NP_NKNOT_SETS_G)
+          CALL WRITE_I_C(Q1NP_KTAB_LEN_G,Q1NP_NKNOT_SETS_G)
+        ENDIF
+C       Q1NP inverse connectivity (local solid element -> Q1NP element)
+        CALL WRITE_I_C(KQ1NP_TAB_INV,NUMELS)
       ENDIF
 C----------------------------------
       CALL WRITE_I_C(TAG_SKINS6,NUMELS)
@@ -1648,6 +1692,7 @@ C
 C
       IF (N_ANCHOR_REMOTE_SEND > 0) THEN
         CALL WRITE_I_C(ANCHOR_REMOTE_SEND%ADD_PROC, NSPMD+1)
+        CALL WRITE_I_C(ANCHOR_REMOTE_SEND%BUF_INDEX, N_ANCHOR_REMOTE_SEND)
         CALL WRITE_I_C(ANCHOR_REMOTE_SEND%NODE, N_ANCHOR_REMOTE_SEND)
       ENDIF
 C
@@ -1753,6 +1798,21 @@ C
       IF (NDRAPE > 0) CALL DRAPE_WREST(DRAPE_SH4N  , DRAPE_SH3N,DRAPEG)
 C
       IF (NUMPLY > 0) CALL PLY_INFO_WREST(PLY_INFO)
+C
+C--------------------------------------
+C Q1NP element real arrays
+C--------------------------------------
+      IF (NUMELQ1NP_G > 0) THEN
+        IF (SQ1NPWEIGHT_L_G > 0) THEN
+          CALL WRITE_DB(Q1NP_WTAB,SQ1NPWEIGHT_L_G)
+        ENDIF
+        IF (SQ1NPKNOT_L_G > 0) THEN
+          CALL WRITE_DB(Q1NP_KTAB,SQ1NPKNOT_L_G)
+        ENDIF
+        IF (SQ1NPCTRL_SHARED_G > 0) THEN
+          CALL WRITE_DB(Q1NP_CPTAB,3*SQ1NPCTRL_SHARED_G)
+        ENDIF
+      ENDIF
 
       ! ---------------------------
       ! write the starter + engine elapsed time

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    update_slipring      ../engine/source/tools/seatbelts/update_slipring.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod          ../common_source/modules/elements/element_mod.F90
 !||    groupdef_mod         ../common_source/modules/groupdef_mod.F
 !||    message_mod          ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod         ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod       ../common_source/tools/memory/my_dealloc.F90
 !||    seatbelt_mod         ../common_source/modules/seatbelt_mod.F
 !||====================================================================
       SUBROUTINE UPDATE_SLIPRING(IXR,IXC,IPARG,ELBUF_TAB,FLAG_SLIPRING_UPDATE,
@@ -52,6 +55,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -117,17 +122,17 @@ C         Check of rbody status
             ENDIF
           ENDIF   
         ENDDO
-        ALLOCATE(TAG_NOD(NUMNOD))
-        ALLOCATE(CORES_SLIP(S_SLIPRING))
-        ALLOCATE(CORES_FRAM(S_SLIPRING))
-        ALLOCATE(CORES_RET(NRETRACTOR))
+        call my_alloc(TAG_NOD, NUMNOD, "TAG_NOD")
+        call my_alloc(CORES_SLIP, S_SLIPRING, "CORES_SLIP")
+        call my_alloc(CORES_FRAM, S_SLIPRING, "CORES_FRAM")
+        call my_alloc(CORES_RET, NRETRACTOR, "CORES_RET")
         S_GUIDED_CABLE = 0
         DO GUI=1,NGUIDED_CABLE
           S_GUIDED_CABLE = S_GUIDED_CABLE + GUIDE(GUI)%NCONT
         ENDDO
-        ALLOCATE(CORES_GUIDE(S_GUIDED_CABLE))
-        ALLOCATE(CORES_CONT(S_GUIDED_CABLE))
-        ALLOCATE(TAG_PART_GUI(NPART))
+        call my_alloc(CORES_GUIDE, S_GUIDED_CABLE, "CORES_GUIDE")
+        call my_alloc(CORES_CONT, S_GUIDED_CABLE, "CORES_CONT")
+        call my_alloc(TAG_PART_GUI, NPART, "TAG_PART_GUI")
       ENDIF
 C
 C----------------------------------------------------------
@@ -687,7 +692,12 @@ C
       ENDIF
 C
       IF (((N_SEATBELT_2D > 0).AND.(NCYCLE==0)).OR.(FLAG_SLIPRING_UPDATE /= 0)) THEN
-        DEALLOCATE(TAG_NOD,CORES_SLIP,CORES_FRAM,CORES_RET,CORES_GUIDE,CORES_CONT)
+        call my_dealloc(TAG_NOD)
+        call my_dealloc(CORES_SLIP)
+        call my_dealloc(CORES_FRAM)
+        call my_dealloc(CORES_RET)
+        call my_dealloc(CORES_GUIDE)
+        call my_dealloc(CORES_CONT)
       ENDIF
 C
 C----------------------------------------------------------

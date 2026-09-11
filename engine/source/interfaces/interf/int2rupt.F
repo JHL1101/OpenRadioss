@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    int2rupt        ../engine/source/interfaces/interf/int2rupt.F
 !||--- called by ------------------------------------------------------
@@ -134,13 +135,13 @@ C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
       INTEGER NSN, NMN,NUVAR,PID,IGTYP,ISYM
       INTEGER IRECT(4,*),MSR(*),NSV(*),IRTL(*),IRUPT(*),IPARI(*),
-     .   WEIGHT(*),NPF(*),ITAB(*),PDAMA2(*),INORM(*)
+     .   WEIGHT(*),NPF(*),ITAB(*),INORM(*)
 C     REAL
       my_real
      .   X(3,*),V(3,*),A(3,*),XSM0(3,*),DSM(3,*),FSM(3,*),PROP(*),
      .   AREA(*),STIFN(*),SINER(*),SMASS(*),FNCONT(3,*),
      .   MS(*),IN(*),MMASS(*),MINER(*),CRST(2,*),FSAV(*),TF(*),
-     .   FNCONTP(3,*)  ,FTCONTP(3,* ) 
+     .   FNCONTP(3,*)  ,FTCONTP(3,* ), PDAMA2(*) 
       my_real, DIMENSION(NUVAR,NSN) ::
      .   UVAR
       TYPE (H3D_DATABASE) :: H3D_DATA

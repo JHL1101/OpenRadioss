@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25prep_add    ../engine/source/interfaces/int25/i25slid.F
 !||--- called by ------------------------------------------------------
@@ -56,7 +57,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, NOR
+      INTEGER I, J, N, NOR
 C
 C preparer TAGFR ds le starter
       INTEGER TAGFR(NADMSR)
@@ -176,10 +177,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, I1, I2, I3, I4,
-     .        FAR1, FAR2, FAR3, FAR4, FARI, MGLOB,
-     .        J1, J2, J3, J4, NOR,
-     .        LOC_PROC, IADLEN, NS, IT, JT, ITRIA(2,4), NSLIDE, ITAG(4)
+      INTEGER J, K, L, N, I1, I2, I3, I4,
+     .        IT, JT, ITRIA(2,4), NSLIDE, ITAG(4)
       DATA ITRIA/1,2,2,3,3,4,4,1/
 C
 C--------------------------------------------------------
@@ -379,7 +378,10 @@ C
 !||    i25prep_slid_2   ../engine/source/interfaces/int25/i25slid.F
 !||--- called by ------------------------------------------------------
 !||    i25main_slid     ../engine/source/interfaces/int25/i25main_slid.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    tri7box          ../engine/share/modules/tri7box.F
 !||====================================================================
       SUBROUTINE I25PREP_SLID_2(
@@ -395,6 +397,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -403,7 +407,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
 C-----------------------------------------------
-      INTEGER NIN, NI25, NSN, NSNR, NADMSR, NRTM, I_MEM, SIZOPT, K_STOK,
+      INTEGER NIN, NI25, NSN, NSNR, NADMSR, NRTM, SIZOPT, K_STOK,
      .        I_STOK_OPT, FLAGREMN
       INTEGER NSV(*), CAND_N(*),CAND_E(*),ITAB(*),IRECT(4,*), MSEGLO(*),
      .        MSEGTYP(*), ADMSR(4,*), ISLIDE(4,*),
@@ -414,18 +418,18 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, NL, NOR, ISH, NOR1, NOR2, M,
+      INTEGER J, L, N, NL, NOR, ISH, NOR1, NOR2, M,
      .        ITAGM(NRTM)
       INTEGER, DIMENSION(:), ALLOCATABLE ::  PROV_E, PROV_N, TAGMSR
 C--------------------------------------------------------
       K_STOK = 0
       ITAGM(1:NRTM)=0
 
-      ALLOCATE(PROV_E(SIZOPT))
-      ALLOCATE(PROV_N(SIZOPT))
+      call my_alloc(PROV_E, SIZOPT, "PROV_E")
+      call my_alloc(PROV_N, SIZOPT, "PROV_N")
 
       IF(FLAGREMN == 2)THEN
-        ALLOCATE(TAGMSR(NRTM))
+        call my_alloc(TAGMSR, NRTM, "TAGMSR")
         TAGMSR(1:NRTM) = 0
 c
         DO N=1,NSN
@@ -599,7 +603,8 @@ c
       ENDIF
 C-----
       IF(I_STOK_OPT+K_STOK>SIZOPT) THEN
-        DEALLOCATE(PROV_E,PROV_N)
+        call my_dealloc(PROV_E)
+        call my_dealloc(PROV_N)
         RETURN
       ENDIF
 C-----
@@ -608,8 +613,9 @@ C-----
       CAND_E(I_STOK_OPT+1:I_STOK_OPT+K_STOK) = PROV_E(1:K_STOK)
       I_STOK_OPT  = I_STOK_OPT + K_STOK
 
-      DEALLOCATE(PROV_E,PROV_N)
-      IF(FLAGREMN == 2) DEALLOCATE(TAGMSR)
+      call my_dealloc(PROV_E)
+      call my_dealloc(PROV_N)
+      IF(FLAGREMN == 2) call my_dealloc(TAGMSR)
 
       RETURN
       END
@@ -649,7 +655,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, IKEEP
+      INTEGER I, J, L, N, IKEEP
 C--------------------------------------------------------
 C      keep only candidate pairs that are actually impacted
 C--------------------------------------------------------
@@ -740,7 +746,7 @@ C-----------------------------------------------
      .        SIZBUFS(NSPMD),NSENDTOT
       INTEGER ITAB(*)
       INTEGER IAD_FRNOR(NINTER25,NSPMD+1),FR_NOR(*),
-     .        NADD(*), KADD(*), IRTLM(4,NSN), NSV(*)
+     .        NADD(*), KADD(*), NSV(*)
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
 C-----------------------------------------------
@@ -748,9 +754,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, N, NOR, NOD,
-     .        LOC_PROC, P, IADLEN, NS, IDEB
-      INTEGER LR, LI, RSHIFT, ISHIFT
+      INTEGER I, J, N, NOR,
+     .        LOC_PROC, P
 C     INTEGER, DIMENSION(:), ALLOCATABLE :: TAGSLD
       INTEGER :: TAGSLD(NSN+NSNR)
 C--------------------------------------------------------
@@ -824,7 +829,7 @@ C-----------------------------------------------
      .        RSIZ, ISIZ, INTFRIC, IVIS2, SIZBUFS(NSPMD)
       INTEGER ITAB(*), INDEX(*), FR_SLIDE(4,*)
       INTEGER IAD_FRNOR(NINTER25,NSPMD+1),FR_NOR(*),
-     .        NADD(*), KADD(*), IRTLM(4,NSN), NSV(*)
+     .        NADD(*), KADD(*), NSV(*)
       INTEGER , INTENT(INOUT) :: ISTIF_MSDT, IFSUB_CAREA
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -833,9 +838,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, N, NOR, NOD,
-     .        LOC_PROC, P, IADLEN, NS, IDEB
-      INTEGER LR, LI, RSHIFT, ISHIFT, TAGSLD(NSN+NSNR), ILOC(NSN+NSNR)
+      INTEGER I, J, N, NOR,
+     .        LOC_PROC, P, IDEB
+      INTEGER TAGSLD(NSN+NSNR), ILOC(NSN+NSNR)
 C--------------------------------------------------------
 C
 C computation of real and integer sending buffers sizes
@@ -999,8 +1004,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, N, NOR, NOD,
-     .        LOC_PROC, P, IADLEN, NS, II, IDEB
+      INTEGER I, J, NOD,
+     .        LOC_PROC, P, II, IDEB
       INTEGER NSEND, LR, LI, RSHIFT, ISHIFT
 C--------------------------------------------------------
 

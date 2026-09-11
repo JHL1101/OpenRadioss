@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    write_sensors          ../starter/source/tools/sensor/write_sensors.F
 !||--- called by ------------------------------------------------------
@@ -37,6 +38,7 @@ C-----------------------------------------------
       USE WRITE_MOD, ONLY : WRITE_INTEGER
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE PYTHON_FUNCT_MOD
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -68,7 +70,7 @@ c
           NPARR = SENSOR%NPARR
           NVAR  = SENSOR%NVAR
           TITLE = SENSOR%TITLE
-          ALLOCATE (LTEMP(NPARI))
+          call my_alloc(LTEMP, NPARI, "LTEMP")
           LTEMP(1:NPARI) = SENSOR%IPARAM(1:NPARI)
 c         update node system number after renumbering for sensors using nodes
           IF (TYP == 2) THEN   ! /sens/disp
@@ -97,7 +99,7 @@ c         update node system number after renumbering for sensors using nodes
           END IF
 c
           LEN = NFIX + NPARI + NPARR + NVAR
-          ALLOCATE (RBUF(LEN) )
+          call my_alloc(RBUF, LEN, "RBUF")
 c
           IAD = 0
           RBUF(IAD+1) = SENSOR%TYPE
@@ -133,8 +135,8 @@ c
           END IF
 c
           CALL WRITE_DB(RBUF,LEN)
-          DEALLOCATE(RBUF)
-          DEALLOCATE(LTEMP)
+          CALL MY_DEALLOC(RBUF)
+          CALL MY_DEALLOC(LTEMP)
 c
 c         write sensor title
           CALL FRETITL(TITLE,ITITLE,LTITR)

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !=======================================================================================================================
 !||====================================================================
 !||    ush_init_mod    ../starter/source/elements/elbuf_init/ush_init.F90
@@ -102,6 +103,7 @@
           use prop_param_mod ,       only : n_var_iparg,n_var_pm
           use precision_mod,          only: WP
           use my_alloc_mod
+          use my_dealloc_mod, only : my_dealloc
           use message_mod
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
@@ -119,7 +121,7 @@
           integer,                               intent (in   )     :: npart            !< number of ipart
           integer,                               intent (in   )     :: nel              !< number of elements in this group
           integer,                               intent (in   )     :: numelx           !< number x element
-          integer,                               intent (in   )     :: nixx             !< 1er dimension of ixx
+          integer,                               intent (in   )     :: nixx             !< first dimension of ixx
           integer, dimension(numelx),            intent (in   )     :: ipartx           !< element part id
           integer, dimension(numnod),            intent (inout)     :: nshnod           !< number shell element connected to node
           integer, dimension(n_var_iparg),       intent (in   )     :: iparg            !< element group data
@@ -151,7 +153,6 @@
           type(g_bufel_) ,pointer :: gbuf
           character(len=100) :: option
           character(len=10) :: char_pid
-          integer :: size
 !
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
@@ -169,17 +170,17 @@
             nnod = 3
           end if
 
-          call my_alloc(xx,nel,nnod)
-          call my_alloc(yy,nel,nnod)
-          call my_alloc(zz,nel,nnod)
-          call my_alloc(vx,nel,nnod)
-          call my_alloc(vy,nel,nnod)
-          call my_alloc(vz,nel,nnod)
-          call my_alloc(vrx,nel,nnod)
-          call my_alloc(vry,nel,nnod)
-          call my_alloc(vrz,nel,nnod)
-          call my_alloc(mas,nel,nnod)
-          call my_alloc(inn,nel,nnod)
+          call my_alloc(xx,nel,nnod,"xx")
+          call my_alloc(yy,nel,nnod,"yy")
+          call my_alloc(zz,nel,nnod,"zz")
+          call my_alloc(vx,nel,nnod,"vx")
+          call my_alloc(vy,nel,nnod,"vy")
+          call my_alloc(vz,nel,nnod,"vz")
+          call my_alloc(vrx,nel,nnod,"vrx")
+          call my_alloc(vry,nel,nnod,"vry")
+          call my_alloc(vrz,nel,nnod,"vrz")
+          call my_alloc(mas,nel,nnod,"mas")
+          call my_alloc(inn,nel,nnod,"inn")
 !
           nf1=nft+1
 !
@@ -390,17 +391,17 @@
             endif
           endif ! if (userl_avail==1)then
 !
-          deallocate(mas)
-          deallocate(inn)
-          deallocate(xx)
-          deallocate(yy)
-          deallocate(zz)
-          deallocate(vx)
-          deallocate(vy)
-          deallocate(vz)
-          deallocate(vrx)
-          deallocate(vry)
-          deallocate(vrz)
+          call my_dealloc(mas)
+          call my_dealloc(inn)
+          call my_dealloc(xx)
+          call my_dealloc(yy)
+          call my_dealloc(zz)
+          call my_dealloc(vx)
+          call my_dealloc(vy)
+          call my_dealloc(vz)
+          call my_dealloc(vrx)
+          call my_dealloc(vry)
+          call my_dealloc(vrz)
 
         end subroutine ush_init
 !

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,28 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    jacobiew_v       ../engine/source/materials/mat_share/jacobview_v.F
 !||--- called by ------------------------------------------------------
 !||    fail_inievo_ib   ../engine/source/materials/fail/inievo/fail_inievo_ib.F90
 !||    fail_inievo_s    ../engine/source/materials/fail/inievo/fail_inievo_s.F
+!||--- calls      -----------------------------------------------------
+!||--- uses       -----------------------------------------------------
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE  JACOBIEW_V(DIM1,DIM2,A,EW,EV,NROT)
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
         INTEGER, INTENT(in) :: DIM1
         INTEGER, INTENT(in) :: DIM2
@@ -46,8 +53,8 @@ C-----------------------------------------------
 C----------------------------------------------------------------
 
         ! ---------------------
-        ALLOCATE( B(DIM1,DIM2) )
-        ALLOCATE( Z(DIM1,DIM2) )
+        call my_alloc(B, DIM1, DIM2, "B")
+        call my_alloc(Z, DIM1, DIM2, "Z")
         DO IZ=1,DIM2
             DO IS=1,DIM2
                 IF(IZ>IS) THEN 
@@ -162,8 +169,8 @@ C----------------------------------------------------------------
             ! ---------------------
         ENDDO
 
-        DEALLOCATE( B )
-        DEALLOCATE( Z )
+        call my_dealloc(B)
+        call my_dealloc(Z)
 
         RETURN
         END SUBROUTINE JACOBIEW_V  

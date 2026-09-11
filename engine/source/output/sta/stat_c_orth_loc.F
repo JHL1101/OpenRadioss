@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    stat_c_orth_loc     ../engine/source/output/sta/stat_c_orth_loc.F
 !||--- called by ------------------------------------------------------
@@ -33,6 +34,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    elbufdef_mod        ../common_source/modules/mat_elem/elbufdef_mod.F90
 !||    element_mod         ../common_source/modules/elements/element_mod.F90
 !||    my_alloc_mod        ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod      ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE STAT_C_ORTH_LOC(ELBUF_TAB,IPARG ,IPM ,IGEO ,IXC ,
      2                           IXTG  ,WA,WAP0 ,IPARTC, IPARTTG,
@@ -47,6 +49,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -74,14 +77,14 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I, J, K, N, JJ, LEN, IOFF, IREP, NG, NEL, NFT, ITY, LFT, NPT, 
      .        LLT, MLW,NDIR,NLAY,IHBE,ISH3N,IDRAPE,NPTT, NPLY_MAX,IPT,
-     .        IGTYP, ID, IPRT0, IPRT,NPG,IPG,IE, FLAGDEG,IDEL,ILAY,ILAW,IFRAM_OLD
+     .        IGTYP, ID, IPRT0, IPRT,NPG,IE, FLAGDEG,IDEL,ILAW,IFRAM_OLD
       INTEGER,DIMENSION(:),ALLOCATABLE :: PTWA
       INTEGER,DIMENSION(:),ALLOCATABLE :: PTWA_P0
       my_real
-     .   THK, EM, EB, H1, H2, H3, ANGLE1,
+     .   ANGLE1,
      .   ANGLE2,DIR1_1,DIR1_2,DIR2_1,DIR2_2,AA,BB,V1,V2,V3,X21,X32,X34,
      .   X41,Y21,Y32,Y34,Y41,Z21,Z32,Z34,Z41,SUMA,S1,S2,VR,VS,X31,Y31,
-     .   Z31,E11,E12,E13,E21,E22,E23,SUM,AREA
+     .   Z31,SUM,AREA
       my_real 
      .   E1X, E1Y, E1Z, E2X,E2Y, E2Z, E3X, E3Y, E3Z, RX,RY,RZ,SX,SY,SZ,
      .   X2L
@@ -97,8 +100,9 @@ C-----------------------------------------------
 C=======================================================================
 C     4-NODE SHELLS
 C-----------------------------------------------
-      CALL MY_ALLOC(PTWA,MAX(STAT_NUMELC ,STAT_NUMELTG))
+      call my_alloc(PTWA, MAX(STAT_NUMELC ,STAT_NUMELTG), "PTWA")
       ALLOCATE(PTWA_P0(0:MAX(1,STAT_NUMELC_G,STAT_NUMELTG_G)))
+! TODO: non-default lower bound, convert manually
 C-----------------------------------------------
       JJ = 0
       FLAGDEG = 1
@@ -1202,8 +1206,8 @@ C IGTYP = 16 or (IGTYP = 51 + ILAW 58)
         ENDDO  !  DO N=1,STAT_NUMELTG_G
       ENDIF  !  IF (ISPMD == 0.AND.LEN > 0)
 c----------
-      DEALLOCATE(PTWA)
-      DEALLOCATE(PTWA_P0)
+      call my_dealloc(PTWA)
+      call my_dealloc(PTWA_P0)
 c-----------
       RETURN
       END

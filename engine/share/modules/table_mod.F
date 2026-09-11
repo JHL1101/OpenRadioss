@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    table_mod                  ../engine/share/modules/table_mod.F
 !||--- called by ------------------------------------------------------
@@ -81,12 +82,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    mulawglcpinch              ../engine/source/elements/shell/coqueba/mulawglcpinch.F
 !||    press_seg3                 ../engine/source/loads/general/load_pcyl/press_seg3.F
 !||    pressure_cyl               ../engine/source/loads/general/load_pcyl/pressure_cyl.F
+!||    q1np_forc3                 ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
 !||    q4forc2                    ../engine/source/elements/solid_2d/quad4/q4forc2.F
 !||    qforc2                     ../engine/source/elements/solid_2d/quad/qforc2.F
 !||    r23forc3                   ../engine/source/elements/spring/r23forc3.F
 !||    r23law108                  ../engine/source/elements/spring/r23law108.F
 !||    r23law113                  ../engine/source/elements/spring/r23law113.F
 !||    r23law114                  ../engine/source/elements/spring/r23law114.F
+!||    r23law135                  ../engine/source/elements/spring/r23law135.F90
 !||    r3def3                     ../engine/source/elements/spring/r3def3.F
 !||    resol                      ../engine/source/engine/resol.F
 !||    retractor_table_inv        ../engine/source/tools/seatbelts/retractor_table_inv.F90

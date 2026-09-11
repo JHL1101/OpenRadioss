@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i24inisur_nei          ../starter/source/interfaces/inter3d1/i24inisu_nei.F
 !||--- called by ------------------------------------------------------
@@ -36,6 +37,7 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
         USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+        use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -56,10 +58,9 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,IW,I1,I2,I3,M,NMAX,N_MAX,E_MAX,E_ID,N_EI,
-     1        ITAG(NUMNOD),N_NI,NE0,NN0,NRTM_SH,NRTM0,
-     2        J1,J2,J3,J4,K1,K2,L1,L2,KPERM1(4),KPERM2(4),IRR,
-     3        NFT,JLT
+      INTEGER I,J,I1,I2,M,NMAX,N_MAX,E_MAX,N_EI,
+     1        ITAG(NUMNOD),N_NI,
+     2        J1,J2,J3,J4,K1,K2,L1,L2,KPERM1(4),KPERM2(4),IRR
       INTEGER, DIMENSION(:),ALLOCATABLE :: MVOI,NVOI
       INTEGER, DIMENSION(:,:),ALLOCATABLE :: EIDNOD
       my_real
@@ -93,7 +94,9 @@ C-----------max number of connected segment per node
        NMAX=MAX(NMAX,ITAG(I))
        ITAG(I)=0
       ENDDO
-      ALLOCATE(MVOI(NMAX+10),NVOI(2*NMAX+10),EIDNOD(NMAX,NUMNOD))
+      call my_alloc(MVOI, NMAX+10, "MVOI")
+      call my_alloc(NVOI, 2*NMAX+10, "NVOI")
+      call my_alloc(EIDNOD, NMAX, NUMNOD, "EIDNOD")
       EIDNOD=0
 C------------ini- E_ids of each node
       DO I=1,NRTM
@@ -190,7 +193,9 @@ c        ELSE  sous-triangle 1
 C
       END DO !I=1,NRTM
 C      
-      DEALLOCATE(MVOI,NVOI,EIDNOD)
+      CALL MY_DEALLOC(MVOI)
+      CALL MY_DEALLOC(NVOI)
+      CALL MY_DEALLOC(EIDNOD)
 C
 c      DO I=1,NRTM
 c       print *,'N_E(I),MSEGTYP(I),I=',N_E(I),MSEGTYP(I),I
@@ -245,7 +250,7 @@ c  O   IE(NE),IN(NN)     - final (reduced) neighbour segment,node arries
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NEW,K,M,NE0,NN0,DNE,IOP
+      INTEGER I,NE0,NN0,DNE,IOP
 C---------------------
        IRR = 0
        NE0=NE
@@ -323,7 +328,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NEW,K,M,LING,NE,NN
+      INTEGER J,NEW,LING,NE
       DATA LING/0/
 C---- Common Add Id--And End --------------------------------------------------------------------
       IF (I1==I2) THEN
@@ -375,7 +380,7 @@ c  O   NN,ICN(NN)        - Number and neighbour node list
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,NEW,K,M,LING,NN0
+      INTEGER J,NEW,K,M,LING,NN0
       DATA LING/0/
 C---- Common Add Id--And End --------------------------------------------------------------------
       IF (I1==I2) THEN
@@ -447,7 +452,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,IW,I1,I2,I3,MG,M,IP,IGTYP
+      INTEGER I,J,MG,M,IP,IGTYP
       my_real
      .   WA(NUMNOD),DX
 C init 

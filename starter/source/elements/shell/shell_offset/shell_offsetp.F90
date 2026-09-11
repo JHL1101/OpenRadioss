@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    shell_offsetp_mod   ../starter/source/elements/shell/shell_offset/shell_offsetp.F90
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@
 ! ======================================================================================================================
 !
 !=======================================================================================================================
-!!\brief This subroutine do the shell offset treatment w/ projection for composite shell
+!!\brief This subroutine performs the shell offset treatment with projection for composite shell
 !=======================================================================================================================
 !||====================================================================
 !||    shell_offsetp             ../starter/source/elements/shell/shell_offset/shell_offsetp.F90
@@ -69,19 +70,21 @@
           use sh_offset_jonct_chk_mod, only:sh_offset_jonct_chk
           use dim_shell_offsetp_mod, only: dim_shell_offsetp
           use precision_mod, only: WP
+          use MY_ALLOC_MOD
+          use my_dealloc_mod, only : my_dealloc
 ! ----------------------------------------------------------------------------------------------------------------------
           implicit none
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Arguments
 ! ----------------------------------------------------------------------------------------------------------------------
           integer, intent (in   )                          :: ngroup           !< number of elem group
-          integer, intent (in   )                          :: nparg            !< 1er dim of iparg
-          integer, intent (in   )                          :: npropg           !< 1er dim of geo
+          integer, intent (in   )                          :: nparg            !< first dimension of iparg
+          integer, intent (in   )                          :: npropg           !< first dimension of geo
           integer, intent (in   )                          :: numgeo           !< number of prop
           integer, intent (in   )                          :: numelc           !< number shell 4n element
-          integer, intent (in   )                          :: nixc             !< 1er dim of ixc
+          integer, intent (in   )                          :: nixc             !< first dimension of ixc
           integer, intent (in   )                          :: numeltg          !< number shell 3n element
-          integer, intent (in   )                          :: nixtg            !< 1er dim of ixtg
+          integer, intent (in   )                          :: nixtg            !< first dimension of ixtg
           integer, intent (in   )                          :: numnod           !< number node
           integer, intent (in   ) ,dimension(nparg,ngroup) :: iparg            !< elem group array
           integer, intent (in   ) ,dimension(nixc,numelc)  :: ixc              !< shell 4n connectivity
@@ -89,7 +92,7 @@
           real(kind=WP), intent (in   ),dimension(npropg,numgeo) :: geo              !< property array
           real(kind=WP), intent (in  ),dimension(numelc+numeltg) :: thk              !< shell thickness
           real(kind=WP), intent (inout),dimension(3,numnod)      :: x                !< node coordinates
-          integer, intent (inout),dimension(numelc+numeltg):: itagsh           !< shell w/ offset
+          integer, intent (inout),dimension(numelc+numeltg):: itagsh           !< shell with offset
           type(shell_defaults_), intent(inout)             :: defaults_shell   !< /DEF_SHELL variables
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
@@ -103,7 +106,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
-          allocate(intag(numnod))
+          call my_alloc(intag, numnod, "intag")
 !
           call dim_shell_offsetp(                                              &
             ngroup,    nparg,      iparg,        npropg,                   &
@@ -112,11 +115,11 @@
             numnod,    intag,      nshel)
 !
           nneoset_g = nshel
-          allocate(idnneoset(nneoset_g))
-          allocate(ixnneoset(4,nneoset_g))
-          allocate(shoset_n(numnod))
-          allocate(sh_oset(nneoset_g))
-          allocate(thk_g(nneoset_g))
+          call my_alloc(idnneoset, nneoset_g, "idnneoset")
+          call my_alloc(ixnneoset, 4, nneoset_g, "ixnneoset")
+          call my_alloc(shoset_n, numnod, "shoset_n")
+          call my_alloc(sh_oset, nneoset_g, "sh_oset")
+          call my_alloc(thk_g, nneoset_g, "thk_g")
           shoset_n = zero
           nshel = 0
           do  ng=1,ngroup
@@ -206,12 +209,12 @@
             end do
           end if
 !
-          deallocate(intag)
-          deallocate(idnneoset)
-          deallocate(ixnneoset)
-          deallocate(shoset_n)
-          deallocate(sh_oset)
-          deallocate(thk_g)
+          call my_dealloc(intag)
+          call my_dealloc(idnneoset)
+          call my_dealloc(ixnneoset)
+          call my_dealloc(shoset_n)
+          call my_dealloc(sh_oset)
+          call my_dealloc(thk_g)
 !-----------
         end subroutine shell_offsetp
       end module shell_offsetp_mod

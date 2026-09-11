@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cnloc_mat104_ini   ../starter/source/materials/mat/mat104/cnloc_mat104_ini.F
 !||--- called by ------------------------------------------------------
@@ -60,13 +61,13 @@ c
       !=======================================================================
       !      Local Variables
       !=======================================================================
-      INTEGER I, IGURSON, INDEX(NEL), NICE
+      INTEGER I, IGURSON, NICE
 c
       my_real 
      .   CDR,KDR,HARD,YLD0,QVOCE,BVOCE,
-     .   Q1,Q2,ED,AN,EPN,KW,FR,FC,F0,NNU
+     .   Q1,Q2,ED,AN,KW,FR,FC,F0,NNU
       my_real 
-     .   SIGVM,YLD2I,OMEGA,FCOSH,FSINH,DSDRDJ2,DSDRDJ3,NORMSIG,
+     .   SIGVM,YLD2I,OMEGA,FSINH,DSDRDJ2,DSDRDJ3,NORMSIG,
      .   DJ3DSXX,DJ3DSYY,DJ3DSXY,DJ3DSZZ,DJ3DSYZ,DJ3DSZX,
      .   NORMXX,NORMYY,NORMXY,NORMZZ,NORMYZ,NORMZX,
      .   SDPLA,DPHI_DTRSIG,SIG_DFDSIG,DPHI_DSIG,DPHI_DFDR

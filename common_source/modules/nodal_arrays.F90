@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,19 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    nodal_arrays_mod                         ../common_source/modules/nodal_arrays.F90
 !||--- called by ------------------------------------------------------
+!||    apply_crack                              ../engine/source/engine/node_spliting/apply_crack.F90
 !||    asspar4                                  ../engine/source/assembly/asspar4.F
 !||    check_nan_acc                            ../engine/source/output/outfile/check_nan_acc.F
+!||    check_pon_consistency                    ../engine/source/engine/node_spliting/check_pon_consistency.F90
 !||    chkload                                  ../engine/source/interfaces/chkload.F
 !||    chkstfn3n                                ../engine/source/interfaces/interf/chkstfn3.F
 !||    count_remote_nb_elem_edge                ../engine/source/interfaces/interf/count_remote_nb_elem_edge.F
@@ -34,6 +37,7 @@
 !||    coupling_sync                            ../engine/source/coupling/coupling_adapter.F90
 !||    detach_node                              ../engine/source/engine/node_spliting/detach_node.F90
 !||    detach_node_from_interfaces              ../engine/source/engine/node_spliting/detach_node.F90
+!||    detach_node_from_rwalls                  ../engine/source/engine/node_spliting/detach_node.F90
 !||    detach_node_from_shells                  ../engine/source/engine/node_spliting/detach_node.F90
 !||    find_edge_from_remote_proc               ../engine/source/interfaces/interf/find_edge_from_remote_proc.F
 !||    find_surface_from_remote_proc            ../engine/source/interfaces/interf/find_surface_from_remote_proc.F
@@ -41,9 +45,13 @@
 !||    fixvel                                   ../engine/source/constraints/general/impvel/fixvel.F
 !||    force                                    ../engine/source/loads/general/force.F90
 !||    forcefingeo                              ../engine/source/loads/general/forcefingeo.F
+!||    forintc_prepare_gpu                      ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    funct_python_update_elements             ../engine/source/tools/curve/funct_python_update_elements.F90
 !||    get_neighbour_surface                    ../engine/source/interfaces/interf/get_neighbour_surface.F90
 !||    get_neighbour_surface_from_remote_proc   ../engine/source/interfaces/interf/get_neighbour_surface_from_remote_proc.F90
+!||    gpu_shell_internal_forces                ../engine/source/elements/shell/coque/shell_internal_forces.F90
+!||    gpu_shell_launch_async                   ../engine/source/elements/shell/coque/shell_internal_forces.F90
+!||    gpu_shell_sync_scatter                   ../engine/source/elements/shell/coque/shell_internal_forces.F90
 !||    i25main_norm                             ../engine/source/interfaces/int25/i25main_norm.F
 !||    i25tagn                                  ../engine/source/interfaces/int25/i25norm.F
 !||    init_ghost_shells                        ../engine/source/engine/node_spliting/ghost_shells.F90
@@ -55,6 +63,9 @@
 !||    lag_fxvp                                 ../engine/source/tools/lagmul/lag_fxv.F
 !||    lag_mult                                 ../engine/source/tools/lagmul/lag_mult.F
 !||    lag_multp                                ../engine/source/tools/lagmul/lag_mult.F
+!||    merge_boundary_with_split                ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
+!||    mirror_node_split                        ../engine/source/engine/node_spliting/detach_node.F90
+!||    nloc_shell_detach                        ../engine/source/engine/node_spliting/nloc_shell_detach.F90
 !||    python_call_funct_cload_dp               ../engine/source/loads/general/python_call_funct_cload.F90
 !||    python_call_funct_cload_sp               ../engine/source/loads/general/python_call_funct_cload.F90
 !||    python_register                          ../engine/source/tools/curve/python_register.F90
@@ -70,7 +81,10 @@
 !||    resol_alloc_python                       ../engine/source/engine/resol_alloc.F90
 !||    resol_head                               ../engine/source/engine/resol_head.F
 !||    restalloc                                ../engine/source/output/restart/arralloc.F
+!||    scale_parent_on_noncreating_rank         ../engine/source/engine/node_spliting/apply_crack.F90
 !||    set_new_node_values                      ../engine/source/engine/node_spliting/detach_node.F90
+!||    sfem_init                                ../engine/source/elements/solid/solide4_sfem/sfem_init.F90
+!||    sfem_init_spmd                           ../engine/source/elements/solid/solide4_sfem/sfem_init_spmd.F90
 !||    sortie_main                              ../engine/source/output/sortie_main.F
 !||    spmd_exch_deleted_surf_edge              ../engine/source/mpi/interfaces/spmd_exch_deleted_surf_edge.F
 !||    spmd_exch_neighbour_segment              ../engine/source/mpi/interfaces/spmd_exch_neighbour_segment.F90
@@ -78,8 +92,8 @@
 !||    spmd_exchange_ghost_shells               ../engine/source/engine/node_spliting/ghost_shells.F90
 !||    spmd_exchmsr_idel                        ../engine/source/mpi/interfaces/spmd_exchmsr_idel.F
 !||    spmd_exchseg_idel                        ../engine/source/mpi/kinematic_conditions/spmd_exchseg_idel.F
+!||    spmd_rebuild_boundary                    ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||    tagoff3n                                 ../engine/source/interfaces/interf/chkstfn3.F
-!||    test_jc_shell_detach                     ../engine/source/engine/node_spliting/detach_node.F90
 !||    user_interface_mod                       ../engine/source/modules/user_interface_mod.F90
 !||    viper_coupling_initialize                ../engine/source/coupling/viper/viper_interface_mod.F90
 !||    wrrestp                                  ../engine/source/output/restart/wrrestp.F
@@ -146,6 +160,7 @@
           real(kind=wp), dimension(:), allocatable :: TEMP !< temperature
 
           ! 3*NUMNOD if IRESP == 1, else 3
+          integer :: s_xdp
           double precision, dimension(:,:), allocatable :: DDP !< double precision D
           double precision, dimension(:,:), allocatable :: XDP !< double precision X
           double precision, dimension(:,:), allocatable :: ACC_DP !< double precision acceleration
@@ -223,7 +238,7 @@
 ! ----------------------------------------------------------------------------------------------------------------------
           ptr => array
         end subroutine assign_ptr_int_2d
-        
+
 !||====================================================================
 !||    assign_ptr_real_1d   ../common_source/modules/nodal_arrays.F90
 !||====================================================================
@@ -247,7 +262,7 @@
 !||====================================================================
 !||    assign_ptr_real_2d   ../common_source/modules/nodal_arrays.F90
 !||====================================================================
-      subroutine assign_ptr_real_2d(ptr,array,dim1,dim2)
+        subroutine assign_ptr_real_2d(ptr,array,dim1,dim2)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -263,7 +278,7 @@
 !                                                   Body
 ! ----------------------------------------------------------------------------------------------------------------------
           ptr => array
-        end subroutine assign_ptr_real_2d     
+        end subroutine assign_ptr_real_2d
 
 
 !! \brief Allocate nodal arrays
@@ -355,12 +370,14 @@
             call my_alloc(arrays%TEMP,0)
           end if
 #ifdef MYREAL4
+          arrays%s_xdp = numnod
           call my_alloc(arrays%DDP,3,numnod)
           call my_alloc(arrays%XDP,3,numnod)
           if(iparith==0) then
             call my_alloc(arrays%ACC_DP,3,numnod)
           end if
 #else
+          arrays%s_xdp = 1
           call my_alloc(arrays%DDP,3,1)
           call my_alloc(arrays%XDP,3,1)
 #endif
@@ -432,7 +449,9 @@
 !||====================================================================
 !||    extend_nodal_arrays   ../common_source/modules/nodal_arrays.F90
 !||--- called by ------------------------------------------------------
+!||    apply_crack           ../engine/source/engine/node_spliting/apply_crack.F90
 !||    detach_node           ../engine/source/engine/node_spliting/detach_node.F90
+!||    mirror_node_split     ../engine/source/engine/node_spliting/detach_node.F90
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    extend_array_mod      ../common_source/tools/memory/extend_array.F90
@@ -544,7 +563,90 @@
         end subroutine extend_nodal_arrays
 
 
-!! \brief extend nodal arrays
+!! \brief Extend NODES%BOUNDARY / NODES%BOUNDARY_ADD after a node split
+!! \details When node parent_id is split into parent_id and new_id, and parent_id
+!!          appears in the MPI domain-boundary list (NODES%BOUNDARY), the new node
+!!          must be inserted next to the parent in every domain slot where it appears.
+!!          This keeps NODES%BOUNDARY consistent so that SPMD_SUB_BOUNDARIES correctly
+!!          includes new_id in the non-local MPI communication tables.
+!||====================================================================
+!||    extend_boundary_for_split   ../common_source/modules/nodal_arrays.F90
+!||====================================================================
+        subroutine extend_boundary_for_split(arrays, parent_id, new_id, nspmd)
+! ----------------------------------------------------------------------------------------------------------------------
+!                                                   Implicit none
+! ----------------------------------------------------------------------------------------------------------------------
+          implicit none
+! ----------------------------------------------------------------------------------------------------------------------
+!                                                   Arguments
+! ----------------------------------------------------------------------------------------------------------------------
+          type(nodal_arrays_), intent(inout) :: arrays
+          integer,             intent(in)    :: parent_id  !< local ID of the split parent node
+          integer,             intent(in)    :: new_id     !< local ID of the new child node
+          integer,             intent(in)    :: nspmd      !< number of MPI domains
+! ----------------------------------------------------------------------------------------------------------------------
+!                                                   Local variables
+! ----------------------------------------------------------------------------------------------------------------------
+          integer :: p, j, n_total_ins, n_p, old_size, new_size, out
+          integer, allocatable :: tmp(:)
+          integer, allocatable :: n_ins(:)  ! insertions per domain
+! ----------------------------------------------------------------------------------------------------------------------
+!                                                   Body
+! ----------------------------------------------------------------------------------------------------------------------
+          if (.not. allocated(arrays%boundary))     return
+          if (.not. allocated(arrays%boundary_add)) return
+
+          old_size = arrays%boundary_size
+          allocate(n_ins(nspmd))
+          n_ins = 0
+
+          ! Count parent_id occurrences per domain using old BOUNDARY_ADD offsets
+          do p = 1, nspmd
+            do j = arrays%boundary_add(1,p), arrays%boundary_add(1,p+1) - 1
+              if (arrays%boundary(j) == parent_id) n_ins(p) = n_ins(p) + 1
+            end do
+          end do
+
+          n_total_ins = sum(n_ins)
+          if (n_total_ins == 0) then
+            deallocate(n_ins)
+            return  ! parent is not a boundary node — nothing to do
+          end if
+
+          new_size = old_size + n_total_ins
+          allocate(tmp(new_size))
+
+          ! Rebuild BOUNDARY: copy entries, inserting new_id after each parent_id
+          out = 0
+          do j = 1, old_size
+            out = out + 1
+            tmp(out) = arrays%boundary(j)
+            if (arrays%boundary(j) == parent_id) then
+              out = out + 1
+              tmp(out) = new_id
+            end if
+          end do
+
+          deallocate(arrays%boundary)
+          allocate(arrays%boundary(new_size))
+          arrays%boundary(1:new_size) = tmp(1:new_size)
+          arrays%boundary_size = new_size
+          deallocate(tmp)
+
+          ! Update BOUNDARY_ADD CSR offsets:
+          ! boundary_add(1, P+1) shifts by the total insertions in domains 1..P
+          n_p = 0
+          do p = 1, nspmd
+            n_p = n_p + n_ins(p)
+            arrays%boundary_add(1, p+1) = arrays%boundary_add(1, p+1) + n_p
+            arrays%boundary_add(2, p+1) = arrays%boundary_add(2, p+1) + n_p
+          end do
+
+          deallocate(n_ins)
+
+        end subroutine extend_boundary_for_split
+
+
 !||====================================================================
 !||    init_global_node_id   ../common_source/modules/nodal_arrays.F90
 !||--- called by ------------------------------------------------------

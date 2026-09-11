@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 C
 !||====================================================================
 !||    i7sti3                  ../starter/source/interfaces/inter3d1/i7sti3.F
@@ -138,7 +139,7 @@ C     STIFFNESS SEGMENTS
 C        IF ONE SEGMENTS IS BASED ON BOTH SOLID AND SHELL
 C        THEN SHELL STIFFNESS IS USED. UNLESS MATERIAL HAS
 C        NO STIFFNESS
-      ALLOCATE( GAP_S_L_TMP(NUMNOD) )
+      call my_alloc(GAP_S_L_TMP, NUMNOD, "GAP_S_L_TMP")
       TYPE18 = .FALSE.
       IF(INACTI == 7)TYPE18=.TRUE.
       IPGMAT = 700
@@ -403,9 +404,9 @@ C------------------------------------
 C     GAP STIFF FACES MAIN
 C------------------------------------
       IF(NUMELS > 0) THEN
-        CALL MY_ALLOC(TAGELEMS,NUMELS)
+        CALL MY_ALLOC(TAGELEMS,NUMELS,"TAGELEMS")
         TAGELEMS = 0
-        CALL MY_ALLOC(INDEXE,NUMELS)
+        CALL MY_ALLOC(INDEXE,NUMELS,"INDEXE")
         INDEXE = 0
       ENDIF
       NINV = 0
@@ -935,7 +936,8 @@ C        SPMD EXCHANGE : if no element associated to the edge => error
 C----------------------------------        
       ENDDO!next I=1,NRT
   
-      IF(NUMELS > 0) DEALLOCATE(TAGELEMS,INDEXE)
+      IF(NUMELS > 0) CALL MY_DEALLOC(TAGELEMS)
+      IF(NUMELS > 0) CALL MY_DEALLOC(INDEXE)
 C
       CALL ANCMSG(MSGID=3022,
      .             MSGTYPE=MSGWARNING,
@@ -1243,7 +1245,7 @@ C
         GAPINF=GAPINF_S+GAPINF_M
         GAPINF=MAX(GAPINF,GAPMIN)
       ENDIF 
-      DEALLOCATE( GAP_S_L_TMP )
+      CALL MY_DEALLOC(GAP_S_L_TMP)
       RETURN
  1300 FORMAT(2X,'GAP MIN = ',1PG20.13)
  2001 FORMAT(2X,'Maximum distance for radiation computation = ',
@@ -1260,6 +1262,7 @@ C
 !||    i24sti3                         ../starter/source/interfaces/inter3d1/i24sti3.F
 !||    i25gapm                         ../starter/source/interfaces/inter3d1/i25sti3.F
 !||    i25sti3                         ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i25sti_edg                      ../starter/source/interfaces/inter3d1/i25sti_edg.F
 !||    i7sti3                          ../starter/source/interfaces/inter3d1/i7sti3.F
 !||--- uses       -----------------------------------------------------
 !||====================================================================

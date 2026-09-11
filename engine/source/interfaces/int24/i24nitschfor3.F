@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,20 +15,23 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 
 !||====================================================================
 !||    i24nitschfor3   ../engine/source/interfaces/int24/i24nitschfor3.F
 !||--- called by ------------------------------------------------------
 !||    resol           ../engine/source/engine/resol.F
+!||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
 !||    element_mod     ../common_source/modules/elements/element_mod.F90
 !||    intbufdef_mod   ../common_source/modules/interfaces/intbufdef_mod.F90
 !||    message_mod     ../engine/share/message_module/message_mod.F
+!||    my_alloc_mod    ../common_source/tools/memory/my_alloc.F90
 !||    tri7box         ../engine/share/modules/tri7box.F
 !||====================================================================
        SUBROUTINE  I24NITSCHFOR3 (IPARI ,INTBUF_TAB ,IPARIT ,STRESSMEAN,
@@ -45,6 +48,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -75,7 +79,7 @@ C Equivalent nodal force computation using element mean stress:
 C               mean of contribution of all surrounded elements 
 C               FORNEQS = SUM(PHI*STRESSMEAN*Facet_Normal*Facet_Area)
 C-----------------------------------------------
-      ALLOCATE(ITAG(NUMNOD))
+      call my_alloc(ITAG, NUMNOD, "ITAG")
       ITAG(1:NUMNOD)=0
       IF(IPARIT==0)THEN
        DO NI=1,NBINTC

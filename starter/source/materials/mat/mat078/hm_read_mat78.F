@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,27 +15,30 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    hm_read_mat78            ../starter/source/materials/mat/mat078/hm_read_mat78.F
+!||    hm_read_mat78               ../starter/source/materials/mat/mat078/hm_read_mat78.F
 !||--- called by ------------------------------------------------------
-!||    hm_read_mat              ../starter/source/materials/mat/hm_read_mat.F90
+!||    hm_read_mat                 ../starter/source/materials/mat/hm_read_mat.F90
 !||--- calls      -----------------------------------------------------
-!||    ancmsg                   ../starter/source/output/message/message.F
-!||    calculp2                 ../starter/source/materials/mat/mat057/calculp2.F90
-!||    hm_get_floatv            ../starter/source/devtools/hm_reader/hm_get_floatv.F
-!||    hm_get_intv              ../starter/source/devtools/hm_reader/hm_get_intv.F
-!||    hm_option_is_encrypted   ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
-!||    init_mat_keyword         ../starter/source/materials/mat/init_mat_keyword.F
+!||    ancmsg                      ../starter/source/output/message/message.F
+!||    bbc2005_calcul_coeffs       ../starter/source/materials/mat/mat131/yield_criterion/bbc2005_calcul_coeffs.F90
+!||    calculp2                    ../starter/source/materials/mat/mat057/calculp2.F90
+!||    hm_get_floatv               ../starter/source/devtools/hm_reader/hm_get_floatv.F
+!||    hm_get_intv                 ../starter/source/devtools/hm_reader/hm_get_intv.F
+!||    hm_option_is_encrypted      ../starter/source/devtools/hm_reader/hm_option_is_encrypted.F
+!||    init_mat_keyword            ../starter/source/materials/mat/init_mat_keyword.F
 !||--- uses       -----------------------------------------------------
-!||    calculp2_mod             ../starter/source/materials/mat/mat057/calculp2.F90
-!||    elbuftag_mod             ../starter/share/modules1/elbuftag_mod.F
-!||    message_mod              ../starter/share/message_module/message_mod.F
-!||    submodel_mod             ../starter/share/modules1/submodel_mod.F
+!||    bbc2005_calcul_coeffs_mod   ../starter/source/materials/mat/mat131/yield_criterion/bbc2005_calcul_coeffs.F90
+!||    calculp2_mod                ../starter/source/materials/mat/mat057/calculp2.F90
+!||    elbuftag_mod                ../starter/share/modules1/elbuftag_mod.F
+!||    message_mod                 ../starter/share/message_module/message_mod.F
+!||    submodel_mod                ../starter/share/modules1/submodel_mod.F
 !||====================================================================
       SUBROUTINE HM_READ_MAT78(UPARAM   ,MAXUPARAM,NUPARAM  ,ISRATE   ,IMATVIS  ,
      .                         NUVAR    ,IFUNC    ,MAXFUNC  ,NFUNC    ,PARMAT   , 
@@ -55,6 +58,7 @@ C-----------------------------------------------
       USE MATPARAM_DEF_MOD
       USE CALCULP2_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use bbc2005_calcul_coeffs_mod, ONLY : bbc2005_calcul_coeffs
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -87,6 +91,12 @@ C-----------------------------------------------
      .           EINF,COE,RHO0,
      .           R00,R45,R90,CST,CSTT,P1,P2,P3,P4,N3,MEXP,C1_KH
       LOGICAL :: IS_AVAILABLE,IS_ENCRYPTED
+
+      my_real :: y0_BBC, y45_BBC, y90_BBC, r0_BBC, r45_BBC, r90_BBC, yb_BBC, rb_BBC
+      integer :: k_val_BBC
+      real(kind=8) :: y0_BBC_d, y45_BBC_d, y90_BBC_d, r0_BBC_d, r45_BBC_d, r90_BBC_d, yb_BBC_d, rb_BBC_d
+      my_real :: a, b, l_coeff, m_coeff, n_coeff, p, q, r 
+
 c-----------------------------------------------
 c   S o u r c e   L i n e s 
 C=======================================================================
@@ -95,6 +105,15 @@ C=======================================================================
       ISRATE  = 0
       IMATVIS = 0
       ILAW    = 78
+
+      a = 0.0
+      b = 0.0
+      l_coeff = 0.0
+      m_coeff = 0.0
+      n_coeff = 0.0
+      p = 0.0
+      q = 0.0
+      r = 0.0
 C
       CALL HM_OPTION_IS_ENCRYPTED(IS_ENCRYPTED)
       !line+1
@@ -120,12 +139,34 @@ C
       CALL HM_GET_FLOATV('MAT_R90'    ,R90      ,IS_AVAILABLE, LSUBMODEL, UNITAB)
       CALL HM_GET_FLOATV('MAT_MEXP'   ,MEXP     ,IS_AVAILABLE, LSUBMODEL, UNITAB)
       CALL HM_GET_INTV  ('MAT_IPLAS'  ,Iplas    ,IS_AVAILABLE, LSUBMODEL)
+
+      !Iplas = 3
       !line-6
       CALL HM_GET_INTV  ('MAT_fct_IDE',FUNCID   ,IS_AVAILABLE, LSUBMODEL)
       CALL HM_GET_FLOATV('MAT_EA'     ,EINF     ,IS_AVAILABLE, LSUBMODEL, UNITAB)
       CALL HM_GET_FLOATV('MAT_CE'     ,COE      ,IS_AVAILABLE, LSUBMODEL, UNITAB) 
-      CALL HM_GET_FLOATV('MAT_C1KH'   ,C1_KH    ,IS_AVAILABLE, LSUBMODEL, UNITAB) 
-      !========== DEFAULT VALUES=============!              
+      CALL HM_GET_FLOATV('MAT_C1KH'   ,C1_KH    ,IS_AVAILABLE, LSUBMODEL, UNITAB)
+      !line-7
+      call HM_GET_FLOATV("CRIT_BBC2005_Y0" ,y0_BBC ,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_Y45",y45_BBC,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_Y90",y90_BBC,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_R0" ,r0_BBC ,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_R45",r45_BBC,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_R90",r90_BBC,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_YB" ,yb_BBC ,is_available,lsubmodel,unitab)
+      call HM_GET_FLOATV("CRIT_BBC2005_RB" ,rb_BBC ,is_available,lsubmodel,unitab)
+      call HM_GET_INTV("CRIT_BBC2005_K"    ,k_val_BBC,is_available,lsubmodel)
+
+      y0_BBC_d  = y0_BBC
+      y45_BBC_d = y45_BBC
+      y90_BBC_d = y90_BBC
+      r0_BBC_d  = r0_BBC
+      r45_BBC_d = r45_BBC
+      r90_BBC_d = r90_BBC
+      yb_BBC_d  = yb_BBC
+      rb_BBC_d  = rb_BBC
+
+      !========== DEFAULT VALUES=============!             
       PM(1) = RHO0
       PM(89)= RHO0
 C       
@@ -153,7 +194,10 @@ C
       ENDIF
       IF (C1_KH <= CYU) C1_KH = CYU
       ! Hill 48
+     
+
       IF (Iplas == 1) THEN 
+        
         MEXP = ZERO
         P1   = R00*(ONE+R90)/R90/(ONE+R00)
         P2   = R00/(R00+ONE)
@@ -162,6 +206,7 @@ C
         N3   = P1/(ONE+R90)
       ! Barlat 89
       ELSEIF (Iplas == 2) THEN
+         
         ! Wrong value of M exponent
         IF ((MEXP > ZERO).AND.(MEXP < TWO)) THEN
           CALL ANCMSG(MSGID=1735,
@@ -178,8 +223,24 @@ C
         P4   = ONE                                              ! P
         CALL CALCULP2(P1,P2,P3,P4,MEXP,R45)                    ! USE ROUTINE OF HM_READ_MAT57
         N3   = MEXP                                            ! M
+      ! BBC2025
+      ELSEIF (Iplas == 3) THEN
+         
+          !< Cast lattice exponent K to integer (defaulting to 3 for BCC if not provided)
+          if (k_val_BBC <= 0) k_val_BBC = 3 
+          !< Compute BBC2005 math coefficients using Newton-Raphson 
+          
+          call bbc2005_calcul_coeffs(y0_BBC_d, y45_BBC_d, y90_BBC_d, r0_BBC_d, r45_BBC_d, r90_BBC_d, yb_BBC_d, rb_BBC_d, k_val_BBC, 
+     .                              a, b, l_coeff, m_coeff, n_coeff, p, q, r, mat_id, titr)  
+     
+         
+     
+        P1  = ZERO                           
+        P2  = ZERO 
+        P3  = ZERO  
+        P4  = ZERO 
+        N3  = ZERO 
       ELSE 
-        P1  = ZERO
         P1  = ZERO                           
         P2  = ZERO 
         P3  = ZERO  
@@ -190,7 +251,7 @@ c---------------------------------
       NVARTMP = 0
       NUVAR   = 6
       NFUNC   = OPTE
-      NUPARAM = 22
+      NUPARAM = 31
 c
       IF (NFUNC == 1) THEN
         IFUNC(1) = FUNCID
@@ -228,6 +289,15 @@ c----------------------
       UPARAM(20) = CSTT
       UPARAM(21) = Iplas
       UPARAM(22) = C1_KH
+      UPARAM(23) = a
+      UPARAM(24) = b
+      UPARAM(25) = l_coeff
+      UPARAM(26) = m_coeff
+      UPARAM(27) = n_coeff
+      UPARAM(28) = p
+      UPARAM(29) = q
+      UPARAM(30) = r
+      UPARAM(31) = k_val_BBC
 c---------------------
       PARMAT(1)  = YOUNG/THREE/(ONE - TWO*NU)
       PARMAT(2)  = YOUNG
@@ -267,6 +337,10 @@ c------------------------------
        WRITE(IOUT,1300) MYU,RSAT,OPTR
        WRITE(IOUT,1400) Iplas,R00,R45,R90,CST,CSTT
        IF (Iplas == 2) WRITE(IOUT,1500) P1,P2,P3,P4,MEXP
+       IF (Iplas == 3) THEN
+       WRITE(IOUT,1600) y0_BBC, y45_BBC, y90_BBC, r0_BBC, r45_BBC, r90_BBC, yb_BBC, rb_BBC, k_val_BBC, 
+     &                      a, b, l_coeff, m_coeff, n_coeff, p, q, r
+       ENDIF
       ENDIF 
 c----------------------------------------------------------------
  1000 FORMAT
@@ -299,6 +373,7 @@ c----------------------------------------------------------------
      & 5X,'PLASTIC CRITERION FLAG  . . . . . . . . . . . =',I10/  
      & 5X,'  Icrit=1  HILL   1948 CRITERION'/
      & 5X,'  Icrit=2  BARLAT 1989 CRITERION'/
+     & 5X,'  Icrit=3  BBC 2005 CRITERION'/
      & 5X,'LANKFORD COEFFICIENT R00. . . . . . . . . . . =',1PG20.13/
      & 5X,'LANKFORD COEFFICIENT R45. . . . . . . . . . . =',1PG20.13/
      & 5X,'LANKFORD COEFFICIENT R90. . . . . . . . . . . =',1PG20.13/
@@ -310,6 +385,28 @@ c----------------------------------------------------------------
      & 5X,'BARLAT PARAMETER H. . . . . . . . . . . . . . =',1PG20.13/
      & 5X,'BARLAT PARAMETER P. . . . . . . . . . . . . . =',1PG20.13/
      & 5X,'BARLAT EXPONENT  M. . . . . . . . . . . . . . =',1PG20.13/)
+ 1600 format(//                                                                  
+     & 5X,"-------------------------------------------------------",/       
+     & 5X,"BBC (2005) YIELD CRITERION                             ",/,      
+     & 5X,"-------------------------------------------------------",/,      
+     & 5X,"YIELD STRESS (Y0)  . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"YIELD STRESS (Y45) . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"YIELD STRESS (Y90) . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"LANKFORD COEFFICIENT (R00)  . . . . .  . . . . . . . =",1PG20.13/  
+     & 5X,"LANKFORD COEFFICIENT (R45) . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"LANKFORD COEFFICIENT (R90) . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"BIAXIAL YIELD STRESS (YB)  . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"BIAXIAL LANKFORD COEFF (RB)  . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"LATTICE EXPONENT (K) . . . . . . . . . . . . . . . . =",I20/       
+     & 5X,"--- CALCULATED MATHEMATICAL COEFFICIENTS ---       ",/         
+     & 5X,"PARAMETER (a)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (b)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (L)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (M)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (N)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (P)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (Q)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/  
+     & 5X,"PARAMETER (R)  . . . . . . . . . . . . . . . . . . . =",1PG20.13/)     
 c----------------------------------------------------------------
       RETURN
       END

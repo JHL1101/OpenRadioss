@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hist2_mod     ../engine/source/output/th/hist2.F
 !||--- called by ------------------------------------------------------
@@ -76,6 +77,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    pinchtype_mod           ../common_source/modules/pinchtype_mod.F
 !||    seatbelt_mod            ../common_source/modules/seatbelt_mod.F
 !||    sensor_mod              ../common_source/modules/sensor_mod.F90
+!||    spmd_mod                ../engine/source/mpi/spmd_mod.F90
 !||    stack_mod               ../engine/share/modules/stack_mod.F
 !||    th_mod                  ../engine/share/modules/th_mod.F
 !||    th_surf_mod             ../common_source/modules/interfaces/th_surf_mod.F
@@ -118,6 +120,7 @@ C-----------------------------------------------
       USE MATPARAM_DEF_MOD
       USE EBCS_MOD , only : t_ebcs_tab
       USE TH_SURF_MOD , only : TH_SURF_NUM_CHANNEL
+      USE SPMD_MOD , only : SPMD_REDUCE, SPMD_SUM
       use glob_therm_mod
       USE OUTPUT_MOD , ONLY : OUTPUT_
       use thsechecksum_mod
@@ -324,6 +327,9 @@ C------------------------
           WA(II+20)= OUTPUT%DATA%INOUT%DM_OUT   !outlet mass
           WA(II+21)= OUTPUT%DATA%INOUT%DE_IN    !inlet energy
           WA(II+22)= OUTPUT%DATA%INOUT%DE_OUT   !outlet energy
+          WA(II+23)= ENINT + ENCIN + ENROT + (ECONT + ECONT_CUMU + ECONTV + ECONTD) + EHOUR ! +TTE
+     .                - OUTPUT%TH%WFEXT ! -EFW
+     .                + OUTPUT%DATA%INOUT%DE_IN + OUTPUT%DATA%INOUT%DE_OUT ! +inlet/outlet energy  (DE_IN > 0, DE_OUT < 0)
           IF(IUNIT==IUHIS) CALL WRTDES(WA,WA,NGLOBTH,ITTYP,1)
         ENDIF  ! ISPMD==0
 C-----------------------------
@@ -674,20 +680,29 @@ C---------------------------------------------------------
        ENDIF !NSURF > 0
 
 C---------------------------------------------------------
-C      /TH/SURF : SPMD EXCHANGE
+C      /TH/SURF : OUTPUT SNAPSHOT
 C---------------------------------------------------------
-       IF(NSPMD > 1)CALL SPMD_GLOB_DSUM9(FSAVSURF,5*NSURF)
+       IF(NSURF > 0)THEN
+         IF(NSPMD > 1)THEN
+           CALL SPMD_REDUCE(FSAVSURF,
+     .                      OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT,
+     .                      TH_SURF_NUM_CHANNEL*NSURF,SPMD_SUM,IT_SPMD(1))
+         ELSE
+           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT = FSAVSURF
+         ENDIF
+       ENDIF
 
 C---------------------------------------------------------
-C      /TH/SURF (PRESSURE mean velues)
+C      /TH/SURF (PRESSURE mean values)
 C---------------------------------------------------------
        IF(ISPMD ==0 ) THEN
          DO I=1,NSURF
            IF(IGRSURF(I)%TH_SURF == 1) THEN
-             IF( FSAVSURF(5,I) > ZERO )THEN
-               FSAVSURF(4,I) = FSAVSURF(4,I) / FSAVSURF(5,I) ! The pressure in an average pressure
+             IF( OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(5,I) > ZERO )THEN
+               OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(4,I) =
+     .           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(4,I) / OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(5,I)
              ELSE
-               FSAVSURF(4,I) = ZERO
+               OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(4,I) = ZERO
              ENDIF
            ENDIF
          ENDDO
@@ -695,19 +710,23 @@ C---------------------------------------------------------
 
 C---------------------------------------------------------
 C      /TH/SURF (EBCS mean values)
-C        total surface FSAVSURF(1,:) are here gathered and
+C        total surface output channels are gathered and
 C        they can be used here to divide
 C---------------------------------------------------------
-       IF (EBCS_TAB%nebcs > 0)THEN
+       IF (ISPMD == 0 .AND. EBCS_TAB%nebcs > 0)THEN
          DO K=1,EBCS_TAB%nebcs
            IF(.NOT.EBCS_TAB%need_to_compute(K)) CYCLE
            HAS_TH = EBCS_TAB%TAB(K)%poly%has_th
            IF(has_th) THEN
              SURF_ID = EBCS_TAB%TAB(K)%poly%surf_id
              NN = IGRSURF(SURF_ID)%NSEG
-             IF(FSAVSURF(1,SURF_ID) > ZERO)THEN
-               FSAVSURF(3,SURF_ID) =  FSAVSURF(3,SURF_ID) / FSAVSURF(1,SURF_ID)  !mean velocity
-               FSAVSURF(4,SURF_ID) =  FSAVSURF(4,SURF_ID) / FSAVSURF(1,SURF_ID)  !mean pressure
+             IF(OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(1,SURF_ID) > ZERO)THEN
+               OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(3,SURF_ID) =
+     .           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(3,SURF_ID) /
+     .           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(1,SURF_ID)
+               OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(4,SURF_ID) =
+     .           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(4,SURF_ID) /
+     .           OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT(1,SURF_ID)
              ENDIF
            ENDIF
          ENDDO!next K
@@ -1329,7 +1348,8 @@ C-----------------------------
 C-----------------------------
 C           /TH/SURF
 C-----------------------------
-            CALL THSURF(IAD,IAD+NN-1,IADV,IADV+NVAR-1,ITHBUF,WA ,FSAVSURF,ITTYP,NSURF)
+            CALL THSURF(IAD,IAD+NN-1,IADV,IADV+NVAR-1,ITHBUF,WA,
+     .                  OUTPUT%TH%TH_SURF%CHANNELS_OUTPUT,ITTYP,NSURF)
 C
           ELSEIF (ITYP==118) THEN
 C-----------------------------
@@ -1538,4 +1558,3 @@ C             Aout, Aout1, Uout, Mout, Hout
       END DO
       RETURN
       END SUBROUTINE BUFMONV
-

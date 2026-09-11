@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,20 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_i8_iloc          ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_iloc   ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intvo8                ../engine/source/interfaces/inter3d/intvo8.F
+!||    intvo8         ../engine/source/interfaces/inter3d/intvo8.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    int8_mod              ../common_source/modules/interfaces/int8_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    int8_mod       ../common_source/modules/interfaces/int8_mod.F90
+!||    spmd_mod       ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_ILOC(ILOC    ,MSR,ITAB,BUFFER,
      .                        DISTANCE)
@@ -45,7 +46,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -124,29 +125,29 @@ C        BUFFER(I)%NEW_MAIN_UID(J) = ITAB(MSR(ILOC(N)))
         TAB_BUFPOS(K1) = BUFPOS
         TAG = MSGOFF
 
-        CALL MPI_ISEND(BUFS_ID(BUFPOS),N,
-     .    MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQS(K),IERR)
-        CALL MPI_IRECV(BUFR_ID(BUFPOS),N,
-     .    MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQR1(K1),IERR)
+        CALL spmd_isend(BUFS_ID(BUFPOS:BUFPOS+N-1),N,
+     .    I-1,TAG,RQS(K))
+        CALL spmd_irecv(BUFR_ID(BUFPOS:BUFPOS+N-1),N,
+     .    I-1,TAG,RQR1(K1))
 
         TAG = MSGOFF2
         K = K + 1
         K2=K2 + 1
-        CALL MPI_ISEND(BUFS_DIST(BUFPOS),N,
-     .    REAL,I-1,TAG,SPMD_COMM_WORLD,RQS(K),IERR)
-        CALL MPI_IRECV(BUFR_DIST(BUFPOS),N,
-     .    REAL,I-1,TAG,SPMD_COMM_WORLD,RQR2(K2),IERR)
+        CALL spmd_isend(BUFS_DIST(BUFPOS:BUFPOS+N-1),N,
+     .    I-1,TAG,RQS(K))
+        CALL spmd_irecv(BUFR_DIST(BUFPOS:BUFPOS+N-1),N,
+     .    I-1,TAG,RQR2(K2))
             BUFPOS = BUFPOS + N
         ENDIF
        ENDIF
       ENDDO
 
       IERR=-999
-      IF(K > 0)  CALL MPI_WAITALL(K, RQS,STAT,IERR)
+      IF(K > 0)  CALL spmd_waitall(RQS(1:K), K, STAT(:,1:K))
       BUFPOS = 0
       DO P = 1,K1
-         CALL MPI_WAITANY(K2,RQR2,I,STAT,IERR) 
-         CALL MPI_WAIT(RQR1(I),STAT2,IERR)
+         CALL spmd_waitany(RQR2(1:K2), K2, I, STAT2)
+         CALL spmd_wait(RQR1(I), STAT2)
          BUFPOS = TAB_BUFPOS(I) - 1
          I = TAB_RANK(I)
          IF(ISPMD /= I-1) THEN
@@ -190,12 +191,12 @@ C           DIST1 = DISTANCE(K)
 #endif
       END SUBROUTINE
 !||====================================================================
-!||    spmd_i8_index         ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_index   ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intvo8                ../engine/source/interfaces/inter3d/intvo8.F
+!||    intvo8          ../engine/source/interfaces/inter3d/intvo8.F
 !||--- uses       -----------------------------------------------------
-!||    int8_mod              ../common_source/modules/interfaces/int8_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    int8_mod        ../common_source/modules/interfaces/int8_mod.F90
+!||    spmd_mod        ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_INDEX(NMN,FRONTIER,INDEX_IN_COMM,S_COMM)
 C-----------------------------------------------
@@ -216,7 +217,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   D u m m y   A r g u m e n t s
@@ -238,13 +239,13 @@ C-----------------------------------------------
 
       END SUBROUTINE
 !||====================================================================
-!||    spmd_i8_commslv       ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_commslv   ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intvo8                ../engine/source/interfaces/inter3d/intvo8.F
+!||    intvo8            ../engine/source/interfaces/inter3d/intvo8.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    int8_mod              ../common_source/modules/interfaces/int8_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    int8_mod          ../common_source/modules/interfaces/int8_mod.F90
+!||    spmd_mod          ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_COMMSLV(NBSECNDS,ILOC,NSV,
      .            ITAB,BUFFER,FRONTIER,INDEX_IN_COMM)
@@ -261,7 +262,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -358,14 +359,14 @@ C-----------------------------------------------
 C       WRITE(6,*) __FILE__,__LINE__,ISPMD,I-1
         IF(ISPMD /= I-1 .AND.BUFFER(I)%NBMAIN >0 ) THEN
         K = K +1
-        CALL MPI_ISEND(NB_SECND_SENT(I),1,
-     .    MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQS(K),IERR)
-        CALL MPI_IRECV(NB_SECND_RECV(I),1,
-     .    MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQR(K),IERR)
+        CALL spmd_isend(NB_SECND_SENT(I),1,
+     .    I-1,TAG,RQS(K))
+        CALL spmd_irecv(NB_SECND_RECV(I),1,
+     .    I-1,TAG,RQR(K))
         ENDIF
       ENDDO
  
-      IF( K > 0 ) CALL MPI_WAITALL(K,RQR,STAT,IERR)
+      IF( K > 0 ) CALL spmd_waitall(RQR(1:K), K, STAT(:,1:K))
 
 
       ! size of reception buffer
@@ -378,7 +379,7 @@ C       WRITE(6,*) __FILE__,__LINE__,ISPMD,I-1
       !write(6,*) __file__,__line__,"nbsr(:)=",nb_secnd_recv(1:nspmd)
       ALLOCATE(BUFR_IDR(BUFLEN*2))
 
-      IF( K > 0 ) CALL MPI_WAITALL(K, RQS,STAT,IERR)
+      IF( K > 0 ) CALL spmd_waitall(RQS(1:K), K, STAT(:,1:K))
 
      
       TAG = MSGOFF2 
@@ -392,22 +393,24 @@ C       WRITE(6,*) __FILE__,__LINE__,ISPMD,I-1
           J = NB_SECND_SENT(I)*2
           IF(J > 0) THEN
             KSENT = KSENT + 1
-            CALL MPI_ISEND(BUFR_ID(N),J,
-     .      MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQS(KSENT),IERR)
+            CALL spmd_isend(BUFR_ID(N:N+J-1),J,
+     .      I-1,TAG,RQS(KSENT))
             N = N + J                
           ENDIF
           J = NB_SECND_RECV(I)*2
           IF(J > 0) THEN
             KRECV = KRECV + 1
-            CALL MPI_IRECV(BUFR_IDR(L),J,
-     .      MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQR(KRECV),IERR)
+            CALL spmd_irecv(BUFR_IDR(L:L+J-1),J,
+     .      I-1,TAG,RQR(KRECV))
             L = L + J       
           ENDIF
         ENDIF
       ENDDO
 
-      IF(KSENT > 0 ) CALL MPI_WAITALL(KSENT, RQS,STAT,IERR)
-      IF(KRECV > 0 ) CALL MPI_WAITALL(KRECV, RQR,STAT,IERR)
+      IF(KSENT > 0 ) CALL spmd_waitall(RQS(1:KSENT), KSENT,
+     .                                    STAT(:,1:KSENT))
+      IF(KRECV > 0 ) CALL spmd_waitall(RQR(1:KRECV), KRECV,
+     .                                    STAT(:,1:KRECV))
 
 !                                                    
       K = 1
@@ -444,12 +447,12 @@ C       WRITE(6,*) __FILE__,__LINE__,ISPMD,I-1
       END SUBROUTINE
 
 !||====================================================================
-!||    spmd_i8_updbuf        ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_updbuf   ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intvo8                ../engine/source/interfaces/inter3d/intvo8.F
+!||    intvo8           ../engine/source/interfaces/inter3d/intvo8.F
 !||--- uses       -----------------------------------------------------
-!||    int8_mod              ../common_source/modules/interfaces/int8_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    int8_mod         ../common_source/modules/interfaces/int8_mod.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_UPDBUF(NBSECNDS,ILOC,NSV,
      .            ITAB,BUFFER,FRONTIER,INDEX_IN_COMM)
@@ -466,7 +469,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -558,14 +561,14 @@ C           BUFFER(I)%BUFI(1:BUFFER(I)%NBSECND_TOT)=0
 
 
 !||====================================================================
-!||    spmd_i8_irtl          ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_irtl     ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intvo8                ../engine/source/interfaces/inter3d/intvo8.F
+!||    intvo8           ../engine/source/interfaces/inter3d/intvo8.F
 !||--- calls      -----------------------------------------------------
-!||    is_sup_face_id        ../engine/source/interfaces/inter3d/is_sup_face_id.F
+!||    is_sup_face_id   ../engine/source/interfaces/inter3d/is_sup_face_id.F
 !||--- uses       -----------------------------------------------------
-!||    int8_mod              ../common_source/modules/interfaces/int8_mod.F90
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    int8_mod         ../common_source/modules/interfaces/int8_mod.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_IRTL(
      .            IRTL,     HAS_MOVED,
@@ -586,7 +589,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -670,20 +673,24 @@ C
         IF(N > 0) THEN
           TAG = MSGOFF
           NBRQ = NBRQ + 1
-          CALL MPI_ISEND(BUFS_ID(BUFPOS1),N*5,MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQS(NBRQ),IERR)
-          CALL MPI_IRECV(BUFR_ID(BUFPOS1),N*5,MPI_INT,I-1,TAG,SPMD_COMM_WORLD,RQR(NBRQ),IERR)
+          CALL spmd_isend(BUFS_ID(BUFPOS1:BUFPOS1+5*N-1),N*5,
+     .      I-1,TAG,RQS(NBRQ))
+          CALL spmd_irecv(BUFR_ID(BUFPOS1:BUFPOS1+5*N-1),N*5,
+     .      I-1,TAG,RQR(NBRQ))
           BUFPOS1 = BUFPOS1 + 5*N
           TAG = MSGOFF2 
           NBRQ = NBRQ + 1
-          CALL MPI_ISEND(BUFS(BUFPOS2),N,REAL,I-1,TAG,SPMD_COMM_WORLD,RQS(NBRQ),IERR)
-          CALL MPI_IRECV(BUFR(BUFPOS2),N,REAL,I-1,TAG,SPMD_COMM_WORLD,RQR(NBRQ),IERR)
+          CALL spmd_isend(BUFS(BUFPOS2:BUFPOS2+N-1),N,
+     .      I-1,TAG,RQS(NBRQ))
+          CALL spmd_irecv(BUFR(BUFPOS2:BUFPOS2+N-1),N,
+     .      I-1,TAG,RQR(NBRQ))
           BUFPOS2 = BUFPOS2 + N
         ENDIF
        ENDIF
       ENDDO !ISPMD
       IF(NBRQ > 0) THEN 
-        CALL MPI_WAITALL(NBRQ, RQS,STAT,IERR)
-        CALL MPI_WAITALL(NBRQ, RQR,STAT,IERR)
+        CALL spmd_waitall(RQS(1:NBRQ), NBRQ, STAT(:,1:NBRQ))
+        CALL spmd_waitall(RQR(1:NBRQ), NBRQ, STAT(:,1:NBRQ))
       ENDIF
 
       BUFPOS1 = 0
@@ -735,12 +742,12 @@ C
 
 
 !||====================================================================
-!||    spmd_i8_reduce        ../engine/source/mpi/interfaces/spmd_i8tool.F
+!||    spmd_i8_reduce   ../engine/source/mpi/interfaces/spmd_i8tool.F
 !||--- called by ------------------------------------------------------
-!||    intfop8               ../engine/source/interfaces/interf/intfop8.F
+!||    intfop8          ../engine/source/interfaces/interf/intfop8.F
 !||--- calls      -----------------------------------------------------
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
       SUBROUTINE SPMD_I8_REDUCE(TAB,N,NUM)
 C-----------------------------------------------
@@ -757,7 +764,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
-        USE SPMD_COMM_WORLD_MOD, ONLY : SPMD_COMM_WORLD
+        USE SPMD_MOD
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -808,8 +815,7 @@ c       DEALLOCATE(BUF)
 c     ELSEIF(FLAG == 3) THEN
         ALLOCATE(BUF(N),STAT=IERR)
         BUF(1:N) = TAB(1:N)
-        CALL MPI_ALLREDUCE(BUF,TAB,N,REAL,MPI_SUM,
-     .  SPMD_COMM_WORLD,IERR)
+        CALL spmd_allreduce(BUF(1:N), TAB(1:N), N, SPMD_SUM)
         DEALLOCATE(BUF)
        
 

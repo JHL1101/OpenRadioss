@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_initemp            ../starter/source/initial_conditions/thermic/hm_read_initemp.F
 !||--- called by ------------------------------------------------------
@@ -53,6 +54,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
+      use my_alloc_mod, only : my_alloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -119,9 +122,9 @@ C--------------------------------------------------
         IF (TYP == 1) THEN
           CALL HM_GET_INTV('grnd_ID',IGR,IS_AVAILABLE,LSUBMODEL)
           CALL HM_GET_INTV('distribution_table_count',NB_LINE,IS_AVAILABLE,LSUBMODEL)
-          IF(.NOT.ALLOCATED(LIST_NOD)) ALLOCATE(LIST_NOD(NB_LINE))
+          IF(.NOT.ALLOCATED(LIST_NOD)) call my_alloc(LIST_NOD, NB_LINE, "LIST_NOD")
           LIST_NOD(1:NB_LINE) = 0
-          IF(.NOT.ALLOCATED(LIST_TEMP0)) ALLOCATE(LIST_TEMP0(NB_LINE))
+          IF(.NOT.ALLOCATED(LIST_TEMP0)) call my_alloc(LIST_TEMP0, NB_LINE, "LIST_TEMP0")
           LIST_TEMP0(1:NB_LINE) = ZERO
           DO J=1,NB_LINE
             CALL HM_GET_INT_ARRAY_INDEX('location_unit_node',LIST_NOD(J),J,IS_AVAILABLE,LSUBMODEL)
@@ -192,8 +195,8 @@ C--------------------------------------------------
             IF (NODSYS /= 0) TEMP(NODSYS)= LIST_TEMP0(J)
           ENDDO 
         ENDIF 
-        IF(ALLOCATED(LIST_TEMP0)) DEALLOCATE(LIST_TEMP0) 
-        IF(ALLOCATED(LIST_NOD)) DEALLOCATE(LIST_NOD) 
+        IF(ALLOCATED(LIST_TEMP0)) call my_dealloc(LIST_TEMP0)
+        IF(ALLOCATED(LIST_NOD)) call my_dealloc(LIST_NOD)
        ENDDO  
 C---                                                           
       CALL UDOUBLE(INITIDS,1,NBTEMP,MESS,0,BID)

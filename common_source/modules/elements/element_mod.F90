@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    element_mod                         ../common_source/modules/elements/element_mod.F90
 !||--- called by ------------------------------------------------------
@@ -395,10 +396,14 @@
 !||    genh3d                              ../engine/source/output/h3d/h3d_results/genh3d.F
 !||    genoutp                             ../engine/source/output/sty/genoutp.F
 !||    genstat                             ../engine/source/output/sta/genstat.F
+!||    get_element_group                   ../starter/source/elements/get_element_group.F90
 !||    get_nodal_ipart                     ../engine/source/output/h3d/h3d_results/h3d_skin_ixskin.F
 !||    get_q4l                             ../engine/source/output/sta/stat_c_strafg.F
 !||    get_q4lsys                          ../engine/source/output/sta/sta_c_get_q4lsys.F
 !||    get_skew45                          ../starter/source/elements/joint/rjoint/rini45.F
+!||    get_sort_key_shell                  ../starter/source/elements/shell/get_sort_key_shell.F90
+!||    get_sort_key_shell3n                ../starter/source/elements/sh3n/get_sort_key_shell3n.F90
+!||    get_sort_key_solid                  ../starter/source/elements/solid/get_sort_key_solid.F90
 !||    get_t3l                             ../engine/source/output/sta/stat_c_strafg.F
 !||    get_t3lsys                          ../engine/source/output/sta/sta_c_get_t3lsys.F
 !||    getphase                            ../starter/source/initial_conditions/inivol/getphase.F
@@ -558,6 +563,7 @@
 !||    i25gapm                             ../starter/source/interfaces/inter3d1/i25sti3.F
 !||    i25ini_gap_n                        ../starter/source/interfaces/inter3d1/i25neigh.F
 !||    i25sti3                             ../starter/source/interfaces/inter3d1/i25sti3.F
+!||    i25sti_edg                          ../starter/source/interfaces/inter3d1/i25sti_edg.F
 !||    i25surfi                            ../starter/source/interfaces/inter3d1/i25surfi.F
 !||    i2_surfi                            ../starter/source/interfaces/inter3d1/i2_surfi.F90
 !||    i2buc1                              ../starter/source/interfaces/inter3d1/i2buc1.F
@@ -762,6 +768,9 @@
 !||    printimeg                           ../engine/source/system/timer.F
 !||    printsolides                        ../engine/source/system/timer.F
 !||    printtet4                           ../engine/source/system/timer.F
+!||    q1np_forc3                          ../engine/source/elements/solid/solid_q1np/q1np_forc3.F90
+!||    q1np_generate_main                  ../starter/source/elements/solid/solid_q1np/q1np_generate_main.F90
+!||    q1np_mass3_mod                      ../starter/source/elements/solid/solid_q1np/q1np_mass3.F90
 !||    q4init2                             ../starter/source/elements/solid_2d/quad4/q4init2.F
 !||    q4ke2                               ../engine/source/elements/solid_2d/quad4/q4ke2.F
 !||    q4rcoor2                            ../engine/source/elements/solid_2d/quad4/q4rcoor2.F
@@ -790,8 +799,10 @@
 !||    r23law108                           ../engine/source/elements/spring/r23law108.F
 !||    r23law113                           ../engine/source/elements/spring/r23law113.F
 !||    r23law114                           ../engine/source/elements/spring/r23law114.F
+!||    r23law135                           ../engine/source/elements/spring/r23law135.F90
 !||    r23mass                             ../starter/source/elements/spring/rmass.F
 !||    r2buf3                              ../starter/source/elements/spring/r2buf3.F
+!||    r2buf3_law135                       ../starter/source/elements/spring/r2buf3_law135.F90
 !||    r2coor3                             ../engine/source/elements/spring/r2coor3.F
 !||    r2coork3                            ../engine/source/elements/spring/r2coork3.F
 !||    r2r_check_seg                       ../starter/source/coupling/rad2rad/routines_r2r.F
@@ -842,6 +853,7 @@
 !||    rgwat2                              ../engine/source/interfaces/int09/rgwat2.F
 !||    rgwat3                              ../engine/source/interfaces/int09/rgwat3.F
 !||    rgwath                              ../engine/source/interfaces/int09/rgwath.F
+!||    rini135_rb                          ../starter/source/elements/joint/rjoint/rini135_rb.F90
 !||    rini1u                              ../starter/source/elements/spring/rinit3.F
 !||    rini2u                              ../starter/source/elements/spring/rinit3.F
 !||    rini33_rb                           ../starter/source/elements/joint/rjoint/rini33_rb.F
@@ -936,6 +948,8 @@
 !||    setrbyon                            ../starter/source/constraints/general/rbody/hm_read_rbody.F
 !||    sfem_exclude_dim                    ../starter/source/elements/solid/solide4/sfem_exclude.F90
 !||    sfem_exclude_ini                    ../starter/source/elements/solid/solide4/sfem_exclude.F90
+!||    sfem_init                           ../engine/source/elements/solid/solide4_sfem/sfem_init.F90
+!||    sfem_init_spmd                      ../engine/source/elements/solid/solide4_sfem/sfem_init_spmd.F90
 !||    sfint3                              ../engine/source/elements/solid/solide/sfint3.F
 !||    sfint3b                             ../engine/source/elements/solid/solide/sfint3b.F
 !||    sforc3                              ../engine/source/elements/solid/solide/sforc3.F

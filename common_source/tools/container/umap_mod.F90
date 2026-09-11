@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    umap_mod                     ../common_source/tools/container/umap_mod.F90
 !||--- called by ------------------------------------------------------
@@ -28,7 +29,9 @@
 !||    init_ghost_shells            ../engine/source/engine/node_spliting/ghost_shells.F90
 !||    init_global_node_id          ../common_source/modules/nodal_arrays.F90
 !||    init_global_shell_id         ../common_source/modules/connectivity.F90
+!||    nloc_shell_detach            ../engine/source/engine/node_spliting/nloc_shell_detach.F90
 !||    spmd_exchange_ghost_shells   ../engine/source/engine/node_spliting/ghost_shells.F90
+!||    spmd_rebuild_boundary        ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||====================================================================
       module umap_mod
         use, intrinsic :: iso_c_binding
@@ -71,7 +74,9 @@
       contains
 
 !||====================================================================
-!||    add_entry        ../common_source/tools/container/umap_mod.F90
+!||    add_entry               ../common_source/tools/container/umap_mod.F90
+!||--- called by ------------------------------------------------------
+!||    spmd_rebuild_boundary   ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||--- calls      -----------------------------------------------------
 !||====================================================================
         subroutine add_entry(m, key, value)
@@ -93,10 +98,12 @@
         end function get_value
 
 !||====================================================================
-!||    reserve_capacity       ../common_source/tools/container/umap_mod.F90
+!||    reserve_capacity        ../common_source/tools/container/umap_mod.F90
 !||--- called by ------------------------------------------------------
-!||    init_global_node_id    ../common_source/modules/nodal_arrays.F90
-!||    init_global_shell_id   ../common_source/modules/connectivity.F90
+!||    init_ghost_shells       ../engine/source/engine/node_spliting/ghost_shells.F90
+!||    init_global_node_id     ../common_source/modules/nodal_arrays.F90
+!||    init_global_shell_id    ../common_source/modules/connectivity.F90
+!||    spmd_rebuild_boundary   ../engine/source/engine/node_spliting/spmd_rebuild_boundary.F90
 !||--- calls      -----------------------------------------------------
 !||====================================================================
         subroutine reserve_capacity(m, n)

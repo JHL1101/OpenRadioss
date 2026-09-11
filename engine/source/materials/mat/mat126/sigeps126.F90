@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    sigeps126_mod   ../engine/source/materials/mat/mat126/sigeps126.F90
 !||--- called by ------------------------------------------------------
@@ -41,28 +42,28 @@
 !||    matparam_def_mod   ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    precision_mod      ../common_source/modules/precision_mod.F90
 !||====================================================================
-        subroutine sigeps126(                                          &
-          nel      ,nuvar    ,uvar     ,matparam ,tt       ,et       , &
-          rho0     ,ngl      ,sigy     ,dpla     ,defp     ,amu      , &
-          depsxx   ,depsyy   ,depszz   ,depsxy   ,depsyz   ,depszx   , &
-          sigoxx   ,sigoyy   ,sigozz   ,sigoxy   ,sigoyz   ,sigozx   , &
-          signxx   ,signyy   ,signzz   ,signxy   ,signyz   ,signzx   , &
-          epsd     ,dmg      ,ssp      ,off      ,inloc    , &
-          varnl    ,l_planl  ,planl    )
-! ----------------------------------------------------------------------------------------------------------------------
-!                                                        Modules
-! ----------------------------------------------------------------------------------------------------------------------
+        subroutine sigeps126(                                                  &
+          nel      ,nuvar    ,uvar     ,matparam ,tt       ,et       ,         &
+          rho0     ,ngl      ,sigy     ,dpla     ,defp     ,amu      ,         &
+          depsxx   ,depsyy   ,depszz   ,depsxy   ,depsyz   ,depszx   ,         &
+          sigoxx   ,sigoyy   ,sigozz   ,sigoxy   ,sigoyz   ,sigozx   ,         &
+          signxx   ,signyy   ,signzz   ,signxy   ,signyz   ,signzx   ,         &
+          epsd     ,dmg      ,ssp      ,off      ,inloc    ,varnl    ,         &
+          l_planl  ,planl    )
+!----------------------------------------------------------------
+!   M o d u l e s
+!----------------------------------------------------------------
           use matparam_def_mod
           use constant_mod
           use precision_mod, only : WP
-! ----------------------------------------------------------------------------------------------------------------------
-!                                                 implicit none
-! ----------------------------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------
+!   I m p l i c i t   T y p e s
+!----------------------------------------------------------------
           implicit none
 #include  "units_c.inc"
-! ----------------------------------------------------------------------------------------------------------------------
-!                                                   arguments
-! ----------------------------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------
+!  I n p u t   A r g u m e n t s
+!----------------------------------------------------------------
           integer, intent(in) :: nel !< number of elements in the group
           integer, intent(in) :: nuvar !< number of user variables
           real(kind=WP), dimension(nel,nuvar), intent(inout) :: uvar !< user variables
@@ -101,23 +102,22 @@
           real(kind=WP), dimension(nel), intent(inout) :: varnl !< non-local variable increment
           integer, intent(in) :: l_planl !< size of the non-local plastic strain table
           real(kind=WP), dimension(l_planl*nel), intent(in) :: planl !< non-local plastic strain
-! ----------------------------------------------------------------------------------------------------------------------
-!                                                   local variables
-! ----------------------------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------
+!  L o c a l  V a r i a b l e s
+!----------------------------------------------------------------
           integer :: i,j,nindx,indx(nel),idel,ifail,noff(nel),icowpsym
-          real(kind=WP)                                                        &
-            :: g,g2,aa,bb,nn,fc,t0,cc,eps0,sfmax,efmin,pc,muc,pl,mul,          &
-            k0,k1,k2,k3,d1,d2,emax,h,cst,powt,csc,powc
-          real(kind=WP)                                                        &
-            :: pold(nel),vm(nel),mup(nel),pnew(nel),dpdmu(nel),dmup(nel),      &
-            pstar(nel),phard(nel),scale(nel),dav(nel)
-          real(kind=WP)                                                        &
-            :: j2,kav,pmin,mubar,sigstar,epfail
+          real(kind=WP) :: g,g2,aa,bb,nn,fc,t0,cc,eps0,sfmax,efmin,pc,muc,pl, &
+            mul,k0,k1,k2,k3,d1,d2,emax,h,cst,powt,csc,powc,lambda,muplock
+          real(kind=WP) ::                                                    &
+            pold(nel),vm(nel),mup(nel),pnew(nel),dpdmu(nel),dmup(nel),        &
+            pstar(nel),phard(nel),scale(nel),dav(nel),mu_max(nel)
+          real(kind=WP) :: j2,kav,pmin,mubar,sigstar,epfail,fact
           logical :: dmg_on
+          real(kind=WP), parameter :: onem = 0.999d0
 !
-          !========================================================================
+          !=====================================================================
           !< Initialisation of computation on time step
-          !========================================================================
+          !=====================================================================
           !< Recovering integer model parameter
           idel     = matparam%iparam(1)  !< Element failure flag
           ifail    = matparam%iparam(2)  !< Element failure behavior flag
@@ -150,40 +150,43 @@
           powt     = matparam%uparam(22) !< Cowper-Symonds tension exponent
           csc      = matparam%uparam(23) !< Cowper-Symonds compression parameter
           powc     = matparam%uparam(24) !< Cowper-Symonds compression exponent
+          lambda   = matparam%uparam(25) !< Locking parameter
+          muplock  = matparam%uparam(26) !< Locking volumetric strain (for which p = pl)
           !< Recovering user variables and initialization of local variables
           nindx = 0
           dmg_on = (d1 > zero)
           do i=1,nel
             if (uvar(i,2) == zero) uvar(i,2) = pc
             if (tt == zero) uvar(i,3) = fc*aa
-            mup(i)   = uvar(i,1)
-            phard(i) = uvar(i,2)
-            noff(i)  = nint(uvar(i,4))
-            dpla(i)  = zero
-            dmup(i)  = zero
+            mup(i)    = uvar(i,1)
+            phard(i)  = uvar(i,2)
+            noff(i)   = nint(uvar(i,4))
+            mu_max(i) = uvar(i,5)
+            dpla(i)   = zero
+            dmup(i)   = zero
             if (.not.dmg_on) dmg(i) = zero
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Computation of elastic deviatoric stresses and equivalent stress
-          !========================================================================
+          !=====================================================================
           do i=1,nel
-            dav(i)    =  (depsxx(i) + depsyy(i) + depszz(i))*third
-            pold(i)   = -(sigoxx(i) + sigoyy(i) + sigozz(i))*third
-            signxx(i) = sigoxx(i) + pold(i) + g2*(depsxx(i)-dav(i))
-            signyy(i) = sigoyy(i) + pold(i) + g2*(depsyy(i)-dav(i))
-            signzz(i) = sigozz(i) + pold(i) + g2*(depszz(i)-dav(i))
-            signxy(i) = sigoxy(i) + g*depsxy(i)
-            signyz(i) = sigoyz(i) + g*depsyz(i)
-            signzx(i) = sigozx(i) + g*depszx(i)
-            j2        = half*(signxx(i)**2+signyy(i)**2+signzz(i)**2)           &
-              + signxy(i)**2+signyz(i)**2+signzx(i)**2
-            vm(i)     = sqrt(three*j2)
+              dav(i)    =  (depsxx(i) + depsyy(i) + depszz(i))*third
+              pold(i)   = -(sigoxx(i) + sigoyy(i) + sigozz(i))*third
+              signxx(i) = sigoxx(i) + pold(i) + g2*(depsxx(i)-dav(i))
+              signyy(i) = sigoyy(i) + pold(i) + g2*(depsyy(i)-dav(i))
+              signzz(i) = sigozz(i) + pold(i) + g2*(depszz(i)-dav(i))
+              signxy(i) = sigoxy(i) + g*depsxy(i)
+              signyz(i) = sigoyz(i) + g*depsyz(i)
+              signzx(i) = sigozx(i) + g*depszx(i)
+              j2        = half*(signxx(i)**2+signyy(i)**2+signzz(i)**2)          &
+                              + signxy(i)**2+signyz(i)**2+signzx(i)**2
+              vm(i)     = sqrt(three*j2)
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Update plastic strain and damage in case of non-local regularisation
-          !========================================================================
+          !=====================================================================
           if (inloc > 0) then
             nindx = 0
             indx(1:nel) = 0
@@ -232,9 +235,9 @@
             end do
           end if
 !
-          !========================================================================
+          !=====================================================================
           !< Computation of the pressure
-          !========================================================================
+          !=====================================================================
           do i=1,nel
             !< Minimum pressure for tension
             pmin = -t0
@@ -254,9 +257,21 @@
             end if
             ! -> Region III: fully dense concrete
             if (mup(i) >= mul) then
-              mubar    = (amu(i) - mul)/(one + mul)
-              pnew(i)  = k1*mubar + k2*(mubar**2) + k3*(mubar**3)
-              dpdmu(i) = (k1 + two*k2*mubar + three*k3*(mubar**2))/(one + mul)
+              if ((amu(i) - mup(i)) < zero) then
+                pnew(i)  = k1*(amu(i) - mup(i))
+                dpdmu(i) = k1
+              else
+                mu_max(i) = max(amu(i),mu_max(i),zero)
+                fact      = exp(-lambda*((mu_max(i)-muplock)/muplock))
+                fact      = min(max(fact,zero),one)
+                if (fact >= onem) fact = one
+                mubar     = (amu(i) - mul)/(one + mul)
+                pnew(i)   = k1*mubar + k2*(mubar**2) + k3*(mubar**3)
+                pnew(i)   = k1*(amu(i) - mul)*fact + pnew(i)*(one - fact)
+                dpdmu(i)  = (k1 + two*k2*mubar + three*k3*(mubar**2))/(one + mul)
+                dpdmu(i)  = k1*fact + dpdmu(i)*(one - fact)
+                uvar(i,5) = mu_max(i)
+              endif
             end if
             !< Check pressure for tension
             pnew(i)  = max(pnew(i),pmin)
@@ -264,9 +279,9 @@
             pstar(i) = pnew(i)/fc
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Computation of the deviatoric yield stress
-          !========================================================================
+          !=====================================================================
           do i=1,nel
             !< For compression loadings
             if (pstar(i) > zero) then
@@ -296,11 +311,11 @@
             end if
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Radial return mapping for deviatoric stress tensor
-          !========================================================================
+          !=====================================================================
           do i=1,nel
-            if ((off(i) == one).and.(noff(i) == 0)) then
+            if ((off(i) == one).and.((noff(i) == 0).or.(ifail == 5))) then
               !< Normalized deviatoric yield stress
               sigstar = vm(i)/fc
               !< Radial return scale factor
@@ -324,9 +339,9 @@
             end if
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Update plastic strain and damage without non-local regularization
-          !========================================================================
+          !=====================================================================
           if (inloc == 0) then
             nindx = 0
             indx(1:nel) = 0
@@ -375,9 +390,9 @@
             end do
           end if
 !
-          !========================================================================
-          !< Update stress tensor and sound speed
-          !========================================================================
+          !=====================================================================
+          !< Update stress tensor, sound speed and user variables
+          !=====================================================================
           do i=1,nel
             !< Yield stress
             sigy(i)   = fc*sigy(i)
@@ -407,9 +422,9 @@
             et(i) = one
           end do
 !
-          !========================================================================
+          !=====================================================================
           !< Element failure behavior
-          !========================================================================
+          !=====================================================================
           !< Classic element deletion
           if (ifail == 1) then
             do i = 1,nel
@@ -417,48 +432,60 @@
               if (off(i) <  one) off(i) = off(i)*four_over_5
               if ((noff(i) == 1).and.(off(i) == one)) off(i) = four_over_5
             end do
-            !< Set to zero the deviatoric stress tensor
+          !< Set to zero the deviatoric stress tensor
           else if (ifail == 2) then
             do i = 1,nel
               if (noff(i) == 1) then
-                signxx(i) = -pnew(i)
-                signyy(i) = -pnew(i)
-                signzz(i) = -pnew(i)
-                signxy(i) = zero
-                signyz(i) = zero
-                signzx(i) = zero
+                signxx(i) = em02*(signxx(i) + pnew(i)) - pnew(i)
+                signyy(i) = em02*(signyy(i) + pnew(i)) - pnew(i)
+                signzz(i) = em02*(signzz(i) + pnew(i)) - pnew(i)
+                signxy(i) = em02*signxy(i)
+                signyz(i) = em02*signyz(i)
+                signzx(i) = em02*signzx(i)
               end if
             end do
-            !< Set to zero the deviatoric stress tensor
-            !< Keep pressure only in compression
+          !< Set to zero the deviatoric stress tensor
+          !< Keep pressure only in compression
           else if (ifail == 3) then
             do i = 1,nel
               if (noff(i) == 1) then
-                signxx(i) = -max(pnew(i),zero)
-                signyy(i) = -max(pnew(i),zero)
-                signzz(i) = -max(pnew(i),zero)
-                signxy(i) = zero
-                signyz(i) = zero
-                signzx(i) = zero
+                signxx(i) = em02*(signxx(i) + pnew(i)) - max(pnew(i),zero)
+                signyy(i) = em02*(signyy(i) + pnew(i)) - max(pnew(i),zero)
+                signzz(i) = em02*(signzz(i) + pnew(i)) - max(pnew(i),zero)
+                signxy(i) = em02*signxy(i)
+                signyz(i) = em02*signyz(i)
+                signzx(i) = em02*signzx(i)
               end if
             end do
-            !< Set to zero the whole stress tensor
+          !< Set to zero the whole stress tensor
           else if (ifail == 4) then
             do i = 1,nel
               if (noff(i) == 1) then
-                signxx(i) = zero
-                signyy(i) = zero
-                signzz(i) = zero
-                signxy(i) = zero
-                signyz(i) = zero
-                signzx(i) = zero
+                signxx(i) = em02*signxx(i)
+                signyy(i) = em02*signyy(i)
+                signzz(i) = em02*signzz(i)
+                signxy(i) = em02*signxy(i)
+                signyz(i) = em02*signyz(i)
+                signzx(i) = em02*signzx(i)
+              end if
+            end do
+          !< Set stress tensor to zero only in tension (negative pressure)
+          elseif (ifail == 5) then 
+            do i = 1,nel
+              if ((noff(i) == 1).and.(pnew(i) < zero)) then
+                signxx(i) = em02*signxx(i)
+                signyy(i) = em02*signyy(i)
+                signzz(i) = em02*signzz(i)
+                signxy(i) = em02*signxy(i)
+                signyz(i) = em02*signyz(i)
+                signzx(i) = em02*signzx(i)
               end if
             end do
           end if
 !
-          !========================================================================
+          !=====================================================================
           !< Element failure behavior and printing out element deletion data
-          !========================================================================
+          !=====================================================================
           if (nindx > 0) then
             !< Classic element deletion
             if (ifail == 1) then

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i17lagm       ../engine/source/interfaces/int17/i17lagm.F
 !||--- called by ------------------------------------------------------
@@ -65,13 +66,13 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,IK,IE,IS,IC,NK,III(MVSIZ,17),LLT,NFT,LE,FIRST,LAST,
-     .        I16,LES,IES,IIIS(MVSIZ,16),NC_SAV,IEL(MVSIZ),IESL(MVSIZ),
+      INTEGER I,K,IE,IC,III(MVSIZ,17),LLT,NFT,LE,FIRST,LAST,
+     .        LES,IES,IIIS(MVSIZ,16),NC_SAV,IEL(MVSIZ),IESL(MVSIZ),
      .        IE_MIN,IES_MIN
       my_real
      .   XX(MVSIZ,17),YY(MVSIZ,17),ZZ(MVSIZ,17),
      .   XXS(MVSIZ,16),YYS(MVSIZ,16),ZZS(MVSIZ,16),
-     .   AA,XMIN,YMIN,ZMIN,XMAX,YMAX,ZMAX,DIST,VIT_MIN
+     .   VIT_MIN
 C-----------------------------------------------
 C
 C
@@ -260,10 +261,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4,IAD,ICON,
+      INTEGER I,J,ICON,
      +        ICONT(MVSIZ,4)
-      my_real
-     .   VX,VY,VZ,VN,AA,VV,PENE
       my_real
      .   R_CM(MVSIZ),T_CM(MVSIZ),S_CM(MVSIZ),SI_S(MVSIZ,8),
      .   RI_S(MVSIZ,8),TI_S(MVSIZ,8),
@@ -516,9 +515,9 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4
+      INTEGER I,IK
       my_real
-     .   VX,VY,VZ,VN,AA
+     .   VX,VY,VZ,VN
       my_real
      .   NI_ML(MVSIZ,8) ,NI_SL(MVSIZ,8)
 C-----------------------------------------------------------------------
@@ -628,9 +627,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,I1,I2,I3,I4,IAD,NN
-      my_real
-     .   VX,VY,VZ,VN,AA
+      INTEGER I,IK,NK,IAD,NN
 C-----------------------------------------------
       IF(ITIED==0)THEN
        DO I=1,LLT
@@ -792,9 +789,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,IK,NK,ITER,NITERMAX,JTER,NJTERMAX,CONV
-      my_real
-     .   VX,VY,VZ,VN
+      INTEGER I,ITER,NITERMAX,JTER,NJTERMAX,CONV
       my_real
      .   DRDX(MVSIZ),DRDY(MVSIZ),DRDZ(MVSIZ),
      .   DSDX(MVSIZ),DSDY(MVSIZ),DSDZ(MVSIZ),     
@@ -913,7 +908,7 @@ C-----------------------------------------------
      +        ICONT(MVSIZ,4)
 C     REAL
       my_real
-     + SI_S(MVSIZ,*),NI_S(MVSIZ,*),RI_S,TI_S ,
+     + SI_S(MVSIZ,*),NI_S(MVSIZ,*),RI_S(MVSIZ,*),TI_S(MVSIZ,*) ,
      + XXS(MVSIZ,*) ,YYS(MVSIZ,*) ,ZZS(MVSIZ,*) ,
      + XX(MVSIZ,*)  ,YY(MVSIZ,*)  ,ZZ(MVSIZ,*) ,
      + R_CM(MVSIZ) ,S_CM(MVSIZ) ,T_CM(MVSIZ),
@@ -931,7 +926,7 @@ C-----------------------------------------------
      +        B1(MVSIZ),B2(MVSIZ),B3(MVSIZ),B4(MVSIZ),B5(MVSIZ),
      +        C1(MVSIZ),C2(MVSIZ),C3(MVSIZ),
      +        F1,F2,F3,F4,F5,F6,F7,F8,
-     +        CC1,CC2,CC3,DD1,DD2,DD3,DD,D,
+     +        CC1,CC2,CC3,DD1,DD2,DD3,D,
      +        A0,AB,BA,A4R,B4T,A5T,B5R,EPS
 C-----------------------------------------------
 C ro = r ri    to = t ti
@@ -1271,11 +1266,8 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     .  U_M_R,U_P_R,U_M_S,U_P_S,U_M_T,U_P_T,
-     .  UMS_UMT,UMS_UPT,UPS_UMT,UPS_UPT,
-     .  UMR_UMS,UMR_UPS,UPR_UMS,UPR_UPS,
-     .  UMT_UMR,UMT_UPR,UPT_UMR,UPT_UPR,
-     .  A,R05,S05,T05
+     .  U_M_R,U_P_R,U_M_T,U_P_T,
+     .  A,R05,T05
 C-----------------------------------------------------------------------
 C     calculation of Ni
 C-----------------------------------------------------------------------
@@ -1511,7 +1503,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I
       my_real
-     +        A1,A2,A3,A4,A5,A6,A7,A8,R2,T2,FF5,FF6,FF7,FF8
+     +        A1,A2,A3,A4,A5,A6,A7,A8,FF5,FF6,FF7,FF8
 C
       DO I=1,LLT
         FF5 = F(I,5) + F(I,5)
@@ -1573,11 +1565,11 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,N
+      INTEGER I
       my_real
      .   DXDR(MVSIZ), DYDR(MVSIZ), DZDR(MVSIZ),
      .   DXDT(MVSIZ), DYDT(MVSIZ), DZDT(MVSIZ),
-     .   DNIDR(8),DNIDS(8),DNIDT(8)
+     .   DNIDR(8),DNIDT(8)
       my_real
      .  U_M_R,U_P_R,U_M_S,U_P_S,U_M_T,U_P_T,
      .  UMS_UMT,UMS_UPT,UPS_UMT,UPS_UPT,

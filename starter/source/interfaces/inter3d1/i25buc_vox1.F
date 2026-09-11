@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25buc_vox1            ../starter/source/interfaces/inter3d1/i25buc_vox1.F
 !||--- called by ------------------------------------------------------
@@ -57,6 +58,7 @@ C-----------------------------------------------
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE INTBUFDEF_MOD 
       use margin_reduction_mod
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -96,7 +98,6 @@ C     REAL
 
       INTEGER , INTENT(IN) :: NRTMT
       type(intbuf_struct_), intent(inout) :: intbuf_tab !< interface data 
-      integer :: candidate_count
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -122,7 +123,6 @@ C     REAL
       INTEGER :: NB_LARGE_NODES
       INTEGER (KIND=8) :: NBX8,NBY8,NBZ8,RES8,LVOXEL8
       INTEGER (KIND=8) :: IONE,IHUNDRED !< Integer constants in INTEGER 8 for comparisions
-      my_real :: xmin_base, ymin_base, zmin_base, xmax_base, ymax_base, zmax_base
 C-----------------------------------------------
       IONE=1
       IHUNDRED=100
@@ -321,7 +321,9 @@ C
 C--------------------------------
 C     Initializations case of IDDLEVEL=0 or INACTI/=5 and INACTI/=-1
 C--------------------------------
-      ALLOCATE(NPARTNS(NSN+1),IELEM(NRTM),EDGE_L2(NSN))
+      call my_alloc(NPARTNS, NSN+1, "NPARTNS")
+      call my_alloc(IELEM, NRTM, "IELEM")
+      call my_alloc(EDGE_L2, NSN, "EDGE_L2")
 
       NPARTNS(1:NSN+1) = 0
       IELEM(1:NRTM)    = 0
@@ -332,9 +334,9 @@ C--------------------------------
  
 
        NB_LARGE_NODES = 0
-       ALLOCATE(LARGE_NODE(NSN))
-       ALLOCATE(IS_LARGE_NODE(NSN))
-       ALLOCATE(TAGNOD(NUMNOD))
+       call my_alloc(LARGE_NODE, NSN, "LARGE_NODE")
+       call my_alloc(IS_LARGE_NODE, NSN, "IS_LARGE_NODE")
+       call my_alloc(TAGNOD, NUMNOD, "TAGNOD")
        IS_LARGE_NODE(1:NSN) = 0
        LARGE_NODE(1:NSN) = 0
        NB_LARGE_NODES = 0
@@ -356,7 +358,7 @@ C
 C
         IF(INACTI==5.OR.INACTI==-1)THEN 
 
-          ALLOCATE(EDGE_L2_TMP(NUMNOD))
+          call my_alloc(EDGE_L2_TMP, NUMNOD, "EDGE_L2_TMP")
           EDGE_L2_TMP(1:NUMNOD)=ZERO
           N_SOL = 0
           DO IE=1,NRTM
@@ -397,7 +399,7 @@ C
           IF(N_SOL > 0) LEDGMAX=HALF*LEDGMAX/N_SOL
 
  
-          DEALLOCATE(EDGE_L2_TMP)
+          CALL MY_DEALLOC(EDGE_L2_TMP)
 
         ENDIF
 
@@ -429,7 +431,7 @@ C
           END DO
           NPARTNS(1)=0
 C
-          ALLOCATE(LPARTNS(NPARTNS(NSN+1)))
+          call my_alloc(LPARTNS, NPARTNS(NSN+1), "LPARTNS")
 C
           DO I=1,NSN
             N=NSV(I)
@@ -458,7 +460,7 @@ c        ELSE
 c          ALLOCATE(LPARTNS(0))
 c        END IF
       ELSE
-        ALLOCATE(LPARTNS(0))
+        call my_alloc(LPARTNS, 0, "LPARTNS")
       END IF
 C
 
@@ -472,10 +474,10 @@ C
 C
       I_STOK = 0
 
-      ALLOCATE(LOCAL_NEXT_NOD(NSN))
-      ALLOCATE(IIX(NSN))
-      ALLOCATE(IIY(NSN))
-      ALLOCATE(IIZ(NSN))
+      call my_alloc(LOCAL_NEXT_NOD, NSN, "LOCAL_NEXT_NOD")
+      call my_alloc(IIX, NSN, "IIX")
+      call my_alloc(IIY, NSN, "IIY")
+      call my_alloc(IIZ, NSN, "IIZ")
 C
 !$OMP PARALLEL
       CALL I25TRIVOX1(
@@ -493,13 +495,18 @@ C
      C   IELEM_M,LOCAL_NEXT_NOD,IIX,IIY,IIZ,
      D   intbuf_tab,ipari,nin)
 !$OMP END PARALLEL
-      DEALLOCATE(LOCAL_NEXT_NOD)
-      DEALLOCATE(IIX)
-      DEALLOCATE(IIY)
-      DEALLOCATE(IIZ)
+      CALL MY_DEALLOC(LOCAL_NEXT_NOD)
+      CALL MY_DEALLOC(IIX)
+      CALL MY_DEALLOC(IIY)
+      CALL MY_DEALLOC(IIZ)
 
-      DEALLOCATE(EDGE_L2,NPARTNS,IELEM,LPARTNS)
-      DEALLOCATE(IS_LARGE_NODE,LARGE_NODE,TAGNOD)
+      CALL MY_DEALLOC(EDGE_L2)
+      CALL MY_DEALLOC(NPARTNS)
+      CALL MY_DEALLOC(IELEM)
+      CALL MY_DEALLOC(LPARTNS)
+      CALL MY_DEALLOC(IS_LARGE_NODE)
+      CALL MY_DEALLOC(LARGE_NODE)
+      CALL MY_DEALLOC(TAGNOD)
 C
       IF(NSN/=0)THEN
        WRITE(IOUT,*)' POSSIBLE IMPACT NUMBER, NSN:',I_STOK,NSN

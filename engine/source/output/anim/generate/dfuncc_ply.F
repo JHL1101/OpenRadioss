@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    dfuncc_ply         ../engine/source/output/anim/generate/dfuncc_ply.F
 !||--- called by ------------------------------------------------------
@@ -35,6 +36,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    initbuf_mod        ../engine/share/resol/initbuf.F
 !||    matparam_def_mod   ../common_source/modules/mat_elem/matparam_def_mod.F90
 !||    my_alloc_mod       ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod     ../common_source/tools/memory/my_dealloc.F90
 !||    plyxfem_mod        ../engine/share/modules/plyxfem_mod.F
 !||    stack_mod          ../engine/share/modules/stack_mod.F
 !||====================================================================
@@ -57,6 +59,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -89,24 +92,21 @@ C-----------------------------------------------
 C     REAL
       my_real
      .   EVAR(MVSIZ),
-     .   OFF, P, VONM2, VONM, S1, S2, S12, S3, VALUE,
-     .   A1,B1,B2,B3,YEQ,F1,M1,M2,M3, FAC, DAM1(MVSIZ),DAM2(MVSIZ),
-     .   WPLA(MVSIZ), DMAX(MVSIZ),WPMAX(MVSIZ),
+     .   OFF, VONM2, S1, S2, S12, FAC,
      .   FAIL(MVSIZ),SIGE(MVSIZ,5)
       INTEGER I, NG, NEL, ISS, N, J, MLW, NUVAR, IUS, 
-     .        ISTRAIN,NN, K1, K2,JTURB,MT,IMID, IALEL,IPID,
-     .        NN1,NN2,NN3,NN4,NN5,NN6,NN7,NN8,NN9,NN10,NF,
-     .        LLL,NINTLAY,NFAIL,
-     .        OFFSET,K,II,II_L,INC,KK,IHBE, 
-     .        NPTM,NPG, NBVU, I1, MPT, NEL5, NEL8,
+     .        ISTRAIN,JTURB,IPID,
+     .        NN1,NN3,NN4,NN5,NN6,
+     .        NINTLAY,NFAIL,
+     .        OFFSET,K,II,INC,IHBE, 
+     .        NPTM,NPG, I1, MPT, NEL5, NEL8,
      .        IPT,BUF,NPTR,NPTS,NPTT,NLAY,IR,IS,PTF,LENF,IL,
-     .        IADR,IPMAT,PID(MVSIZ),MAT(MVSIZ),MATLY(MVSIZ*100),
+     .        IADR,IPMAT,PID(MVSIZ),MAT(MVSIZ),
      .        NEL_PLY,ILAYER,IFLAG,JJ(5)
       INTEGER IE, ISHPLYXFEM, ILAST, NUVARV, 
-     .        IVISC,IPMAT_IPLY,NUVARD,MAT_IPLY,
-     .        MATPLY,LL,IPLYC,I3,I2
+     .        IVISC,LL
       INTEGER PLYS,IPLY,PLYELEMS(NUMELC),ELC,NS1,MATL,
-     .   IIGEO,IADI,ISUBSTACK
+     .   ISUBSTACK
       REAL R4
       TYPE(G_BUFEL_)    ,POINTER :: GBUF     
       TYPE(BUF_LAY_)    ,POINTER :: BUFLY     
@@ -118,7 +118,7 @@ C     REAL
      .  DIMENSION(:), POINTER  :: UVAR 
       REAL,DIMENSION(:),ALLOCATABLE:: WAL
 C-----------------------------------------------
-      CALL MY_ALLOC(WAL,NBF_L)
+      call my_alloc(WAL, NBF_L, "WAL")
 !
       LL = 0
 C      
@@ -956,6 +956,6 @@ C
           CALL SPMD_R4GET_PARTN(1,NBF_L,NBPART,IADG,WAL,BUF)
       ENDIF
 
-      DEALLOCATE(WAL)
+      call my_dealloc(WAL)
       RETURN
       END

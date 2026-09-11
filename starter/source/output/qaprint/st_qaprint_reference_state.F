@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    st_qaprint_reference_state   ../starter/source/output/qaprint/st_qaprint_reference_state.F
 !||--- called by ------------------------------------------------------
@@ -162,8 +163,8 @@ C
 C        
         IF (NEREF > 0) THEN
 C
-          CALL MY_ALLOC(INDEX,2*NUMELC)
-          CALL MY_ALLOC(ITR1,NUMELC)
+          CALL MY_ALLOC(INDEX,2*NUMELC,"INDEX")
+          CALL MY_ALLOC(ITR1,NUMELC,"ITR1")
 C
           DO IE=1,NUMELC
             ITR1(IE)=IXC(NIXC,IE)
@@ -203,10 +204,11 @@ C
             ENDDO
 C
           ENDDO
-          DEALLOCATE(INDEX,ITR1)
+          CALL MY_DEALLOC(INDEX)
+          CALL MY_DEALLOC(ITR1)
 C
-          CALL MY_ALLOC(INDEX,2*NUMELTG)
-          CALL MY_ALLOC(ITR1,NUMELTG)
+          CALL MY_ALLOC(INDEX,2*NUMELTG,"INDEX")
+          CALL MY_ALLOC(ITR1,NUMELTG,"ITR1")
 C
           DO IE=1,NUMELTG
             ITR1(IE)=IXTG(NIXTG,IE)
@@ -246,10 +248,11 @@ C
             ENDDO
 C
           ENDDO
-          DEALLOCATE(INDEX,ITR1)
+          CALL MY_DEALLOC(INDEX)
+          CALL MY_DEALLOC(ITR1)
 C
-          CALL MY_ALLOC(INDEX,2*NUMELS8)
-          CALL MY_ALLOC(ITR1,NUMELS8)
+          CALL MY_ALLOC(INDEX,2*NUMELS8,"INDEX")
+          CALL MY_ALLOC(ITR1,NUMELS8,"ITR1")
 C
           DO IE=1,NUMELS8
             ITR1(IE)=IXS(NIXS,IE)
@@ -289,7 +292,8 @@ C
             ENDDO
 C
           ENDDO
-          DEALLOCATE(INDEX,ITR1)
+          CALL MY_DEALLOC(INDEX)
+          CALL MY_DEALLOC(ITR1)
 C
         ENDIF
 

@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_fxb1           ../starter/source/constraints/fxbody/hm_read_fxb.F
 !||--- called by ------------------------------------------------------
@@ -52,6 +53,7 @@ C-----------------------------------------------
       USE HM_OPTION_READ_MOD
       USE SUBMODEL_MOD , ONLY : NSUBMOD, SUBMODEL_DATA
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -73,15 +75,15 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER ID,I,J,L,NFX,NMOD,NMST,NBNO,NTR,NME,IDAMP,
+      INTEGER ID,I,J,NFX,NMOD,NMST,NBNO,NTR,NME,IDAMP,
      .        ISHELL,IBLO,IFILE,IDMAST,IANIM,IMIN,IMAX,ADRNOD,NLIG,NRES,ILIG,
-     .        NUMNO(10),BID,IFLAGI1,IC,IOLD,IFLAGDBL,IRB,FLAG,IDUM1,IDUM2,IDUM3,
-     .        SIZE_MAX,SIZE_MAT,I1,I2,IDOF1,IDOF2,ADR_MAT,ADR_MASS,ADR_MASS0,ADRNOD0,
+     .        NUMNO(10),BID,IFLAGI1,IC,IOLD,IFLAGDBL,IRB,FLAG,
+     .        SIZE_MAX,I1,I2,IDOF1,IDOF2,ADR_MAT,ADR_MASS,ADR_MASS0,ADRNOD0,
      .        IL1,IL2,ADR_STIFF,ADR_STIFF0,SIZE_MASS,SIZE_STIFF
       INTEGER IWORK(70000)
       CHARACTER FXBFILE*2148, NWLINE*100, STRERR*29
       CHARACTER(LEN=NCHARTITLE) :: TITR
-      CHARACTER :: MESS*40,MESS1*40,EXTENSION*3
+      CHARACTER :: MESS*40,MESS1*40
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: TABSL,ITAG_DOF
       INTEGER, DIMENSION(:), ALLOCATABLE :: INDEX,ITAG
 
@@ -105,10 +107,10 @@ C
       ENDDO
 C
       IF (LENNOD > 0) THEN
-        ALLOCATE(TABSL(2,LENNOD))
-        ALLOCATE(INDEX(3*LENNOD))
-        ALLOCATE(ITAG_DOF(6,SIZE_MAX))
-        ALLOCATE(ITAG(NUMNOD))
+        call my_alloc(TABSL, 2, LENNOD, "TABSL")
+        call my_alloc(INDEX, 3*LENNOD, "INDEX")
+        call my_alloc(ITAG_DOF, 6, SIZE_MAX, "ITAG_DOF")
+        call my_alloc(ITAG, NUMNOD, "ITAG")
         ITAG(1:NUMNOD) = 0
         ITAG_DOF(1:6,1:SIZE_MAX) = 0
         TABSL = 0
@@ -441,7 +443,10 @@ C-------------------------------------
       END IF
 C
 C
-      DEALLOCATE(TABSL,INDEX,ITAG_DOF,ITAG)
+      CALL MY_DEALLOC(TABSL)
+      CALL MY_DEALLOC(INDEX)
+      CALL MY_DEALLOC(ITAG_DOF)
+      CALL MY_DEALLOC(ITAG)
 C
       RETURN
 1000  CALL ANCMSG(MSGID=565,
@@ -528,10 +533,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER NFX,ID,IDMAST,NMOD,NMST,NBNO,NME,NTR,ADRGLM,
+      INTEGER NFX,ID,NMOD,NMST,NBNO,NME,NTR,ADRGLM,
      .        ADRCP,ADRLM,ADRFLS,ADRDLS,ADRVAR,ADRRPM,IMOD,INO,I,LEN,
      .        NLIG,NRES,ILIG,ADRCP2,IR,ADRNOD,IDAMP,ISHELL,
-     .        ADRMCD,J,INFO,IBLO,IFILE, IANIM, IMIN, IMAX, ADRMOD,IRCM,
+     .        ADRMCD,J,IBLO,IFILE, ADRMOD,IRCM,
      .        NTAG,ADRM1,ADRM2,ADRN1,ADRN2,CNOD(NUMNOD)
       my_real FREQ,BETA,OMEGA,DTC1,DTC2,VV(6)
       CHARACTER(LEN=NCHARTITLE) :: TITR

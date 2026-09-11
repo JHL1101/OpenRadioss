@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_exch_n_neighbor_mod        ../engine/source/mpi/ale/spmd_exch_n_neighbor.F90
 !||--- called by ------------------------------------------------------
@@ -35,7 +36,7 @@
         interface spmd_exch_n_neighbor
           module procedure spmd_exch_n_neighbor_2d !< 2d version
           module procedure spmd_exch_n_neighbor_3d !< 3d version
-        end interface spmd_exch_n_neighbor        
+        end interface spmd_exch_n_neighbor
       contains
 ! ======================================================================================================================
 !                                                   procedures
@@ -47,18 +48,16 @@
 !||--- calls      -----------------------------------------------------
 !||    alloc_my_real_2d_array     ../common_source/modules/array_mod.F
 !||    dealloc_my_real_2d_array   ../common_source/modules/array_mod.F
-!||    spmd_waitall               ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany               ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    array_mod                  ../common_source/modules/array_mod.F
 !||    debug_mod                  ../engine/share/modules/debug_mod.F
 !||    precision_mod              ../common_source/modules/precision_mod.F90
 !||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
-      subroutine spmd_exch_n_neighbor_2d(flag,nspmd,n_entity,dim1,s_lesdvois,s_lercvois, &
-                                        s_proc_nb,r_proc_nb,s_index,r_index,s_req,r_req, &
-                                        nesdvois,nercvois,lesdvois,lercvois, &
-                                        phi,s_buffer,r_buffer)
+        subroutine spmd_exch_n_neighbor_2d(flag,nspmd,n_entity,dim1,s_lesdvois,s_lercvois, &
+          s_proc_nb,r_proc_nb,s_index,r_index,s_req,r_req, &
+          nesdvois,nercvois,lesdvois,lercvois, &
+          phi,s_buffer,r_buffer)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -98,7 +97,7 @@
           integer, dimension(s_lercvois), intent(in) :: lercvois !< frontier element ids (rcv)
           real(kind=WP), dimension(n_entity,dim1), intent(inout) :: phi !<values to exchange
           type(array_type_my_real_2d), dimension(nspmd), intent(inout) :: s_buffer !< send buffer
-          type(array_type_my_real_2d), dimension(nspmd), intent(inout) :: r_buffer !< send buffer     
+          type(array_type_my_real_2d), dimension(nspmd), intent(inout) :: r_buffer !< send buffer
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -166,7 +165,7 @@
             ! -------------
             ! wait for the receive comms and update values + deallocation
             do p=1,r_proc_nb
-              call spmd_waitany(r_proc_nb,r_req,ijk)
+              call spmd_waitany(r_req,r_proc_nb,ijk)
               proc_id = r_index(ijk) ! get the R processor id
               r_size = nercvois(proc_id)
               do k=1,dim1
@@ -181,7 +180,7 @@
 
             ! -------------
             ! wait for the send comms + deallocation
-            call spmd_waitall(s_proc_nb,s_req)
+            call spmd_waitall(s_req,s_proc_nb)
             do p=1,nspmd
               s_size = nesdvois(p)
               if (s_size > 0) then
@@ -202,8 +201,6 @@
 !||--- calls      -----------------------------------------------------
 !||    alloc_my_real_3d_array     ../common_source/modules/array_mod.F
 !||    dealloc_my_real_3d_array   ../common_source/modules/array_mod.F
-!||    spmd_waitall               ../engine/source/mpi/spmd_wait.F90
-!||    spmd_waitany               ../engine/source/mpi/spmd_wait.F90
 !||--- uses       -----------------------------------------------------
 !||    array_mod                  ../common_source/modules/array_mod.F
 !||    constant_mod               ../common_source/modules/constant_mod.F
@@ -212,9 +209,9 @@
 !||    spmd_mod                   ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         subroutine spmd_exch_n_neighbor_3d(flag,nspmd,n_entity,dim1,dim2,s_lesdvois,s_lercvois, &
-                                        s_proc_nb,r_proc_nb,s_index,r_index,s_req,r_req, &
-                                        nesdvois,nercvois,lesdvois,lercvois, &
-                                        phi,s_buffer,r_buffer)
+          s_proc_nb,r_proc_nb,s_index,r_index,s_req,r_req, &
+          nesdvois,nercvois,lesdvois,lercvois, &
+          phi,s_buffer,r_buffer)
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Modules
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -243,20 +240,20 @@
           integer, intent(in) :: dim1 !< second dimension of phi array
           integer, intent(in) :: dim2 !< third dimension of phi array
           integer, intent(in) :: s_lesdvois !< size of lesdvois array
-          integer, intent(in) :: s_lercvois !< size of lercvois array       
+          integer, intent(in) :: s_lercvois !< size of lercvois array
           integer, intent(inout) :: s_proc_nb !< number of S procs
           integer, intent(inout) :: r_proc_nb !< number of R procs
           integer, dimension(nspmd), intent(inout) :: s_index !< index of S processor
           integer, dimension(nspmd), intent(inout) :: r_index !< index of R processor
           integer, dimension(nspmd), intent(inout) :: s_req !< S requests
           integer, dimension(nspmd), intent(inout) :: r_req !< R requests
-          integer, dimension(nspmd+1), intent(in) :: nesdvois !< number of frontier elements (send)          
+          integer, dimension(nspmd+1), intent(in) :: nesdvois !< number of frontier elements (send)
           integer, dimension(nspmd+1), intent(in) :: nercvois !< number of frontier elements (rcv)
           integer, dimension(s_lesdvois), intent(in) :: lesdvois !< frontier element ids (send)
           integer, dimension(s_lercvois), intent(in) :: lercvois !< frontier element ids (rcv)
           real(kind=WP), dimension(n_entity,dim1,dim2), intent(inout) :: phi !<values to exchange
           type(array_type_my_real_3d), dimension(nspmd), intent(inout) :: s_buffer !< send buffer
-          type(array_type_my_real_3d), dimension(nspmd), intent(inout) :: r_buffer !< send buffer     
+          type(array_type_my_real_3d), dimension(nspmd), intent(inout) :: r_buffer !< send buffer
 ! ----------------------------------------------------------------------------------------------------------------------
 !                                                   Local variables
 ! ----------------------------------------------------------------------------------------------------------------------
@@ -306,7 +303,7 @@
                 do l=1,dim2
                   do k=1,dim1
                     do j=1,s_size
-                      ijk = lesdvois(s_address+j)                
+                      ijk = lesdvois(s_address+j)
                       s_buffer(p)%my_real_array_3d(j,k,l) = phi(ijk,k,l)
                     end do
                   enddo
@@ -314,8 +311,8 @@
                 s_address = s_address + s_size
                 ! send the data
                 s_proc_nb = s_proc_nb + 1
-                s_index(s_proc_nb) = p   
-                call spmd_isend(s_buffer(p)%my_real_array_3d(1,1,1),dim2*dim1*s_size,p-1,msgtyp,s_req(s_proc_nb))  
+                s_index(s_proc_nb) = p
+                call spmd_isend(s_buffer(p)%my_real_array_3d(1,1,1),dim2*dim1*s_size,p-1,msgtyp,s_req(s_proc_nb))
               end if
             end do
           else
@@ -327,8 +324,8 @@
 
             ! -------------
             ! wait for the receive comms and update values + deallocation
-            do p=1,r_proc_nb            
-              call spmd_waitany(r_proc_nb,r_req,ijk)
+            do p=1,r_proc_nb
+              call spmd_waitany(r_req,r_proc_nb,ijk)
               proc_id = r_index(ijk) ! get the R processor id
               r_size = nercvois(proc_id)
               do l=1,dim2
@@ -345,15 +342,15 @@
 
             ! -------------
             ! wait for the send comms + deallocation
-            call spmd_waitall(s_proc_nb,s_req)
+            call spmd_waitall(s_req,s_proc_nb)
             do p=1,nspmd
               s_size = nesdvois(p)
               if (s_size > 0) then
                 call dealloc_my_real_3d_array(s_buffer(p))
               end if
-            end do            
+            end do
             ! -------------
           endif
 ! ----------------------------------------------------------------------------------------------------------------------
-        end subroutine spmd_exch_n_neighbor_3d        
+        end subroutine spmd_exch_n_neighbor_3d
       end module spmd_exch_n_neighbor_mod

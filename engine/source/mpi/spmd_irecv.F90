@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,99 +15,133 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_irecv_mod   ../engine/source/mpi/spmd_irecv.F90
+!||    spmd_irecv_mod      ../engine/source/mpi/spmd_irecv.F90
 !||--- called by ------------------------------------------------------
-!||    spmd_mod         ../engine/source/mpi/spmd_mod.F90
+!||    spmd_mod            ../engine/source/mpi/spmd_mod.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_profiler_mod   ../engine/source/mpi/generic/spmd_profiler_mod.F90
 !||====================================================================
       module spmd_irecv_mod
+        use, intrinsic :: iso_c_binding
+        use spmd_profiler_mod, only: spmd_profiling_enabled
         implicit none
 
-        ! \brief Interface for spmd_irecv, a wrapper for MPI_IRECV
+        interface
+          subroutine spmd_profiler_register_request_c(request, peer_rank, msg_tag, is_recv) &
+            bind(c, name="spmd_profiler_register_request")
+            import :: c_int
+            integer(c_int), intent(in) :: request, peer_rank, msg_tag, is_recv
+          end subroutine spmd_profiler_register_request_c
+        end interface
+
+        !> \brief Interface for spmd_irecv, a wrapper for MPI_IRECV
         interface spmd_irecv
-          module procedure spmd_irecv_reals     !< Non-blocking receive of real numbers
-          module procedure spmd_irecv_ints      !< Non-blocking receive of integers
-          module procedure spmd_irecv_doubles   !< Non-blocking receive of double precision numbers
-          module procedure spmd_irecv_real      !< Non-blocking receive of a single real number
-          module procedure spmd_irecv_int       !< Non-blocking receive of a single integer
-          module procedure spmd_irecv_double    !< Non-blocking receive of a single double precision number
+          module procedure spmd_irecv_reals
+          module procedure spmd_irecv_ints
+          module procedure spmd_irecv_doubles
+          module procedure spmd_irecv_reals2d
+          module procedure spmd_irecv_ints2d
+          module procedure spmd_irecv_doubles2d
+          module procedure spmd_irecv_real
+          module procedure spmd_irecv_int
+          module procedure spmd_irecv_double
         end interface spmd_irecv
 
       contains
+
 ! ======================================================================================================================
+!>  \brief Non-blocking receive of real       array
 !||====================================================================
-!||    spmd_irecv_reals      ../engine/source/mpi/spmd_irecv.F90
+!||    spmd_irecv_reals                   ../engine/source/mpi/spmd_irecv.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
 !||====================================================================
         subroutine spmd_irecv_reals(buf, buf_count, source, tag, request, comm)
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          real, dimension(buf_count), intent(inout) :: buf
+          real, dimension(:), intent(inout) :: buf
           integer, intent(inout) :: request
           integer, intent(in), optional :: comm
           integer :: ierr
 #ifdef MPI
-          call spmd_in(tag)
+          call spmd_in(tag, "MPI_Irecv", source)
           if (present(comm)) then
             call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, comm, request, ierr)
           else
             call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, request, ierr)
           end if
-          call spmd_out(tag,ierr)
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
 #endif
         end subroutine spmd_irecv_reals
+
 ! ======================================================================================================================
+!>  \brief Non-blocking receive of integer       array
 !||====================================================================
-!||    spmd_irecv_ints       ../engine/source/mpi/spmd_irecv.F90
+!||    spmd_irecv_ints                    ../engine/source/mpi/spmd_irecv.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
 !||====================================================================
         subroutine spmd_irecv_ints(buf, buf_count, source, tag, request, comm)
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          integer, dimension(buf_count), intent(inout) :: buf
+          integer, dimension(:), intent(inout) :: buf
           integer, intent(inout) :: request
           integer, intent(in), optional :: comm
-#ifdef MPI
           integer :: ierr
-          call spmd_in(tag)
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
           if (present(comm)) then
             call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, comm, request, ierr)
           else
             call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, request, ierr)
           end if
-          call spmd_out(tag,ierr)
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
 #endif
         end subroutine spmd_irecv_ints
+
 ! ======================================================================================================================
+!>  \brief Non-blocking receive of double precision       array
 !||====================================================================
-!||    spmd_irecv_doubles    ../engine/source/mpi/spmd_irecv.F90
+!||    spmd_irecv_doubles                 ../engine/source/mpi/spmd_irecv.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
 !||====================================================================
         subroutine spmd_irecv_doubles(buf, buf_count, source, tag, request, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
@@ -115,109 +149,253 @@
           implicit none
 #include "spmd.inc"
           integer, intent(in) :: buf_count, source, tag
-          double precision, dimension(buf_count), intent(inout) :: buf
+          double precision, dimension(:), intent(inout) :: buf
           integer, intent(inout) :: request
           integer, intent(in), optional :: comm
-#ifdef MPI
           integer :: ierr
-          call spmd_in(tag)
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
           if (present(comm)) then
             call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, request, ierr)
           else
             call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, request, ierr)
           end if
-          call spmd_out(tag,ierr)
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
 #endif
         end subroutine spmd_irecv_doubles
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of real       array
 !||====================================================================
-!||    spmd_irecv_double     ../engine/source/mpi/spmd_irecv.F90
+!||    spmd_irecv_reals2d                 ../engine/source/mpi/spmd_irecv.F90
 !||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
 !||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_irecv_reals2d(buf, buf_count, source, tag, request, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          real, dimension(:,:), intent(inout) :: buf
+          integer, intent(inout) :: request
+          integer, intent(in), optional :: comm
+          integer :: ierr
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
+          if (present(comm)) then
+            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, comm, request, ierr)
+          else
+            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, request, ierr)
+          end if
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
+#endif
+        end subroutine spmd_irecv_reals2d
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of integer       array
+!||====================================================================
+!||    spmd_irecv_ints2d                  ../engine/source/mpi/spmd_irecv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_irecv_ints2d(buf, buf_count, source, tag, request, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          integer, dimension(:,:), intent(inout) :: buf
+          integer, intent(inout) :: request
+          integer, intent(in), optional :: comm
+          integer :: ierr
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
+          if (present(comm)) then
+            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, comm, request, ierr)
+          else
+            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, request, ierr)
+          end if
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
+#endif
+        end subroutine spmd_irecv_ints2d
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of double precision       array
+!||====================================================================
+!||    spmd_irecv_doubles2d               ../engine/source/mpi/spmd_irecv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_irecv_doubles2d(buf, buf_count, source, tag, request, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          double precision, dimension(:,:), intent(inout) :: buf
+          integer, intent(inout) :: request
+          integer, intent(in), optional :: comm
+          integer :: ierr
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
+          if (present(comm)) then
+            call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, request, ierr)
+          else
+            call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, request, ierr)
+          end if
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
+#endif
+        end subroutine spmd_irecv_doubles2d
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of real       scalar
+!||====================================================================
+!||    spmd_irecv_real                    ../engine/source/mpi/spmd_irecv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_irecv_real(buf, buf_count, source, tag, request, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          real,  intent(inout) :: buf
+          integer, intent(inout) :: request
+          integer, intent(in), optional :: comm
+          integer :: ierr
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
+          if (present(comm)) then
+            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, comm, request, ierr)
+          else
+            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, request, ierr)
+          end if
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
+#endif
+        end subroutine spmd_irecv_real
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of integer       scalar
+!||====================================================================
+!||    spmd_irecv_int                     ../engine/source/mpi/spmd_irecv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
+!||====================================================================
+        subroutine spmd_irecv_int(buf, buf_count, source, tag, request, comm)
+          use spmd_error_mod, only: spmd_in, spmd_out
+          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
+          implicit none
+#include "spmd.inc"
+          integer, intent(in) :: buf_count, source, tag
+          integer,  intent(inout) :: buf
+          integer, intent(inout) :: request
+          integer, intent(in), optional :: comm
+          integer :: ierr
+#ifdef MPI
+          call spmd_in(tag, "MPI_Irecv", source)
+          if (present(comm)) then
+            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, comm, request, ierr)
+          else
+            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, request, ierr)
+          end if
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
+#endif
+        end subroutine spmd_irecv_int
+
+! ======================================================================================================================
+!>  \brief Non-blocking receive of double precision       scalar
+!||====================================================================
+!||    spmd_irecv_double                  ../engine/source/mpi/spmd_irecv.F90
+!||--- calls      -----------------------------------------------------
+!||    spmd_in                            ../engine/source/mpi/spmd_error.F90
+!||    spmd_out                           ../engine/source/mpi/spmd_error.F90
+!||--- uses       -----------------------------------------------------
+!||    spmd_comm_world_mod                ../engine/source/mpi/spmd_comm_world.F90
+!||    spmd_error_mod                     ../engine/source/mpi/spmd_error.F90
 !||====================================================================
         subroutine spmd_irecv_double(buf, buf_count, source, tag, request, comm)
           use spmd_error_mod, only: spmd_in, spmd_out
           use spmd_comm_world_mod, only: SPMD_COMM_WORLD
           implicit none
 #include "spmd.inc"
-          double precision, intent(inout) :: buf
           integer, intent(in) :: buf_count, source, tag
+          double precision,  intent(inout) :: buf
           integer, intent(inout) :: request
           integer, intent(in), optional :: comm
           integer :: ierr
 #ifdef MPI
-          call spmd_in(tag)
+          call spmd_in(tag, "MPI_Irecv", source)
           if (present(comm)) then
             call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, comm, request, ierr)
           else
             call MPI_Irecv(buf, buf_count, MPI_DOUBLE_PRECISION, source, tag, SPMD_COMM_WORLD, request, ierr)
           end if
-          call spmd_out(tag,ierr)
+          call spmd_out(tag, ierr)
+          if (spmd_profiling_enabled) then
+            call spmd_profiler_register_request_c(int(request,c_int), int(source,c_int), &
+              int(tag,c_int), 1_c_int)
+          end if
+#else
+          request = 0
 #endif
         end subroutine spmd_irecv_double
-!||====================================================================
-!||    spmd_irecv_int        ../engine/source/mpi/spmd_irecv.F90
-!||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
-!||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
-!||====================================================================
-        subroutine spmd_irecv_int(buf, buf_count, source, tag, request, comm)
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
-          use spmd_error_mod, only: spmd_in, spmd_out
-          implicit none
-#include "spmd.inc"
-          integer, intent(inout) :: buf
-          integer, intent(in) :: buf_count, source, tag
-          integer, intent(inout) :: request
-          integer, intent(in), optional :: comm
-          integer :: ierr
-#ifdef MPI
-          call spmd_in(tag)
-          if (present(comm)) then
-            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, comm, request, ierr)
-          else
-            call MPI_Irecv(buf, buf_count, MPI_INTEGER, source, tag, SPMD_COMM_WORLD, request, ierr)
-          end if
-          call spmd_out(tag,ierr)
-#endif
-        end subroutine spmd_irecv_int
-!||====================================================================
-!||    spmd_irecv_real       ../engine/source/mpi/spmd_irecv.F90
-!||--- calls      -----------------------------------------------------
-!||    spmd_in               ../engine/source/mpi/spmd_error.F90
-!||    spmd_out              ../engine/source/mpi/spmd_error.F90
-!||--- uses       -----------------------------------------------------
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
-!||    spmd_error_mod        ../engine/source/mpi/spmd_error.F90
-!||====================================================================
-        subroutine spmd_irecv_real(buf, buf_count, source, tag, request, comm)
-          use spmd_comm_world_mod, only: SPMD_COMM_WORLD
-          use spmd_error_mod, only: spmd_in, spmd_out
-          implicit none
-#include "spmd.inc"
-          integer, intent(in) :: buf_count, source, tag
-          real,    intent(inout) :: buf
-          integer, intent(inout) :: request
-          integer, intent(in), optional :: comm
-          integer :: ierr
-#ifdef MPI
-          call spmd_in(tag)
-          if (present(comm)) then
-            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, comm, request, ierr)
-          else
-            call MPI_Irecv(buf, buf_count, MPI_REAL, source, tag, SPMD_COMM_WORLD, request, ierr)
-          end if
-          call spmd_out(tag,ierr)
-#endif
-        end subroutine spmd_irecv_real
-
-
 
       end module spmd_irecv_mod
-

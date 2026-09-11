@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    i25optcd_e2s      ../engine/source/interfaces/intsort/i25optcd_e2s.F
 !||--- called by ------------------------------------------------------
@@ -30,6 +31,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    sync_data         ../engine/source/system/machine.F
 !||--- uses       -----------------------------------------------------
 !||    debug_mod         ../engine/share/modules/debug_mod.F
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||    tri25ebox         ../engine/share/modules/tri25ebox.F
 !||    tri7box           ../engine/share/modules/tri7box.F
 !||====================================================================
@@ -51,6 +54,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -121,12 +126,13 @@ C-----------------------------------------------
       FIRST = 1 + I_STOK*ITASK / NTHREAD
       LAST = I_STOK*(ITASK+1) / NTHREAD
       MY_SIZE = LAST - FIRST + 1
-      ALLOCATE( LIST_REAL_CANDIDATE(MY_SIZE) )
+      call my_alloc(LIST_REAL_CANDIDATE, MY_SIZE, "LIST_REAL_CANDIDATE")
 C-----------------------------------------------
       IF(SOL_EDGE/=0)THEN
 
         IF(ITASK==0)THEN
-          ALLOCATE(TAGM(NRTM),BOXM(6,NRTM))
+          call my_alloc(TAGM, NRTM, "TAGM")
+          call my_alloc(BOXM, 6, NRTM, "BOXM")
           TAGM(1:NRTM)=0
         END IF
 
@@ -296,7 +302,7 @@ C========== LOCAL
          IE=CAND_M(I) ! segment, zero gap
          JE=CAND_S(I) ! edge
          GAPV(IS)=GAPE(JE)
-         IF(SH_EDGE /= 0 .AND. IGAP0 /= 0) GAPV(IS)=TWO*GAPV(IS)
+         IF(SH_EDGE /= 0 .AND. IGAP0 /= 0.AND.IABS(LEDGE(7,CAND_S(I)))/=3) GAPV(IS)=TWO*GAPV(IS)
          IF(IGAP==3)
      .     GAPV(IS)=MIN(GAPV(IS),GAP_M_L(IE)+GAP_E_L(JE))
          GAPV(IS)=MAX(GAPV(IS)+DGAPLOAD,DRAD)
@@ -332,6 +338,8 @@ C In that case, we assume that the segment on the
 C other side of the boundary is not broken
            S = ONE
 C          S = ZERO
+         ELSEIF(L==0.AND.IABS(LEDGE(7,CAND_S(I)))==3)THEN
+           S = STFE(CAND_S(I))
          ENDIF
 
 #ifdef WITH_ASSERT
@@ -442,7 +450,7 @@ C =========  REMOTE
            I=JS+IS
            IE=CAND_M(I)
            GAPV(IS)=GAPFIE(NIN)%P(CAND_S(I)-NEDGE)
-           IF(SH_EDGE /= 0 .AND. IGAP0 /= 0) GAPV(IS)=TWO*GAPV(IS)
+           IF(SH_EDGE /= 0 .AND. IGAP0 /= 0.AND.LEDGE_FIE(NIN)%P(E_TYPE,CAND_S(I)-NEDGE)/=3) GAPV(IS)=TWO*GAPV(IS)
 
            IF(IGAP==3)
      .       GAPV(IS)=MIN(GAPV(IS),GAPE_L_FIE(NIN)%P(CAND_S(I)-NEDGE)+GAP_M_L(IE))
@@ -601,11 +609,14 @@ C
 
         CALL MY_BARRIER
 
-        IF(ITASK==0)DEALLOCATE(TAGM,BOXM)
+        IF(ITASK==0) THEN
+          CALL MY_DEALLOC(TAGM)
+          CALL MY_DEALLOC(BOXM)
+        ENDIF
 
       END IF
 
-      DEALLOCATE( LIST_REAL_CANDIDATE )
+      call my_dealloc(LIST_REAL_CANDIDATE)
 C
       RETURN
       END

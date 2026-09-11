@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    pre_stackgroup         ../starter/source/stack/pres_stackgroup.F
 !||--- called by ------------------------------------------------------
@@ -46,6 +47,7 @@ C-----------------------------------------------
       USE DRAPE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       use element_mod , only : nixc,nixtg
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -78,20 +80,14 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER I,J,II,NSTACK,NPLY,IGTYP,ID,JD,IDPLY,NEL,
-     .        IAD,ITY,IDSHEL,PID,IS,IDS,NSH,MODE,NS,JJ,NGEO_STACK,
-     .        IGRTYP,N1,IIGEO,NSS,IPPOS,NPT,IIS,NP,
-     .        JJPID,JSTACK,JPID,ITG,IPMAT_IPLY,ISH3N,J4N,J3N,IPOS,
-     .        MAT_LY,NLAY,NPTT,IPIDL,IT,ILAY,IPTHK_NPTT,IPPOS_NPTT,
-     .        IINT,IPID_LY,IPDIR ,NS_STACK0 ,NPT_STACK0,IS0,JS,PIDS,IP,
-     .        II1,II2,JJ1,JJ2
+     .        ITY,IDSHEL,PID,IS,IDS,
+     .        NPT,ITG,ISH3N,J4N,J3N
      
       INTEGER , DIMENSION(NUMGEO+NUMPLY)  :: IPIDPLY,IDGR4N,IDGR3N
      
       INTEGER NGL, IPID_1, NSHQ4, NSHT3
      
-      INTEGER, DIMENSION(:,:), ALLOCATABLE :: ITRI
-      INTEGER, DIMENSION (:) ,ALLOCATABLE ::ICSH,INDX
-      CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
+
 C----------------------------f-------------------    
 C=======================================================================
 C    For Shell
@@ -244,8 +240,8 @@ C #####################################################"
              IGTYP = IGEO(11,PID) 
              NPT   = IWORKSH(1,I)    
              IF(IGTYP == 17 .OR. IGTYP == 51  .AND. NPT > 0) THEN
-               ALLOCATE(IWORK_T(I)%PLYID(NPT))
-               ALLOCATE(IWORK_T(I)%PLYNUM(NPT))
+               call my_alloc(IWORK_T(I)%PLYID, NPT, "IWORK_T(I)%PLYID")
+               call my_alloc(IWORK_T(I)%PLYNUM, NPT, "IWORK_T(I)%PLYNUM")
                IWORK_T(I)%PLYID = 0
                IWORKSH(1,I)     = 0
                IWORK_T(I)%PLYNUM    = 0
@@ -258,8 +254,8 @@ C #####################################################"
              II    = NUMELC + I
              NPT   = IWORKSH(1,II)
              IF((IGTYP == 17 .OR. IGTYP == 51) .AND. NPT > 0) THEN
-               ALLOCATE(IWORK_T(II)%PLYID(NPT))
-               ALLOCATE(IWORK_T(II)%PLYNUM(NPT))
+               call my_alloc(IWORK_T(II)%PLYID, NPT, "IWORK_T(II)%PLYID")
+               call my_alloc(IWORK_T(II)%PLYNUM, NPT, "IWORK_T(II)%PLYNUM")
                IWORK_T(II)%PLYID = 0
                IWORKSH(1,II)     = 0
                IWORK_T(II)%PLYNUM    = 0
@@ -478,8 +474,8 @@ C
              IGTYP = IGEO(11,PID) 
              NPT   = IWORKSH(1,I)
              IF(IGTYP == 52 .AND. NPT > 0) THEN
-               ALLOCATE(IWORK_T(I)%PLYID(NPT))
-               ALLOCATE(IWORK_T(I)%PLYNUM(NPT))
+               call my_alloc(IWORK_T(I)%PLYID, NPT, "IWORK_T(I)%PLYID")
+               call my_alloc(IWORK_T(I)%PLYNUM, NPT, "IWORK_T(I)%PLYNUM")
                IWORK_T(I)%PLYID   = 0
                IWORK_T(I)%IDSTACK = 0
                IWORKSH(1,I)       = 0
@@ -492,8 +488,8 @@ C
              II    = NUMELC + I
              NPT   = IWORKSH(1,II)
              IF(IGTYP == 52 .AND. NPT > 0) THEN
-                ALLOCATE(IWORK_T(II)%PLYID(NPT) )
-               ALLOCATE(IWORK_T(II)%PLYNUM(NPT))
+                call my_alloc(IWORK_T(II)%PLYID, NPT, "IWORK_T(II)%PLYID")
+               call my_alloc(IWORK_T(II)%PLYNUM, NPT, "IWORK_T(II)%PLYNUM")
                 IWORK_T(II)%PLYID   = 0
                 IWORK_T(II)%IDSTACK = 0
                 IWORKSH(1,II)       = 0

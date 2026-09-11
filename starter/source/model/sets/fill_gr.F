@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    fill_gr                ../starter/source/model/sets/fill_gr.F
 !||--- called by ------------------------------------------------------
@@ -95,7 +96,7 @@ C-----------------------------------------------
       IF (NELEM == 0) IGRELE(IGRE)%SET_GROUP = 1
 !
       IF (NELEM > 0) THEN
-        CALL MY_ALLOC(IGRELE(IGRE)%ENTITY,NELEM)
+        CALL MY_ALLOC(IGRELE(IGRE)%ENTITY,NELEM,"IGRELE(IGRE)%ENTITY")
         IGRELE(IGRE)%ENTITY(1:NELEM) = GETELEM(1:NELEM)
       ENDIF
 
@@ -197,13 +198,13 @@ C-----------------------------------------------
 !
       IF (NSEG > 0) THEN
 !
-        IF (ALLOCATED(IGRSURF(IGRS)%NODES)) DEALLOCATE(IGRSURF(IGRS)%NODES)
-        IF (ALLOCATED(IGRSURF(IGRS)%ELTYP)) DEALLOCATE(IGRSURF(IGRS)%ELTYP)
-        IF (ALLOCATED(IGRSURF(IGRS)%ELEM))  DEALLOCATE(IGRSURF(IGRS)%ELEM)
+        IF (ALLOCATED(IGRSURF(IGRS)%NODES)) CALL MY_DEALLOC(IGRSURF(IGRS)%NODES)
+        IF (ALLOCATED(IGRSURF(IGRS)%ELTYP)) CALL MY_DEALLOC(IGRSURF(IGRS)%ELTYP)
+        IF (ALLOCATED(IGRSURF(IGRS)%ELEM))  CALL MY_DEALLOC(IGRSURF(IGRS)%ELEM)
 !
-        CALL MY_ALLOC(IGRSURF(IGRS)%NODES,NSEG,4)
-        CALL MY_ALLOC(IGRSURF(IGRS)%ELTYP,NSEG)
-        CALL MY_ALLOC(IGRSURF(IGRS)%ELEM,NSEG)
+        CALL MY_ALLOC(IGRSURF(IGRS)%NODES,NSEG,4,"IGRSURF(IGRS)%NODES")
+        CALL MY_ALLOC(IGRSURF(IGRS)%ELTYP,NSEG,"IGRSURF(IGRS)%ELTYP")
+        CALL MY_ALLOC(IGRSURF(IGRS)%ELEM,NSEG,"IGRSURF(IGRS)%ELEM")
 !
         IF(SURF_SEG)THEN
           IGRSURF(IGRS)%NODES(1:NSEG,1) = SET%SURF_NODES(1:NSEG,1)
@@ -272,7 +273,6 @@ C-----------------------------------------------
 C-----------------------------------------------
       TYPE (SURF_)   , INTENT(INOUT) :: IGRSLIN(*)
       TYPE (SET_)    , INTENT(INOUT) :: SET
-      CHARACTER(LEN=NCHARTITLE)::SET_TITLE
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
@@ -303,15 +303,15 @@ C-----------------------------------------------
 !
       IF (NSEG > 0) THEN
 !
-        IF (ALLOCATED(IGRSLIN(IGRL)%NODES)) DEALLOCATE(IGRSLIN(IGRL)%NODES)
-        IF (ALLOCATED(IGRSLIN(IGRL)%ELTYP)) DEALLOCATE(IGRSLIN(IGRL)%ELTYP)
-        IF (ALLOCATED(IGRSLIN(IGRL)%ELEM))  DEALLOCATE(IGRSLIN(IGRL)%ELEM)
-        IF (ALLOCATED(IGRSLIN(IGRL)%PROC))  DEALLOCATE(IGRSLIN(IGRL)%PROC)
+        IF (ALLOCATED(IGRSLIN(IGRL)%NODES)) CALL MY_DEALLOC(IGRSLIN(IGRL)%NODES)
+        IF (ALLOCATED(IGRSLIN(IGRL)%ELTYP)) CALL MY_DEALLOC(IGRSLIN(IGRL)%ELTYP)
+        IF (ALLOCATED(IGRSLIN(IGRL)%ELEM))  CALL MY_DEALLOC(IGRSLIN(IGRL)%ELEM)
+        IF (ALLOCATED(IGRSLIN(IGRL)%PROC))  CALL MY_DEALLOC(IGRSLIN(IGRL)%PROC)
 !
-        CALL MY_ALLOC(IGRSLIN(IGRL)%NODES,NSEG,2)
-        CALL MY_ALLOC(IGRSLIN(IGRL)%ELTYP,NSEG)
-        CALL MY_ALLOC(IGRSLIN(IGRL)%ELEM,NSEG)
-        CALL MY_ALLOC(IGRSLIN(IGRL)%PROC,NSEG)
+        CALL MY_ALLOC(IGRSLIN(IGRL)%NODES,NSEG,2,"IGRSLIN(IGRL)%NODES")
+        CALL MY_ALLOC(IGRSLIN(IGRL)%ELTYP,NSEG,"IGRSLIN(IGRL)%ELTYP")
+        CALL MY_ALLOC(IGRSLIN(IGRL)%ELEM,NSEG,"IGRSLIN(IGRL)%ELEM")
+        CALL MY_ALLOC(IGRSLIN(IGRL)%PROC,NSEG,"IGRSLIN(IGRL)%PROC")
 !
         IGRSLIN(IGRL)%NODES(1:NSEG,1) = SET%LINE_NODES(1:NSEG,1)
         IGRSLIN(IGRL)%NODES(1:NSEG,2) = SET%LINE_NODES(1:NSEG,2)
@@ -325,4 +325,3 @@ C-----
 
       RETURN
       END
-

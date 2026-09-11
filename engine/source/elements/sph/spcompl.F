@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spcompl   ../engine/source/elements/sph/spcompl.F
 !||--- called by ------------------------------------------------------
@@ -176,20 +177,24 @@ C------
           JNOD=IXSP(J,N)
           IF(JNOD>0)THEN
             M=NOD2SP(JNOD)
+            IF(M<=0) CYCLE
             XJ=X(1,JNOD)
             YJ=X(2,JNOD)
             ZJ=X(3,JNOD)
             DJ  =SPBUF(1,M)
             RHOJ=SPBUF(2,M)
             VJ=SPBUF(12,M)/MAX(EM20,RHOJ)
-          ELSE
+          ELSEIF(JNOD<0)THEN
             NN = -JNOD
+            IF(NN>NSPHR) CYCLE
             XJ=XSPHR(3,NN)
             YJ=XSPHR(4,NN)
             ZJ=XSPHR(5,NN)
             DJ  =XSPHR(2,NN)
             RHOJ=XSPHR(7,NN)
             VJ=XSPHR(8,NN)/MAX(EM20,RHOJ)
+          ELSE
+            CYCLE
           END IF
           DIJ=0.5*(DI+DJ)
           CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
@@ -216,8 +221,9 @@ C       symmetrical part.
             CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
             JNOD=KXSP(3,SM)
             VJ=SPBUF(12,SM)/MAX(EM20,RHOJ)
-          ELSE
+          ELSEIF(JS<0)THEN
             SM=-JS/(NSPCOND+1)
+            IF(SM>NSPHR.OR.SM<=0) CYCLE
             NC=MOD(-JS,NSPCOND+1)
             JS=ISPSYMR(NC,SM)
             XJ =XSPSYM(1,JS)
@@ -228,6 +234,8 @@ C       symmetrical part.
             DIJ =HALF*(DI+DJ)
             CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
             VJ=XSPHR(8,SM)/MAX(EM20,RHOJ)
+          ELSE
+            CYCLE
           END IF
           WCOMPI=WCOMPI+VJ*WGHT
           WGRADXI=WGRADXI+VJ*WGRAD(1)
@@ -292,20 +300,24 @@ C------
           JNOD=IXSP(J,N)
           IF(JNOD>0)THEN
             M=NOD2SP(JNOD)
+            IF(M<=0) CYCLE
             XJ=X(1,JNOD)
             YJ=X(2,JNOD)
             ZJ=X(3,JNOD)
             DJ  =SPBUF(1,M)
             RHOJ=SPBUF(2,M)
             VJ=SPBUF(12,M)/MAX(EM20,RHOJ)
-          ELSE
+          ELSEIF(JNOD<0)THEN
             NN = -JNOD
+            IF(NN>NSPHR) CYCLE
             XJ=XSPHR(3,NN)
             YJ=XSPHR(4,NN)
             ZJ=XSPHR(5,NN)
             DJ  =XSPHR(2,NN)
             RHOJ=XSPHR(7,NN)
             VJ=XSPHR(8,NN)/MAX(EM20,RHOJ)
+          ELSE
+            CYCLE
           END IF
           DIJ=0.5*(DI+DJ)
           CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
@@ -341,8 +353,9 @@ C       symmetrical part.
             CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
             JNOD=KXSP(3,SM)
             VJ=SPBUF(12,SM)/MAX(EM20,RHOJ)
-          ELSE
+          ELSEIF(JS<0)THEN
             SM=-JS/(NSPCOND+1)
+            IF(SM>NSPHR.OR.SM<=0) CYCLE
             NC=MOD(-JS,NSPCOND+1)
             JS=ISPSYMR(NC,SM)
             XJ =XSPSYM(1,JS)
@@ -353,6 +366,8 @@ C       symmetrical part.
             DIJ =HALF*(DI+DJ)
             CALL WEIGHT1(XI,YI,ZI,XJ,YJ,ZJ,DIJ,WGHT,WGRAD)
             VJ=XSPHR(8,SM)/MAX(EM20,RHOJ)
+          ELSE
+            CYCLE
           END IF
           WCOMPI=WCOMPI+VJ*WGHT
           WCOMPXI=WCOMPXI+VJ*WGHT*(XI-XJ)

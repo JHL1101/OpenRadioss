@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,22 +15,26 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    mulaw_ib       ../engine/source/elements/beam/mulaw_ib.F
+!||    mulaw_ib           ../engine/source/elements/beam/mulaw_ib.F
 !||--- called by ------------------------------------------------------
-!||    main_beam18    ../engine/source/elements/beam/main_beam18.F
+!||    main_beam18        ../engine/source/elements/beam/main_beam18.F
 !||--- calls      -----------------------------------------------------
-!||    sigeps34pi     ../engine/source/materials/mat/mat034/sigeps34pi.F
-!||    sigeps36pi     ../engine/source/materials/mat/mat036/sigeps36pi.F
-!||    sigeps44pi     ../engine/source/materials/mat/mat044/sigeps44pi.F
-!||    sigeps71pi     ../engine/source/materials/mat/mat071/sigeps71pi.F
+!||    sigeps131pi        ../engine/source/materials/mat/mat131/sigeps131pi.F90
+!||    sigeps34pi         ../engine/source/materials/mat/mat034/sigeps34pi.F
+!||    sigeps36pi         ../engine/source/materials/mat/mat036/sigeps36pi.F
+!||    sigeps44pi         ../engine/source/materials/mat/mat044/sigeps44pi.F
+!||    sigeps71pi         ../engine/source/materials/mat/mat071/sigeps71pi.F
 !||--- uses       -----------------------------------------------------
-!||    elbufdef_mod   ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    elbufdef_mod       ../common_source/modules/mat_elem/elbufdef_mod.F90
+!||    matparam_def_mod   ../common_source/modules/mat_elem/matparam_def_mod.F90
+!||    sigeps131pi_mod    ../engine/source/materials/mat/mat131/sigeps131pi.F90
 !||====================================================================
       SUBROUTINE MULAW_IB(ELBUF_STR,
      1                    NEL     ,NPT     ,MTN     ,IMAT    ,
@@ -38,11 +42,14 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
      3                    GEO     ,OFF     , 
      4                    EPSP    ,BUFMAT  ,NPF     ,TF      ,
      5                    EXX     ,EXY     ,EXZ     ,KXX     ,
-     6                    KYY     ,KZZ     ,JTHE    ,TEMPEL  ,SIGY )
+     6                    KYY     ,KZZ     ,JTHE    ,TEMPEL  ,SIGY ,
+     7                    TORS_FACT,MATPARAM,ASRATE )
 C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
       USE ELBUFDEF_MOD
+      USE SIGEPS131PI_MOD
+      USE MATPARAM_DEF_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -64,14 +71,17 @@ C-----------------------------------------------
      .   EXX(NEL),EXY(NEL),EXZ(NEL),KXX(NEL),KYY(NEL),KZZ(NEL)   
       my_real , INTENT(INOUT) :: TEMPEL(NEL)
       my_real , INTENT(INOUT) :: SIGY(NEL,NPT)
+      my_real , INTENT(IN) :: TORS_FACT
 C
       TYPE (ELBUF_STRUCT_), TARGET :: ELBUF_STR
       TARGET :: BUFMAT
+      TYPE (MATPARAM_STRUCT_) ,INTENT(IN) :: MATPARAM
+      my_real, INTENT(IN) :: ASRATE
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER IFUNC(100)
-      INTEGER I,K,J1,IADBUF,IPT,JPLA,NFUNC,IPY,IPZ,IPA,NUVAR,NVARTMP,
+      INTEGER I,IADBUF,IPT,NFUNC,IPY,IPZ,IPA,NUVAR,NVARTMP,
      .        IR,IS,II(3),ILAYER,NUPARAM
       my_real 
      .   YPT(NEL),ZPT(NEL),APT(NEL),G(NEL),E(NEL),ETSE(NEL),
@@ -79,8 +89,8 @@ C-----------------------------------------------
      .   SIGOXX(NEL),SIGOXY(NEL),SIGOXZ(NEL),
      .   SIGNXX(NEL),SIGNXY(NEL),SIGNXZ(NEL),
      .   SIGY_IPT(NEL)
-      my_real :: SHFACT,DFXX,DFXY,DFXZ
-      my_real ,DIMENSION(NEL) :: EPSXX,EPSXY,EPSXZ,DPLA
+      my_real :: SHFACT
+      my_real ,DIMENSION(NEL) :: EPSXX,EPSXY,EPSXZ
 C
       TYPE(BUF_LAY_) ,POINTER :: BUFLY
       TYPE(L_BUFEL_) ,POINTER :: LBUF
@@ -138,8 +148,8 @@ C
 c---    Deformations Incrementales
         DO I = 1,NEL
           DEPSXX(I) = EXX(I) - YPT(I)*KZZ(I) + ZPT(I)*KYY(I)
-          DEPSXY(I) = EXY(I) + ZPT(I)*KXX(I) 
-          DEPSXZ(I) = EXZ(I) - YPT(I)*KXX(I)
+          DEPSXY(I) = EXY(I) + ZPT(I)*KXX(I)*TORS_FACT 
+          DEPSXZ(I) = EXZ(I) - YPT(I)*KXX(I)*TORS_FACT
           DEPSXY(I) = DEPSXY(I) / SHFACT
           DEPSXZ(I) = DEPSXZ(I) / SHFACT 
         ENDDO
@@ -203,7 +213,15 @@ C---
                 GBUF%MAXEPS(II(2)+I) = MAX(GBUF%MAXEPS(II(2)+I) , ABS(EPSXY(I)))
                 GBUF%MAXEPS(II(3)+I) = MAX(GBUF%MAXEPS(II(3)+I) , ABS(EPSXZ(I)))
                ENDDO
-
+C---
+          CASE (131)
+            CALL SIGEPS131PI(                                                  
+     1         NEL      ,MATPARAM ,NVARTMP  ,VARTMP   ,DT1      ,OFF      ,              
+     2         DEPSXX   ,DEPSXY   ,DEPSXZ   ,SIGOXX   ,SIGOXY   ,SIGOXZ   ,           
+     3         SIGNXX   ,SIGNXY   ,SIGNXZ   ,LBUF%PLA ,LBUF%SEQ ,ETSE     ,           
+     4         SIGY_IPT ,EPSP     ,TEMPEL   ,ASRATE   ,BUFLY%L_SIGB ,LBUF%SIGB,
+     5         NUVAR    ,UVAR     ,JTHE     )
+C---
           CASE DEFAULT
 C---
         END SELECT

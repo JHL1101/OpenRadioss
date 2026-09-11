@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,21 +15,22 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
-!||    spmd_sphgetv          ../engine/source/mpi/sph/spmd_sphgetv.F
+!||    spmd_sphgetv              ../engine/source/mpi/sph/spmd_sphgetv.F
 !||--- called by ------------------------------------------------------
-!||    sphprep               ../engine/source/elements/sph/sphprep.F
+!||    sphprep                   ../engine/source/elements/sph/sphprep.F
 !||--- calls      -----------------------------------------------------
-!||    spmd_ialltoallv       ../engine/source/mpi/generic/spmd_ialltoallv.F
-!||    spmd_ialltoallv_int   ../engine/source/mpi/generic/spmd_ialltoallv_int.F
+!||    spmd_ialltoallv           ../engine/source/mpi/generic/spmd_ialltoallv.F
+!||    spmd_ialltoallv_int_old   ../engine/source/mpi/generic/spmd_ialltoallv_int_old.F
 !||--- uses       -----------------------------------------------------
-!||    sphbox                ../engine/share/modules/sphbox.F
-!||    spmd_comm_world_mod   ../engine/source/mpi/spmd_comm_world.F90
+!||    sphbox                    ../engine/share/modules/sphbox.F
+!||    spmd_comm_world_mod       ../engine/source/mpi/spmd_comm_world.F90
 !||====================================================================
       SUBROUTINE SPMD_SPHGETV(KXSP ,SPBUF, V, MS, ISORTSP, IPARTSP)
 C-----------------------------------------------
@@ -114,7 +115,7 @@ C
 !   -------------------------
 !   alltoall communication with non-uniform size
 !   for integer array : send : ISPHR --> rcv : ISPHS
-      CALL SPMD_IALLTOALLV_INT(ISPHR,ISPHS,
+      CALL SPMD_IALLTOALLV_INT_OLD(ISPHR,ISPHS,
      .          SEND_SIZE_ISPHR,TOTAL_SEND_SIZE_ISPHR,DISPLS_ISPHR,
      .          TOTAL_RCV_SIZE_ISPHS,RCV_SIZE_ISPHS,DISPLS_ISPHS,
      .          REQUEST_ISPHR,SPMD_COMM_WORLD,NSPMD)

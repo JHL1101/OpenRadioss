@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    read_msgfile           ../starter/source/output/message/read_msgfile.F
 !||--- called by ------------------------------------------------------
@@ -49,10 +50,8 @@ C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       CHARACTER(LEN=NCHARLINE) :: ERRMSGLINE
-      CHARACTER(LEN=NCHARLINE) :: CTMP
       INTEGER ISTDEML
-      INTEGER NBLINE,NBLINETOT,J1,J,ID,MAXID,MSGTYPE,
-     .        IADT,IADD,IO_ERR
+      INTEGER NBLINE,NBLINETOT,IO_ERR
 
       ISTDEML=81
       OPEN(UNIT=ISTDEML,FORM='FORMATTED',FILE=INPUTR,
@@ -76,7 +75,7 @@ C reading the file ...
         END IF
       GOTO 10
    20 CONTINUE
-      ALLOCATE(MESSAGESFILE(NBLINE))
+      allocate(MESSAGESFILE(NBLINE))
       SMESSAGESFILE=NBLINE
       IF (NBLINE<=0) GOTO 900
       REWIND(ISTDEML)

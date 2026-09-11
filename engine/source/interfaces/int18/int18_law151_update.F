@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    int18_law151_update   ../engine/source/interfaces/int18/int18_law151_update.F
 !||--- called by ------------------------------------------------------
@@ -31,6 +32,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    element_mod           ../common_source/modules/elements/element_mod.F90
 !||    groupdef_mod          ../common_source/modules/groupdef_mod.F
 !||    multi_fvm_mod         ../common_source/modules/ale/multi_fvm_mod.F90
+!||    my_alloc_mod          ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
         SUBROUTINE INT18_LAW151_UPDATE(ITASK,MULTI_FVM,IGRBRIC,IPARI,IXS,
      1                               IGROUPS ,IPARG   ,ELBUF_TAB  ,FORCE_INT   ,
@@ -55,6 +58,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 #include      "com04_c.inc"
@@ -122,8 +127,8 @@ C-----------------------------------------------
                     INDEX_THREADS(I) = 1 + 3*(I-1)*NSN/NTHREAD
                 ENDDO
 !$OMP SINGLE
-                ALLOCATE( VEL(3*NSN) )
-                ALLOCATE( VEL_DP(6,3*NSN) )
+                call my_alloc(VEL, 3*NSN, "VEL")
+                call my_alloc(VEL_DP, 6, 3*NSN, "VEL_DP")
                 DO II = 1,NSN
                     IBRIC = IGRBRIC(ISU1)%ENTITY(II)    ! id of the phantom element
                     GROUP_ID = IGROUPS(IBRIC)       ! id of the element group
@@ -160,8 +165,8 @@ C-----------------------------------------------
                     MULTI_FVM%VEL(1:3,IBRIC) = MULTI_FVM%VEL(1:3,IBRIC) + LOCAL_FORCE_INT_DP(1:3)              
                 ENDDO
 
-                DEALLOCATE( VEL )
-                DEALLOCATE( VEL_DP )
+                call my_dealloc(VEL)
+                call my_dealloc(VEL_DP)
 !$OMP END SINGLE
             ENDDO  
         ! -------------------------------------

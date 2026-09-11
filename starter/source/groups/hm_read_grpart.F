@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_grpart           ../starter/source/groups/hm_read_grpart.F
 !||--- called by ------------------------------------------------------
@@ -70,17 +71,17 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I,J,K,L,ID,NEL,IGS,JREC,
+      INTEGER J,K,ID,NEL,IGS,
      .        IT0,IT1,IT2,IT3,IT4,IT5,
-     .        FLAG_FMT,FLAG_FMT_TMP,IFIX_TMP,IBID,N1,N2,OK,NINDX,
+     .        IBID,N1,N2,NINDX,
      .        NN,IDMIN,IDMAX,OFFSET,NENTITY
-      INTEGER J10(10),BUFTMP(NSUBS+NPART),INDX(NSUBS+NPART),
+      INTEGER BUFTMP(NSUBS+NPART),INDX(NSUBS+NPART),
      .        LIST_IGR(NGRPRT),UID,KK
       my_real BID
       CHARACTER(LEN=NCHARTITLE) :: TITR,TITR1
       CHARACTER(LEN=NCHARKEY) :: KEY,KEY2
       CHARACTER :: MES*40
-      LOGICAL IS_AVAILABLE, IS_ENCRYPTED
+      LOGICAL IS_AVAILABLE
 C-----------------------------------------------
       DATA MES/' PART GROUP'/
 C-----------------------------------------------
@@ -219,7 +220,7 @@ C-------------------------
                 IF (BUFTMP(J) == 1) NEL=NEL+1                                                                    
               ENDDO                                                                                              
               IGRPART(IGS)%NENTITY=NEL                                                                           
-              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL)                                                               
+              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL,"IGRPART(IGS)%ENTITY")
               IGRPART(IGS)%ENTITY = 0                                                                            
             ELSEIF (FLAG == 1) THEN                                                                              
               DO J=1,NPART                                                                                       
@@ -265,7 +266,7 @@ C-------------------------
                 IF (BUFTMP(J) == 1) NEL=NEL+1                                                      
               ENDDO                                                                                
               IGRPART(IGS)%NENTITY=NEL                                                             
-              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL)                                                 
+              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL,"IGRPART(IGS)%ENTITY")
               IGRPART(IGS)%ENTITY = 0                                                              
             ELSEIF (FLAG == 1) THEN                                                                
               DO J=1,NPART                                                                         
@@ -304,7 +305,7 @@ C-------------------------
                 IF (BUFTMP(J) == 1) NEL=NEL+1                                                                     
               ENDDO                                                                                               
               IGRPART(IGS)%NENTITY=NEL                                                                            
-              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL)                                                                
+              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL,"IGRPART(IGS)%ENTITY")
               IGRPART(IGS)%ENTITY = 0                                                                             
             ELSEIF (FLAG == 1) THEN                                                                               
               DO J=1,NPART                                                                                        
@@ -364,7 +365,7 @@ C-------------------------
                 IF (BUFTMP(J) == 1) NEL=NEL+1                                                           
               ENDDO                                                                                     
               IGRPART(IGS)%NENTITY=NEL                                                                  
-              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL)                                                      
+              CALL MY_ALLOC(IGRPART(IGS)%ENTITY,NEL,"IGRPART(IGS)%ENTITY")
               IGRPART(IGS)%ENTITY = 0                                                                   
             ELSEIF (FLAG == 1) THEN                                                                     
               DO J=1,NPART                                                                              

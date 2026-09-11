@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
      
 
 !||====================================================================
@@ -35,6 +36,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    write_intbuf_t8   ../engine/source/output/restart/write_intbuf.F
 !||--- uses       -----------------------------------------------------
 !||    intbufdef_mod     ../common_source/modules/interfaces/intbufdef_mod.F90
+!||    my_alloc_mod      ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod    ../common_source/tools/memory/my_dealloc.F90
 !||====================================================================
       SUBROUTINE WRITE_INTBUF(INTBUF_TAB)  
 C-----------------------------------------------
@@ -44,6 +47,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -63,7 +68,7 @@ C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
       INTEGER N,NI,SIZ,L_INTBUF_SIZE
 C=======================================================================
-      ALLOCATE(INTBUF_SIZE(L_INTBUF_SIZE_MAX))
+      call my_alloc(INTBUF_SIZE, L_INTBUF_SIZE_MAX, "INTBUF_SIZE")
       INTBUF_SIZE(1:L_INTBUF_SIZE_MAX) = 0
 
       DO NI= 1, NINTER
@@ -314,6 +319,8 @@ C------- to be cleaned later
         INTBUF_SIZE(N) = INTBUF_TAB(NI)%S_IELEM_M         
         N = N+1
         INTBUF_SIZE(N) = INTBUF_TAB(NI)%S_PROC_MVOISIN  
+        N = N+1
+        INTBUF_SIZE(N) = INTBUF_TAB(NI)%S_MSR_1D 
 
 C=======================================================================
 C real arrays sizes
@@ -966,12 +973,13 @@ C we can avoid to write 0
         CALL WRITE_I_C(INTBUF_TAB(NI)%CANDM_E2S,SIZ)
         CALL WRITE_I_C(INTBUF_TAB(NI)%CANDS_E2S,SIZ)
 
+
         SIZ = INTBUF_TAB(NI)%S_IFPEN_E
-        CALL WRITE_I_C(INTBUF_TAB(NI)%IFPEN_E,SIZ)
+        IF(SIZ > 0) CALL COMPRESS_I_NNZ(INTBUF_TAB(NI)%IFPEN_E,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_IFPEN_E2S
         IF(SIZ > 0) SIZ = INTBUF_TAB(NI)%I_STOK_E(2)
-        CALL WRITE_I_C(INTBUF_TAB(NI)%IFPEN_E2S,SIZ)
+        IF(SIZ > 0) CALL COMPRESS_I_NNZ(INTBUF_TAB(NI)%IFPEN_E2S,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_IELNRTS
         CALL WRITE_I_C(INTBUF_TAB(NI)%IELNRTS,SIZ)
@@ -987,6 +995,9 @@ C we can avoid to write 0
         
         SIZ = INTBUF_TAB(NI)%S_PROC_MVOISIN
         CALL WRITE_I_C(INTBUF_TAB(NI)%PROC_MVOISIN,SIZ)   
+
+        SIZ = INTBUF_TAB(NI)%S_MSR_1D
+        CALL WRITE_I_C(INTBUF_TAB(NI)%MSR_1D,SIZ)  
 
 C=======================================================================
 C write REAL arrays on disk
@@ -1103,16 +1114,18 @@ C=======================================================================
         ENDIF
 
         SIZ = INTBUF_TAB(NI)%S_PENE_OLD_E
-        CALL WRITE_DB(INTBUF_TAB(NI)%PENE_OLD_E,SIZ)
+        IF(SIZ > 0) CALL COMPRESS_R_NNZ(INTBUF_TAB(NI)%PENE_OLD_E,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_STIF_OLD_E
-        CALL WRITE_DB(INTBUF_TAB(NI)%STIF_OLD_E,SIZ)
+        IF(SIZ > 0) CALL COMPRESS_R_NNZ(INTBUF_TAB(NI)%STIF_OLD_E,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_PENE_OLD_E2S
-        CALL WRITE_DB(INTBUF_TAB(NI)%PENE_OLD_E2S,SIZ)
+        IF(SIZ > 0) SIZ = 4*INTBUF_TAB(NI)%I_STOK_E(2)
+        IF(SIZ > 0) CALL COMPRESS_R_NNZ(INTBUF_TAB(NI)%PENE_OLD_E2S,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_STIF_OLD_E2S
-        CALL WRITE_DB(INTBUF_TAB(NI)%STIF_OLD_E2S,SIZ)
+        IF(SIZ > 0) SIZ = 4*INTBUF_TAB(NI)%I_STOK_E(2)
+        IF(SIZ > 0) CALL COMPRESS_R_NNZ(INTBUF_TAB(NI)%STIF_OLD_E2S,SIZ)
 
         SIZ = INTBUF_TAB(NI)%S_GAPE
         CALL WRITE_DB(INTBUF_TAB(NI)%GAPE,SIZ)
@@ -1393,7 +1406,7 @@ C=======================================================================
 
       ENDDO !NI=1,NINTER
 
-      DEALLOCATE(INTBUF_SIZE)
+      call my_dealloc(INTBUF_SIZE)
 C-----
       RETURN
 
@@ -1428,11 +1441,10 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER K,NBS_INTERF,NBM_INTERF,SIZ,P2
+      INTEGER K,NBS_INTERF,NBM_INTERF,P2
 
       IF(NSPMD > 1) THEN
-         SIZ = T8%S_COMM 
-         CALL WRITE_I_C(SIZ,1)
+         CALL WRITE_I_C(T8%S_COMM,1)
 
          DO K=1,T8%S_COMM 
           CALL WRITE_I_C(T8%SPMD_COMM_PATTERN(K)%NUMLOC,1)

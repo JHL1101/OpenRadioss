@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    update_struct_int21   ../engine/source/interfaces/int21/update_struct_int21.F
 !||--- called by ------------------------------------------------------
@@ -29,6 +30,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||--- uses       -----------------------------------------------------
 !||    intstamp_glob_mod     ../engine/share/modules/intstamp_glob_mod.F
 !||    message_mod           ../engine/share/message_module/message_mod.F
+!||    my_dealloc_mod        ../common_source/tools/memory/my_dealloc.F90
 !||    tri7box               ../engine/share/modules/tri7box.F
 !||====================================================================
        SUBROUTINE UPDATE_STRUCT_INT21(
@@ -43,6 +45,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 #include      "comlock.inc"
 C-----------------------------------------------
@@ -97,7 +100,7 @@ C
                 ENDIF
             ENDDO 
 
-            IF(ASSOCIATED( NMVFI(NIN)%P )) DEALLOCATE(NMVFI(NIN)%P)
+            IF(ASSOCIATED( NMVFI(NIN)%P )) call my_dealloc(NMVFI(NIN)%P)
             ALLOCATE(NMVFI(NIN)%P(NODFI),STAT=IERROR1)
 C
             IAD(1)=1
@@ -134,7 +137,7 @@ C
                         FTHEFI(NIN)%P(I) = ZERO
                     ENDDO
                 ELSE
-                    IF(ASSOCIATED(FTHESKYFI(NIN)%P)) DEALLOCATE(FTHESKYFI(NIN)%P)
+                    IF(ASSOCIATED(FTHESKYFI(NIN)%P)) call my_dealloc(FTHESKYFI(NIN)%P)
                     LSKYFI = NODFI*MULTIMAX
                     NLSKYFI(NIN) = LSKYFI
                     IF(LSKYFI>0) THEN
@@ -146,7 +149,7 @@ C
 
             IF (IFLAGLOADP > 0) THEN
                 IF(NODFI>0) THEN 
-                  IF(ASSOCIATED( TAGNCONTFI(NIN)%P )) DEALLOCATE(TAGNCONTFI(NIN)%P)
+                  IF(ASSOCIATED( TAGNCONTFI(NIN)%P )) call my_dealloc(TAGNCONTFI(NIN)%P)
                    ALLOCATE(TAGNCONTFI(NIN)%P(NODFI),STAT=IERROR2)   
                      DO I = 1, NODFI
                         TAGNCONTFI(NIN)%P(I) = 0

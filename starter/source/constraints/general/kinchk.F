@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    kinchk                 ../starter/source/constraints/general/kinchk.F
 !||--- called by ------------------------------------------------------
@@ -38,6 +39,7 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
       USE MESSAGE_MOD
       USE NAMES_AND_TITLES_MOD , ONLY : NCHARTITLE
       USE FORMAT_MOD, ONLY : FMW_A_I_A, FMW_10I
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -60,22 +62,24 @@ C-----------------------------------------------
       INTEGER IKINE(*),NPRW(*), LPRW(*),ITAB(*),KINET(*),
      .        NPBY(NNPBY,*), LPBY(*),IRBE2(NRBE2L,*),LRBE2(*),
      .        IRBE3(NRBE3L,*),LRBE3(*),
-     .        INOPT_RWALL,INOPT_RBE2,INOPT_RBE3,ITAGCYC(*)
+     .        ITAGCYC(*)
       my_real
      .   RWL(NRWLP,*)
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, KK, IKK, IKK2, NK, JWARN, ITYP, NE, NSL,
+      INTEGER I, J, K, L, N, KK, IKK, NK, JWARN, ITYP, NE, NSL,
      .        IK(10), RBWARN, RB2WARN, KRB, NSLRB,
      .        MARQUEUR(8192),
      .        MARQUEURDOUBLE(13),J1,FLAG_IKCOND,MARQ2,MARQM2,
-     .        NS,NM,M,IAD,NUN,JJ,NIKRW,IPEN,NHIER
+     .        NM,M,IAD,NUN,NIKRW,IPEN,NHIER
       INTEGER, DIMENSION(:), ALLOCATABLE :: NKINDOUBLE,NKIN,IKRW
       INTEGER ID
       CHARACTER(LEN=NCHARTITLE) :: TITR
 C-----------------------------------------------------------------
-      ALLOCATE(NKINDOUBLE(NUMNOD),NKIN(NUMNOD),IKRW(NUMNOD))
+      call my_alloc(NKINDOUBLE, NUMNOD, "NKINDOUBLE")
+      call my_alloc(NKIN, NUMNOD, "NKIN")
+      call my_alloc(IKRW, NUMNOD, "IKRW")
       MARQ2  = 0
       MARQM2 = 0
 C=======================================================================
@@ -1167,7 +1171,9 @@ C reset flag impact / wall
 ccc        IF(IWL(IKINE(I))==1)IKINE(I) = IKINE(I) - 4
         KINET(I)=IKINE(I)
       ENDDO
-      DEALLOCATE(NKINDOUBLE,NKIN,IKRW)
+      CALL MY_DEALLOC(NKINDOUBLE)
+      CALL MY_DEALLOC(NKIN)
+      CALL MY_DEALLOC(IKRW)
 
 C
 Cls
@@ -1323,8 +1329,7 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K, L, N, KK, IKK, IKK2, NK, JWARN, ITYP, NE, NSL,
-     .        IK(10), RBWARN, RB2WARN, KRB, NSLRB,ICDG,ISEN,M
+      INTEGER I, K, NSL, ICDG, ISEN, M
 C-----------------------------------------------------------------
 C=======================================================================
 C  AUTOMATIC CORRECTIONS FOR INITIAL VELOCITIES
@@ -1408,18 +1413,20 @@ C
       RETURN
       END
 !||====================================================================
-!||    rbe3_impd   ../starter/source/constraints/general/kinchk.F
+!||    rbe3_impd      ../starter/source/constraints/general/kinchk.F
 !||--- called by ------------------------------------------------------
-!||    inivchk     ../starter/source/constraints/general/kinchk.F
+!||    inivchk        ../starter/source/constraints/general/kinchk.F
 !||--- calls      -----------------------------------------------------
-!||    prerbe3     ../starter/source/constraints/general/kinchk.F
-!||    rbe3cl      ../starter/source/constraints/general/kinchk.F
+!||    prerbe3        ../starter/source/constraints/general/kinchk.F
+!||    rbe3cl         ../starter/source/constraints/general/kinchk.F
+!||--- uses       -----------------------------------------------------
 !||====================================================================
       SUBROUTINE RBE3_IMPD(IRBE3 ,LRBE3 ,X    ,D     ,DR    ,
      1                     FRBE3 ,SKEW  )
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   C o m m o n   B l o c k s
@@ -1438,8 +1445,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, M, NS ,NML, IAD,JJ,IROT,IADS,MAX_M,IROTG,
-     .        JT(3,NRBE3),JR(3,NRBE3),NM,NN,K
+      INTEGER I, J, N, M, NS ,NML, IAD,IROT,IADS,MAX_M,IROTG,
+     .        JT(3,NRBE3),JR(3,NRBE3),K
 C     REAL
       my_real
      .        VS(3),VRS(3)
@@ -1449,7 +1456,7 @@ C     REAL
 C======================================================================|
       IADS = SLRBE3/2
       CALL PRERBE3(IRBE3 ,MAX_M , IROTG,JT  ,JR   )
-      ALLOCATE(FDSTNB(3,6,MAX_M))
+      call my_alloc(FDSTNB, 3, 6, MAX_M, "FDSTNB")
       IF (IROTG>0) ALLOCATE(MDSTNB(3,6,MAX_M))
       DO N=1,NRBE3
         IAD = IRBE3(1,N)
@@ -1494,7 +1501,7 @@ C======================================================================|
         ENDIF
       ENDDO
 C
-      DEALLOCATE(FDSTNB)
+      CALL MY_DEALLOC(FDSTNB)
       IF (IROTG>0) DEALLOCATE(MDSTNB)
 C---
       RETURN
@@ -1522,7 +1529,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N,NML,IC,ICT,ICR,IROT
+      INTEGER J, N,NML,IC,ICT,ICR,IROT
 C======================================================================|
       MAX_M=0
       IROTG=0
@@ -1616,7 +1623,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, K,N, M ,NML, IAD,JJ,KG,NSNGLR,IELSUB,IERR,ng1
+      INTEGER I, J, K, KG,NSNGLR,IELSUB,IERR
 C     REAL
       my_real
      *        TW(3,NG), RW(3,NG),
@@ -1636,7 +1643,7 @@ C     REAL
      *                 TMUFX(3), TMUFY(3), TMUFZ(3),
      *                 TFUMX(3), TFUMY(3), TFUMZ(3),
      *                 TMUMX(3), TMUMY(3), TMUMZ(3),
-     *                 A(6,6), C(6,6), T(3,3)
+     *                 A(6,6), C(6,6)
 C
 C     INITIALIZATION
 C
@@ -1958,8 +1965,8 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, M, NS ,NML, IAD,JJ,ISK,
-     .        JT(3,NRBE2),JR(3,NRBE2),NM,NN,K,NSL
+      INTEGER N, M, IAD,ISK,
+     .        JT(3,NRBE2),JR(3,NRBE2),NSL
 C     REAL
 C======================================================================|
       CALL PRERBE2(IRBE2 ,JT  ,JR   )
@@ -2003,7 +2010,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N,NML,IC,ICT,ICR,IROT
+      INTEGER J, N,IC,ICT,ICR
 C======================================================================|
       DO N=1,NRBE2
           IC=IRBE2(4,N)
@@ -2081,7 +2088,7 @@ C     REAL
 C-----------------------------------------------
 C   L o c a l   V a r i a b l e s
 C-----------------------------------------------
-      INTEGER I, J, N, NS
+      INTEGER I, J, NS
 C     REAL
       my_real
      .     XS, YS, ZS,VRM(3)

@@ -1,5 +1,5 @@
 !Copyright>        OpenRadioss
-!Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+!Copyright>        Copyright (C) 2026 Siemens
 !Copyright>
 !Copyright>        This program is free software: you can redistribute it and/or modify
 !Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@
 !Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !Copyright>
 !Copyright>
-!Copyright>        Commercial Alternative: Altair Radioss Software
+!Copyright>        Commercial Alternative: Simcenter Radioss Software
 !Copyright>
-!Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-!Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-!Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+!Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+!Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+!Copyright>        commercial version may interest you: 
+!Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !hd|====================================================================
 !hd|  intbufdef_mod                 modules/intbufdef_mod.f
 !hd|-- called by -----------
@@ -820,6 +821,7 @@
 !||    intvo3                                   ../engine/source/interfaces/inter3d/intvo3.F
 !||    intvo8                                   ../engine/source/interfaces/inter3d/intvo8.F
 !||    ipari_l_ini                              ../starter/source/restart/ddsplit/ipari_l_ini.F
+!||    ists_mainf                               ../engine/source/interfaces/ists/ists_mainf.F90
 !||    itagsl12                                 ../starter/source/interfaces/inter3d1/inintr2.F
 !||    itagsl2                                  ../starter/source/interfaces/inter3d1/itagsl2.F
 !||    iwcontdd_type24                          ../starter/source/spmd/domain_decomposition/iwcontdd_type24.F
@@ -987,6 +989,8 @@
 !||    st_qaprint_driver                        ../starter/source/output/qaprint/st_qaprint_driver.F
 !||    st_qaprint_interfaces                    ../starter/source/output/qaprint/st_qaprint_interfaces.F
 !||    stifint_icontrol                         ../starter/source/interfaces/interf1/stifint_icontrol.F90
+!||    sts_broad_phase_int7_bucket_mod          ../engine/source/interfaces/ists/ists_broad_phase_int7_bucket.F90
+!||    sts_remap_segments                       ../engine/source/interfaces/ists/ists_remap_segments.F90
 !||    ud_int5                                  ../engine/source/implicit/upd_glob_k.F
 !||    upd_fr                                   ../engine/source/mpi/implicit/imp_fri.F
 !||    upd_glob_k                               ../engine/source/implicit/upd_glob_k.F
@@ -1188,6 +1192,7 @@
           integer ::   s_adrects!  4*nrts    :adrects : address of each secnd node of the segment in ixs/ixs10/ixs20/ixs16
           integer ::   s_facnrts!  nrts      :facnrts : corresponding facet in element ielnrts
           integer ::   s_e2s_actnor!
+          integer ::   s_msr_1d ! nodes for 1D edges inter 25
 !=======================================================================
 ! define sizes (float arrays)
 !=======================================================================
@@ -1474,6 +1479,7 @@
           integer, dimension(:), allocatable :: edge_type1_0
           integer, dimension(:) , allocatable ::  ielem_m
           integer, dimension(:) , allocatable ::  proc_mvoisin
+          integer, dimension(:) , allocatable ::  msr_1d
 
 !---- inter friction parts
           integer, dimension(:) , allocatable ::  ipartfrics
@@ -1701,7 +1707,7 @@
 
 ! intbuf_size array maximum length defined as parameter
 ! (maximum number of different arrays composing intbuf_tab structure)
-        integer, parameter :: l_intbuf_size_max = 520
+        integer, parameter :: l_intbuf_size_max = 521
         integer :: inter_ithknod !flag to fill thknod array  (enabled with ithick parameter from interface type 25 or 21)
 
         ! -------------------------

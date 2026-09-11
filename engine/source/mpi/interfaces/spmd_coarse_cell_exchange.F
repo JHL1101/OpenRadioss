@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,18 +15,21 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    spmd_coarse_cell_exchange   ../engine/source/mpi/interfaces/spmd_coarse_cell_exchange.F
 !||--- calls      -----------------------------------------------------
 !||    check_coarse_grid           ../engine/source/interfaces/generic/check_coarse_grid.F
-!||    spmd_ialltoallv_int         ../engine/source/mpi/generic/spmd_ialltoallv_int.F
+!||    spmd_ialltoallv_int_old     ../engine/source/mpi/generic/spmd_ialltoallv_int_old.F
 !||--- uses       -----------------------------------------------------
 !||    inter_sorting_mod           ../engine/share/modules/inter_sorting_mod.F
+!||    my_dealloc_mod              ../common_source/tools/memory/my_dealloc.F90
+!||    spmd_mod                    ../engine/source/mpi/spmd_mod.F90
 !||====================================================================
         SUBROUTINE SPMD_COARSE_CELL_EXCHANGE(NB_INTER_SORTED,LIST_INTER_SORTED,IRECVFROM,ISENDTO,MODE,
      .              IPARI,SORT_COMM,NB_REQUEST_COARSE_CELL,ARRAY_REQUEST_COARSE_CELL,LIST_INTER_COARSE_CELL)
@@ -43,9 +46,11 @@ C-----------------------------------------------
 C   M o d u l e s
 C-----------------------------------------------
         USE INTER_SORTING_MOD
+        USE SPMD_MOD
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   M e s s a g e   P a s s i n g
@@ -89,7 +94,7 @@ C-----------------------------------------------
           NB_REQUEST_COARSE_CELL = 0
           DO KK=1,NB_INTER_SORTED
             NIN = LIST_INTER_SORTED(KK)
-            ARRAY_REQUEST_COARSE_CELL(KK) = MPI_REQUEST_NULL
+            ARRAY_REQUEST_COARSE_CELL(KK) = SPMD_REQUEST_NULL
             IF(SORT_COMM(NIN)%PROC_NUMBER>NSPMD/2) THEN
                 IF(IRECVFROM(NIN,LOC_PROC)==0.AND.ISENDTO(NIN,LOC_PROC)==0) CYCLE
 
@@ -144,7 +149,7 @@ C-----------------------------------------------
                 NB_REQUEST_COARSE_CELL = NB_REQUEST_COARSE_CELL + 1
                 LIST_INTER_COARSE_CELL(NB_REQUEST_COARSE_CELL) = NIN
 
-                CALL SPMD_IALLTOALLV_INT(SORT_COMM(NIN)%COARSE_GRID,
+                CALL SPMD_IALLTOALLV_INT_OLD(SORT_COMM(NIN)%COARSE_GRID,
      .            SORT_COMM(NIN)%GLOBAL_COARSE_CELL,SORT_COMM(NIN)%SEND_SIZE_COARSE_CELL,TOTAL_SEND_SIZE,
      .            SORT_COMM(NIN)%SEND_DISPLS_COARSE_CELL,
      .            TOTAL_RCV_SIZE,SORT_COMM(NIN)%RCV_SIZE_COARSE_CELL,
@@ -158,13 +163,13 @@ C-----------------------------------------------
         !            - check if current proc and remote proc need to communicate
         IF(MODE==2) THEN
             DO KK=1,NB_REQUEST_COARSE_CELL
-                CALL MPI_WAIT(ARRAY_REQUEST_COARSE_CELL(KK),STATUS,IERROR)  
+                CALL SPMD_WAIT(ARRAY_REQUEST_COARSE_CELL(KK),STATUS)  
                 NIN = LIST_INTER_COARSE_CELL(KK)
                 ITIED = IPARI(85,NIN)
                 CALL CHECK_COARSE_GRID(NIN,SORT_COMM(NIN)%MAIN_COARSE_GRID,SORT_COMM,ITIED)
 
-                DEALLOCATE( SORT_COMM(NIN)%GLOBAL_COARSE_CELL )
-                DEALLOCATE( SORT_COMM(NIN)%COARSE_GRID )
+                call my_dealloc(SORT_COMM(NIN)%GLOBAL_COARSE_CELL)
+                call my_dealloc(SORT_COMM(NIN)%COARSE_GRID)
             ENDDO 
             NB_REQUEST_COARSE_CELL = 0                   
         ENDIF

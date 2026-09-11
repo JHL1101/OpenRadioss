@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    hm_read_submodel     ../starter/source/model/assembling/hm_read_submodel.F
 !||--- called by ------------------------------------------------------
@@ -54,6 +55,7 @@ C-----------------------------------------------
       USE SUBMODEL_MOD   
       USE HM_OPTION_READ_MOD
       USE USER_ID_MOD , ONLY : ID_LIMIT
+      use my_alloc_mod
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
@@ -74,29 +76,28 @@ C-----------------------------------------------
       INTEGER, DIMENSION(:), ALLOCATABLE :: NOSUBMOD,IFATHER,LEVEL,UID_SUB
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: OFFSETS
       INTEGER  NB_BEGIN,SCHAR,SUB_INDEX,NBUNIT_SUB
-      LOGICAL :: IS_AVAILABLE
 C-----------------------------------------------
 C   E x t e r n a l   F u n c t i o n s
 C-----------------------------------------------
 C--------------------------------------------------------
       IF(NSUBMOD > 0)THEN
-        ALLOCATE (NOSUBMOD(NSUBMOD),STAT=stat)
+        call my_alloc(NOSUBMOD, NSUBMOD, "NOSUBMOD", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='NOSUBMOD')
-        ALLOCATE (IFATHER(NSUBMOD),STAT=stat)
+        call my_alloc(IFATHER, NSUBMOD, "IFATHER", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='IFATHER')
-        ALLOCATE (LEVEL(NSUBMOD),STAT=stat)
+        call my_alloc(LEVEL, NSUBMOD, "LEVEL", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='LEVEL')
-        ALLOCATE (OFFSETS(7,NSUBMOD),STAT=stat)
+        call my_alloc(OFFSETS, 7, NSUBMOD, "OFFSETS", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='OFFSETS')
-        ALLOCATE (UID_SUB(NSUBMOD),STAT=stat)
+        call my_alloc(UID_SUB, NSUBMOD, "UID_SUB", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='UID_SUB')
@@ -111,23 +112,23 @@ C--------------------------------------------------------
         UID_SUB(1:NSUBMOD)=0
         OFFSETS(1:7,1:NSUBMOD)=0
       ELSE
-        ALLOCATE (NOSUBMOD(0),STAT=stat)
+        call my_alloc(NOSUBMOD, 0, "NOSUBMOD", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='NOSUBMOD')
-        ALLOCATE (IFATHER(0),STAT=stat)
+        call my_alloc(IFATHER, 0, "IFATHER", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='IFATHER')
-        ALLOCATE (LEVEL(0),STAT=stat)
+        call my_alloc(LEVEL, 0, "LEVEL", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='LEVEL')
-        ALLOCATE (OFFSETS(0,0),STAT=stat)
+        call my_alloc(OFFSETS, 0, 0, "OFFSETS", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='OFFSETS')
-        ALLOCATE (UID_SUB(0),STAT=stat)
+        call my_alloc(UID_SUB, 0, "UID_SUB", stat=stat)
         IF (STAT /= 0) CALL ANCMSG(MSGID=268,ANMODE=ANINFO,
      .                             MSGTYPE=MSGERROR,
      .                         C1='UID_SUB')
@@ -189,10 +190,10 @@ c        print *,I,LSUBMODEL(I)%NOSUBMOD,LSUBMODEL(I)%IFATHER,LSUBMODEL(I)%OFF_D
 c     .                                            LSUBMODEL(I)%UID
 c      ENDDO
 c
-      IF (ALLOCATED(NOSUBMOD)) DEALLOCATE(NOSUBMOD)
-      IF (ALLOCATED(IFATHER)) DEALLOCATE(IFATHER)
-      IF (ALLOCATED(LEVEL)) DEALLOCATE(LEVEL)
-      IF (ALLOCATED(OFFSETS)) DEALLOCATE(OFFSETS)
+      IF (ALLOCATED(NOSUBMOD)) CALL MY_DEALLOC(NOSUBMOD)
+      IF (ALLOCATED(IFATHER)) CALL MY_DEALLOC(IFATHER)
+      IF (ALLOCATED(LEVEL)) CALL MY_DEALLOC(LEVEL)
+      IF (ALLOCATED(OFFSETS)) CALL MY_DEALLOC(OFFSETS)
 C-----------
       RETURN
       END SUBROUTINE HM_READ_SUBMODEL

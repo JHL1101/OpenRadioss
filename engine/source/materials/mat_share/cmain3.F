@@ -1,5 +1,5 @@
 Copyright>        OpenRadioss
-Copyright>        Copyright (C) 1986-2026 Altair Engineering Inc.
+Copyright>        Copyright (C) 2026 Siemens
 Copyright>
 Copyright>        This program is free software: you can redistribute it and/or modify
 Copyright>        it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,12 @@ Copyright>        You should have received a copy of the GNU Affero General Publ
 Copyright>        along with this program.  If not, see <https://www.gnu.org/licenses/>.
 Copyright>
 Copyright>
-Copyright>        Commercial Alternative: Altair Radioss Software
+Copyright>        Commercial Alternative: Simcenter Radioss Software
 Copyright>
-Copyright>        As an alternative to this open-source version, Altair also offers Altair Radioss
-Copyright>        software under a commercial license.  Contact Altair to discuss further if the
-Copyright>        commercial version may interest you: https://www.altair.com/radioss/.
+Copyright>        As an alternative to this open-source version, Siemens also offers Simcenter(TM) Radioss(R)
+Copyright>        software under a commercial license.  Contact Siemens to discuss further if the
+Copyright>        commercial version may interest you: 
+Copyright>        https://www.siemens.com/en-us/products/simcenter/mechanical-simulation/radioss/.
 !||====================================================================
 !||    cmain3           ../engine/source/materials/mat_share/cmain3.F
 !||--- called by ------------------------------------------------------
@@ -48,6 +49,8 @@ Copyright>        commercial version may interest you: https://www.altair.com/ra
 !||    failwave_mod     ../common_source/modules/failwave_mod.F
 !||    mat_elem_mod     ../common_source/modules/mat_elem/mat_elem_mod.F90
 !||    mulawc_mod       ../engine/source/materials/mat_share/mulawc.F90
+!||    my_alloc_mod     ../common_source/tools/memory/my_alloc.F90
+!||    my_dealloc_mod   ../common_source/tools/memory/my_dealloc.F90
 !||    nlocal_reg_mod   ../common_source/modules/nlocal_reg_mod.F
 !||    sensor_mod       ../common_source/modules/sensor_mod.F90
 !||    stack_mod        ../engine/share/modules/stack_mod.F
@@ -102,6 +105,8 @@ C-----------------------------------------------
 C-----------------------------------------------
 C   I m p l i c i t   T y p e s
 C-----------------------------------------------
+      use my_alloc_mod
+      use my_dealloc_mod, only : my_dealloc
 #include      "implicit_f.inc"
 C-----------------------------------------------
 C   G l o b a l   P a r a m e t e r s
@@ -225,7 +230,7 @@ C     add source terme for law not user
         DIE(JFT:JLT)   = ZERO
       ENDIF
 c-----------------
-      IF (IEXPAN > 0 .AND. JTHE > 0) THEN
+      IF (IEXPAN > 0 .AND. JTHE > 0 .AND. MTN /= 137) THEN
 c
         IF (TT == ZERO) TEMPEL0(JFT:JLT) = TEMPEL(JFT:JLT)
         DTEMP(JFT:JLT) = TEMPEL(JFT:JLT) - TEMPEL0(JFT:JLT) 
@@ -252,12 +257,14 @@ c
         ENDDO  
       ENDIF
       NLAY_MAX   = MAX(NLAY,NPT,IXLAY, ELBUF_STR%NLAY)
-      ALLOCATE(MATLY(MVSIZ*NLAY_MAX), THKLY(MVSIZ*NLAY_MAX*LAYNPT_MAX),
-     .         POSLY(MVSIZ,NLAY_MAX*LAYNPT_MAX),THK_LY(NEL,NLAY_MAX*LAYNPT_MAX))
+      call my_alloc(MATLY, MVSIZ*NLAY_MAX, "MATLY")
+      call my_alloc(THKLY, MVSIZ*NLAY_MAX*LAYNPT_MAX, "THKLY")
+      call my_alloc(POSLY, MVSIZ, NLAY_MAX*LAYNPT_MAX, "POSLY")
+      call my_alloc(THK_LY, NEL, NLAY_MAX*LAYNPT_MAX, "THK_LY")
 c
 c----------------------------
       IF (NPT == 0) THEN
-          ! Radioss laws 1,2,22,36,43,56,60,86 with global integration
+          ! Radioss laws 1,2,22,36,43,56,60,86,136 with global integration
 c----------------------------
         ILAY = 1
         IT   = 1
@@ -318,7 +325,7 @@ c----------------------------
      .              NEL      ,THK_LY   ,INDX_DRAPE, SEDRAPE,NUMEL_DRAPE)
 c 
         CALL MULAWC(TIMERS,ELBUF_STR ,
-     1       JFT     ,JLT     ,NEL     ,PM      ,FOR     ,MOM     ,
+     1       JLT     ,NEL     ,PM      ,FOR     ,MOM     ,
      2       GSTR    ,THK     ,EINT    ,OFF     ,DIR_A   ,DIR_B   ,
      3       MAT     ,AREA    ,EXX     ,EYY     ,EXY     ,EXZ     ,
      4       EYZ     ,KXX     ,KYY     ,KXY     ,GEO     ,THK_LY  ,
@@ -344,7 +351,7 @@ c
      T       IPARTC  ,NPART)
       ENDIF ! IF (NPT == 0) 
 C----------------------------------------------------------------------
-      IF (IEXPAN > 0 .AND. JTHE > 0. AND. IDT_THERM==0) THEN
+      IF (IEXPAN > 0 .AND. JTHE > 0. AND. IDT_THERM==0 .AND. MTN /= 137) THEN
          CALL THERMEXPC(ELBUF_STR,
      1                  JFT  ,JLT   ,GBUF%FORTH  ,FOR   ,EINT  , 
      2                  OFF  ,ETH   ,THK0        ,EXX   ,EYY   ,    
@@ -395,7 +402,10 @@ C---------------------------------------------------------
         IF (MTN /=78)  ETIMP(JFT:JLT) = ZCFAC(JFT:JLT,1)
         CALL PUT_ETFAC(NEL ,ETIMP ,MTN)
       END IF
-      DEALLOCATE(MATLY, THKLY, POSLY, THK_LY)
+      call my_dealloc(MATLY)
+      call my_dealloc(THKLY)
+      call my_dealloc(POSLY)
+      call my_dealloc(THK_LY)
 c-----------
       RETURN
       END SUBROUTINE CMAIN3
